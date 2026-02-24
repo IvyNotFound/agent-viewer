@@ -11,6 +11,7 @@ export interface Task {
   id: number
   titre: string
   description: string | null
+  commentaire: string | null
   statut: 'a_faire' | 'en_cours' | 'terminé' | 'validé'
   agent_assigne_id: number | null
   agent_name: string | null
@@ -20,6 +21,15 @@ export interface Task {
   updated_at: string
   started_at: string | null
   completed_at: string | null
+}
+
+export interface TaskComment {
+  id: number
+  task_id: number
+  agent_id: number | null
+  agent_name: string | null
+  contenu: string
+  created_at: string
 }
 
 export interface Lock {

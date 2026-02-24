@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Task, Agent, Lock, Stats } from '@renderer/types'
+import type { Task, Agent, Lock, Stats, TaskComment } from '@renderer/types'
+import { useTabsStore } from '@renderer/stores/tabs'
 
 declare global {
   interface Window {
@@ -10,6 +11,7 @@ declare global {
       watchDb(dbPath: string): Promise<void>
       unwatchDb(): Promise<void>
       onDbChanged(callback: () => void): () => void
+      showConfirmDialog(opts: { title: string; message: string; detail?: string }): Promise<boolean>
       windowMinimize(): Promise<void>
       windowMaximize(): Promise<void>
       windowClose(): Promise<void>
@@ -36,6 +38,8 @@ export const useTasksStore = defineStore('tasks', () => {
   const error = ref<string | null>(null)
   const selectedAgentId = ref<number | null>(null)
   const selectedPerimetre = ref<string | null>(null)
+  const selectedTask = ref<Task | null>(null)
+  const taskComments = ref<TaskComment[]>([])
 
   let pollInterval: ReturnType<typeof setInterval> | null = null
   let unsubDbChange: (() => void) | null = null
@@ -81,6 +85,20 @@ export const useTasksStore = defineStore('tasks', () => {
   }
 
   async function selectProject(): Promise<void> {
+    const tabsStore = useTabsStore()
+    const openTerminals = tabsStore.tabs.filter(t => t.type === 'terminal')
+
+    if (openTerminals.length > 0) {
+      const n = openTerminals.length
+      const confirmed = await window.electronAPI.showConfirmDialog({
+        title: 'Changer de projet',
+        message: `${n} session${n > 1 ? 's' : ''} WSL ouverte${n > 1 ? 's' : ''}`,
+        detail: 'Toutes les sessions WSL seront fermées. Continuer ?',
+      })
+      if (!confirmed) return
+      tabsStore.closeAllTerminals()
+    }
+
     const result = await window.electronAPI.selectProjectDir()
     if (!result) return
     if (!result.dbPath) {
@@ -153,6 +171,28 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
+  async function openTask(task: Task): Promise<void> {
+    selectedTask.value = task
+    taskComments.value = []
+    try {
+      const rows = await query<TaskComment>(`
+        SELECT tc.*, a.name as agent_name
+        FROM task_comments tc
+        LEFT JOIN agents a ON a.id = tc.agent_id
+        WHERE tc.task_id = ?
+        ORDER BY tc.created_at ASC
+      `, [task.id])
+      taskComments.value = rows
+    } catch {
+      // table absente ou erreur : on affiche le modal sans commentaires
+    }
+  }
+
+  function closeTask(): void {
+    selectedTask.value = null
+    taskComments.value = []
+  }
+
   function startWatching(path: string): void {
     if (unsubDbChange) { unsubDbChange(); unsubDbChange = null }
     window.electronAPI.watchDb(path)
@@ -180,6 +220,7 @@ export const useTasksStore = defineStore('tasks', () => {
     projectPath, dbPath, tasks, agents, locks, stats, lastRefresh, loading, error,
     selectedAgentId, toggleAgentFilter,
     selectedPerimetre, togglePerimetreFilter, perimetres,
-    tasksByStatus, setProject, selectProject, refresh, startPolling, stopPolling
+    tasksByStatus, setProject, selectProject, refresh, startPolling, stopPolling,
+    selectedTask, taskComments, openTask, closeTask
   }
 })

@@ -19,13 +19,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.off('db-changed', handler)
   },
 
+  showConfirmDialog: (opts: { title: string; message: string; detail?: string }): Promise<boolean> =>
+    ipcRenderer.invoke('show-confirm-dialog', opts),
+
   windowMinimize: (): Promise<void> => ipcRenderer.invoke('window-minimize'),
   windowMaximize: (): Promise<void> => ipcRenderer.invoke('window-maximize'),
   windowClose: (): Promise<void> => ipcRenderer.invoke('window-close'),
 
   // Terminal
-  terminalCreate: (cols: number, rows: number, projectPath?: string): Promise<string> =>
-    ipcRenderer.invoke('terminal:create', cols, rows, projectPath),
+  getWslUsers: (): Promise<string[]> =>
+    ipcRenderer.invoke('terminal:getWslUsers'),
+
+  terminalCreate: (cols: number, rows: number, projectPath?: string, wslUser?: string): Promise<string> =>
+    ipcRenderer.invoke('terminal:create', cols, rows, projectPath, wslUser),
 
   terminalWrite: (id: string, data: string): Promise<void> =>
     ipcRenderer.invoke('terminal:write', id, data),

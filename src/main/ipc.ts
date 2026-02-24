@@ -105,6 +105,19 @@ export function registerIpcHandlers(): void {
     if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null }
   })
 
+  ipcMain.handle('show-confirm-dialog', async (_event, opts: { title: string; message: string; detail?: string }) => {
+    const result = await dialog.showMessageBox({
+      type: 'warning',
+      buttons: ['Continuer', 'Annuler'],
+      defaultId: 1,
+      cancelId: 1,
+      title: opts.title,
+      message: opts.message,
+      detail: opts.detail,
+    })
+    return result.response === 0
+  })
+
   ipcMain.handle('window-minimize', () => {
     BrowserWindow.getFocusedWindow()?.minimize()
   })

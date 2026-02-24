@@ -7,6 +7,7 @@ import BoardView from '@renderer/components/BoardView.vue'
 import DbSelector from '@renderer/components/DbSelector.vue'
 import TabBar from '@renderer/components/TabBar.vue'
 import TerminalView from '@renderer/components/TerminalView.vue'
+import TaskDetailModal from '@renderer/components/TaskDetailModal.vue'
 
 const store = useTasksStore()
 const tabsStore = useTabsStore()
@@ -35,5 +36,6 @@ const tabsStore = useTabsStore()
         </template>
       </main>
     </div>
+    <TaskDetailModal />
   </div>
 </template>

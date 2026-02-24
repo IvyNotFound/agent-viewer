@@ -8,11 +8,14 @@ export interface Tab {
   type: TabType
   title: string
   ptyId: string | null
+  agentName: string | null
+  wslUser: string | null
+  autoSend: string | null
 }
 
 export const useTabsStore = defineStore('tabs', () => {
   const tabs = ref<Tab[]>([
-    { id: 'board', type: 'board', title: 'Board', ptyId: null }
+    { id: 'board', type: 'board', title: 'Board', ptyId: null, agentName: null, wslUser: null, autoSend: null }
   ])
   const activeTabId = ref<string>('board')
 
@@ -22,10 +25,19 @@ export const useTabsStore = defineStore('tabs', () => {
     activeTabId.value = id
   }
 
-  function addTerminal(): void {
+  function addTerminal(agentName?: string, wslUser?: string, autoSend?: string): void {
     const id = `term-${Date.now()}`
     const n = tabs.value.filter(t => t.type === 'terminal').length + 1
-    tabs.value.push({ id, type: 'terminal', title: `WSL ${n}`, ptyId: null })
+    const title = agentName ?? `WSL ${n}`
+    tabs.value.push({
+      id,
+      type: 'terminal',
+      title,
+      ptyId: null,
+      agentName: agentName ?? null,
+      wslUser: wslUser ?? null,
+      autoSend: autoSend ?? null,
+    })
     activeTabId.value = id
   }
 
@@ -49,5 +61,25 @@ export const useTabsStore = defineStore('tabs', () => {
     if (tab && title.trim()) tab.title = title.trim()
   }
 
-  return { tabs, activeTabId, activeTab, setActive, addTerminal, setPtyId, closeTab, renameTab }
+  function reorderTab(fromId: string, toId: string): void {
+    const fromIdx = tabs.value.findIndex(t => t.id === fromId)
+    const toIdx = tabs.value.findIndex(t => t.id === toId)
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return
+    const [tab] = tabs.value.splice(fromIdx, 1)
+    const newToIdx = tabs.value.findIndex(t => t.id === toId)
+    tabs.value.splice(newToIdx, 0, tab)
+  }
+
+  function closeAllTerminals(): void {
+    const terminals = tabs.value.filter(t => t.type === 'terminal')
+    for (const tab of terminals) {
+      if (tab.ptyId) window.electronAPI.terminalKill(tab.ptyId)
+    }
+    tabs.value = tabs.value.filter(t => t.type !== 'terminal')
+    if (activeTabId.value !== 'board' && !tabs.value.find(t => t.id === activeTabId.value)) {
+      activeTabId.value = 'board'
+    }
+  }
+
+  return { tabs, activeTabId, activeTab, setActive, addTerminal, setPtyId, closeTab, renameTab, reorderTab, closeAllTerminals }
 })

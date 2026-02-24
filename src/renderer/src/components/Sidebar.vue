@@ -1,9 +1,18 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
+import LaunchSessionModal from './LaunchSessionModal.vue'
+import type { Agent } from '@renderer/types'
 
 const store = useTasksStore()
+
+const launchTarget = ref<Agent | null>(null)
+
+function openLaunchModal(event: MouseEvent, agent: Agent) {
+  event.stopPropagation()
+  launchTarget.value = agent
+}
 
 const lastRefreshStr = computed(() => {
   if (!store.lastRefresh) return '—'
@@ -33,15 +42,24 @@ function isLockOld(createdAt: string): boolean {
     <!-- DB selector -->
     <div class="px-4 py-3 border-b border-zinc-800">
       <button
-        class="w-full text-left text-sm text-zinc-500 hover:text-zinc-300 transition-colors truncate"
+        class="w-full text-left group transition-colors"
         @click="store.selectProject()"
         :title="store.projectPath ?? 'Sélectionner un projet'"
       >
-        <span class="text-zinc-600">Projet :</span>
-        {{ projectName ?? 'Sélectionner…' }}
-        <span v-if="store.dbPath" class="block text-xs text-zinc-600 truncate mt-0.5" :title="store.dbPath">
-          {{ store.dbPath.split(/[\\/]/).slice(-2).join('/') }}
-        </span>
+        <div class="flex items-baseline gap-2">
+          <span class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider shrink-0">Projet</span>
+          <span
+            :class="[
+              'text-sm font-medium truncate transition-colors',
+              store.projectPath ? 'text-zinc-200 group-hover:text-white' : 'text-zinc-500 group-hover:text-zinc-300 italic'
+            ]"
+          >{{ projectName ?? 'Sélectionner…' }}</span>
+        </div>
+        <span
+          v-if="store.dbPath"
+          class="block text-xs text-zinc-500 group-hover:text-zinc-400 truncate mt-0.5 font-mono transition-colors"
+          :title="store.dbPath"
+        >{{ store.dbPath.split(/[\\/]/).slice(-2).join('/') }}</span>
       </button>
     </div>
 
@@ -118,30 +136,45 @@ function isLockOld(createdAt: string): boolean {
         >reset</button>
       </div>
       <div class="space-y-0.5">
-        <button
+        <div
           v-for="agent in store.agents"
           :key="agent.id"
-          :class="[
-            'w-full flex items-center gap-3 px-2 py-2 rounded-md text-left transition-colors cursor-pointer',
-            isAgentSelected(agent.id) ? 'bg-zinc-800 ring-1 ring-zinc-600' : 'hover:bg-zinc-900'
-          ]"
-          @click="store.toggleAgentFilter(agent.id)"
+          class="group relative"
         >
-          <span class="relative shrink-0 flex items-center justify-center w-2.5 h-2.5">
+          <button
+            :class="[
+              'w-full flex items-center gap-3 px-2 py-2 rounded-md text-left transition-colors cursor-pointer pr-8',
+              isAgentSelected(agent.id) ? 'bg-zinc-800 ring-1 ring-zinc-600' : 'hover:bg-zinc-900'
+            ]"
+            @click="store.toggleAgentFilter(agent.id)"
+          >
+            <span class="relative shrink-0 flex items-center justify-center w-2.5 h-2.5">
+              <span
+                v-if="agent.session_statut === 'en_cours'"
+                class="absolute inline-flex w-full h-full rounded-full opacity-60 animate-ping"
+                :style="{ backgroundColor: agentFg(agent.name) }"
+              ></span>
+              <span
+                class="relative w-2.5 h-2.5 rounded-full"
+                :style="{ backgroundColor: agentFg(agent.name) }"
+              ></span>
+            </span>
             <span
-              v-if="agent.session_statut === 'en_cours'"
-              class="absolute inline-flex w-full h-full rounded-full opacity-60 animate-ping"
-              :style="{ backgroundColor: agentFg(agent.name) }"
-            ></span>
-            <span
-              class="relative w-2.5 h-2.5 rounded-full"
-              :style="{ backgroundColor: agentFg(agent.name) }"
-            ></span>
-          </span>
-          <span
-            :class="['text-sm truncate font-mono', isAgentSelected(agent.id) ? 'text-zinc-100' : 'text-zinc-400']"
-          >{{ agent.name }}</span>
-        </button>
+              :class="['text-sm truncate font-mono', isAgentSelected(agent.id) ? 'text-zinc-100' : 'text-zinc-400']"
+            >{{ agent.name }}</span>
+          </button>
+          <!-- Launch button -->
+          <button
+            class="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-all text-xs hover:scale-110"
+            :style="{ color: agentFg(agent.name), backgroundColor: agentBg(agent.name) }"
+            :title="`Lancer une session ${agent.name}`"
+            @click="openLaunchModal($event, agent)"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
+              <path d="M3.5 2.635a.5.5 0 0 1 .752-.43l9 5.364a.5.5 0 0 1 0 .862l-9 5.365A.5.5 0 0 1 3.5 13.364V2.635z"/>
+            </svg>
+          </button>
+        </div>
         <div v-if="store.agents.length === 0" class="text-sm text-zinc-600 px-2">Aucun agent</div>
       </div>
     </div>
@@ -166,4 +199,11 @@ function isLockOld(createdAt: string): boolean {
       <p class="text-xs text-zinc-600">MAJ {{ lastRefreshStr }}</p>
     </div>
   </aside>
+
+  <!-- Launch session modal -->
+  <LaunchSessionModal
+    v-if="launchTarget"
+    :agent="launchTarget"
+    @close="launchTarget = null"
+  />
 </template>
