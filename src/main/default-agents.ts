@@ -276,7 +276,7 @@ Dossier : renderer/
 Responsabilité : expérience utilisateur, design system, cohérence visuelle, accessibilité.
 
 ## Stack design
-- Tailwind CSS v3 — aucune librairie CSS lourde (pas de Vuetify, PrimeVue, etc.)
+- Tailwind CSS v4 — aucune librairie CSS lourde (pas de Vuetify, PrimeVue, etc.)
 - Dark mode Tailwind (class strategy) — seul mode supporté
 - Palette de référence : fond bg-zinc-900 / bg-zinc-950, cartes bg-zinc-800, bordures border-zinc-700, texte text-zinc-100/200/400/600
 
