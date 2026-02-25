@@ -229,6 +229,24 @@ export function registerTerminalHandlers(): void {
     webContentsPtys.get(wcId)!.add(id)
 
     const args: string[] = []
+
+    // ── Auto-send userPrompt on readiness (T273) ──────────────────────────
+    // Set by the systemPrompt+userPrompt path; consumed by onData handler.
+    let pendingUserPrompt: { id: string; text: string } | null = null
+    const QUIET_MS = 800   // ms of silence to consider Claude ready
+    const MAX_WAIT_MS = 15000 // absolute max wait before sending anyway
+    let quietTimer: ReturnType<typeof setTimeout> | null = null
+    let maxTimer: ReturnType<typeof setTimeout> | null = null
+
+    const sendPendingPrompt = (): void => {
+      if (!pendingUserPrompt) return
+      const p = ptys.get(pendingUserPrompt.id)
+      if (p) p.write(pendingUserPrompt.text + '\n')
+      pendingUserPrompt = null
+      if (quietTimer) { clearTimeout(quietTimer); quietTimer = null }
+      if (maxTimer) { clearTimeout(maxTimer); maxTimer = null }
+    }
+
     // Use -d <distro> to target a specific WSL distro (falls back to default if not provided)
     if (wslDistro) args.push('-d', wslDistro)
 
@@ -279,14 +297,12 @@ export function registerTerminalHandlers(): void {
         args.push('--', 'bash', '-lc', wrapperScript)
       }
 
-      // Send user prompt (autoSend) after a short delay to ensure Claude is ready
-      // This is the correct way to pass user input - not via --append-system-prompt
-      setTimeout(() => {
-        const pty = ptys.get(id)
-        if (pty) {
-          pty.write(userPrompt + '\n')
-        }
-      }, 2000)
+      // Send user prompt (autoSend) once Claude is ready.
+      // Detects readiness by waiting for a quiet period (no PTY output for
+      // QUIET_MS after receiving some output). This handles variable login shell
+      // load times (bash -lc loads .bashrc/.profile/nvm which can take 3-5s).
+      // A max timeout (MAX_WAIT_MS) acts as a safety net.
+      pendingUserPrompt = { id, text: userPrompt }
     } else if (projectPath) {
       args.push('--cd', toWslPath(projectPath))
     }
@@ -340,6 +356,11 @@ export function registerTerminalHandlers(): void {
     }
     ptys.set(id, pty)
 
+    // Start max timeout for auto-send if a userPrompt is pending
+    if (pendingUserPrompt) {
+      maxTimer = setTimeout(sendPendingPrompt, MAX_WAIT_MS)
+    }
+
     // Track agent sessions for graceful kill (normal launch OR resume)
     if (validConvId || (systemPrompt && userPrompt)) {
       agentPtys.add(id)
@@ -379,10 +400,22 @@ export function registerTerminalHandlers(): void {
         }
       }
 
+      // ── Readiness detection for auto-send userPrompt (T273) ──────────
+      // After each data event, reset a quiet timer. When no output arrives
+      // for QUIET_MS, Claude is ready → send the pending userPrompt.
+      if (pendingUserPrompt) {
+        if (quietTimer) clearTimeout(quietTimer)
+        quietTimer = setTimeout(sendPendingPrompt, QUIET_MS)
+      }
+
       event.sender.send(`terminal:data:${id}`, data)
     })
 
     pty.onExit(() => {
+      // Clean up pending prompt timers to prevent writes to dead PTY
+      if (quietTimer) { clearTimeout(quietTimer); quietTimer = null }
+      if (maxTimer) { clearTimeout(maxTimer); maxTimer = null }
+      pendingUserPrompt = null
       ptys.delete(id)
       webContentsPtys.get(wcId)?.delete(id)
       if (!event.sender.isDestroyed()) {

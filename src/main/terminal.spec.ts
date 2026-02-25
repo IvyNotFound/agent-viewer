@@ -315,6 +315,57 @@ describe('terminal utilities', () => {
       expect(spawnArgs[cdIndex + 1]).toContain('/mnt/c/')
     })
 
+    it('should send userPrompt after PTY output quiet period (not via setTimeout)', async () => {
+      vi.useFakeTimers()
+      mockPty.write.mockClear()
+      mockPty.onData.mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+
+      await handler(makeEvent(33), 80, 24, undefined, undefined, 'prompt', 'Bonjour agent', undefined)
+
+      // onData should have been registered
+      expect(mockPty.onData).toHaveBeenCalled()
+      const onDataCallback = mockPty.onData.mock.calls[0][0] as (data: string) => void
+
+      // userPrompt should NOT be sent yet (no output received)
+      expect(mockPty.write).not.toHaveBeenCalledWith('Bonjour agent\n')
+
+      // Simulate PTY output burst (Claude startup)
+      onDataCallback('Loading...')
+      onDataCallback('Claude Code v2.1')
+
+      // Still not sent — quiet period hasn't elapsed
+      expect(mockPty.write).not.toHaveBeenCalledWith('Bonjour agent\n')
+
+      // Advance past quiet period (800ms)
+      vi.advanceTimersByTime(900)
+
+      // Now userPrompt should have been sent
+      expect(mockPty.write).toHaveBeenCalledWith('Bonjour agent\n')
+
+      vi.useRealTimers()
+    })
+
+    it('should send userPrompt via max timeout even without PTY output', async () => {
+      vi.useFakeTimers()
+      mockPty.write.mockClear()
+      mockPty.onData.mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+
+      await handler(makeEvent(34), 80, 24, undefined, undefined, 'prompt', 'Hello', undefined)
+
+      // No PTY output at all — max timeout should fire
+      vi.advanceTimersByTime(15100)
+
+      expect(mockPty.write).toHaveBeenCalledWith('Hello\n')
+
+      vi.useRealTimers()
+    })
+
     it('should return a unique string ID for each created PTY', async () => {
       const { find } = await getHandlers()
       const handler = find('terminal:create')
