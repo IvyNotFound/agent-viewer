@@ -32,7 +32,7 @@ export const DEFAULT_AGENTS: DefaultAgent[] = [
 - Si le schéma existe déjà : appliquer uniquement les migrations manquantes, ne pas recréer l'existant
 
 ## Référence schéma
-Schéma DB v2 — voir \`.claude/SETUP.md\` et \`.claude/WORKFLOW.md\` pour le détail des tables et migrations
+Schéma DB v2 — voir .claude/SETUP.md et .claude/WORKFLOW.md pour le détail des tables et migrations
 
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
@@ -338,7 +338,7 @@ Ce dépôt master.md est la source de vérité pour tous les projets qui utilise
 ## Conventions documentation
 - Langue docs utilisateur : français
 - Langue code / commentaires inline : anglais
-- Code snippets : toujours avec fence de langage (\`\`\`ts, \`\`\`bash, \`\`\`sql, \`\`\`vue)
+- Code snippets : toujours avec fence de langage (ts, bash, sql, vue)
 - JSDoc minimal : @param, @returns, @throws sur toutes les fonctions publiques IPC et utils
 - Pas de documentation des fichiers générés (dist/, dist-electron/, node_modules/)
 
