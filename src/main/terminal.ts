@@ -244,21 +244,21 @@ export function registerTerminalHandlers(): void {
       const thinkingFlag = thinkingMode === 'disabled' ? ` --settings '{"alwaysThinkingEnabled":false}'` : ''
       const resumeScript = `exec ${cmd} --resume ${validConvId}${thinkingFlag}`
       if (projectPath) {
-        args.push('--cd', toWslPath(projectPath), '-i', '-c', resumeScript)
+        args.push('--cd', toWslPath(projectPath), '--', 'bash', '-lc', resumeScript)
       } else {
-        args.push('-i', '-c', resumeScript)
+        args.push('--', 'bash', '-lc', resumeScript)
       }
     // ── Normal agent launch: inject system prompt ─────────────────────────────
     // If systemPrompt is provided, launch Claude with the system prompt.
-    // Uses wsl.exe -i -c (interactive bash with command) + heredoc to avoid shell injection.
-    // This fixes vulnerability from $(), backticks, $VAR, newlines that were interpreted by bash -lc.
+    // Uses wsl.exe -- bash -lc (login shell with command) to avoid shell injection.
+    // wsl.exe does NOT accept -i as an argument (triggers "argument non valide" error).
+    // -- separates WSL options from the shell command; bash -lc uses login shell for PATH.
     //
     // IMPORTANT CLI flags findings (per task #123):
     // - --append-system-prompt-file: print mode only - NOT for interactive agents
     // - --system-prompt and --append-system-prompt: work in BOTH interactive and print mode
     //   (--append recommended to preserve default Claude Code behaviors)
     // - --settings '{"alwaysThinkingEnabled":false}': disables extended thinking when thinking_mode='disabled'
-    // - Using heredoc in bash to safely pass inline prompts without shell injection
     } else if (systemPrompt && userPrompt) {
       // Base64-encode the system prompt to avoid any shell injection risk.
       // Only [A-Za-z0-9+/=] chars in the encoded string — no backticks, $(), quotes, etc.
@@ -274,9 +274,9 @@ export function registerTerminalHandlers(): void {
       const wrapperScript = `exec ${cmd} --append-system-prompt "$(echo '${b64}' | base64 -d)"${thinkingFlag}`
 
       if (projectPath) {
-        args.push('--cd', toWslPath(projectPath), '-i', '-c', wrapperScript)
+        args.push('--cd', toWslPath(projectPath), '--', 'bash', '-lc', wrapperScript)
       } else {
-        args.push('-i', '-c', wrapperScript)
+        args.push('--', 'bash', '-lc', wrapperScript)
       }
 
       // Send user prompt (autoSend) after a short delay to ensure Claude is ready

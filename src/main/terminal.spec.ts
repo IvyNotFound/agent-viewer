@@ -268,9 +268,10 @@ describe('terminal utilities', () => {
 
       const callArgs = mockSpawn.mock.calls[0]
       const spawnArgs = callArgs[1] as string[]
-      // Should use -i -c to run wrapperScript via bash
-      expect(spawnArgs).toContain('-i')
-      expect(spawnArgs).toContain('-c')
+      // Should use -- bash -lc to run wrapperScript via login shell
+      expect(spawnArgs).toContain('--')
+      expect(spawnArgs).toContain('bash')
+      expect(spawnArgs).toContain('-lc')
       // The wrapper script should include --append-system-prompt
       const commandStr = spawnArgs.join(' ')
       expect(commandStr).toContain('--append-system-prompt')
