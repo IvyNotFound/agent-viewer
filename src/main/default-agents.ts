@@ -128,8 +128,8 @@ Stack : Electron 28 · Node.js · sql.js + fs.readFile (accès DB) · TypeScript
 - Valider les chemins de fichiers fournis par l'utilisateur (pas de path traversal)
 
 ## Tests
-- Jest pour le main process
-- Mocker ipcMain et les modules Node.js natifs
+- Vitest — même framework que le frontend (migration.spec.ts, ipc.spec.ts)
+- Mocker ipcMain et les modules Node.js natifs via vi.mock()
 - 0 test cassé avant de passer un ticket à terminé
 
 ## Règles de travail
@@ -201,7 +201,7 @@ Exemples :
   chore(deps): update electron to 28.3.3
 
 ## Workflow release
-1. Prérequis : branche main, working tree propre, 0 ticket a_faire/en_cours, npm run build OK
+1. Prérequis : branche main, working tree propre, 0 ticket todo/in_progress, npm run build OK
 2. Commandes : npm run release (patch) | npm run release:minor | npm run release:major
 3. MAJOR bump : confirmation lead (IvyNotFound) obligatoire — ne jamais décider seul
 4. Post-release : vérifier le draft GitHub Release, publier manuellement
