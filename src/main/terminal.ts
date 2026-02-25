@@ -88,11 +88,14 @@ export function registerTerminalHandlers(): void {
       const thinkingFlag = thinkingMode === 'disabled'
         ? ' --thinking disabled'
         : '' // 'auto' and 'budget_tokens' both use no flag for now
-      const claudeCmd = `claude --system-prompt "${escapedSystemPrompt}"${thinkingFlag} "${escapedUserPrompt}"`
+      // Pre-check: friendly error if claude is not found in PATH
+      // Use bash -lc (login shell) so ~/.bash_profile / ~/.profile is sourced → full PATH loaded
+      const claudeCheck = `command -v claude >/dev/null 2>&1 || { printf "\\033[1;31mErreur : 'claude' est introuvable dans le PATH WSL.\\033[0m\\nInstallez Claude Code : npm install -g @anthropic-ai/claude-code\\n"; exit 1; }; `
+      const claudeCmd = `${claudeCheck}claude --system-prompt "${escapedSystemPrompt}"${thinkingFlag} "${escapedUserPrompt}"`
       if (projectPath) {
-        args.push('--cd', toWslPath(projectPath), '--', 'bash', '-c', claudeCmd)
+        args.push('--cd', toWslPath(projectPath), '--', 'bash', '-lc', claudeCmd)
       } else {
-        args.push('--', 'bash', '-c', claudeCmd)
+        args.push('--', 'bash', '-lc', claudeCmd)
       }
     } else if (projectPath) {
       args.push('--cd', toWslPath(projectPath))

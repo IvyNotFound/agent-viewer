@@ -24,6 +24,16 @@ const activeAgentName = computed(() =>
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
+
+const archivedByAgent = computed(() => {
+  const groups = new Map<string, typeof store.tasksByStatus.archivé>()
+  for (const task of store.tasksByStatus.archivé) {
+    const key = task.agent_name ?? '(non assigné)'
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key)!.push(task)
+  }
+  return [...groups.entries()].sort((a, b) => b[1].length - a[1].length)
+})
 </script>
 
 <template>
@@ -87,27 +97,40 @@ function formatDate(iso: string): string {
       <div v-if="store.tasksByStatus.archivé.length === 0" class="flex items-center justify-center h-full">
         <p class="text-sm text-zinc-600 italic">Aucun ticket archivé</p>
       </div>
-      <div v-else class="space-y-1.5">
-        <button
-          v-for="task in store.tasksByStatus.archivé"
-          :key="task.id"
-          class="w-full text-left px-4 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-lg transition-colors group"
-          @click="store.openTask(task)"
-        >
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex-1 min-w-0">
-              <p class="text-sm text-zinc-300 group-hover:text-zinc-100 truncate transition-colors">{{ task.titre }}</p>
-              <div class="flex items-center gap-2 mt-1">
-                <span v-if="task.perimetre" class="text-[10px] font-mono text-zinc-600">{{ task.perimetre }}</span>
-                <span v-if="task.agent_name" class="text-[10px] font-mono" :style="{ color: agentFg(task.agent_name) }">{{ task.agent_name }}</span>
-              </div>
-            </div>
-            <div class="shrink-0 text-right">
-              <span class="text-[10px] text-zinc-600 font-mono">{{ formatDate(task.updated_at) }}</span>
-              <p class="text-[10px] text-zinc-700 font-mono mt-0.5">#{{ task.id }}</p>
-            </div>
+      <div v-else class="flex flex-col gap-4">
+        <!-- Group by agent -->
+        <div v-for="[agentName, tasks] in archivedByAgent" :key="agentName">
+          <!-- Group header -->
+          <div class="flex items-center gap-2 mb-2">
+            <span
+              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono border"
+              :style="agentName !== '(non assigné)'
+                ? { color: agentFg(agentName), backgroundColor: agentBg(agentName), borderColor: agentBorder(agentName) }
+                : { color: '#71717a', backgroundColor: '#18181b', borderColor: '#3f3f46' }"
+            >{{ agentName }}</span>
+            <span class="text-[10px] text-zinc-600 font-mono">{{ tasks.length }} ticket{{ tasks.length > 1 ? 's' : '' }}</span>
           </div>
-        </button>
+          <!-- Tasks in group -->
+          <div class="space-y-1.5">
+            <button
+              v-for="task in tasks"
+              :key="task.id"
+              class="w-full text-left px-4 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-lg transition-colors group"
+              @click="store.openTask(task)"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-zinc-300 group-hover:text-zinc-100 truncate transition-colors">{{ task.titre }}</p>
+                  <span v-if="task.perimetre" class="text-[10px] font-mono text-zinc-600 mt-1 block">{{ task.perimetre }}</span>
+                </div>
+                <div class="shrink-0 text-right">
+                  <span class="text-[10px] text-zinc-600 font-mono">{{ formatDate(task.updated_at) }}</span>
+                  <p class="text-[10px] text-zinc-700 font-mono mt-0.5">#{{ task.id }}</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

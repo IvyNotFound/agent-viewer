@@ -3,6 +3,7 @@ import { watch, type FSWatcher, readdirSync, existsSync, type Dirent } from 'fs'
 import { readFile, mkdir, writeFile, rename } from 'fs/promises'
 import { join, dirname } from 'path'
 import { runTaskStatusMigration } from './migration'
+import { DEFAULT_AGENTS } from './default-agents'
 
 interface FileNode {
   name: string
@@ -278,6 +279,16 @@ export function registerIpcHandlers(): void {
           ('back-electron','main/','Electron + Node.js + SQLite','Process principal, IPC, accès DB'),
           ('global','','—','Transversal, aucun périmètre spécifique');
       `)
+      // Insert default agents with their system_prompt and system_prompt_suffix.
+      // Using parameterized INSERT OR IGNORE to stay idempotent:
+      // if agents already exist (e.g. user re-opens an existing DB), their custom prompts are preserved.
+      for (const agent of DEFAULT_AGENTS) {
+        db.run(
+          `INSERT OR IGNORE INTO agents (name, type, perimetre, system_prompt, system_prompt_suffix)
+           VALUES (?, ?, ?, ?, ?)`,
+          [agent.name, agent.type, agent.perimetre ?? null, agent.system_prompt ?? null, agent.system_prompt_suffix ?? null]
+        )
+      }
       const exported = db.export()
       db.close()
       await writeFile(dbPath, Buffer.from(exported))
@@ -571,7 +582,15 @@ export function registerIpcHandlers(): void {
     }
   })
 
-  ipcMain.handle('update-agent', async (_event, dbPath: string, agentId: number, updates: { name?: string; thinkingMode?: string | null; allowedTools?: string | null }) => {
+  ipcMain.handle('update-agent', async (_event, dbPath: string, agentId: number, updates: {
+    name?: string
+    type?: string
+    perimetre?: string | null
+    thinkingMode?: string | null
+    allowedTools?: string | null
+    systemPrompt?: string | null
+    systemPromptSuffix?: string | null
+  }) => {
     try {
       const sqlJs = await getSqlJs()
       const buf = await readFile(dbPath)
@@ -580,11 +599,23 @@ export function registerIpcHandlers(): void {
         if (updates.name !== undefined) {
           db.run('UPDATE agents SET name = ? WHERE id = ?', [updates.name, agentId])
         }
+        if (updates.type !== undefined) {
+          db.run('UPDATE agents SET type = ? WHERE id = ?', [updates.type, agentId])
+        }
+        if (updates.perimetre !== undefined) {
+          db.run('UPDATE agents SET perimetre = ? WHERE id = ?', [updates.perimetre || null, agentId])
+        }
         if (updates.thinkingMode !== undefined) {
           db.run('UPDATE agents SET thinking_mode = ? WHERE id = ?', [updates.thinkingMode || null, agentId])
         }
         if (updates.allowedTools !== undefined) {
           db.run('UPDATE agents SET allowed_tools = ? WHERE id = ?', [updates.allowedTools || null, agentId])
+        }
+        if (updates.systemPrompt !== undefined) {
+          db.run('UPDATE agents SET system_prompt = ? WHERE id = ?', [updates.systemPrompt || null, agentId])
+        }
+        if (updates.systemPromptSuffix !== undefined) {
+          db.run('UPDATE agents SET system_prompt_suffix = ? WHERE id = ?', [updates.systemPromptSuffix || null, agentId])
         }
         const exported = db.export()
         await writeFile(dbPath, Buffer.from(exported))

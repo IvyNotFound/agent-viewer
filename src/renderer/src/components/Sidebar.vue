@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch, onUnmounted } from 'vue'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
@@ -8,11 +8,10 @@ import LaunchSessionModal from './LaunchSessionModal.vue'
 import SettingsModal from './SettingsModal.vue'
 import ContextMenu from './ContextMenu.vue'
 import CreateAgentModal from './CreateAgentModal.vue'
-import AgentEditModal from './AgentEditModal.vue'
 import type { ContextMenuItem } from './ContextMenu.vue'
-import type { Agent, FileNode, Perimetre } from '@renderer/types'
+import type { Agent, AgentLog, FileNode, Perimetre } from '@renderer/types'
 
-type Section = 'project' | 'perimetres' | 'agents' | 'tree'
+type Section = 'project' | 'perimetres' | 'agents' | 'tree' | 'backlog' | 'logs'
 
 const store = useTasksStore()
 const tabsStore = useTabsStore()
@@ -91,7 +90,54 @@ const sectionTitles: Record<Section, string> = {
   perimetres: 'Périmètres',
   agents: 'Agents',
   tree: 'Arborescence',
+  backlog: 'Backlog',
+  logs: 'Logs',
 }
+
+// ── Sidebar logs ───────────────────────────────────────────────────────────────
+const sidebarLogs = ref<AgentLog[]>([])
+let logsPollTimer: ReturnType<typeof setInterval> | null = null
+
+async function fetchSidebarLogs(): Promise<void> {
+  if (!store.dbPath) return
+  try {
+    const rows = await window.electronAPI.queryDb(
+      store.dbPath,
+      `SELECT l.id, l.session_id, l.agent_id, a.name as agent_name, a.type as agent_type,
+              l.niveau, l.action, l.detail, l.fichiers, l.created_at
+       FROM agent_logs l
+       LEFT JOIN agents a ON a.id = l.agent_id
+       ORDER BY l.created_at DESC LIMIT 20`
+    ) as AgentLog[]
+    sidebarLogs.value = rows
+  } catch { /* silent */ }
+}
+
+function formatRelativeTime(iso: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
+  if (diff < 60) return `${diff}s`
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`
+  return `${Math.floor(diff / 86400)}j`
+}
+
+watch(activeSection, (section) => {
+  if (section === 'logs') {
+    fetchSidebarLogs()
+    if (!logsPollTimer) {
+      logsPollTimer = setInterval(fetchSidebarLogs, 3000)
+    }
+  } else {
+    if (logsPollTimer) {
+      clearInterval(logsPollTimer)
+      logsPollTimer = null
+    }
+  }
+})
+
+onUnmounted(() => {
+  if (logsPollTimer) clearInterval(logsPollTimer)
+})
 
 function toggleSection(section: Section) {
   const next = activeSection.value === section ? null : section
@@ -273,6 +319,36 @@ async function closeProject() {
     <!-- ── Activity Rail (toujours visible, 48px) ── -->
     <div class="w-12 flex flex-col items-center py-2 gap-1 shrink-0 border-r border-zinc-800">
 
+      <!-- Backlog -->
+      <button
+        title="Backlog"
+        :class="['rail-btn', activeSection === 'backlog' && 'rail-btn--active']"
+        @click="toggleSection('backlog')"
+      >
+        <span v-if="activeSection === 'backlog'" class="rail-indicator" />
+        <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
+          <rect x="1"  y="2" width="4" height="12" rx="1.5"/>
+          <rect x="6"  y="2" width="4" height="8"  rx="1.5"/>
+          <rect x="11" y="2" width="4" height="5"  rx="1.5"/>
+        </svg>
+      </button>
+
+      <!-- Log -->
+      <button
+        title="Log"
+        :class="['rail-btn', activeSection === 'logs' && 'rail-btn--active']"
+        @click="toggleSection('logs')"
+      >
+        <span v-if="activeSection === 'logs'" class="rail-indicator" />
+        <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
+          <path d="M5 3a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 3a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 3a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H5z"/>
+          <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3z"/>
+        </svg>
+      </button>
+
+      <!-- Divider -->
+      <hr class="border-zinc-800 w-6 my-0.5">
+
       <!-- Projet -->
       <button
         title="Projet"
@@ -285,18 +361,6 @@ async function closeProject() {
         </svg>
       </button>
 
-      <!-- Backlog -->
-      <button
-        title="Backlog"
-        :class="['rail-btn', tabsStore.activeTabId === 'backlog' && !activeSection && 'rail-btn--active']"
-        @click="tabsStore.setActive('backlog')"
-      >
-        <span v-if="tabsStore.activeTabId === 'backlog' && !activeSection" class="rail-indicator" />
-        <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
-          <path d="M13.5 1a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h3zm-3-1a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2h-3zM2 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zM1 2a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V2z"/>
-        </svg>
-      </button>
-
       <!-- Agents -->
       <button
         title="Agents"
@@ -306,19 +370,6 @@ async function closeProject() {
         <span v-if="activeSection === 'agents'" class="rail-indicator" />
         <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
           <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816zM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.276zM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
-        </svg>
-      </button>
-
-      <!-- Log -->
-      <button
-        title="Log"
-        :class="['rail-btn', tabsStore.activeTabId === 'logs' && !activeSection && 'rail-btn--active']"
-        @click="tabsStore.setActive('logs')"
-      >
-        <span v-if="tabsStore.activeTabId === 'logs' && !activeSection" class="rail-indicator" />
-        <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
-          <path d="M5 3a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 3a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 3a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H5z"/>
-          <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3z"/>
         </svg>
       </button>
 
@@ -385,8 +436,109 @@ async function closeProject() {
           </button>
         </div>
 
+        <!-- ── Backlog ── -->
+        <template v-if="activeSection === 'backlog'">
+          <div class="flex-1 overflow-y-auto min-h-0 px-4 py-3 flex flex-col gap-3">
+
+            <!-- Compteurs -->
+            <div class="flex items-center gap-2">
+              <span class="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-amber-950/40 border border-amber-800/40 text-amber-400">
+                {{ store.tasksByStatus.a_faire.length }} à faire
+              </span>
+              <span class="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950/40 border border-emerald-800/40 text-emerald-400">
+                {{ store.tasksByStatus.en_cours.length }} en cours
+              </span>
+              <span class="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 border border-zinc-700 text-zinc-400">
+                {{ store.tasksByStatus.terminé.length }} terminé
+              </span>
+            </div>
+
+            <!-- En cours -->
+            <div v-if="store.tasksByStatus.en_cours.length > 0">
+              <p class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">En cours</p>
+              <div class="space-y-1">
+                <button
+                  v-for="task in store.tasksByStatus.en_cours"
+                  :key="task.id"
+                  class="w-full text-left px-2 py-1.5 rounded-md hover:bg-zinc-800 transition-colors group"
+                  @click="store.openTask(task)"
+                >
+                  <div class="flex items-start justify-between gap-1 min-w-0">
+                    <span class="text-xs text-zinc-300 truncate leading-snug group-hover:text-zinc-100 transition-colors">{{ task.titre }}</span>
+                    <span class="text-[10px] text-zinc-600 font-mono shrink-0">#{{ task.id }}</span>
+                  </div>
+                  <span v-if="task.agent_name" class="text-[10px] font-mono" :style="{ color: agentFg(task.agent_name) }">{{ task.agent_name }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- À faire (5 premières) -->
+            <div v-if="store.tasksByStatus.a_faire.length > 0">
+              <p class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">À faire</p>
+              <div class="space-y-1">
+                <button
+                  v-for="task in store.tasksByStatus.a_faire.slice(0, 5)"
+                  :key="task.id"
+                  class="w-full text-left px-2 py-1.5 rounded-md hover:bg-zinc-800 transition-colors group"
+                  @click="store.openTask(task)"
+                >
+                  <div class="flex items-start justify-between gap-1 min-w-0">
+                    <span class="text-xs text-zinc-400 truncate leading-snug group-hover:text-zinc-200 transition-colors">{{ task.titre }}</span>
+                    <span class="text-[10px] text-zinc-600 font-mono shrink-0">#{{ task.id }}</span>
+                  </div>
+                  <span v-if="task.agent_name" class="text-[10px] font-mono" :style="{ color: agentFg(task.agent_name) }">{{ task.agent_name }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Empty state -->
+            <div v-if="store.tasksByStatus.en_cours.length === 0 && store.tasksByStatus.a_faire.length === 0"
+              class="flex items-center justify-center py-8">
+              <p class="text-xs text-zinc-600 italic">Aucune tâche active</p>
+            </div>
+
+            <!-- Lien board -->
+            <button
+              class="mt-auto text-xs text-zinc-600 hover:text-zinc-300 transition-colors text-left"
+              @click="tabsStore.setActive('backlog'); activeSection = null"
+            >→ Voir le board complet</button>
+          </div>
+        </template>
+
+        <!-- ── Logs ── -->
+        <template v-else-if="activeSection === 'logs'">
+          <div class="flex-1 overflow-y-auto min-h-0 px-3 py-3 flex flex-col gap-1">
+            <div v-if="sidebarLogs.length === 0" class="flex items-center justify-center py-8">
+              <p class="text-xs text-zinc-600 italic">Aucun log</p>
+            </div>
+            <div
+              v-for="log in sidebarLogs"
+              :key="log.id"
+              class="flex flex-col gap-0.5 px-2 py-1.5 rounded-md hover:bg-zinc-800/60 transition-colors"
+            >
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span :class="[
+                  'text-[9px] font-bold uppercase tracking-wide shrink-0 px-1 rounded',
+                  log.niveau === 'error' ? 'bg-red-950/60 text-red-400' :
+                  log.niveau === 'warn'  ? 'bg-amber-950/60 text-amber-400' :
+                  log.niveau === 'debug' ? 'bg-zinc-800 text-zinc-600' :
+                  'bg-zinc-800 text-zinc-500'
+                ]">{{ log.niveau }}</span>
+                <span v-if="log.agent_name" class="text-[10px] font-mono shrink-0" :style="{ color: agentFg(log.agent_name) }">{{ log.agent_name }}</span>
+                <span class="text-[10px] text-zinc-600 font-mono ml-auto shrink-0">{{ formatRelativeTime(log.created_at) }}</span>
+              </div>
+              <p class="text-[11px] text-zinc-400 truncate">{{ log.action }}<span v-if="log.detail" class="text-zinc-600"> — {{ log.detail }}</span></p>
+            </div>
+            <!-- Lien logs complets -->
+            <button
+              class="mt-2 text-xs text-zinc-600 hover:text-zinc-300 transition-colors text-left px-2"
+              @click="tabsStore.setActive('logs'); activeSection = null"
+            >→ Voir tous les logs</button>
+          </div>
+        </template>
+
         <!-- ── Projet ── -->
-        <template v-if="activeSection === 'project'">
+        <template v-else-if="activeSection === 'project'">
           <div class="px-4 py-3">
             <div class="flex items-center justify-between gap-2">
               <button
@@ -433,7 +585,7 @@ async function closeProject() {
         <template v-else-if="activeSection === 'perimetres'">
           <div class="flex-1 overflow-y-auto min-h-0 px-4 py-3 flex flex-col gap-1">
             <div class="flex items-center justify-between mb-2">
-              <p class="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Filtrer le backlog</p>
+              <p class="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Perimetre</p>
               <button
                 v-if="store.selectedPerimetre !== null"
                 class="text-xs text-violet-400 hover:text-violet-300 transition-colors"
@@ -508,22 +660,13 @@ async function closeProject() {
         <template v-else-if="activeSection === 'agents'">
           <div class="flex-1 overflow-y-auto min-h-0 px-4 py-3">
             <div class="flex items-center justify-between mb-3">
-              <p class="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Filtrer le backlog</p>
+              <p class="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Agents</p>
               <div class="flex items-center gap-2">
                 <button
                   v-if="store.selectedAgentId !== null"
                   class="text-xs text-violet-400 hover:text-violet-300 transition-colors"
                   @click="store.selectedAgentId = null"
                 >reset</button>
-                <button
-                  class="w-5 h-5 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700 transition-colors"
-                  title="Nouvel agent"
-                  @click="showCreateAgent = true"
-                >
-                  <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
-                    <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/>
-                  </svg>
-                </button>
               </div>
             </div>
             <div class="space-y-0.5">
@@ -584,6 +727,16 @@ async function closeProject() {
                         <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
                       </svg>
                     </button>
+                    <!-- edit agent -->
+                    <button
+                      class="w-6 h-6 flex items-center justify-center rounded transition-colors text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700"
+                      title="Éditer l'agent"
+                      @click.stop="editAgentTarget = agent"
+                    >
+                      <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+                        <path d="M9.5 1.5a2.121 2.121 0 0 1 3 3L4 13H1v-3L9.5 1.5z"/>
+                      </svg>
+                    </button>
                     <!-- run -->
                     <button
                       class="w-6 h-6 flex items-center justify-center rounded transition-colors"
@@ -600,6 +753,16 @@ async function closeProject() {
               </div>
               <div v-if="store.agents.length === 0" class="text-sm text-zinc-600 px-2 py-2">Aucun agent</div>
             </div>
+            <!-- Bouton ajouter -->
+            <button
+              class="mt-2 flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900 transition-colors"
+              @click="showCreateAgent = true"
+            >
+              <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+              </svg>
+              Ajouter un agent
+            </button>
           </div>
         </template>
 
@@ -678,7 +841,7 @@ async function closeProject() {
         <!-- ── Agents actifs (permanent bas) ── -->
         <div v-if="activeAgents.length > 0" class="shrink-0 border-t border-zinc-800 px-3 py-2">
           <p class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
             Sessions ouvertes
             <span class="text-zinc-700 font-mono">({{ activeAgents.length }})</span>
           </p>
@@ -766,12 +929,14 @@ async function closeProject() {
     @toast="(msg, type) => pushToast(msg, type === 'success' ? 'info' : 'error')"
   />
 
-  <!-- Modal édition agent -->
-  <AgentEditModal
+  <!-- Modal édition agent (réutilise CreateAgentModal en mode edit) -->
+  <CreateAgentModal
     v-if="editAgentTarget"
+    mode="edit"
     :agent="editAgentTarget"
     @close="editAgentTarget = null"
-    @saved="editAgentTarget = null"
+    @saved="editAgentTarget = null; store.refresh()"
+    @toast="(msg, type) => pushToast(msg, type === 'success' ? 'info' : 'error')"
   />
 
   <!-- Context menu clic droit agent -->

@@ -361,7 +361,7 @@ export const useTasksStore = defineStore('tasks', () => {
     selectedAgentId, toggleAgentFilter,
     selectedPerimetre, togglePerimetreFilter, perimetres, perimetresData,
     tasksByStatus, setProject, selectProject, closeProject, setProjectPathOnly, watchForDb,
-    refresh, startPolling, stopPolling,
+    refresh, agentRefresh, startPolling, stopPolling,
     selectedTask, taskComments, openTask, closeTask,
     setupWizardTarget, closeWizard
   }

@@ -16,3 +16,8 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #71717a;
 }
+
+/* xterm.js — hide native textarea caret (prevents double-cursor / violet blinking caret in terminal) */
+.xterm-helper-textarea {
+  caret-color: transparent !important;
+}

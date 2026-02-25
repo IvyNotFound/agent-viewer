@@ -16,6 +16,8 @@ let term: Terminal | null = null
 let fitAddon: FitAddon | null = null
 let unsubData: (() => void) | null = null
 let unsubExit: (() => void) | null = null
+// Permanent activity listener — never paused, tracks PTY output regardless of tab visibility
+let unsubActivity: (() => void) | null = null
 let resizeObserver: ResizeObserver | null = null
 let ptyId: string | null = null
 
@@ -86,6 +88,11 @@ onMounted(async () => {
   term.loadAddon(fitAddon)
   term.open(container.value)
 
+  // Prevent xterm's native paste event — paste is handled exclusively by attachCustomKeyEventHandler
+  // (Ctrl+V fires both a keydown and a paste DOM event; blocking paste here prevents double-write)
+  const xtermTextarea = container.value?.querySelector('.xterm-helper-textarea') as HTMLTextAreaElement | null
+  xtermTextarea?.addEventListener('paste', (e) => e.preventDefault())
+
   // Wait for DOM to have proper dimensions before fitting
   await new Promise(r => setTimeout(r, 100))
   fitAddon.fit()
@@ -114,6 +121,8 @@ onMounted(async () => {
     )
   }
   tabsStore.setPtyId(props.tabId, ptyId)
+  // Immediate agent status refresh after session start (avoids waiting for 1s poll)
+  tasksStore.agentRefresh()
 
   // Rename tab on OSC 0/2 title change — sauf si l'onglet a un agentName fixé
   // (le shell PROMPT_COMMAND écraserait sinon le nom de l'agent à chaque prompt)
@@ -121,8 +130,14 @@ onMounted(async () => {
     if (!tab?.agentName) tabsStore.renameTab(props.tabId, title)
   })
 
+  // Main data listener (paused when tab inactive — writes to xterm canvas)
   unsubData = window.electronAPI.onTerminalData(ptyId, (data) => {
     term?.write(data)
+  })
+
+  // Permanent activity listener — independent of tab visibility
+  // Fixes: spinner was only active when user had the tab focused
+  unsubActivity = window.electronAPI.onTerminalData(ptyId, () => {
     tabsStore.markTabActive(props.tabId)
   })
 
@@ -203,10 +218,9 @@ onMounted(async () => {
   function resumeListeners() {
     if (!isPaused || !ptyId) return
     isPaused = false
-    // Re-subscribe to IPC events
+    // Re-subscribe to data events (writes to xterm only — activity tracked separately)
     unsubData = window.electronAPI.onTerminalData(ptyId, (data) => {
       term?.write(data)
-      tabsStore.markTabActive(props.tabId)
     })
     unsubExit = window.electronAPI.onTerminalExit(ptyId, () => {
       term?.write('\r\n\x1b[31m[session terminée]\x1b[0m\r\n')
@@ -239,6 +253,7 @@ onUnmounted(() => {
   if (ptyId) window.electronAPI.terminalKill(ptyId)
   unsubData?.()
   unsubExit?.()
+  unsubActivity?.()
   resizeObserver?.disconnect()
   term?.dispose()
 })

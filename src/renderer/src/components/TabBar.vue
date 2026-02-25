@@ -137,7 +137,7 @@ function indicatorStyle(tab: Tab): Record<string, string> {
           store.activeTabId !== tab.id && !tab.agentName ? 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60' : '',
           draggedId === tab.id ? 'opacity-40' : '',
           dropTargetId === tab.id && draggedId !== tab.id ? 'ring-1 ring-inset ring-violet-500/50' : '',
-          'cursor-grab active:cursor-grabbing',
+          'cursor-pointer',
         ]"
         :style="tabStyle(tab)"
         @click="store.setActive(tab.id)"

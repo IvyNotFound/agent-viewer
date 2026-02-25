@@ -114,7 +114,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateAgentThinkingMode: (dbPath: string, agentId: number, thinkingMode: string | null): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('update-agent-thinking-mode', dbPath, agentId, thinkingMode),
 
-  updateAgent: (dbPath: string, agentId: number, updates: { name?: string; thinkingMode?: string | null; allowedTools?: string | null }): Promise<{ success: boolean; error?: string }> =>
+  updateAgent: (dbPath: string, agentId: number, updates: {
+    name?: string
+    type?: string
+    perimetre?: string | null
+    thinkingMode?: string | null
+    allowedTools?: string | null
+    systemPrompt?: string | null
+    systemPromptSuffix?: string | null
+  }): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('update-agent', dbPath, agentId, updates),
 
   // Config DB

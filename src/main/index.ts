@@ -3,7 +3,18 @@ import { join } from 'path'
 import { registerIpcHandlers } from './ipc'
 import { registerTerminalHandlers } from './terminal'
 
+function getIconPath(): string | undefined {
+  // In packaged app, resources are in process.resourcesPath
+  // In development, icons are in the project root build/ folder
+  if (app.isPackaged) {
+    return join(process.resourcesPath || '', '../build/icon.png')
+  }
+  return join(__dirname, '../../build/icon.png')
+}
+
 function createWindow(): void {
+  const iconPath = getIconPath()
+
   const win = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -12,6 +23,7 @@ function createWindow(): void {
     frame: false,
     show: false,
     backgroundColor: '#18181b',
+    icon: iconPath,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,

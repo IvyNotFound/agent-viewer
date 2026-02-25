@@ -151,18 +151,16 @@ async function launch() {
             <div class="flex gap-2">
               <button
                 class="flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all"
-                :class="thinkingMode === 'auto'
-                  ? 'border-violet-500/60 bg-violet-950/30 text-violet-300'
-                  : 'border-zinc-700 bg-zinc-800/40 text-zinc-400 hover:border-zinc-600'"
+                :class="thinkingMode !== 'auto' ? 'border-zinc-700 bg-zinc-800/40 text-zinc-400 hover:border-zinc-600' : ''"
+                :style="thinkingMode === 'auto' ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
                 @click="thinkingMode = 'auto'"
               >
                 Auto
               </button>
               <button
                 class="flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all"
-                :class="thinkingMode === 'disabled'
-                  ? 'border-amber-500/60 bg-amber-950/30 text-amber-300'
-                  : 'border-zinc-700 bg-zinc-800/40 text-zinc-400 hover:border-zinc-600'"
+                :class="thinkingMode !== 'disabled' ? 'border-zinc-700 bg-zinc-800/40 text-zinc-400 hover:border-zinc-600' : ''"
+                :style="thinkingMode === 'disabled' ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
                 @click="thinkingMode = 'disabled'"
               >
                 Désactivé

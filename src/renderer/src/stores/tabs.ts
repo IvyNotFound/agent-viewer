@@ -35,7 +35,7 @@ export const useTabsStore = defineStore('tabs', () => {
     if (activityTimers[tabId]) clearTimeout(activityTimers[tabId])
     activityTimers[tabId] = setTimeout(() => {
       tabActivity.value[tabId] = false
-    }, 2500)
+    }, 1000)
   }
 
   function isAgentActive(agentName: string): boolean {

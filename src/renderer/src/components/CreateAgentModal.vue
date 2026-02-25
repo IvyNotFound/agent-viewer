@@ -1,12 +1,21 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useTasksStore } from '@renderer/stores/tasks'
+import type { Agent } from '@renderer/types'
+
+const props = defineProps<{
+  mode?: 'create' | 'edit'
+  agent?: Agent
+}>()
 
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'created'): void
+  (e: 'saved'): void
   (e: 'toast', message: string, type: 'success' | 'error'): void
 }>()
+
+const isEditMode = computed(() => props.mode === 'edit' && props.agent != null)
 
 const store = useTasksStore()
 
@@ -18,6 +27,7 @@ const type = ref('dev')
 const perimetre = ref('')
 const thinkingMode = ref<'auto' | 'disabled'>('auto')
 const systemPrompt = ref('')
+const systemPromptSuffix = ref('')
 const description = ref('')
 const showPrompt = ref(false)
 const loading = ref(false)
@@ -46,13 +56,35 @@ function defaultDescription(t: string): string {
 }
 
 watch(type, (t) => {
-  if (!description.value || description.value === defaultDescription(ALL_TYPES.find(x => x !== t) ?? '')) {
-    description.value = defaultDescription(t)
+  if (!isEditMode.value) {
+    if (!description.value || description.value === defaultDescription(ALL_TYPES.find(x => x !== t) ?? '')) {
+      description.value = defaultDescription(t)
+    }
   }
 }, { immediate: true })
 
+onMounted(async () => {
+  if (isEditMode.value && props.agent) {
+    const a = props.agent
+    name.value = a.name
+    type.value = ALL_TYPES.includes(a.type) ? a.type : 'dev'
+    perimetre.value = a.perimetre ?? ''
+    thinkingMode.value = a.thinking_mode === 'disabled' ? 'disabled' : 'auto'
+    // Load system_prompt and system_prompt_suffix from DB (may be more up-to-date than agent prop)
+    if (store.dbPath) {
+      const result = await window.electronAPI.getAgentSystemPrompt(store.dbPath, a.id)
+      if (result.success) {
+        systemPrompt.value = result.systemPrompt ?? ''
+        systemPromptSuffix.value = result.systemPromptSuffix ?? ''
+        thinkingMode.value = result.thinkingMode === 'disabled' ? 'disabled' : 'auto'
+        if (systemPrompt.value || systemPromptSuffix.value) showPrompt.value = true
+      }
+    }
+  }
+})
+
 async function submit() {
-  if (!store.dbPath || !store.projectPath) return
+  if (!store.dbPath) return
 
   const trimmed = name.value.trim()
   if (!trimmed) { nameError.value = 'Le nom est requis'; return }
@@ -60,6 +92,28 @@ async function submit() {
 
   loading.value = true
   try {
+    // ── Edit mode ──────────────────────────────────────────────────────────
+    if (isEditMode.value && props.agent) {
+      const result = await window.electronAPI.updateAgent(store.dbPath, props.agent.id, {
+        name: trimmed,
+        type: type.value,
+        perimetre: isScoped.value && perimetre.value.trim() ? perimetre.value.trim() : null,
+        thinkingMode: thinkingMode.value,
+        systemPrompt: systemPrompt.value.trim() || null,
+        systemPromptSuffix: systemPromptSuffix.value.trim() || null,
+      })
+      if (!result.success) {
+        emit('toast', result.error ?? 'Erreur lors de la sauvegarde', 'error')
+        return
+      }
+      emit('toast', `Agent "${trimmed}" mis à jour`, 'success')
+      emit('saved')
+      emit('close')
+      return
+    }
+
+    // ── Create mode ────────────────────────────────────────────────────────
+    if (!store.projectPath) return
     const result = await window.electronAPI.createAgent(store.dbPath, store.projectPath, {
       name: trimmed,
       type: type.value,
@@ -102,7 +156,7 @@ function handleKeydown(e: KeyboardEvent) {
       <div class="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-[440px] flex flex-col max-h-[85vh]">
         <!-- Header -->
         <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800 shrink-0">
-          <h2 class="text-base font-semibold text-zinc-100">Nouvel agent</h2>
+          <h2 class="text-base font-semibold text-zinc-100">{{ isEditMode ? 'Éditer l\'agent' : 'Nouvel agent' }}</h2>
           <button
             class="w-7 h-7 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
             @click="emit('close')"
@@ -160,8 +214,8 @@ function handleKeydown(e: KeyboardEvent) {
             />
           </div>
 
-          <!-- Description (pour CLAUDE.md) -->
-          <div>
+          <!-- Description (pour CLAUDE.md) — create mode uniquement -->
+          <div v-if="!isEditMode">
             <label class="block text-xs text-zinc-400 mb-1">Description <span class="text-zinc-600">(CLAUDE.md)</span></label>
             <input
               v-model="description"
@@ -194,21 +248,31 @@ function handleKeydown(e: KeyboardEvent) {
               <svg :class="['w-3 h-3 transition-transform', showPrompt ? 'rotate-90' : '']" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M6 3.5l5 4.5-5 4.5V3.5z"/>
               </svg>
-              System prompt (optionnel)
+              System prompt {{ isEditMode ? '' : '(optionnel)' }}
             </button>
-            <textarea
-              v-if="showPrompt"
-              v-model="systemPrompt"
-              rows="4"
-              placeholder="Instructions spécifiques à cet agent..."
-              class="mt-2 w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-xs text-zinc-300 font-mono outline-none focus:ring-1 focus:ring-violet-500 resize-none"
-            />
+            <div v-if="showPrompt" class="mt-2 flex flex-col gap-2">
+              <textarea
+                v-model="systemPrompt"
+                rows="4"
+                placeholder="Instructions spécifiques à cet agent..."
+                class="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-xs text-zinc-300 font-mono outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+              />
+              <div v-if="isEditMode">
+                <label class="block text-xs text-zinc-500 mb-1">Suffixe caché <span class="text-zinc-600">(system_prompt_suffix)</span></label>
+                <textarea
+                  v-model="systemPromptSuffix"
+                  rows="3"
+                  placeholder="Suffixe injecté en fin de system prompt (protocole agent, etc.)..."
+                  class="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-xs text-zinc-300 font-mono outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Footer -->
         <div class="px-5 py-3 border-t border-zinc-800 flex items-center justify-between shrink-0">
-          <span class="text-xs text-zinc-600">Ctrl+Entrée pour créer</span>
+          <span class="text-xs text-zinc-600">{{ isEditMode ? 'Ctrl+Entrée pour enregistrer' : 'Ctrl+Entrée pour créer' }}</span>
           <div class="flex gap-2">
             <button
               class="px-4 py-1.5 text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
@@ -219,7 +283,7 @@ function handleKeydown(e: KeyboardEvent) {
               :disabled="loading || !name.trim()"
               @click="submit"
             >
-              {{ loading ? 'Création...' : 'Créer' }}
+              {{ loading ? (isEditMode ? 'Enregistrement...' : 'Création...') : (isEditMode ? 'Enregistrer' : 'Créer') }}
             </button>
           </div>
         </div>

@@ -112,7 +112,7 @@ watch(task, (val) => {
       ></div>
 
       <!-- Panel -->
-      <div class="relative w-full max-w-3xl max-h-[84vh] bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl flex flex-col overflow-hidden mx-4 select-text">
+      <div class="relative w-full max-w-5xl max-h-[84vh] bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl flex flex-col overflow-hidden mx-4 select-text">
 
         <!-- Header -->
         <div class="flex items-start justify-between gap-3 px-5 py-4 border-b border-zinc-800 shrink-0">

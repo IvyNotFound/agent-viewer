@@ -412,7 +412,7 @@ VALUES (:task_id, (SELECT id FROM agents WHERE name = '<review>'), 'REJETÉ — 
 - Un agent = un périmètre — ne jamais déborder sans le signaler
 - Vérifier les locks avant de modifier · Poser un lock immédiatement
 - Interfaces IPC Electron ↔ Vue → passer par `arch` avant d'implémenter
-- Jamais de push direct sur `main` en multi-user
+- Jamais de push direct sur `main`
 - Actions production : validation humaine obligatoire
 - **`infra-prod`** : confirmation humaine explicite requise avant **toute** action (création, suppression, modification) — ne jamais agir de façon autonome en production
 
@@ -762,7 +762,7 @@ AGENT PROTOCOL REMINDER (mandatory — do not override):
 - When finishing a task: UPDATE tasks SET statut='terminé', commentaire='<files:lines changed (e.g. Sidebar.vue:L319, ipc.ts:L87-L102) · what was done · why · what remains>'
 - After completing a task: check assigned backlog — if tasks remain (a_faire/en_cours) → take the next one immediately; if none → close session (step 5)
 - When ending session: release all locks + UPDATE sessions SET statut='terminé', summary='Done:... Pending:... Next:...' (this IS the input session for next startup)
-- Never commit directly to main in multi-user mode
+- Never commit directly to main
 - Never edit project.db manually
 ```
 
