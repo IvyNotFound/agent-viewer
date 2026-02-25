@@ -67,6 +67,14 @@ export default [
     },
   },
 
+  // ── TaskDetailModal — v-html allowed (sanitized via DOMPurify) ───────────
+  {
+    files: ['src/renderer/src/components/TaskDetailModal.vue'],
+    rules: {
+      'vue/no-v-html': 'off',
+    },
+  },
+
   // ── Test files ────────────────────────────────────────────────────────────
   {
     files: ['src/**/*.spec.ts'],
