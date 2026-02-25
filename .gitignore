@@ -40,7 +40,9 @@ resources/bin/*.zip
 # Build artifacts
 build/
 tsconfig.node.tsbuildinfo
+tsconfig.web.tsbuildinfo
 
 # Misc
 SELECT
 .claude/project-db
+.claude/project_db
