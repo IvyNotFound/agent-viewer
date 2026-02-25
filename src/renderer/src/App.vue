@@ -41,7 +41,7 @@ defineExpose({
 
 <template>
   <div class="flex flex-col h-screen bg-zinc-900 text-zinc-100 select-none">
-    <TitleBar />
+    <TitleBar @open-search="isCommandPaletteOpen = true" />
     <div class="flex flex-1 overflow-hidden">
       <!-- Sidebar: only show when project is open -->
       <Sidebar v-if="store.projectPath" />
