@@ -82,7 +82,7 @@ fi
 if [ -f CHANGELOG.md ]; then
     # Skip header lines when prepending
     head -6 CHANGELOG.md > /tmp/changelog_header.md
-    cat /tmp/changelog_header.md /tmp/changelog_entry.md tail -n +7 CHANGELOG.md > /tmp/changelog_new.md
+    { cat /tmp/changelog_header.md /tmp/changelog_entry.md; tail -n +7 CHANGELOG.md; } > /tmp/changelog_new.md
     mv /tmp/changelog_new.md CHANGELOG.md
 else
     cat > CHANGELOG.md << 'EOF'
