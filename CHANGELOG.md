@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-02-25
+
+### Added
+- Internationalisation (i18n) français/anglais via vue-i18n v9 — langue persistée en localStorage
+- Locales `fr.json` et `en.json` pour tous les textes UI
+- Plugin i18n (`plugins/i18n.ts`) avec fallback `en`
+- Content Security Policy sur les headers HTTP Electron (`session.defaultSession`)
+- Flags GPU rasterization pour meilleures performances de rendu (`enable-gpu-rasterization`, `enable-zero-copy`)
+- `allowedDir` param sur les handlers IPC `fs:listDir` / `fs:readFile` (restriction de chemin)
+- DOMPurify pour la sanitisation du rendu Markdown dans TaskDetailModal
+- Librairie `marked` pour le rendu Markdown des descriptions et commentaires
+- Scripts DB : `scripts/dbq.js` (lecture), `scripts/dbw.js` (écriture), `scripts/dbstart.js`
+- `scripts/migrate-drop-commentaire.sql` migration one-shot
+- ADR-005 : rationale sql.js vs better-sqlite3 (`.claude/ADRS.md`)
+- Documentation agent : `.claude/SETUP.md`, `.claude/WORKFLOW.md`
+
+### Changed
+- **Electron 28 → 40** — upgrade majeur (CVE GHSA-vmqv-hx8q-j7mg corrigée)
+- **Tailwind CSS v3 → v4** — `@import 'tailwindcss'`, `@tailwindcss/postcss`, tokens `@theme`
+- `tailwind.config.ts` supprimé (non nécessaire en v4)
+- `postcss.config.js` : plugin `@tailwindcss/postcss` remplace `tailwindcss`
+- `tsconfig.node.json` : sql.js ajouté dans `types`
+- TitleBar : barre de recherche centrée style VS Code (grid-cols-3, pill)
+- Sidebar : sections sessions/locks scrollables (`max-h-40 overflow-y-auto`)
+- AgentLogsView : fetch immédiat dès changement pagination/filtre
+- migration.ts : `recreateTasksTableWithArchive()` pour compatibilité DB legacy
+- terminal.ts : détection UUID session Claude Code, validation profil regex, `promisify(execFile)`
+- preload/index.ts : signature `unwatchDb(dbPath?)` optionnelle
+- Stores, types et `agentColor.ts` étendus (langue, nouveaux types onglets, `agentBorder()`)
+
+### Fixed
+- 19 tests components.spec.ts corrigés (plugin i18n manquant dans test setup)
+- `Buffer<ArrayBuffer>` cast pour Electron 40
+- `paintWhenInitiallyHidden` supprimé (déprécié depuis Electron 35)
+- `fs/promises` import remplace l'API callback dépréciée
+
+### Removed
+- `scripts/check-sqlite3.js` (remplacé par `download-sqlite3.js`)
+
 ## [0.3.0] - 2026-02-25
 
 ### Added
@@ -61,7 +100,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial prototype with Tauri
 - Basic task board view
 
-[Unreleased]: https://github.com/cover/agent-viewer/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/cover/agent-viewer/releases/tag/v0.3.0
-[0.2.0]: https://github.com/cover/agent-viewer/releases/tag/v0.2.0
-[0.1.0]: https://github.com/cover/agent-viewer/releases/tag/v0.1.0
+[Unreleased]: https://github.com/IvyNotFound/agent-viewer/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/IvyNotFound/agent-viewer/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/IvyNotFound/agent-viewer/releases/tag/v0.3.0
+[0.2.0]: https://github.com/IvyNotFound/agent-viewer/releases/tag/v0.2.0
+[0.1.0]: https://github.com/IvyNotFound/agent-viewer/releases/tag/v0.1.0
