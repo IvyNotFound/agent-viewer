@@ -289,9 +289,11 @@ describe('terminal utilities', () => {
 
       const callArgs = mockSpawn.mock.calls[0]
       const spawnArgs = callArgs[1] as string[]
-      // System prompt should be embedded in the command string (not via shell expansion)
+      // System prompt should be base64-encoded in the command string for shell safety
       const commandStr = spawnArgs.join(' ')
-      expect(commandStr).toContain('Mon prompt')
+      const expectedB64 = Buffer.from(systemPrompt).toString('base64')
+      expect(commandStr).toContain(expectedB64)
+      expect(commandStr).toContain('base64 -d')
     })
 
     it('should include projectPath via --cd when both projectPath and systemPrompt provided', async () => {

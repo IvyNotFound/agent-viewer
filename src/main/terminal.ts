@@ -260,10 +260,10 @@ export function registerTerminalHandlers(): void {
     // - --settings '{"alwaysThinkingEnabled":false}': disables extended thinking when thinking_mode='disabled'
     // - Using heredoc in bash to safely pass inline prompts without shell injection
     } else if (systemPrompt && userPrompt) {
-      // Use heredoc to safely embed system prompt inline without shell injection risk
-      // This escapes $() backticks, $VAR, etc. by using proper quoting in heredoc
-      // The user prompt (autoSend) is sent via PTY write after Claude starts
-      const escapedSystemPrompt = systemPrompt.replace(/'/g, "'\\''").replace(/\n/g, '\\n')
+      // Base64-encode the system prompt to avoid any shell injection risk.
+      // Only [A-Za-z0-9+/=] chars in the encoded string — no backticks, $(), quotes, etc.
+      // The $(...) command substitution decodes at runtime; its content is inert base64.
+      const b64 = Buffer.from(systemPrompt).toString('base64')
       const cmd = (claudeCommand && CLAUDE_CMD_REGEX.test(claudeCommand)) ? claudeCommand : 'claude'
       // Inject --settings alwaysThinkingEnabled:false when thinking_mode is 'disabled'
       const thinkingFlag = thinkingMode === 'disabled' ? ` --settings '{"alwaysThinkingEnabled":false}'` : ''
@@ -271,7 +271,7 @@ export function registerTerminalHandlers(): void {
       // This flag activates Anthropic prompt caching (~80% token reduction on system prompt
       // after first turn). Checked on v2.1.56: flag does not exist yet.
       // Expected flag: `exec ${cmd} --append-system-prompt '...' --cache-system-prompt`
-      const wrapperScript = `exec ${cmd} --append-system-prompt '${escapedSystemPrompt}'${thinkingFlag}`
+      const wrapperScript = `exec ${cmd} --append-system-prompt "$(echo '${b64}' | base64 -d)"${thinkingFlag}`
 
       if (projectPath) {
         args.push('--cd', toWslPath(projectPath), '-i', '-c', wrapperScript)
