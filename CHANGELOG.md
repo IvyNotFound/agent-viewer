@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-02-25
+
+### Fixed
+- Terminal: base64-encode system prompt to prevent bash command substitution errors with backticks or special characters in agent prompts
+- Scripts: release.sh uses `build:vite` to avoid electron-builder blocking under WSL/Wine
+
+### Changed
+- Scripts: refactored `dbq.js` and `dbw.js` helpers
+
 ## [0.3.1] - 2026-02-25
 
 ### Added
