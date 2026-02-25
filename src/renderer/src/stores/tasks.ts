@@ -12,7 +12,7 @@
  */
 
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { Task, Agent, Lock, Stats, TaskComment, FileNode, Perimetre } from '@renderer/types'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useToast } from '@renderer/composables/useToast'
@@ -112,7 +112,7 @@ export const useTasksStore = defineStore('tasks', () => {
   const agents = ref<Agent[]>([])
   const locks = ref<Lock[]>([])
   const perimetresData = ref<Perimetre[]>([])
-  const stats = ref<Stats>({ a_faire: 0, en_cours: 0, terminé: 0, archivé: 0 })
+  const stats = ref<Stats>({ todo: 0, in_progress: 0, done: 0, archived: 0 })
   const lastRefresh = ref<Date | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -135,10 +135,11 @@ export const useTasksStore = defineStore('tasks', () => {
     selectedPerimetre.value = selectedPerimetre.value === p ? null : p
   }
 
-  const perimetres = computed(() => {
-    const set = new Set<string>()
-    for (const t of tasks.value) if (t.perimetre) set.add(t.perimetre)
-    return [...set].sort()
+  // P3-B: single O(N) pass over tasks — Set deduplicates, Array.from+sort at the end only
+  const perimetres = computed((): string[] => {
+    const seen = new Set<string>()
+    for (const t of tasks.value) if (t.perimetre) seen.add(t.perimetre)
+    return Array.from(seen).sort()
   })
 
   const filteredTasks = computed(() =>
@@ -149,18 +150,25 @@ export const useTasksStore = defineStore('tasks', () => {
     })
   )
 
-  const tasksByStatus = computed(() => ({
-    a_faire: filteredTasks.value.filter(t => t.statut === 'a_faire'),
-    en_cours: filteredTasks.value.filter(t => t.statut === 'en_cours'),
-    terminé: filteredTasks.value.filter(t => t.statut === 'terminé'),
-    archivé: filteredTasks.value.filter(t => t.statut === 'archivé' || t.statut === 'validé') // validé = legacy, migrated to archivé
-  }))
+  // P3-A: single O(N) pass — replaces 4 separate .filter() calls (one per status)
+  const tasksByStatus = computed(() => {
+    const groups: { todo: Task[]; in_progress: Task[]; done: Task[]; archived: Task[] } = {
+      todo: [], in_progress: [], done: [], archived: [],
+    }
+    for (const t of filteredTasks.value) {
+      if (t.statut in groups) groups[t.statut as keyof typeof groups].push(t)
+    }
+    return groups
+  })
 
   async function setProject(pPath: string, dPath: string): Promise<void> {
     projectPath.value = pPath
     dbPath.value = dPath
     localStorage.setItem('projectPath', pPath)
     localStorage.setItem('dbPath', dPath)
+    // Reset filters when switching projects — agent/perimetre IDs are project-specific
+    selectedAgentId.value = null
+    selectedPerimetre.value = null
     await window.electronAPI.migrateDb(dPath)
     await refresh()
     startPolling()
@@ -195,7 +203,7 @@ export const useTasksStore = defineStore('tasks', () => {
   function closeProject(): void {
     stopPolling()
     if (unsubDbChange) { unsubDbChange(); unsubDbChange = null }
-    window.electronAPI.unwatchDb()
+    window.electronAPI.unwatchDb(dbPath.value ?? undefined)
     projectPath.value = null
     dbPath.value = null
     localStorage.removeItem('projectPath')
@@ -204,7 +212,7 @@ export const useTasksStore = defineStore('tasks', () => {
     agents.value = []
     locks.value = []
     perimetresData.value = []
-    stats.value = { a_faire: 0, en_cours: 0, terminé: 0, archive: 0 }
+    stats.value = { todo: 0, in_progress: 0, done: 0, archived: 0 }
     selectedTask.value = null
     taskComments.value = []
     selectedAgentId.value = null
@@ -234,7 +242,13 @@ export const useTasksStore = defineStore('tasks', () => {
 
   async function query<T = unknown>(sql: string, params?: unknown[]): Promise<T[]> {
     if (!dbPath.value) return []
-    return window.electronAPI.queryDb(dbPath.value, sql, params) as Promise<T[]>
+    const result = await window.electronAPI.queryDb(dbPath.value, sql, params)
+    // Handle error responses from IPC (e.g., blocked write attempts)
+    if (!Array.isArray(result)) {
+      console.warn('[tasks query] Unexpected result type:', result)
+      return []
+    }
+    return result as T[]
   }
 
   async function refresh(): Promise<void> {
@@ -252,13 +266,20 @@ export const useTasksStore = defineStore('tasks', () => {
           ORDER BY t.updated_at DESC
         `),
         query<Agent>(`
-          SELECT a.*,
-            (SELECT s.statut FROM sessions s WHERE s.agent_id = a.id
-             ORDER BY s.started_at DESC LIMIT 1) as session_statut,
-            (SELECT s.started_at FROM sessions s WHERE s.agent_id = a.id
-             ORDER BY s.started_at DESC LIMIT 1) as session_started_at,
-            (SELECT MAX(l.created_at) FROM agent_logs l WHERE l.agent_id = a.id) as last_log_at
-          FROM agents a WHERE a.type != 'setup' ORDER BY a.name
+          WITH latest_sessions AS (
+            SELECT agent_id, statut, started_at,
+                   ROW_NUMBER() OVER (PARTITION BY agent_id ORDER BY started_at DESC) as rn
+            FROM sessions
+          ),
+          max_logs AS (
+            SELECT agent_id, MAX(created_at) as last_log_at
+            FROM agent_logs GROUP BY agent_id
+          )
+          SELECT a.*, ls.statut as session_statut, ls.started_at as session_started_at, ml.last_log_at
+          FROM agents a
+          LEFT JOIN latest_sessions ls ON ls.agent_id = a.id AND ls.rn = 1
+          LEFT JOIN max_logs ml ON ml.agent_id = a.id
+          WHERE a.type != 'setup' ORDER BY a.name
         `),
         query<Lock>(`
           SELECT l.*, a.name as agent_name FROM locks l
@@ -279,11 +300,9 @@ export const useTasksStore = defineStore('tasks', () => {
       locks.value = rawLocks.map(normalizeRow)
       perimetresData.value = rawPerimetres.map(normalizeRow)
 
-      const s: Stats = { a_faire: 0, en_cours: 0, terminé: 0, archivé: 0 }
+      const s: Stats = { todo: 0, in_progress: 0, done: 0, archived: 0 }
       for (const row of rawStats) {
-        if (row.statut === 'validé') {
-          s.archivé += row.count // válido = legacy, counts as archivé
-        } else if (row.statut in s) {
+        if (row.statut in s) {
           s[row.statut as keyof Stats] = row.count
         }
       }
@@ -299,16 +318,25 @@ export const useTasksStore = defineStore('tasks', () => {
 
   async function agentRefresh(): Promise<void> {
     if (!dbPath.value) return
+    // Skip refresh when window is not visible to save resources
+    if (document.visibilityState === 'hidden') return
     try {
       const [rawAgents, rawLocks] = await Promise.all([
         query<Agent>(`
-          SELECT a.*,
-            (SELECT s.statut FROM sessions s WHERE s.agent_id = a.id
-             ORDER BY s.started_at DESC LIMIT 1) as session_statut,
-            (SELECT s.started_at FROM sessions s WHERE s.agent_id = a.id
-             ORDER BY s.started_at DESC LIMIT 1) as session_started_at,
-            (SELECT MAX(l.created_at) FROM agent_logs l WHERE l.agent_id = a.id) as last_log_at
-          FROM agents a WHERE a.type != 'setup' ORDER BY a.name
+          WITH latest_sessions AS (
+            SELECT agent_id, statut, started_at,
+                   ROW_NUMBER() OVER (PARTITION BY agent_id ORDER BY started_at DESC) as rn
+            FROM sessions
+          ),
+          max_logs AS (
+            SELECT agent_id, MAX(created_at) as last_log_at
+            FROM agent_logs GROUP BY agent_id
+          )
+          SELECT a.*, ls.statut as session_statut, ls.started_at as session_started_at, ml.last_log_at
+          FROM agents a
+          LEFT JOIN latest_sessions ls ON ls.agent_id = a.id AND ls.rn = 1
+          LEFT JOIN max_logs ml ON ml.agent_id = a.id
+          WHERE a.type != 'setup' ORDER BY a.name
         `),
         query<Lock>(`
           SELECT l.*, a.name as agent_name FROM locks l
@@ -325,8 +353,10 @@ export const useTasksStore = defineStore('tasks', () => {
 
   function startPolling(): void {
     stopPolling()
-    pollInterval = setInterval(refresh, 5000)
-    agentPollInterval = setInterval(agentRefresh, 1000)
+    pollInterval = setInterval(refresh, 30000) // fallback only - file watcher is primary
+    // agentPollInterval removed: agentRefresh is now called by file watcher (onDbChanged)
+    // Fallback: keep a very long interval (60s) just in case file watcher fails
+    agentPollInterval = setInterval(agentRefresh, 60000)
   }
 
   function stopPolling(): void {
@@ -369,8 +399,29 @@ export const useTasksStore = defineStore('tasks', () => {
   function startWatching(path: string): void {
     if (unsubDbChange) { unsubDbChange(); unsubDbChange = null }
     window.electronAPI.watchDb(path)
-    unsubDbChange = window.electronAPI.onDbChanged(() => refresh())
+    // File watcher triggers both refresh and agentRefresh (replaces 1s poll)
+    unsubDbChange = window.electronAPI.onDbChanged(() => {
+      refresh()
+      agentRefresh()
+    })
   }
+
+  // Reset agent/perimetre filters whenever the project changes (IDs are project-specific)
+  watch(dbPath, (newPath, oldPath) => {
+    if (newPath !== oldPath) {
+      selectedAgentId.value = null
+      selectedPerimetre.value = null
+    }
+  })
+
+  // Auto-clear selectedAgentId if the agent doesn't exist in the current project
+  // (prevents invisible stale filters after switching projects)
+  watch(agents, (newAgents) => {
+    if (selectedAgentId.value !== null) {
+      const exists = newAgents.some(a => Number(a.id) === Number(selectedAgentId.value))
+      if (!exists) selectedAgentId.value = null
+    }
+  })
 
   // Auto-start if dbPath already stored
   if (dbPath.value) {
@@ -393,8 +444,9 @@ export const useTasksStore = defineStore('tasks', () => {
     projectPath, dbPath, tasks, agents, locks, stats, lastRefresh, loading, error,
     selectedAgentId, toggleAgentFilter,
     selectedPerimetre, togglePerimetreFilter, perimetres, perimetresData,
-    tasksByStatus, setProject, selectProject, closeProject, setProjectPathOnly, watchForDb,
-    refresh, agentRefresh, startPolling, stopPolling,
+    filteredTasks, tasksByStatus,
+    setProject, selectProject, closeProject, setProjectPathOnly, watchForDb,
+    refresh, agentRefresh, startPolling, stopPolling, query,
     selectedTask, taskComments, openTask, closeTask,
     setupWizardTarget, closeWizard
   }

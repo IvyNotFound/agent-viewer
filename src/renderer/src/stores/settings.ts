@@ -13,6 +13,7 @@
 
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import i18n from '../plugins/i18n'
 
 export type Theme = 'dark' | 'light'
 export type Language = 'fr' | 'en'
@@ -59,12 +60,25 @@ export const useSettingsStore = defineStore('settings', () => {
   // Theme
   const theme = ref<Theme>((localStorage.getItem('theme') as Theme) || 'dark')
 
+  /**
+   * Persists and applies a new theme.
+   *
+   * @param t - The theme to apply ('dark' | 'light')
+   * @returns {void}
+   */
   function setTheme(t: Theme) {
     theme.value = t
     localStorage.setItem('theme', t)
     applyTheme(t)
   }
 
+  /**
+   * Applies a theme to the document root element.
+   * Adds/removes the 'dark' CSS class used by Tailwind.
+   *
+   * @param t - The theme to apply ('dark' | 'light')
+   * @returns {void}
+   */
   function applyTheme(t: Theme) {
     if (t === 'dark') {
       document.documentElement.classList.add('dark')
@@ -79,9 +93,17 @@ export const useSettingsStore = defineStore('settings', () => {
   // Language
   const language = ref<Language>((localStorage.getItem('language') as Language) || 'fr')
 
+  /**
+   * Persists and applies a new UI language.
+   *
+   * @param l - The language code to set ('fr' | 'en')
+   * @returns {void}
+   */
   function setLanguage(l: Language) {
     language.value = l
     localStorage.setItem('language', l)
+    // Sync to vue-i18n global locale for hot-switching
+    i18n.global.locale.value = l
   }
 
   // GitHub settings
@@ -94,11 +116,26 @@ export const useSettingsStore = defineStore('settings', () => {
     lastCheck: localStorage.getItem('github_last_check') || null
   })
 
+  /**
+   * Updates the GitHub token in state and localStorage.
+   * Note: the token is encrypted OS-level (safeStorage) by the main process;
+   * this stores the raw value only in the renderer state for display purposes.
+   *
+   * @param token - Plain-text GitHub personal access token
+   * @returns {void}
+   */
   function setGitHubToken(token: string) {
     github.value.token = token
     localStorage.setItem('github_token', token)
   }
 
+  /**
+   * Parses and stores a GitHub repository URL.
+   * Extracts owner and repo name from HTTPS or SSH URL formats.
+   *
+   * @param url - GitHub repository URL (e.g. https://github.com/owner/repo)
+   * @returns {void}
+   */
   function setGitHubRepo(url: string) {
     github.value.repoUrl = url
     localStorage.setItem('github_repo_url', url)
@@ -110,6 +147,12 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  /**
+   * Updates GitHub connection status and persists the last check timestamp.
+   *
+   * @param connected - Whether the GitHub connection is active
+   * @returns {void}
+   */
   function setGitHubConnected(connected: boolean) {
     github.value.connected = connected
     if (connected) {
@@ -139,6 +182,7 @@ export const useSettingsStore = defineStore('settings', () => {
     // Theme
     theme,
     setTheme,
+    applyTheme,
     // Language
     language,
     setLanguage,
