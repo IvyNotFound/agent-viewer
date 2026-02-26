@@ -1838,3 +1838,66 @@ describe('stores/tasks — watch(dbPath) reset filters', () => {
     expect(store.selectedPerimetre).toBe('front-vuejs')
   })
 })
+
+describe('stores/tasks — auto-resume cold start', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    mockElectronAPI.queryDb.mockResolvedValue([])
+    mockElectronAPI.migrateDb.mockResolvedValue({ success: true })
+    mockElectronAPI.watchDb.mockResolvedValue(undefined)
+    mockElectronAPI.onDbChanged.mockReturnValue(() => {})
+    mockElectronAPI.findProjectDb.mockResolvedValue('/my/project/.claude/project.db')
+  })
+
+  it('should call findProjectDb before migrateDb on cold start when projectPath is set', async () => {
+    localStorage.setItem('dbPath', '/my/project/.claude/project.db')
+    localStorage.setItem('projectPath', '/my/project')
+
+    useTasksStore()
+    await nextTick()
+    // Let promises settle
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(mockElectronAPI.findProjectDb).toHaveBeenCalledWith('/my/project')
+    expect(mockElectronAPI.migrateDb).toHaveBeenCalledWith('/my/project/.claude/project.db')
+  })
+
+  it('should call migrateDb even when findProjectDb returns null (fallback)', async () => {
+    localStorage.setItem('dbPath', '/my/project/.claude/project.db')
+    localStorage.setItem('projectPath', '/my/project')
+    mockElectronAPI.findProjectDb.mockResolvedValue(null)
+
+    useTasksStore()
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(mockElectronAPI.findProjectDb).toHaveBeenCalledWith('/my/project')
+    expect(mockElectronAPI.migrateDb).toHaveBeenCalledWith('/my/project/.claude/project.db')
+  })
+
+  it('should skip findProjectDb and call migrateDb directly when projectPath cannot be derived', async () => {
+    // Use a dbPath that doesn't match the .claude pattern so projectPath stays null
+    localStorage.setItem('dbPath', '/my/project/custom.db')
+    // projectPath intentionally not set, and path doesn't match .claude migration
+
+    useTasksStore()
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(mockElectronAPI.findProjectDb).not.toHaveBeenCalled()
+    expect(mockElectronAPI.migrateDb).toHaveBeenCalledWith('/my/project/custom.db')
+  })
+
+  it('should call watchDb after migrateDb and refresh on cold start', async () => {
+    localStorage.setItem('dbPath', '/my/project/.claude/project.db')
+    localStorage.setItem('projectPath', '/my/project')
+
+    useTasksStore()
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(mockElectronAPI.watchDb).toHaveBeenCalledWith('/my/project/.claude/project.db')
+  })
+})

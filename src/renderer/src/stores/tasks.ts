@@ -453,10 +453,17 @@ export const useTasksStore = defineStore('tasks', () => {
         localStorage.setItem('projectPath', derived)
       }
     }
-    window.electronAPI.migrateDb(dbPath.value).then(() => refresh()).then(() => {
-      startPolling()
-      startWatching(dbPath.value!)
-    })
+    // Re-register dbPath in main process (allowedDbPaths is cleared on each app restart)
+    const ensureRegistered = projectPath.value
+      ? window.electronAPI.findProjectDb(projectPath.value)
+      : Promise.resolve(dbPath.value)
+    ensureRegistered
+      .then(() => window.electronAPI.migrateDb(dbPath.value!))
+      .then(() => refresh())
+      .then(() => {
+        startPolling()
+        startWatching(dbPath.value!)
+      })
   }
 
   return {
