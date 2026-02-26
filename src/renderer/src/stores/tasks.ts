@@ -13,7 +13,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { Task, Agent, Lock, Stats, TaskComment, TaskLink, FileNode, Perimetre } from '@renderer/types'
+import type { Task, Agent, Lock, Stats, TaskComment, TaskLink, FileNode, Perimetre, AgentGroup, TaskAssignee } from '@renderer/types'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useToast } from '@renderer/composables/useToast'
 
@@ -78,6 +78,13 @@ declare global {
       tasksUpdateStatus(dbPath: string, taskId: number, statut: string): Promise<{ success: boolean; error?: string }>
       duplicateAgent(dbPath: string, agentId: number): Promise<{ success: boolean; agentId?: number; name?: string; error?: string }>
       getTaskLinks(dbPath: string, taskId: number): Promise<{ success: boolean; links: Array<{ id: number; type: string; from_task: number; to_task: number; from_titre: string; from_statut: string; to_titre: string; to_statut: string }>; error?: string }>
+      // Agent groups (T556/T557)
+      agentGroupsList(dbPath: string): Promise<{ success: boolean; groups: AgentGroup[]; error?: string }>
+      agentGroupsCreate(dbPath: string, name: string): Promise<{ success: boolean; group?: { id: number; name: string; sort_order: number; created_at: string }; error?: string }>
+      agentGroupsRename(dbPath: string, groupId: number, name: string): Promise<{ success: boolean; error?: string }>
+      agentGroupsDelete(dbPath: string, groupId: number): Promise<{ success: boolean; error?: string }>
+      agentGroupsSetMember(dbPath: string, agentId: number, groupId: number | null, sortOrder?: number): Promise<{ success: boolean; error?: string }>
+      agentGroupsReorder(dbPath: string, groupIds: number[]): Promise<{ success: boolean; error?: string }>
     }
   }
 }
@@ -168,6 +175,7 @@ export const useTasksStore = defineStore('tasks', () => {
   const taskLinks = ref<TaskLink[]>([])
   const taskAssignees = ref<TaskAssignee[]>([])
   const setupWizardTarget = ref<{ projectPath: string; hasCLAUDEmd: boolean } | null>(null)
+  const agentGroups = ref<AgentGroup[]>([])
 
   let pollInterval: ReturnType<typeof setInterval> | null = null
   let agentPollInterval: ReturnType<typeof setInterval> | null = null
@@ -349,6 +357,8 @@ export const useTasksStore = defineStore('tasks', () => {
       }
       stats.value = s
       lastRefresh.value = new Date()
+      // Reload agent groups alongside main refresh
+      fetchAgentGroups()
     } catch (e) {
       error.value = String(e)
       pushToast(String(e))
@@ -425,6 +435,50 @@ export const useTasksStore = defineStore('tasks', () => {
 
   function closeWizard(): void {
     setupWizardTarget.value = null
+  }
+
+  async function fetchAgentGroups(): Promise<void> {
+    if (!dbPath.value) return
+    try {
+      const res = await window.electronAPI.agentGroupsList(dbPath.value)
+      if (res.success) agentGroups.value = res.groups
+    } catch {
+      // silent — groups are optional
+    }
+  }
+
+  async function createAgentGroup(name: string): Promise<AgentGroup | null> {
+    if (!dbPath.value) return null
+    const res = await window.electronAPI.agentGroupsCreate(dbPath.value, name)
+    if (!res.success || !res.group) return null
+    const newGroup: AgentGroup = { ...res.group, members: [] }
+    agentGroups.value = [...agentGroups.value, newGroup]
+    return newGroup
+  }
+
+  async function renameAgentGroup(groupId: number, name: string): Promise<void> {
+    if (!dbPath.value) return
+    await window.electronAPI.agentGroupsRename(dbPath.value, groupId, name)
+    agentGroups.value = agentGroups.value.map(g => g.id === groupId ? { ...g, name } : g)
+  }
+
+  async function deleteAgentGroup(groupId: number): Promise<void> {
+    if (!dbPath.value) return
+    await window.electronAPI.agentGroupsDelete(dbPath.value, groupId)
+    agentGroups.value = agentGroups.value.filter(g => g.id !== groupId)
+  }
+
+  async function setAgentGroup(agentId: number, groupId: number | null, sortOrder?: number): Promise<void> {
+    if (!dbPath.value) return
+    await window.electronAPI.agentGroupsSetMember(dbPath.value, agentId, groupId, sortOrder)
+    // Optimistic update: move agent in groups
+    agentGroups.value = agentGroups.value.map(g => {
+      const filtered = g.members.filter(m => m.agent_id !== agentId)
+      if (g.id === groupId) {
+        return { ...g, members: [...filtered, { agent_id: agentId, sort_order: sortOrder ?? g.members.length }] }
+      }
+      return filtered.length !== g.members.length ? { ...g, members: filtered } : g
+    })
   }
 
   async function setTaskStatut(taskId: number, statut: 'in_progress'): Promise<void> {
@@ -508,6 +562,7 @@ export const useTasksStore = defineStore('tasks', () => {
     setProject, selectProject, closeProject, setProjectPathOnly, watchForDb,
     refresh, agentRefresh, startPolling, stopPolling, query, setTaskStatut,
     selectedTask, taskComments, taskLinks, taskAssignees, openTask, closeTask,
-    setupWizardTarget, closeWizard
+    setupWizardTarget, closeWizard,
+    agentGroups, fetchAgentGroups, createAgentGroup, renameAgentGroup, deleteAgentGroup, setAgentGroup
   }
 })
