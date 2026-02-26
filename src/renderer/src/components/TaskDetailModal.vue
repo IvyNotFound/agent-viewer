@@ -6,7 +6,6 @@ import DOMPurify from 'dompurify'
 import { useTasksStore } from '@renderer/stores/tasks'
 import AgentBadge from './AgentBadge.vue'
 import { agentFg, agentBg, agentBorder, perimeterFg, perimeterBg, perimeterBorder } from '@renderer/utils/agentColor'
-import { useToast } from '@renderer/composables/useToast'
 import type { TaskAssignee, TaskLink } from '@renderer/types'
 
 // Configure marked for synchronous rendering
@@ -14,7 +13,6 @@ marked.setOptions({ async: false })
 
 const { t, locale } = useI18n()
 const store = useTasksStore()
-const { push: pushToast } = useToast()
 const task = computed(() => store.selectedTask)
 
 // ── Agents lookup ─────────────────────────────────────────────────────────────
@@ -84,14 +82,12 @@ function relativeTime(iso: string): string {
   return `${Math.floor(h / 24)}j`
 }
 
-// ── Assignees (ADR-008) ───────────────────────────────────────────────────────
-// Local editable copy — seeded from store.taskAssignees (loaded in store.openTask, T521)
+// ── Assignees (ADR-008, read-only — T571) ─────────────────────────────────────
+// Synced from store.taskAssignees — display only, no mutation from UI
 
 const assignees = ref<TaskAssignee[]>([])
-const savingAssignees = ref(false)
-const showAgentDropdown = ref(false)
 
-// Sync local editable copy whenever the store loads assignees for the current task
+// Sync display whenever the store loads assignees for the current task
 watch(() => store.taskAssignees, (val) => { assignees.value = Array.isArray(val) ? [...val] : [] }, { immediate: true })
 
 const sortedAssignees = computed(() =>
@@ -101,41 +97,6 @@ const sortedAssignees = computed(() =>
     return 0
   })
 )
-
-function isAssigned(agentId: number): boolean {
-  return assignees.value.some(a => a.agent_id === agentId)
-}
-
-function toggleAssignee(agent: { id: number; name: string }): void {
-  const idx = assignees.value.findIndex(a => a.agent_id === agent.id)
-  if (idx === -1) {
-    assignees.value.push({ agent_id: agent.id, agent_name: agent.name, role: null, assigned_at: new Date().toISOString() })
-  } else {
-    assignees.value.splice(idx, 1)
-  }
-}
-
-function setRole(agentId: number, role: string): void {
-  const a = assignees.value.find(a => a.agent_id === agentId)
-  if (a) a.role = (role || null) as TaskAssignee['role']
-}
-
-async function saveAssignees(): Promise<void> {
-  if (!store.dbPath || !task.value) return
-  savingAssignees.value = true
-  try {
-    await window.electronAPI.setTaskAssignees(
-      store.dbPath,
-      task.value.id,
-      assignees.value.map(a => ({ agentId: a.agent_id, role: a.role }))
-    )
-    showAgentDropdown.value = false
-  } catch {
-    pushToast(t('taskDetail.saveError'), 'error')
-  } finally {
-    savingAssignees.value = false
-  }
-}
 
 // ── Dependencies (task_links) ─────────────────────────────────────────────────
 
@@ -214,7 +175,6 @@ watch(task, (val) => {
   } else {
     document.removeEventListener('keydown', handleKeydown)
     assignees.value = []
-    showAgentDropdown.value = false
   }
 })
 
@@ -389,20 +349,14 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Section Assignés -->
+            <!-- Section Assignés (read-only — T571) -->
             <div class="px-4 py-3 border-b border-edge-subtle shrink-0">
-              <div class="flex items-center justify-between mb-2">
-                <p class="text-[10px] font-semibold text-content-subtle uppercase tracking-wider">
-                  {{ t('taskDetail.assignees') }}
-                </p>
-                <button
-                  class="text-[10px] text-content-muted hover:text-content-secondary transition-colors"
-                  @click="showAgentDropdown = !showAgentDropdown"
-                >{{ showAgentDropdown ? '▲' : '▼' }} {{ t('taskDetail.addAssignee') }}</button>
-              </div>
+              <p class="text-[10px] font-semibold text-content-subtle uppercase tracking-wider mb-2">
+                {{ t('taskDetail.assignees') }}
+              </p>
 
-              <!-- Assigned agents list -->
-              <div v-if="sortedAssignees.length > 0" class="space-y-1 mb-2">
+              <!-- Assigned agents list — display only -->
+              <div v-if="sortedAssignees.length > 0" class="space-y-1">
                 <div v-for="a in sortedAssignees" :key="a.agent_id" class="flex items-center gap-1.5">
                   <div
                     class="w-4 h-4 rounded-full shrink-0 flex items-center justify-center text-[8px] font-bold border"
@@ -410,47 +364,12 @@ onUnmounted(() => {
                     :title="a.agent_name"
                   >{{ a.agent_name.slice(0, 2).toUpperCase() }}</div>
                   <span class="text-xs text-content-secondary truncate flex-1 min-w-0">{{ a.agent_name }}</span>
-                  <select
-                    :value="a.role ?? ''"
-                    class="text-[10px] bg-surface-secondary border border-edge-default rounded px-1 py-0.5 text-content-muted focus:outline-none shrink-0"
-                    @change="setRole(a.agent_id, ($event.target as HTMLSelectElement).value)"
-                  >
-                    <option value="">—</option>
-                    <option value="primary">primary</option>
-                    <option value="support">support</option>
-                    <option value="reviewer">reviewer</option>
-                  </select>
-                  <button
-                    class="text-content-faint hover:text-content-secondary text-xs shrink-0 transition-colors"
-                    @click="toggleAssignee({ id: a.agent_id, name: a.agent_name })"
-                  >✕</button>
+                  <span class="text-[10px] text-content-faint shrink-0">{{ a.role ?? '—' }}</span>
                 </div>
               </div>
-              <p v-else-if="!showAgentDropdown" class="text-xs text-content-faint italic mb-2">
+              <p v-else class="text-xs text-content-faint italic">
                 {{ t('taskDetail.noAssignees') }}
               </p>
-
-              <!-- Agent picker dropdown -->
-              <div v-if="showAgentDropdown" class="max-h-32 overflow-y-auto border border-edge-default rounded bg-surface-secondary mb-2">
-                <button
-                  v-for="agent in store.agents"
-                  :key="agent.id"
-                  class="w-full flex items-center gap-2 px-2 py-1 text-xs hover:bg-surface-tertiary transition-colors text-left"
-                  @click="toggleAssignee({ id: agent.id, name: agent.name })"
-                >
-                  <span
-                    :class="['w-3 h-3 rounded-sm border flex items-center justify-center shrink-0 text-[8px]', isAssigned(agent.id) ? 'bg-blue-500 border-blue-500 text-white' : 'border-edge-default text-transparent']"
-                  >✓</span>
-                  <span :style="{ color: agentFg(agent.name) }" class="font-mono truncate">{{ agent.name }}</span>
-                </button>
-              </div>
-
-              <!-- Save button -->
-              <button
-                class="w-full text-xs px-2 py-1 bg-surface-secondary hover:bg-surface-tertiary border border-edge-default rounded transition-colors text-content-secondary disabled:opacity-50"
-                :disabled="savingAssignees"
-                @click="saveAssignees"
-              >{{ savingAssignees ? t('common.saving') : t('common.save') }}</button>
             </div>
 
             <!-- Comments header -->
