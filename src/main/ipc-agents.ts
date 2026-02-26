@@ -293,36 +293,21 @@ export function registerAgentHandlers(): void {
     try {
       assertDbPathAllowed(dbPath)
       await writeDb(dbPath, (db) => {
-        if (updates.name !== undefined) {
-          db.run('UPDATE agents SET name = ? WHERE id = ?', [updates.name, agentId])
-        }
-        if (updates.type !== undefined) {
-          db.run('UPDATE agents SET type = ? WHERE id = ?', [updates.type, agentId])
-        }
-        if (updates.perimetre !== undefined) {
-          db.run('UPDATE agents SET perimetre = ? WHERE id = ?', [updates.perimetre || null, agentId])
-        }
-        if (updates.thinkingMode !== undefined) {
-          db.run('UPDATE agents SET thinking_mode = ? WHERE id = ?', [updates.thinkingMode || null, agentId])
-        }
-        if (updates.allowedTools !== undefined) {
-          db.run('UPDATE agents SET allowed_tools = ? WHERE id = ?', [updates.allowedTools || null, agentId])
-        }
-        if (updates.systemPrompt !== undefined) {
-          db.run('UPDATE agents SET system_prompt = ? WHERE id = ?', [updates.systemPrompt || null, agentId])
-        }
-        if (updates.systemPromptSuffix !== undefined) {
-          db.run('UPDATE agents SET system_prompt_suffix = ? WHERE id = ?', [updates.systemPromptSuffix || null, agentId])
-        }
-        if (updates.autoLaunch !== undefined) {
-          db.run('UPDATE agents SET auto_launch = ? WHERE id = ?', [updates.autoLaunch ? 1 : 0, agentId])
-        }
-        if (updates.permissionMode !== undefined) {
-          db.run('UPDATE agents SET permission_mode = ? WHERE id = ?', [updates.permissionMode || null, agentId])
-        }
-        if (updates.maxSessions !== undefined) {
-          db.run('UPDATE agents SET max_sessions = ? WHERE id = ?', [updates.maxSessions, agentId])
-        }
+        const cols: string[] = []
+        const vals: (string | number | null)[] = []
+        if (updates.name !== undefined) { cols.push('name = ?'); vals.push(updates.name) }
+        if (updates.type !== undefined) { cols.push('type = ?'); vals.push(updates.type) }
+        if (updates.perimetre !== undefined) { cols.push('perimetre = ?'); vals.push(updates.perimetre || null) }
+        if (updates.thinkingMode !== undefined) { cols.push('thinking_mode = ?'); vals.push(updates.thinkingMode || null) }
+        if (updates.allowedTools !== undefined) { cols.push('allowed_tools = ?'); vals.push(updates.allowedTools || null) }
+        if (updates.systemPrompt !== undefined) { cols.push('system_prompt = ?'); vals.push(updates.systemPrompt || null) }
+        if (updates.systemPromptSuffix !== undefined) { cols.push('system_prompt_suffix = ?'); vals.push(updates.systemPromptSuffix || null) }
+        if (updates.autoLaunch !== undefined) { cols.push('auto_launch = ?'); vals.push(updates.autoLaunch ? 1 : 0) }
+        if (updates.permissionMode !== undefined) { cols.push('permission_mode = ?'); vals.push(updates.permissionMode || null) }
+        if (updates.maxSessions !== undefined) { cols.push('max_sessions = ?'); vals.push(updates.maxSessions) }
+        if (cols.length === 0) return
+        vals.push(agentId)
+        db.run(`UPDATE agents SET ${cols.join(', ')} WHERE id = ?`, vals)
       })
       return { success: true }
     } catch (err) {
