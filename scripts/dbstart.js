@@ -17,7 +17,7 @@
 const initSqlJs = require('sql.js')
 const fs = require('fs')
 const path = require('path')
-const { acquireLock, releaseLock } = require('./dblock')
+const { acquireLock, releaseLock, cleanupOrphanTmp } = require('./dblock')
 
 const agent = process.argv[2]
 const type = process.argv[3] || agent
@@ -31,11 +31,14 @@ if (!agent) {
 const dbPath = path.resolve(process.cwd(), '.claude/project.db')
 
 initSqlJs().then((SQL) => {
+  cleanupOrphanTmp(dbPath)
   const lockPath = acquireLock(dbPath)
+  try {
   const buf = fs.readFileSync(dbPath)
   const db = new SQL.Database(buf)
 
   // Guard: reject purely numeric agent names (likely an agent_id passed by mistake)
+  // Manual releaseLock required: process.exit() does not trigger finally blocks.
   if (/^\d+$/.test(agent)) {
     const byId = db.exec(`SELECT name FROM agents WHERE id = ${parseInt(agent, 10)}`)
     const hint =
@@ -71,7 +74,7 @@ initSqlJs().then((SQL) => {
   const activeCount = activeRow[0].values[0][0]
   if (activeCount >= maxSessions) {
     db.close()
-    releaseLock(lockPath)
+    releaseLock(lockPath)  // Manual releaseLock required: process.exit() does not trigger finally blocks.
     console.error(
       `ERREUR: ${agent} a déjà ${activeCount} session(s) active(s) (max ${maxSessions}). Terminer une session avant d'en ouvrir une nouvelle.`
     )
@@ -209,4 +212,7 @@ initSqlJs().then((SQL) => {
   }
 
   db.close()
+  } finally {
+    releaseLock(lockPath)
+  }
 })

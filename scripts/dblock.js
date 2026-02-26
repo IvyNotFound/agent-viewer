@@ -16,6 +16,7 @@
  */
 
 const fs = require('fs')
+const path = require('path')
 
 const LOCK_STALE_MS = 30_000  // lock older than 30s is stale (process likely dead)
 const LOCK_TIMEOUT_MS = 15_000 // give up and throw after 15s
@@ -23,12 +24,11 @@ const LOCK_RETRY_MIN = 50      // min wait between retries (ms)
 const LOCK_RETRY_MAX = 200     // max wait between retries (ms)
 
 /**
- * Busy-wait sleep — acceptable for short durations in CLI scripts.
+ * Blocking sleep using Atomics.wait() — zero CPU usage during wait.
  * @param {number} ms
  */
 function sleep(ms) {
-  const end = Date.now() + ms
-  while (Date.now() < end) {}
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
 }
 
 /**
@@ -85,4 +85,29 @@ function releaseLock(lockPath) {
   try { fs.unlinkSync(lockPath) } catch {}
 }
 
-module.exports = { acquireLock, releaseLock }
+/**
+ * Deletes orphan tmp files left by crashed processes.
+ * Pattern: <dbPath>.tmp.<pid>.<timestamp>
+ * A tmp file is orphan if its PID is no longer alive.
+ * @param {string} dbPath - Absolute path to the SQLite DB file
+ */
+function cleanupOrphanTmp(dbPath) {
+  const dir = path.dirname(dbPath)
+  const base = path.basename(dbPath)
+  const pattern = new RegExp(`^${base}\\.tmp\\.(\\d+)\\.\\d+$`)
+  let files
+  try { files = fs.readdirSync(dir) } catch { return }
+  for (const file of files) {
+    const m = file.match(pattern)
+    if (!m) continue
+    const pid = parseInt(m[1], 10)
+    if (pid === process.pid) continue
+    let alive = false
+    try { process.kill(pid, 0); alive = true } catch (e) { alive = e.code === 'EPERM' }
+    if (!alive) {
+      try { fs.unlinkSync(path.join(dir, file)) } catch {}
+    }
+  }
+}
+
+module.exports = { acquireLock, releaseLock, cleanupOrphanTmp }
