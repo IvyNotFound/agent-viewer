@@ -70,7 +70,7 @@ defineExpose({
           <TabBar />
           <!-- Backlog tab -->
           <template v-if="tabsStore.activeTab.type === 'backlog'">
-            <BoardView />
+            <BoardView class="flex-1 min-h-0" />
           </template>
           <!-- Explorer tab -->
           <template v-else-if="tabsStore.activeTab.type === 'explorer'">

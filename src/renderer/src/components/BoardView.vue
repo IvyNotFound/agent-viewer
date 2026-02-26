@@ -112,7 +112,7 @@ const archivedByAgent = computed(() => archivedGroupsSorted.value)
 </script>
 
 <template>
-  <div class="h-full flex flex-col">
+  <div class="flex flex-col flex-1 min-h-0">
     <!-- Header -->
     <div class="flex items-center justify-between px-5 py-3 border-b border-edge-subtle shrink-0">
       <!-- Sub-tabs -->
