@@ -25,6 +25,11 @@
     "nextPage": "Suivant",
     "pageOf": "Page {page} / {total} ({count} tâches)"
   },
+  "taskCard": {
+    "relaunchAgent": "Relancer l'agent",
+    "sessionAlreadyOpen": "Session déjà active",
+    "sessionAlreadyOpenDetail": "Un terminal est déjà ouvert pour T#{id}"
+  },
   "columns": {
     "todo": "À faire",
     "in_progress": "En cours",
