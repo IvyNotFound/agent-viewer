@@ -292,6 +292,7 @@ function handleKeydown(e: KeyboardEvent) {
               <textarea
                 v-model="systemPrompt"
                 rows="14"
+                spellcheck="true"
                 placeholder="Instructions spécifiques à cet agent..."
                 class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-xs text-content-tertiary font-mono outline-none focus:ring-1 focus:ring-violet-500 resize-y"
               />
@@ -300,6 +301,7 @@ function handleKeydown(e: KeyboardEvent) {
                 <textarea
                   v-model="systemPromptSuffix"
                   rows="12"
+                  spellcheck="true"
                   placeholder="Suffixe injecté en fin de system prompt (protocole agent, etc.)..."
                   class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-xs text-content-tertiary font-mono outline-none focus:ring-1 focus:ring-violet-500 resize-y"
                 />

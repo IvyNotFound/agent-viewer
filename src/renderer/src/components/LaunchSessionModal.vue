@@ -267,6 +267,7 @@ async function launch() {
             <textarea
               v-model="customPrompt"
               rows="3"
+              spellcheck="true"
               :placeholder="t('launch.startPromptPlaceholder')"
               class="w-full bg-surface-secondary border border-edge-default rounded-lg px-3 py-2 text-xs font-mono text-content-secondary placeholder-content-faint resize-none outline-none focus:ring-1 transition-colors"
               :style="{ '--tw-ring-color': agentFg(agent.name) }"
