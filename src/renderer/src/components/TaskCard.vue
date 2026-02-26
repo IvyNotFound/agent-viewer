@@ -19,27 +19,47 @@ function formatDate(iso: string): string {
 
 const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
 const EFFORT_BADGE: Record<number, string> = {
-  1: 'bg-emerald-500/20 text-emerald-300',
-  2: 'bg-amber-500/20 text-amber-300',
-  3: 'bg-red-500/20 text-red-300',
+  1: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  2: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  3: 'bg-red-500/20 text-red-400 border-red-500/30',
+}
+
+const PRIORITY_BADGE: Record<string, string> = {
+  critical: 'bg-red-500/20 text-red-400 border-red-500/30',
+  high:     'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  normal:   'bg-surface-tertiary text-content-muted border-edge-default',
+  low:      '',
+}
+const PRIORITY_LABEL: Record<string, string> = {
+  critical: '!!',
+  high:     '!',
+  normal:   '—',
+  low:      '',
 }
 </script>
 
 <template>
   <div
-    class="bg-zinc-800 border border-zinc-700 rounded-lg p-3 hover:border-zinc-600 transition-colors cursor-pointer"
+    class="bg-surface-secondary border border-edge-default rounded-lg p-3 hover:border-content-faint transition-colors cursor-pointer min-h-[120px] flex flex-col"
     @click="store.openTask(task)"
   >
+    <!-- Top row: title + effort/priority -->
     <div class="flex items-start justify-between gap-2 mb-2">
-      <p class="text-sm text-zinc-100 font-medium leading-snug flex-1 min-w-0">{{ task.titre }}</p>
-      <span class="text-xs text-zinc-400 font-mono shrink-0">#{{ task.id }}</span>
-      <span
-        v-if="task.effort"
-        :class="['text-[10px] font-bold px-1.5 py-0.5 rounded font-mono shrink-0', EFFORT_BADGE[task.effort]]"
-      >{{ EFFORT_LABEL[task.effort] }}</span>
+      <p class="text-sm text-content-primary font-medium leading-snug flex-1 min-w-0">{{ task.titre }}</p>
+      <div class="flex items-center gap-1 shrink-0">
+        <span
+          v-if="task.priority && task.priority !== 'normal' && task.priority !== 'low'"
+          :class="['text-xs font-bold px-1.5 py-0.5 rounded font-mono border', PRIORITY_BADGE[task.priority]]"
+        >{{ PRIORITY_LABEL[task.priority] }}</span>
+        <span
+          v-if="task.effort"
+          :class="['text-xs font-bold px-1.5 py-0.5 rounded font-mono border', EFFORT_BADGE[task.effort]]"
+        >{{ EFFORT_LABEL[task.effort] }}</span>
+      </div>
     </div>
 
-    <div class="flex flex-wrap gap-1 mb-2">
+    <!-- Badges: perimeter + agent -->
+    <div v-if="task.perimetre || task.agent_name" class="flex flex-wrap gap-1 mb-2">
       <span
         v-if="task.perimetre"
         class="text-xs px-1.5 py-0.5 rounded font-mono border"
@@ -52,14 +72,17 @@ const EFFORT_BADGE: Record<number, string> = {
       <AgentBadge v-if="task.agent_name" :name="task.agent_name" :perimetre="task.agent_perimetre" />
     </div>
 
-    <!-- Dates -->
-    <div class="flex flex-col gap-0.5 mt-2 pt-2 border-t border-zinc-700/50">
-      <p class="text-xs text-zinc-500">
-        <span class="text-zinc-400">{{ t('taskDetail.created') }}</span> {{ formatDate(task.created_at) }}
-      </p>
-      <p class="text-xs text-zinc-500">
-        <span class="text-zinc-400">{{ t('taskDetail.updated') }}</span> {{ formatDate(task.updated_at) }}
-      </p>
+    <!-- Footer: dates left, #id right -->
+    <div :class="['flex items-end justify-between gap-2 mt-auto pt-2', (task.perimetre || task.agent_name) && 'border-t border-edge-default/50']">
+      <div class="flex flex-col gap-0.5">
+        <p class="text-xs text-content-subtle">
+          <span class="text-content-muted">{{ t('taskDetail.created') }}</span> {{ formatDate(task.created_at) }}
+        </p>
+        <p class="text-xs text-content-subtle">
+          <span class="text-content-muted">{{ t('taskDetail.updated') }}</span> {{ formatDate(task.updated_at) }}
+        </p>
+      </div>
+      <span class="text-xs text-content-faint font-mono shrink-0">#{{ task.id }}</span>
     </div>
   </div>
 </template>

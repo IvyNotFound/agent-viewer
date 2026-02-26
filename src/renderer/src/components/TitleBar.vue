@@ -24,19 +24,20 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="grid grid-cols-3 items-center h-9 bg-zinc-950 shrink-0"
+    class="grid grid-cols-3 items-center h-9 bg-surface-base shrink-0"
     style="-webkit-app-region: drag"
   >
     <!-- Left: App identity -->
     <div class="flex items-center gap-2 px-4">
       <div class="w-2 h-2 rounded-full bg-violet-500 shrink-0"></div>
-      <span class="text-xs font-semibold text-zinc-500 tracking-widest uppercase">agent-viewer</span>
+      <span class="text-xs font-semibold text-content-subtle tracking-widest uppercase">agent-viewer</span>
     </div>
 
     <!-- Center: Search bar (always visible, VS Code style) -->
-    <div class="flex justify-center" style="-webkit-app-region: no-drag">
+    <div class="flex justify-center">
       <button
-        class="flex items-center gap-2 px-3 h-6 rounded-md bg-zinc-800/80 border border-zinc-700/50 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600/80 hover:bg-zinc-800 transition-all duration-150 w-52 group"
+        style="-webkit-app-region: no-drag"
+        class="flex items-center gap-2 px-3 h-6 rounded-md bg-surface-secondary/80 border border-edge-default/50 text-content-subtle hover:text-content-tertiary hover:border-content-faint/80 hover:bg-surface-secondary transition-all duration-150 w-52 group"
         :title="t('titleBar.searchTitle')"
         @click="$emit('open-search')"
       >
@@ -44,16 +45,17 @@ onUnmounted(() => {
           <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
         </svg>
         <span class="flex-1 text-left text-xs">{{ t('titleBar.searchPlaceholder') }}</span>
-        <kbd class="text-[10px] text-zinc-700 group-hover:text-zinc-500 font-mono leading-none">Ctrl+K</kbd>
+        <kbd class="text-[10px] text-content-dim group-hover:text-content-subtle font-mono leading-none">Ctrl+K</kbd>
       </button>
     </div>
 
     <!-- Right: Window controls — Windows 11 style -->
-    <div class="flex items-stretch h-full justify-end" style="-webkit-app-region: no-drag">
+    <div class="flex items-stretch h-full justify-end">
 
       <!-- Minimize -->
       <button
-        class="w-[46px] flex items-center justify-center text-zinc-500 hover:text-zinc-100 hover:bg-zinc-700/60 transition-colors"
+        style="-webkit-app-region: no-drag"
+        class="w-[46px] flex items-center justify-center text-content-subtle hover:text-content-primary hover:bg-surface-tertiary/60 transition-colors"
         :title="t('titleBar.minimize')"
         @click="api.windowMinimize()"
       >
@@ -64,7 +66,8 @@ onUnmounted(() => {
 
       <!-- Maximize / Restore -->
       <button
-        class="w-[46px] flex items-center justify-center text-zinc-500 hover:text-zinc-100 hover:bg-zinc-700/60 transition-colors"
+        style="-webkit-app-region: no-drag"
+        class="w-[46px] flex items-center justify-center text-content-subtle hover:text-content-primary hover:bg-surface-tertiary/60 transition-colors"
         :title="isMaximized ? t('titleBar.restore') : t('titleBar.maximize')"
         @click="api.windowMaximize()"
       >
@@ -81,7 +84,8 @@ onUnmounted(() => {
 
       <!-- Close -->
       <button
-        class="w-[46px] flex items-center justify-center text-zinc-500 hover:text-white hover:bg-red-600 transition-colors"
+        style="-webkit-app-region: no-drag"
+        class="w-[46px] flex items-center justify-center text-content-subtle hover:text-white hover:bg-red-600 transition-colors"
         :title="t('common.close')"
         @click="api.windowClose()"
       >

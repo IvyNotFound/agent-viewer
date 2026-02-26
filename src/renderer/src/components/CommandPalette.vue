@@ -32,7 +32,7 @@ watch(searchQuery, (val) => {
 const STATUTS = computed(() => [
   { key: 'todo',        label: t('columns.todo'),        dot: 'bg-amber-500' },
   { key: 'in_progress', label: t('columns.in_progress'), dot: 'bg-emerald-500' },
-  { key: 'done',        label: t('columns.done'),        dot: 'bg-zinc-400' },
+  { key: 'done',        label: t('columns.done'),        dot: 'bg-content-faint' },
   { key: 'archived',    label: t('columns.archived'),    dot: 'bg-violet-500' },
 ])
 
@@ -123,10 +123,13 @@ function handleGlobalKeydown(e: KeyboardEvent) {
 }
 
 onMounted(() => window.addEventListener('keydown', handleGlobalKeydown))
-onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown))
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
+  if (debounceTimer) clearTimeout(debounceTimer)
+})
 
 function statutDot(statut: string): string {
-  return STATUTS.value.find(s => s.key === statut)?.dot ?? 'bg-zinc-600'
+  return STATUTS.value.find(s => s.key === statut)?.dot ?? 'bg-content-faint'
 }
 </script>
 
@@ -139,11 +142,11 @@ function statutDot(statut: string): string {
         @click.self="close"
         @keydown="handleKeydown"
       >
-        <div class="w-full max-w-2xl mx-4 bg-zinc-900 rounded-xl shadow-2xl border border-zinc-700/60 overflow-hidden flex flex-col max-h-[72vh]">
+        <div class="w-full max-w-2xl mx-4 bg-surface-primary rounded-xl shadow-2xl border border-edge-default/60 overflow-hidden flex flex-col max-h-[72vh]">
 
           <!-- Search input -->
-          <div class="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 shrink-0">
-            <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 text-zinc-500 shrink-0">
+          <div class="flex items-center gap-3 px-4 py-3 border-b border-edge-subtle shrink-0">
+            <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 text-content-subtle shrink-0">
               <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
             </svg>
             <input
@@ -151,7 +154,7 @@ function statutDot(statut: string): string {
               v-model="searchQuery"
               type="text"
               :placeholder="t('commandPalette.placeholder')"
-              class="flex-1 bg-transparent text-zinc-100 placeholder-zinc-500 outline-none text-sm"
+              class="flex-1 bg-transparent text-content-primary placeholder-content-subtle outline-none text-sm"
             >
             <div class="flex items-center gap-2 shrink-0">
               <button
@@ -159,22 +162,22 @@ function statutDot(statut: string): string {
                 class="text-xs text-violet-400 hover:text-violet-300 transition-colors"
                 @click="clearFilters"
               >{{ t('commandPalette.resetFilters') }}</button>
-              <kbd class="px-1.5 py-0.5 text-xs bg-zinc-800 text-zinc-500 rounded border border-zinc-700">ESC</kbd>
+              <kbd class="px-1.5 py-0.5 text-xs bg-surface-secondary text-content-subtle rounded border border-edge-default">ESC</kbd>
             </div>
           </div>
 
           <!-- Filters -->
-          <div class="px-4 py-2.5 border-b border-zinc-800 shrink-0 space-y-2">
+          <div class="px-4 py-2.5 border-b border-edge-subtle shrink-0 space-y-2">
             <!-- Statut chips -->
             <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-[10px] text-zinc-600 uppercase tracking-wider font-semibold mr-1">{{ t('commandPalette.status') }}</span>
+              <span class="text-[10px] text-content-faint uppercase tracking-wider font-semibold mr-1">{{ t('commandPalette.status') }}</span>
               <button
                 v-for="s in STATUTS"
                 :key="s.key"
                 class="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs transition-all border"
                 :class="filterStatut === s.key
-                  ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
-                  : 'border-zinc-700/60 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300'"
+                  ? 'border-content-subtle bg-surface-tertiary text-content-primary'
+                  : 'border-edge-default/60 text-content-subtle hover:border-content-faint hover:text-content-tertiary'"
                 @click="toggleStatut(s.key)"
               >
                 <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="s.dot" />
@@ -186,14 +189,14 @@ function statutDot(statut: string): string {
             <div v-if="tasksStore.agents.length > 0 || tasksStore.perimetresData.length > 0" class="flex items-center gap-3 flex-wrap">
               <!-- Agents -->
               <div v-if="tasksStore.agents.length > 0" class="flex items-center gap-1.5 flex-wrap">
-                <span class="text-[10px] text-zinc-600 uppercase tracking-wider font-semibold mr-1">{{ t('commandPalette.agent') }}</span>
+                <span class="text-[10px] text-content-faint uppercase tracking-wider font-semibold mr-1">{{ t('commandPalette.agent') }}</span>
                 <button
                   v-for="agent in tasksStore.agents.slice(0, 8)"
                   :key="agent.id"
                   class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all border font-mono"
                   :class="filterAgentId === agent.id
-                    ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
-                    : 'border-zinc-700/60 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300'"
+                    ? 'border-content-subtle bg-surface-tertiary text-content-primary'
+                    : 'border-edge-default/60 text-content-subtle hover:border-content-faint hover:text-content-tertiary'"
                   :style="filterAgentId === Number(agent.id)
                     ? { color: agentFg(agent.name), backgroundColor: agentBg(agent.name), borderColor: agentFg(agent.name) + '66' }
                     : {}"
@@ -205,14 +208,14 @@ function statutDot(statut: string): string {
 
               <!-- Périmètres -->
               <div v-if="tasksStore.perimetresData.length > 0" class="flex items-center gap-1.5 flex-wrap">
-                <span class="text-[10px] text-zinc-600 uppercase tracking-wider font-semibold mr-1">{{ t('commandPalette.perimeter') }}</span>
+                <span class="text-[10px] text-content-faint uppercase tracking-wider font-semibold mr-1">{{ t('commandPalette.perimeter') }}</span>
                 <button
                   v-for="p in tasksStore.perimetresData"
                   :key="p.id"
                   class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all border font-mono"
                   :class="filterPerimetre === p.name
-                    ? 'border-zinc-500 bg-zinc-700 text-zinc-100'
-                    : 'border-zinc-700/60 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300'"
+                    ? 'border-content-subtle bg-surface-tertiary text-content-primary'
+                    : 'border-edge-default/60 text-content-subtle hover:border-content-faint hover:text-content-tertiary'"
                   :style="filterPerimetre === p.name
                     ? { color: agentFg(p.name), backgroundColor: agentBg(p.name), borderColor: agentFg(p.name) + '66' }
                     : {}"
@@ -227,17 +230,17 @@ function statutDot(statut: string): string {
           <!-- Results -->
           <div class="flex-1 overflow-y-auto min-h-0">
             <div v-if="filteredTasks.length === 0" class="flex flex-col items-center justify-center py-12 gap-2">
-              <svg viewBox="0 0 16 16" fill="currentColor" class="w-6 h-6 text-zinc-700">
+              <svg viewBox="0 0 16 16" fill="currentColor" class="w-6 h-6 text-content-dim">
                 <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
               </svg>
-              <p class="text-sm text-zinc-600">
+              <p class="text-sm text-content-faint">
                 {{ debouncedQuery || hasFilters ? t('commandPalette.noResults') : t('commandPalette.noTasksLoaded') }}
               </p>
             </div>
 
             <div v-else>
               <div class="px-4 py-1.5 flex items-center justify-between">
-                <p class="text-[10px] text-zinc-600 uppercase tracking-wider font-semibold">
+                <p class="text-[10px] text-content-faint uppercase tracking-wider font-semibold">
                   {{ filteredTasks.length }} {{ t('commandPalette.tasks', filteredTasks.length) }}
                 </p>
               </div>
@@ -246,8 +249,8 @@ function statutDot(statut: string): string {
                 :key="task.id"
                 class="flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors border-l-2"
                 :class="index === selectedIndex
-                  ? 'bg-zinc-800 border-violet-500'
-                  : 'border-transparent hover:bg-zinc-800/50 hover:border-zinc-600'"
+                  ? 'bg-surface-secondary border-violet-500'
+                  : 'border-transparent hover:bg-surface-secondary/50 hover:border-content-faint'"
                 @click="selectTask(task)"
                 @mouseenter="selectedIndex = index"
               >
@@ -257,8 +260,8 @@ function statutDot(statut: string): string {
                 <!-- Content -->
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
-                    <span class="text-xs font-mono text-zinc-600 shrink-0">#{{ task.id }}</span>
-                    <span class="text-sm text-zinc-100 truncate font-medium">{{ task.titre }}</span>
+                    <span class="text-xs font-mono text-content-faint shrink-0">#{{ task.id }}</span>
+                    <span class="text-sm text-content-primary truncate font-medium">{{ task.titre }}</span>
                   </div>
                   <div class="flex items-center gap-2 mt-0.5">
                     <span
@@ -286,10 +289,10 @@ function statutDot(statut: string): string {
           </div>
 
           <!-- Footer -->
-          <div class="px-4 py-2 border-t border-zinc-800 flex items-center gap-4 text-xs text-zinc-600 shrink-0">
-            <span><kbd class="px-1 py-0.5 bg-zinc-800 rounded border border-zinc-700">↑↓</kbd> {{ t('commandPalette.navigate') }}</span>
-            <span><kbd class="px-1 py-0.5 bg-zinc-800 rounded border border-zinc-700">↵</kbd> {{ t('commandPalette.open') }}</span>
-            <span class="ml-auto"><kbd class="px-1 py-0.5 bg-zinc-800 rounded border border-zinc-700">Ctrl+K</kbd> toggle</span>
+          <div class="px-4 py-2 border-t border-edge-subtle flex items-center gap-4 text-xs text-content-faint shrink-0">
+            <span><kbd class="px-1 py-0.5 bg-surface-secondary rounded border border-edge-default">↑↓</kbd> {{ t('commandPalette.navigate') }}</span>
+            <span><kbd class="px-1 py-0.5 bg-surface-secondary rounded border border-edge-default">↵</kbd> {{ t('commandPalette.open') }}</span>
+            <span class="ml-auto"><kbd class="px-1 py-0.5 bg-surface-secondary rounded border border-edge-default">Ctrl+K</kbd> toggle</span>
           </div>
 
         </div>

@@ -15,7 +15,12 @@ import App from './App.vue'
 import i18n from './plugins/i18n'
 import './assets/main.css'
 
-document.documentElement.classList.add('dark')
+// Apply theme early from localStorage to prevent flash of wrong theme
+if ((localStorage.getItem('theme') || 'dark') === 'dark') {
+  document.documentElement.classList.add('dark')
+} else {
+  document.documentElement.classList.remove('dark')
+}
 
 const app = createApp(App)
 app.use(createPinia())

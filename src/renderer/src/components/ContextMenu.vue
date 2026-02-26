@@ -31,15 +31,15 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
       @contextmenu.prevent="emit('close')"
     >
       <div
-        class="absolute bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl py-1 min-w-[188px]"
+        class="absolute bg-surface-primary border border-edge-default rounded-lg shadow-2xl py-1 min-w-[188px]"
         :style="{ left: `${x}px`, top: `${y}px` }"
         @click.stop
       >
         <template v-for="(item, i) in items" :key="i">
-          <div v-if="item.separator" class="my-1 border-t border-zinc-800" />
+          <div v-if="item.separator" class="my-1 border-t border-edge-subtle" />
           <button
             v-else
-            class="w-full flex items-center px-3 py-1.5 text-sm text-left text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors"
+            class="w-full flex items-center px-3 py-1.5 text-sm text-left text-content-tertiary hover:bg-surface-secondary hover:text-content-primary transition-colors"
             @click="item.action(); emit('close')"
           >
             {{ item.label }}

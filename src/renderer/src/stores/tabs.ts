@@ -70,8 +70,7 @@ export const useTabsStore = defineStore('tabs', () => {
   }
 
   function isAgentActive(agentName: string): boolean {
-    const tab = tabs.value.find(t => t.type === 'terminal' && t.agentName === agentName)
-    return tab ? !!tabActivity.value[tab.id] : false
+    return tabs.value.some(t => t.type === 'terminal' && t.agentName === agentName && tabActivity.value[t.id])
   }
 
   function hasAgentTerminal(agentName: string): boolean {
@@ -122,8 +121,14 @@ export const useTabsStore = defineStore('tabs', () => {
 
   function addTerminal(agentName?: string, wslDistro?: string, autoSend?: string, systemPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string): void {
     const id = `term-${Date.now()}`
-    const n = tabs.value.filter(t => t.type === 'terminal').length + 1
-    const title = agentName ?? `WSL ${n}`
+    let title: string
+    if (agentName) {
+      const sameAgent = tabs.value.filter(t => t.type === 'terminal' && t.agentName === agentName).length
+      title = sameAgent > 0 ? `${agentName} (${sameAgent + 1})` : agentName
+    } else {
+      const n = tabs.value.filter(t => t.type === 'terminal').length + 1
+      title = `WSL ${n}`
+    }
     tabs.value.push({
       id,
       type: 'terminal',

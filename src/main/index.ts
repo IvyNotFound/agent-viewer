@@ -21,6 +21,8 @@ import { registerTerminalHandlers } from './terminal'
 app.commandLine.appendSwitch('enable-gpu-rasterization')
 app.commandLine.appendSwitch('enable-zero-copy')
 app.commandLine.appendSwitch('disable-software-rasterizer')
+// Disable GPU shader disk cache to avoid Windows "access denied" errors on WSL
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
 // Optional: uncomment if GPU is blocked by Chromium blocklist
 // app.commandLine.appendSwitch('ignore-gpu-blocklist')
 // app.commandLine.appendSwitch('enable-native-gpu-memory-buffers')

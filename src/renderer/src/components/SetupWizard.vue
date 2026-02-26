@@ -47,7 +47,7 @@ Accès depuis les agents Claude Code :
 node scripts/dbq.js "SELECT id, titre, statut FROM tasks LIMIT 10"
 
 # Écriture
-node scripts/dbw.js "UPDATE tasks SET statut='en_cours' WHERE id=1"
+node scripts/dbw.js "UPDATE tasks SET statut='in_progress' WHERE id=1"
 \`\`\`
 
 Voir \`.claude/WORKFLOW.md\` pour le protocole complet.
@@ -78,10 +78,10 @@ async function handleSetup() {
 <template>
   <!-- Overlay -->
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="w-full max-w-md mx-4 bg-zinc-900 border border-zinc-700/60 rounded-2xl shadow-2xl overflow-hidden">
+    <div class="w-full max-w-md mx-4 bg-surface-primary border border-edge-default/60 rounded-2xl shadow-2xl overflow-hidden">
 
       <!-- Header -->
-      <div class="px-6 pt-6 pb-4 border-b border-zinc-800">
+      <div class="px-6 pt-6 pb-4 border-b border-edge-subtle">
         <div class="flex items-center gap-3">
           <!-- Icon -->
           <div
@@ -98,10 +98,10 @@ async function handleSetup() {
             </svg>
           </div>
           <div>
-            <h2 class="text-base font-semibold text-zinc-100">
+            <h2 class="text-base font-semibold text-content-primary">
               {{ hasCLAUDEmd ? t('setup.missingDb') : t('setup.newProject') }}
             </h2>
-            <p class="text-xs text-zinc-500 mt-0.5 font-mono truncate">{{ projectPath }}</p>
+            <p class="text-xs text-content-subtle mt-0.5 font-mono truncate">{{ projectPath }}</p>
           </div>
         </div>
       </div>
@@ -111,34 +111,34 @@ async function handleSetup() {
 
         <!-- Case B: CLAUDE.md present, no DB -->
         <template v-if="hasCLAUDEmd">
-          <p class="text-sm text-zinc-400 leading-relaxed">
+          <p class="text-sm text-content-muted leading-relaxed">
             {{ t('setup.hasCLAUDEmdDesc', {
               claudeMd: 'CLAUDE.md',
               projectDb: 'project.db',
               claudeDir: '.claude/'
             }) }}
           </p>
-          <div class="px-4 py-3 rounded-lg bg-zinc-800/60 border border-zinc-700/50 text-xs text-zinc-400 leading-relaxed">
+          <div class="px-4 py-3 rounded-lg bg-surface-secondary/60 border border-edge-default/50 text-xs text-content-muted leading-relaxed">
             <p>{{ t('setup.hasCLAUDEmdInfo') }}</p>
           </div>
         </template>
 
         <!-- Case A: Neither CLAUDE.md nor DB -->
         <template v-else>
-          <p class="text-sm text-zinc-400 leading-relaxed">
+          <p class="text-sm text-content-muted leading-relaxed">
             {{ t('setup.noFilesDesc', { claudeMd: 'CLAUDE.md' }) }}
           </p>
 
           <!-- Options -->
           <div class="space-y-2">
             <!-- Always: create DB -->
-            <div class="flex items-start gap-3 px-4 py-3 rounded-lg bg-zinc-800/60 border border-zinc-700/50">
+            <div class="flex items-start gap-3 px-4 py-3 rounded-lg bg-surface-secondary/60 border border-edge-default/50">
               <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 text-violet-400 mt-0.5 shrink-0">
                 <path fill-rule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clip-rule="evenodd"/>
               </svg>
               <div>
-                <p class="text-xs font-medium text-zinc-200">{{ t('setup.createProjectDb', { projectDb: '.claude/project.db' }) }}</p>
-                <p class="text-xs text-zinc-500 mt-0.5">{{ t('setup.createProjectDbDesc') }}</p>
+                <p class="text-xs font-medium text-content-secondary">{{ t('setup.createProjectDb', { projectDb: '.claude/project.db' }) }}</p>
+                <p class="text-xs text-content-subtle mt-0.5">{{ t('setup.createProjectDbDesc') }}</p>
               </div>
             </div>
 
@@ -146,7 +146,7 @@ async function handleSetup() {
             <label class="flex items-start gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all"
               :class="generateClaudeMd
                 ? 'bg-violet-950/20 border-violet-500/40'
-                : 'bg-zinc-800/40 border-zinc-700/50 hover:border-zinc-600'"
+                : 'bg-surface-secondary/40 border-edge-default/50 hover:border-content-faint'"
             >
               <input
                 v-model="generateClaudeMd"
@@ -154,8 +154,8 @@ async function handleSetup() {
                 class="mt-0.5 accent-violet-500 shrink-0"
               />
               <div>
-                <p class="text-xs font-medium text-zinc-200">{{ t('setup.generateClaudeMd', { claudeMd: 'CLAUDE.md' }) }}</p>
-                <p class="text-xs text-zinc-500 mt-0.5">{{ t('setup.generateClaudeMdDesc') }}</p>
+                <p class="text-xs font-medium text-content-secondary">{{ t('setup.generateClaudeMd', { claudeMd: 'CLAUDE.md' }) }}</p>
+                <p class="text-xs text-content-subtle mt-0.5">{{ t('setup.generateClaudeMdDesc') }}</p>
               </div>
             </label>
           </div>
@@ -170,7 +170,7 @@ async function handleSetup() {
       <!-- Footer -->
       <div class="px-6 pb-6 flex items-center justify-between gap-3">
         <button
-          class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-40"
+          class="text-xs text-content-subtle hover:text-content-tertiary transition-colors disabled:opacity-40"
           :disabled="creating"
           @click="emit('skip')"
         >

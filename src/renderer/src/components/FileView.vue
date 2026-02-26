@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useTasksStore } from '@renderer/stores/tasks'
+import { useSettingsStore } from '@renderer/stores/settings'
 import { EditorView, basicSetup } from 'codemirror'
 import { EditorState } from '@codemirror/state'
 import { keymap } from '@codemirror/view'
@@ -20,6 +21,7 @@ const { t } = useI18n()
 const props = defineProps<{ filePath: string; tabId: string }>()
 const tabsStore = useTabsStore()
 const tasksStore = useTasksStore()
+const settingsStore = useSettingsStore()
 
 const editorEl = ref<HTMLDivElement | null>(null)
 let view: EditorView | null = null
@@ -85,7 +87,7 @@ function buildExtensions(): Extension[] {
   const langExt = getLangExtension(props.filePath)
   const exts: Extension[] = [
     basicSetup,
-    oneDark,
+    ...(settingsStore.theme === 'dark' ? [oneDark] : []),
     keymap.of([
       indentWithTab,
       { key: 'Mod-s', run: () => { save(); return true } },
@@ -150,6 +152,17 @@ onUnmounted(() => {
   view = null
 })
 
+// Rebuild editor when theme changes to swap CodeMirror dark/light
+watch(() => settingsStore.theme, () => {
+  if (!view || !editorEl.value) return
+  const content = view.state.doc.toString()
+  view.destroy()
+  view = new EditorView({
+    state: EditorState.create({ doc: content, extensions: buildExtensions() }),
+    parent: editorEl.value,
+  })
+})
+
 watch(() => props.filePath, async () => {
   // Recreate editor with new language extension
   view?.destroy()
@@ -161,17 +174,17 @@ watch(() => props.filePath, async () => {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col overflow-hidden bg-zinc-900">
+  <div class="flex-1 flex flex-col overflow-hidden bg-surface-primary">
     <!-- Header -->
-    <div class="flex items-center gap-3 px-4 py-2 border-b border-zinc-800 shrink-0 min-h-[41px]">
-      <span class="text-xs font-mono text-zinc-300 truncate">{{ filePath.split(/[/\\]/).pop() }}</span>
+    <div class="flex items-center gap-3 px-4 py-2 border-b border-edge-subtle shrink-0 min-h-[41px]">
+      <span class="text-xs font-mono text-content-tertiary truncate">{{ filePath.split(/[/\\]/).pop() }}</span>
       <span v-if="isDirty" class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" :title="t('fileView.unsaved')" />
       <span class="ml-auto flex items-center gap-2 shrink-0">
         <span v-if="saved" class="text-xs text-emerald-400">{{ t('fileView.saved') }}</span>
         <span v-if="saveError" class="text-xs text-red-400">{{ saveError }}</span>
         <button
           v-if="!error && !loading"
-          class="px-2.5 py-1 text-xs rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors disabled:opacity-40"
+          class="px-2.5 py-1 text-xs rounded bg-surface-tertiary hover:bg-content-faint text-content-secondary transition-colors disabled:opacity-40"
           :disabled="saving || !isDirty"
           @click="save"
         >{{ saving ? t('common.saving') : t('common.save') }}</button>
@@ -180,11 +193,11 @@ watch(() => props.filePath, async () => {
 
     <!-- Content -->
     <div class="flex-1 overflow-hidden relative">
-      <div v-if="loading" class="absolute inset-0 flex items-center justify-center z-10 bg-zinc-900/80">
-        <span class="text-xs text-zinc-600 animate-pulse">{{ t('common.loading') }}</span>
+      <div v-if="loading" class="absolute inset-0 flex items-center justify-center z-10 bg-surface-primary/80">
+        <span class="text-xs text-content-faint animate-pulse">{{ t('common.loading') }}</span>
       </div>
       <div v-if="error" class="flex items-center justify-center h-full px-8">
-        <span class="text-xs text-zinc-500 italic text-center">{{ error }}</span>
+        <span class="text-xs text-content-subtle italic text-center">{{ error }}</span>
       </div>
       <div v-show="!error" ref="editorEl" class="h-full" />
     </div>
@@ -195,11 +208,11 @@ watch(() => props.filePath, async () => {
 /* Override One Dark background to match app palette */
 .cm-editor {
   height: 100%;
-  background-color: #18181b !important; /* zinc-900 */
+  background-color: var(--surface-primary) !important;
 }
 .cm-editor .cm-gutters {
-  background-color: #18181b !important;
-  border-right-color: #27272a !important; /* zinc-800 */
+  background-color: var(--surface-primary) !important;
+  border-right-color: var(--surface-secondary) !important;
 }
 .cm-editor.cm-focused {
   outline: none !important;

@@ -45,6 +45,7 @@ declare global {
       terminalWrite(id: string, data: string): Promise<void>
       terminalResize(id: string, cols: number, rows: number): Promise<void>
       terminalKill(id: string): Promise<void>
+      terminalIsAlive(id: string): Promise<boolean>
       onTerminalData(id: string, cb: (data: string) => void): () => void
       onTerminalExit(id: string, cb: () => void): () => void
       closeAgentSessions(dbPath: string, agentName: string): Promise<{ success: boolean; error?: string }>
@@ -104,6 +105,30 @@ function normalizeRow<T extends Record<string, unknown>>(row: T): T {
  *
  * @returns {object} Store instance with state and methods
  */
+// Shared SQL: agent list with latest session + last log timestamp
+const AGENT_CTE_SQL = `
+  WITH latest_sessions AS (
+    SELECT agent_id, statut, started_at,
+           ROW_NUMBER() OVER (PARTITION BY agent_id ORDER BY started_at DESC) as rn
+    FROM sessions
+  ),
+  max_logs AS (
+    SELECT agent_id, MAX(created_at) as last_log_at
+    FROM agent_logs GROUP BY agent_id
+  )
+  SELECT a.*, ls.statut as session_statut, ls.started_at as session_started_at, ml.last_log_at
+  FROM agents a
+  LEFT JOIN latest_sessions ls ON ls.agent_id = a.id AND ls.rn = 1
+  LEFT JOIN max_logs ml ON ml.agent_id = a.id
+  WHERE a.type != 'setup' ORDER BY a.name
+`
+
+const LOCKS_SQL = `
+  SELECT l.*, a.name as agent_name FROM locks l
+  JOIN agents a ON a.id = l.agent_id
+  WHERE l.released_at IS NULL
+`
+
 export const useTasksStore = defineStore('tasks', () => {
   const { push: pushToast } = useToast()
   const projectPath = ref<string | null>(localStorage.getItem('projectPath'))
@@ -265,27 +290,8 @@ export const useTasksStore = defineStore('tasks', () => {
           LEFT JOIN agents c ON c.id = t.agent_createur_id
           ORDER BY t.updated_at DESC
         `),
-        query<Agent>(`
-          WITH latest_sessions AS (
-            SELECT agent_id, statut, started_at,
-                   ROW_NUMBER() OVER (PARTITION BY agent_id ORDER BY started_at DESC) as rn
-            FROM sessions
-          ),
-          max_logs AS (
-            SELECT agent_id, MAX(created_at) as last_log_at
-            FROM agent_logs GROUP BY agent_id
-          )
-          SELECT a.*, ls.statut as session_statut, ls.started_at as session_started_at, ml.last_log_at
-          FROM agents a
-          LEFT JOIN latest_sessions ls ON ls.agent_id = a.id AND ls.rn = 1
-          LEFT JOIN max_logs ml ON ml.agent_id = a.id
-          WHERE a.type != 'setup' ORDER BY a.name
-        `),
-        query<Lock>(`
-          SELECT l.*, a.name as agent_name FROM locks l
-          JOIN agents a ON a.id = l.agent_id
-          WHERE l.released_at IS NULL
-        `),
+        query<Agent>(AGENT_CTE_SQL),
+        query<Lock>(LOCKS_SQL),
         query<{ statut: string; count: number }>(`
           SELECT statut, COUNT(*) as count FROM tasks GROUP BY statut
         `),
@@ -322,27 +328,8 @@ export const useTasksStore = defineStore('tasks', () => {
     if (document.visibilityState === 'hidden') return
     try {
       const [rawAgents, rawLocks] = await Promise.all([
-        query<Agent>(`
-          WITH latest_sessions AS (
-            SELECT agent_id, statut, started_at,
-                   ROW_NUMBER() OVER (PARTITION BY agent_id ORDER BY started_at DESC) as rn
-            FROM sessions
-          ),
-          max_logs AS (
-            SELECT agent_id, MAX(created_at) as last_log_at
-            FROM agent_logs GROUP BY agent_id
-          )
-          SELECT a.*, ls.statut as session_statut, ls.started_at as session_started_at, ml.last_log_at
-          FROM agents a
-          LEFT JOIN latest_sessions ls ON ls.agent_id = a.id AND ls.rn = 1
-          LEFT JOIN max_logs ml ON ml.agent_id = a.id
-          WHERE a.type != 'setup' ORDER BY a.name
-        `),
-        query<Lock>(`
-          SELECT l.*, a.name as agent_name FROM locks l
-          JOIN agents a ON a.id = l.agent_id
-          WHERE l.released_at IS NULL
-        `),
+        query<Agent>(AGENT_CTE_SQL),
+        query<Lock>(LOCKS_SQL),
       ])
       agents.value = rawAgents.map(normalizeRow)
       locks.value = rawLocks.map(normalizeRow)
@@ -399,10 +386,9 @@ export const useTasksStore = defineStore('tasks', () => {
   function startWatching(path: string): void {
     if (unsubDbChange) { unsubDbChange(); unsubDbChange = null }
     window.electronAPI.watchDb(path)
-    // File watcher triggers both refresh and agentRefresh (replaces 1s poll)
+    // File watcher triggers refresh (agentRefresh stays on 60s poll as safety net)
     unsubDbChange = window.electronAPI.onDbChanged(() => {
       refresh()
-      agentRefresh()
     })
   }
 

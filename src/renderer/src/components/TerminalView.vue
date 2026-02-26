@@ -272,54 +272,48 @@ onMounted(async () => {
     doFit()
   })
   resizeObserver.observe(container.value)
+})
 
-  // Pause/resume listeners when terminal becomes inactive/active
-  // This prevents memory leaks when multiple terminals are kept mounted
-  const isActive = computed(() => props.isActive ?? true)
-  let dataHandler: ((data: string) => void) | null = null
-  let exitHandler: (() => void) | null = null
-  let isPaused = false
+// Pause/resume listeners when terminal becomes inactive/active
+// Declared at top-level setup so Vue auto-stops the watcher on unmount
+const isActive = computed(() => props.isActive ?? true)
+let isPaused = false
 
-  function pauseListeners() {
-    if (isPaused || !ptyId) return
-    isPaused = true
-    // Note: unsubData stays subscribed to track activity even when paused
-    // Only unsubExit is cleaned up (terminal not writing anymore)
-    unsubExit?.()
-    unsubExit = null
-  }
+function pauseListeners() {
+  if (isPaused || !ptyId) return
+  isPaused = true
+  unsubExit?.()
+  unsubExit = null
+}
 
-  function resumeListeners() {
-    if (!isPaused || !ptyId) return
-    isPaused = false
-    // Re-subscribe exit handler only (unsubData stays active for activity tracking)
-    unsubExit = window.electronAPI.onTerminalExit(ptyId, () => {
-      term?.clear()
-      term?.write('\r\n\x1b[31m[session terminée]\x1b[0m\r\n')
-      const tab = tabsStore.tabs.find(t => t.id === props.tabId)
-      if (tab?.agentName && tasksStore.dbPath) {
-        window.electronAPI.closeAgentSessions(tasksStore.dbPath, tab.agentName)
+function resumeListeners() {
+  if (!isPaused || !ptyId) return
+  isPaused = false
+  unsubExit = window.electronAPI.onTerminalExit(ptyId, () => {
+    term?.clear()
+    term?.write('\r\n\x1b[31m[session terminée]\x1b[0m\r\n')
+    const tab = tabsStore.tabs.find(t => t.id === props.tabId)
+    if (tab?.agentName && tasksStore.dbPath) {
+      window.electronAPI.closeAgentSessions(tasksStore.dbPath, tab.agentName)
+    }
+  })
+}
+
+watch(isActive, (active) => {
+  if (active) {
+    resumeListeners()
+    requestAnimationFrame(() => {
+      doFit()
+      if (term) {
+        term.refresh(0, term.rows - 1)
+        term.scrollToBottom()
+        term.focus()
       }
     })
+  } else {
+    pauseListeners()
   }
-
-  watch(() => isActive.value, (active) => {
-    if (active) {
-      resumeListeners()
-      // Re-fit when becoming active
-      requestAnimationFrame(() => {
-        doFit()
-        if (term) {
-          term.refresh(0, term.rows - 1)
-          term.scrollToBottom()
-          term.focus()
-        }
-      })
-    } else {
-      pauseListeners()
-    }
-  }, { immediate: true })
-})
+}, { immediate: true })
 
 onUnmounted(() => {
   if (ptyId) window.electronAPI.terminalKill(ptyId)

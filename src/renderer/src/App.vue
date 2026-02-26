@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, defineAsyncComponent } from 'vue'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useTabsStore } from '@renderer/stores/tabs'
 import TitleBar from '@renderer/components/TitleBar.vue'
@@ -7,14 +7,17 @@ import Sidebar from '@renderer/components/Sidebar.vue'
 import BoardView from '@renderer/components/BoardView.vue'
 import DbSelector from '@renderer/components/DbSelector.vue'
 import TabBar from '@renderer/components/TabBar.vue'
-import TerminalView from '@renderer/components/TerminalView.vue'
 import TaskDetailModal from '@renderer/components/TaskDetailModal.vue'
-import ExplorerView from '@renderer/components/ExplorerView.vue'
-import FileView from '@renderer/components/FileView.vue'
-import AgentLogsView from '@renderer/components/AgentLogsView.vue'
 import ToastContainer from '@renderer/components/ToastContainer.vue'
-import CommandPalette from '@renderer/components/CommandPalette.vue'
-import SetupWizard from '@renderer/components/SetupWizard.vue'
+import ConfirmDialog from '@renderer/components/ConfirmDialog.vue'
+
+// Lazy-loaded heavy components (xterm.js, CodeMirror, etc.)
+const TerminalView = defineAsyncComponent(() => import('@renderer/components/TerminalView.vue'))
+const FileView = defineAsyncComponent(() => import('@renderer/components/FileView.vue'))
+const AgentLogsView = defineAsyncComponent(() => import('@renderer/components/AgentLogsView.vue'))
+const ExplorerView = defineAsyncComponent(() => import('@renderer/components/ExplorerView.vue'))
+const CommandPalette = defineAsyncComponent(() => import('@renderer/components/CommandPalette.vue'))
+const SetupWizard = defineAsyncComponent(() => import('@renderer/components/SetupWizard.vue'))
 import type { Task } from '@renderer/types'
 
 const store = useTasksStore()
@@ -40,7 +43,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="flex flex-col h-screen bg-zinc-900 text-zinc-100 select-none">
+  <div class="flex flex-col h-screen bg-surface-primary text-content-primary select-none">
     <TitleBar @open-search="isCommandPaletteOpen = true" />
     <div class="flex flex-1 overflow-hidden">
       <!-- Sidebar: only show when project is open -->
@@ -87,6 +90,7 @@ defineExpose({
     </div>
     <TaskDetailModal />
     <ToastContainer />
+    <ConfirmDialog />
     <CommandPalette v-model="isCommandPaletteOpen" @select-task="openTaskFromPalette" />
     <SetupWizard
       v-if="store.setupWizardTarget"

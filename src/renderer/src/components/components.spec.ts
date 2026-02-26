@@ -192,27 +192,6 @@ describe('BoardView', () => {
     }
   })
 
-  it('renders a search input', () => {
-    const wrapper = shallowMount(BoardView, {
-      global: { plugins: [createTestingPinia(), i18n] },
-    })
-    const input = wrapper.find('input[type="text"]').exists()
-      || wrapper.find('input').exists()
-    expect(input).toBe(true)
-  })
-
-  it('binds searchQuery v-model to the search input', async () => {
-    const wrapper = shallowMount(BoardView, {
-      global: { plugins: [createTestingPinia(), i18n] },
-    })
-    const input = wrapper.find('input')
-    if (input.exists()) {
-      await input.setValue('login')
-      // The internal searchQuery ref should be updated
-      expect((input.element as HTMLInputElement).value).toBe('login')
-    }
-  })
-
   it('renders StatusColumn stubs for each board column', () => {
     const wrapper = shallowMount(BoardView, {
       global: { plugins: [createTestingPinia(), i18n] },

@@ -362,3 +362,485 @@ Ce serait une migration en deux étapes : (1) forcer WAL sur `project.db`, (2) r
 - `sql.js` reste la dépendance canonique pour les lectures DB dans `ipc.ts` et `migration.ts`.
 - **Risque résiduel documenté** : le pattern read-copy-update (`readFile → modify → writeFile`) utilisé pour les écritures agent-viewer présente un risque de race condition si le MCP écrit simultanément. Ce risque est pré-existant et hors scope de cette évaluation.
 - Toute future proposition de migration vers `better-sqlite3` ou `node-sqlite3-wasm` doit passer par `arch` et référencer cette ADR.
+
+---
+
+## ADR-006 — Concurrence multi-instances agents dev
+
+**Date :** 2026-02-26 | **Statut :** accepté | **Auteur :** arch
+
+### Contexte
+
+Quand on lance N instances du même agent (ex. 2× `dev-front-vuejs`), les risques suivants existent :
+
+1. **Double prise de tâche** — deux instances lisent le même ticket `todo` et passent toutes deux `in_progress`
+2. **Conflit fichiers** — deux instances modifient les mêmes fichiers simultanément
+3. **Conflit git** — modifications sur la même branche/worktree → merge impossible
+4. **Perte d'écriture DB** — `dbw.js` fait `readFile → modify → writeFile` : si deux écritures se chevauchent, la dernière écrase la première (last-write-wins)
+
+**Mécanismes existants :**
+- Table `locks` : `(fichier, agent_id, session_id)` — conçue pour un agent à la fois, non testée en multi-instance
+- `dbw.js` : read-copy-update non atomique (ADR-005 risque résiduel documenté)
+- Session : chaque instance crée sa propre session → `session_id` sert naturellement d'identifiant d'instance
+
+### Décision
+
+#### 1. Prise de tâche atomique via claim-and-check
+
+Le pattern `UPDATE ... WHERE statut='todo'` dans `dbw.js` est pseudo-atomique (un seul processus écrit à la fois car `writeFileSync` prend un bref lock OS). Mais le vrai risque est le TOCTOU : deux instances **lisent** le ticket comme `todo` via `dbq.js`, puis chacune **écrit** `in_progress`.
+
+**Solution : claim-and-verify.**
+
+```
+# Étape 1 — Claim (chaque instance tente)
+node scripts/dbw.js "UPDATE tasks SET statut='in_progress', session_id=<MY_SESSION> WHERE id=<TASK_ID> AND statut='todo'"
+
+# Étape 2 — Verify (l'instance vérifie qu'elle a gagné)
+node scripts/dbq.js "SELECT session_id FROM tasks WHERE id=<TASK_ID> AND statut='in_progress'"
+# Si session_id ≠ MY_SESSION → la tâche a été prise par une autre instance → passer au ticket suivant
+```
+
+Ce pattern fonctionne car :
+- `writeFileSync` sérialise les écritures au niveau OS (verrou bref sur le fichier)
+- La vérification post-écriture détecte la perte de course : si l'autre instance a écrit après, son `session_id` sera présent
+- Pas de modification de `dbw.js` nécessaire
+
+**Règle workflow mise à jour :** remplacer `UPDATE tasks SET statut='in_progress'` par le pattern claim-and-verify ci-dessus dans la section "Étape 3" de WORKFLOW.md.
+
+#### 2. Locks fichiers renforcés — vérification obligatoire avant modification
+
+La table `locks` est déjà correcte structurellement. Le `session_id` distingue les instances.
+
+**Protocole renforcé :**
+
+```sql
+-- Avant de modifier un fichier, vérifier qu'aucun lock actif n'existe pour un autre session_id
+SELECT l.fichier, a.name, l.session_id
+FROM locks l JOIN agents a ON a.id = l.agent_id
+WHERE l.fichier = '<fichier>' AND l.released_at IS NULL AND l.session_id != <MY_SESSION>;
+
+-- Si résultat non vide → NE PAS modifier, passer à un autre fichier ou attendre
+-- Si vide → poser le lock
+INSERT OR REPLACE INTO locks (fichier, agent_id, session_id) VALUES ('<fichier>', :agent_id, :session_id);
+```
+
+**Limitation connue :** ce check-then-lock a aussi un TOCTOU minime (deux instances vérifient, puis lockent). Acceptable car :
+- La fenêtre de course est de quelques ms (query + insert)
+- En pratique, les agents dev travaillent sur des fichiers différents (périmètres distincts)
+- L'isolation git (point 3) est le filet de sécurité final
+
+#### 3. Isolation git — worktree par instance
+
+Chaque instance travaille dans un **git worktree dédié**, créé au démarrage de session.
+
+**Convention de nommage :**
+```
+Branche : agent/<agent-name>/s<session-id>
+Worktree : .claude/worktrees/s<session-id>
+```
+
+**Cycle de vie :**
+```bash
+# Création (démarrage session)
+git worktree add .claude/worktrees/s<session_id> -b agent/<agent-name>/s<session_id>
+
+# Travail — l'agent opère dans le worktree
+cd .claude/worktrees/s<session_id>
+
+# Nettoyage (fin de session)
+git worktree remove .claude/worktrees/s<session_id>
+# La branche reste pour merge/review
+```
+
+**Impact terminal.ts :** le `cwd` passé à `terminal:create` doit pointer vers le worktree si multi-instance est activé. Ajout d'un paramètre optionnel `workDir` dans l'IPC `terminal:create`.
+
+#### 4. Visibilité UI — distinction des instances
+
+Les sessions ont déjà un `id` unique. Pour distinguer les instances dans la UI :
+
+- **Sidebar / AgentLogsView** : afficher `agent-name #S<session_id>` quand plusieurs sessions du même agent sont `en_cours` simultanément
+- **BoardView / TaskCard** : la tâche affiche `session_id` en plus de `agent_name` quand assignée
+
+**Pas de nouvelle colonne DB** — le `session_id` existant suffit comme identifiant d'instance.
+
+#### 5. Workflow merge — review comme intégrateur
+
+```
+1. L'instance termine son travail → push sa branche agent/<name>/s<id>
+2. L'instance marque sa tâche `done`
+3. review-master (ou review) :
+   a. Vérifie le code sur la branche
+   b. Merge vers main (fast-forward ou merge commit selon conflits)
+   c. Si conflit → crée une tâche de résolution assignée à l'agent concerné
+   d. Archive la tâche
+4. Nettoyage : review supprime la branche après merge
+```
+
+**Ordre de merge :** par priorité de tâche (`critical > high > normal > low`), puis par `completed_at` (FIFO).
+
+### Modifications nécessaires
+
+| Composant | Modification | Effort |
+|---|---|---|
+| `WORKFLOW.md` | Étape 3 : claim-and-verify + locks renforcés | Faible |
+| `CLAUDE.md` | Section protocole agent : mention worktree multi-instance | Faible |
+| `terminal.ts` | Paramètre optionnel `workDir` dans `terminal:create` | Faible |
+| `LaunchSessionModal.vue` | Option "multi-instance" qui crée le worktree au lancement | Moyen |
+| Sidebar/BoardView | Affichage `#S<id>` conditionnel | Faible |
+| Aucun changement DB | `session_id` existant suffit | Nul |
+
+### Risques
+
+| Risque | Probabilité | Mitigation |
+|---|---|---|
+| TOCTOU sur claim-and-verify | Faible | Fenêtre de course < 100ms + verify post-write |
+| Conflits de merge entre worktrees | Moyenne | Review comme intégrateur + tâches de résolution |
+| Worktrees orphelins (crash agent) | Moyenne | Nettoyage au démarrage : `git worktree prune` |
+| `project.db` corruption (writes concurrents) | Faible | Sérialisé par `writeFileSync` OS-level lock |
+
+### Hors scope
+
+- Migration `dbw.js` vers un mécanisme transactionnel (WAL, better-sqlite3) — voir ADR-005
+- Orchestrateur centralisé (file de tâches, broker) — sur-ingénierie pour le volume actuel (< 10 instances simultanées)
+- Auto-scaling du nombre d'instances — décision manuelle de l'opérateur
+
+### Conséquences
+
+- Aucune migration DB nécessaire — les structures existantes (`sessions`, `locks`, `tasks.session_id`) suffisent
+- Le pattern claim-and-verify est rétrocompatible : un agent solo l'utilise sans effet secondaire
+- L'isolation worktree est opt-in : un agent solo continue de travailler sur `main` directement
+- Tickets d'implémentation à créer par `review` : un pour WORKFLOW.md, un pour `terminal.ts` workDir, un pour UI multi-instance
+
+---
+
+## ADR-007 — Support Windows natif pour les sessions Claude Code
+
+**Date :** 2026-02-26 | **Statut :** accepté | **Auteur :** arch
+
+### Contexte
+
+Actuellement, agent-viewer ne peut lancer des sessions Claude Code que via WSL (`wsl.exe` → `node-pty`). Le besoin est de supporter également le lancement de Claude Code installé nativement sous Windows (npm global → `claude.cmd`), sans WSL.
+
+**Analyse du code existant :**
+
+`terminal.ts` est 100% WSL-centric :
+- `spawn('wsl.exe', args, ...)` — hard-codé
+- `toWslPath()` — conversion Windows → `/mnt/c/...`
+- `startMemoryMonitoring()` — exécute `wsl.exe -- free -m`
+- `terminal:getClaudeInstances` — scan des distros WSL
+- `terminal:getClaudeProfiles` — scan `~/bin/` dans WSL
+- Env vars `wslRequiredVars` — spécifiques à `wsl.exe`
+- `gracefulKillPty()` — séquence Ctrl+C → `exit\r` → kill (adaptée bash WSL)
+
+**node-pty sur Windows :**
+node-pty supporte nativement Windows via ConPTY (Windows 10 1809+). `spawn('cmd.exe', ...)` ou `spawn('powershell.exe', ...)` fonctionne sans configuration supplémentaire. La compilation actuelle inclut déjà ConPTY (cf. MEMORY.md — Spectre mitigation fix).
+
+### Décision
+
+Ajouter un paramètre `env: 'wsl' | 'windows'` à l'IPC `terminal:create` et un nouveau handler `terminal:getWindowsClaudeInstances` pour la détection Windows.
+
+#### 1. IPC `terminal:create` — nouveau paramètre `env`
+
+**Signature actuelle :**
+```ts
+terminal:create(cols, rows, projectPath?, wslDistro?, systemPrompt?, userPrompt?, thinkingMode?, claudeCommand?, convId?)
+```
+
+**Problème :** ajouter `env` comme 10ème paramètre positionnel rend l'API illisible et fragile.
+
+**Solution : migration vers un objet options.**
+
+```ts
+// Nouveau payload — objet unique au lieu de paramètres positionnels
+interface TerminalCreatePayload {
+  cols: number
+  rows: number
+  env: 'wsl' | 'windows'        // NEW — défaut: 'wsl' pour rétrocompatibilité
+  projectPath?: string
+  wslDistro?: string             // ignoré si env='windows'
+  systemPrompt?: string
+  userPrompt?: string
+  thinkingMode?: string
+  claudeCommand?: string
+  convId?: string
+}
+```
+
+**Rétrocompatibilité :** le handler backend accepte les deux formes pendant une transition :
+```ts
+ipcMain.handle('terminal:create', async (event, ...args) => {
+  // Object form (new)
+  if (args.length === 1 && typeof args[0] === 'object') {
+    const payload = args[0] as TerminalCreatePayload
+    // ...
+  }
+  // Positional form (legacy) — env defaults to 'wsl'
+  else {
+    const [cols, rows, projectPath, wslDistro, ...rest] = args
+    // ...
+  }
+})
+```
+
+**Impact preload :**
+```ts
+// Avant — positional args
+terminalCreate: (cols, rows, projectPath?, wslDistro?, ...) => ...
+
+// Après — object payload
+terminalCreate: (payload: TerminalCreatePayload) => ipcRenderer.invoke('terminal:create', payload)
+
+// Legacy compat — supprimer dans 0.4.0
+terminalCreateLegacy: (cols, rows, ...) => ipcRenderer.invoke('terminal:create', cols, rows, ...)
+```
+
+#### 2. Branche Windows dans `terminal:create`
+
+Quand `env === 'windows'` :
+
+```ts
+// Shell = cmd.exe (PowerShell a des quirks d'encoding avec node-pty)
+const shell = 'cmd.exe'
+const shellArgs: string[] = []
+
+// Env minimal pour Windows natif
+const ptyEnv: Record<string, string> = {
+  TERM: 'xterm-256color',
+  PATH: process.env.PATH || '',
+  USERPROFILE: process.env.USERPROFILE || '',
+  APPDATA: process.env.APPDATA || '',
+  LOCALAPPDATA: process.env.LOCALAPPDATA || '',
+  SystemRoot: process.env.SystemRoot || 'C:\\Windows',
+  HOME: process.env.HOME || process.env.USERPROFILE || '',
+}
+
+// CWD = projectPath tel quel (pas de toWslPath)
+const cwd = projectPath ?? process.env.USERPROFILE ?? 'C:\\'
+
+const pty = spawn(shell, shellArgs, {
+  name: 'xterm-256color',
+  cols, rows, cwd,
+  env: ptyEnv,
+})
+```
+
+**Lancement Claude (agent session) :**
+```ts
+// Windows : claude.cmd est dans le PATH npm global
+// Pas de bash -lc, pas de temp script — cmd.exe exécute directement
+const cmd = claudeCommand ?? 'claude'
+const thinkingFlag = thinkingMode === 'disabled'
+  ? ' --settings "{\\"alwaysThinkingEnabled\\":false}"'
+  : ''
+
+if (validConvId) {
+  // Resume
+  pty.write(`${cmd} --resume ${validConvId}${thinkingFlag}\r`)
+} else if (systemPrompt && userPrompt) {
+  // System prompt injection : base64 via certutil (Windows natif)
+  // certutil -decode est disponible sur toutes les versions Windows 10+
+  const b64 = Buffer.from(systemPrompt).toString('base64')
+  const tempFile = join(tmpdir(), `agent-prompt-${id}.b64`)
+  const decodedFile = join(tmpdir(), `agent-prompt-${id}.txt`)
+  await writeFile(tempFile, b64, 'utf8')
+
+  // Séquence cmd.exe : décoder → lancer claude avec le contenu
+  pty.write(`certutil -decode "${tempFile}" "${decodedFile}" >nul 2>&1 && ` +
+    `for /f "delims=" %%a in ('type "${decodedFile}"') do ` +
+    `${cmd} --append-system-prompt "%%a"${thinkingFlag}\r`)
+  tempScriptWinPath = tempFile  // cleanup on exit
+}
+```
+
+**Alternative simplifiée (recommandée) :** pour Windows, écrire le system prompt dans un fichier texte et utiliser `--append-system-prompt-file` (print mode seulement — **à valider**). Sinon, utiliser la même approche que WSL avec un fichier temporaire :
+
+```ts
+// Écrire le prompt dans un fichier .txt
+const promptFile = join(tmpdir(), `agent-prompt-${id}.txt`)
+await writeFile(promptFile, systemPrompt, 'utf8')
+// Lancer claude avec le fichier comme argument
+pty.write(`${cmd} --append-system-prompt "${systemPrompt.replace(/"/g, '\\"')}"${thinkingFlag}\r`)
+```
+
+> **Note :** le mécanisme exact de system prompt injection Windows doit être validé lors de l'implémentation. Les deux approches (certutil decode, fichier direct) sont viables. La contrainte clé est que le system prompt peut contenir des caractères spéciaux CMD (`<`, `>`, `|`, `&`, `^`).
+
+**Recommandation d'implémentation :** écrire le system prompt dans un fichier `.txt` temporaire, puis utiliser `--append-system-prompt` avec un `type <file> | ...` pipe, ou plus simplement utiliser PowerShell pour cette étape uniquement :
+
+```ts
+// PowerShell one-liner pour injection sûre (pas de problème d'escaping CMD)
+const promptFile = join(tmpdir(), `agent-prompt-${id}.txt`)
+await writeFile(promptFile, systemPrompt, 'utf8')
+pty.write(`powershell -NoProfile -Command "& { $p = Get-Content '${promptFile}' -Raw; & ${cmd} --append-system-prompt $p${thinkingFlag} }"\r`)
+```
+
+#### 3. IPC `terminal:getWindowsClaudeInstances`
+
+Nouveau handler pour détecter Claude Code installé nativement sous Windows.
+
+```ts
+ipcMain.handle('terminal:getWindowsClaudeInstances', async () => {
+  try {
+    // where.exe claude → cherche claude.cmd dans le PATH
+    const { stdout } = await execPromise('where.exe', ['claude'])
+    const paths = stdout.split('\n').map(p => p.trim()).filter(Boolean)
+    if (paths.length === 0) return []
+
+    // Version check
+    const { stdout: verOut } = await execPromise('claude', ['--version'])
+    const version = verOut.trim().split(' ')[0]
+
+    // Scan for claude-*.cmd in the same directory as claude.cmd
+    const claudeDir = paths[0].replace(/\\claude\.cmd$/i, '').replace(/\\claude$/i, '')
+    let profiles = ['claude']
+    try {
+      const { stdout: dirOut } = await execPromise('cmd.exe', ['/c', `dir /b "${claudeDir}\\claude-*.cmd" 2>nul`])
+      const scripts = dirOut.split('\n')
+        .map(f => f.trim().replace(/\.cmd$/i, ''))
+        .filter(f => CLAUDE_CMD_REGEX.test(f))
+        .sort()
+      profiles = ['claude', ...scripts.filter(s => s !== 'claude')]
+    } catch { /* no claude-* scripts */ }
+
+    return [{
+      env: 'windows' as const,
+      label: 'Windows (natif)',
+      version,
+      profiles,
+    }]
+  } catch {
+    return []  // Claude not in PATH
+  }
+})
+```
+
+**Type retour :**
+```ts
+interface WindowsClaudeInstance {
+  env: 'windows'
+  label: string
+  version: string
+  profiles: string[]
+}
+```
+
+#### 4. Type unifié `ClaudeInstance`
+
+Étendre le type `ClaudeInstance` existant pour supporter les deux environnements :
+
+```ts
+export interface ClaudeInstance {
+  /** Environment type */
+  env: 'wsl' | 'windows'
+  /** WSL distro name (env='wsl') or 'Windows' (env='windows') */
+  distro: string
+  /** Claude Code version */
+  version: string
+  /** Whether this is the default/preferred instance */
+  isDefault: boolean
+  /** Wrapper scripts matching claude(-[a-z0-9-]+)? */
+  profiles: string[]
+}
+```
+
+**Rétrocompatibilité :** `terminal:getClaudeInstances` retourne les instances WSL avec `env: 'wsl'` ajouté. Un nouveau handler combiné `terminal:getAllClaudeInstances` appelle les deux en parallèle et retourne un tableau unifié.
+
+```ts
+ipcMain.handle('terminal:getAllClaudeInstances', async () => {
+  const [wslInstances, winInstances] = await Promise.all([
+    getWslClaudeInstances(),   // code actuel de terminal:getClaudeInstances
+    getWindowsClaudeInstances()
+  ])
+  return [...winInstances, ...wslInstances]  // Windows first (plus rapide à détecter)
+})
+```
+
+#### 5. Adaptations conditionnelles (env=windows)
+
+| Composant | Comportement WSL (inchangé) | Comportement Windows |
+|---|---|---|
+| `toWslPath()` | Convertit `C:\...` → `/mnt/c/...` | Non appelé — chemin Windows natif |
+| `startMemoryMonitoring()` | `wsl.exe -- free -m` | Skip — pas de `free` Windows |
+| `gracefulKillPty()` | Ctrl+C x2 → `exit\r` → kill | Ctrl+C x2 → kill (pas de `exit`) |
+| `CONV_ID_REGEX` | Inchangé | Inchangé (agnostique OS) |
+| `CLAUDE_CMD_REGEX` | `^claude(-[a-z0-9-]+)?$` | Identique — valide le nom, pas l'extension |
+| `PtyLaunchParams` | `wslDistro` stocké | `env: 'windows'` stocké |
+| Temp script cleanup | `unlink()` | `unlink()` identique |
+
+**Nouveau champ `PtyLaunchParams` :**
+```ts
+interface PtyLaunchParams {
+  env: 'wsl' | 'windows'       // NEW
+  cols: number
+  rows: number
+  projectPath?: string
+  wslDistro?: string            // WSL only
+  systemPrompt?: string
+  userPrompt?: string
+  thinkingMode?: string
+  claudeCommand?: string
+  convId?: string
+  detectedConvId?: string
+}
+```
+
+#### 6. LaunchSessionModal.vue — sélecteur Environnement
+
+**Flux UI :**
+
+1. Au mount, appeler `terminal:getAllClaudeInstances` (remplace `terminal:getClaudeInstances`)
+2. Le tableau retourné contient des instances WSL et Windows mélangées
+3. Afficher un badge `WSL` ou `WIN` à côté de chaque instance
+4. La sélection détermine automatiquement `env` + `distro`
+5. Si `env='windows'` est sélectionné → masquer les options WSL-only (distro)
+6. Transmettre `env` via `tabsStore.addTerminal` → `TerminalView` → `terminal:create`
+
+**Pas de sélecteur Environnement séparé** — l'environnement est déterminé par l'instance sélectionnée, ce qui simplifie l'UX (un seul choix au lieu de deux).
+
+#### 7. Store `tabs.ts` — propagation `env`
+
+Ajouter `env` à l'interface `Tab` :
+
+```ts
+export interface Tab {
+  // ... existing fields ...
+  env?: 'wsl' | 'windows'  // NEW — default 'wsl' for compat
+}
+```
+
+`addTerminal()` accepte `env` et le propage. `TerminalView` le lit pour construire le payload `terminal:create`.
+
+### Modifications nécessaires (résumé)
+
+| Fichier | Action | Effort |
+|---|---|---|
+| `src/main/terminal.ts` | Branche Windows dans `terminal:create`, nouveau handler `getWindowsClaudeInstances`, `getAllClaudeInstances`, skip memoryCheck si env=windows, gracefulKill adapté | Élevé |
+| `src/preload/index.ts` | `terminalCreate` migré en object payload, nouveau `getAllClaudeInstances` | Moyen |
+| `src/renderer/src/types/index.ts` | `ClaudeInstance.env` ajouté, `Tab.env` ajouté | Faible |
+| `src/renderer/src/components/LaunchSessionModal.vue` | Appel `getAllClaudeInstances`, badge env, transmission `env` | Moyen |
+| `src/renderer/src/components/TerminalView.vue` | Lire `tab.env`, construire object payload | Moyen |
+| `src/renderer/src/stores/tabs.ts` | `addTerminal` accepte `env` | Faible |
+| `src/main/terminal.spec.ts` | Tests branche Windows (spawn, env vars, gracefulKill) | Moyen |
+
+### Risques
+
+| Risque | Probabilité | Mitigation |
+|---|---|---|
+| `claude.cmd` pas dans le PATH Windows | Moyenne | `where.exe claude` check + message d'erreur UI clair |
+| System prompt escaping CMD (`<`, `>`, `\|`, `&`) | Élevée | Fichier temporaire + PowerShell one-liner pour injection |
+| ConPTY incompatibilité (Win 10 < 1809) | Très faible | Electron requiert Win 10+ de toute façon |
+| node-pty encoding UTF-8 sur cmd.exe | Faible | `chcp 65001` injecté au démarrage du PTY |
+| `gracefulKillPty` Windows : Ctrl+C peut ne pas être capté | Faible | `pty.kill()` fallback après timeout (déjà en place) |
+
+### Hors scope
+
+- Support PowerShell comme shell principal PTY (cmd.exe suffit comme wrapper)
+- Support macOS/Linux natif (pas de `wsl.exe` sur ces plateformes)
+- Auto-installation de Claude Code si absent du PATH
+- Migration de `terminal:getClaudeInstances` WSL existant (conservé pour compat)
+
+### Conséquences
+
+- `terminal:create` migre vers un object payload — breaking change pour le renderer mais pas de changement de protocole IPC (toujours `invoke`)
+- La migration positional → object est l'occasion de simplifier les signatures et d'éviter l'accumulation de paramètres optionnels
+- `ClaudeInstance` devient polymorphique (`env: 'wsl' | 'windows'`) — le renderer n'a pas besoin de connaître les détails d'implémentation
+- Tickets d'implémentation à créer par `review` : un back-electron (terminal.ts + preload), un front-vuejs (LaunchSessionModal + TerminalView + tabs store), un test-back-electron (terminal.spec.ts)

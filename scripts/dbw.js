@@ -31,7 +31,10 @@ function run(sql) {
     const buf = fs.readFileSync(dbPath)
     const db = new SQL.Database(buf)
     db.run(sql)
-    fs.writeFileSync(dbPath, Buffer.from(db.export()))
+    // T313: Atomic write — temp file + rename prevents partial reads
+    const tmpPath = dbPath + '.tmp'
+    fs.writeFileSync(tmpPath, Buffer.from(db.export()))
+    fs.renameSync(tmpPath, dbPath)
     db.close()
   })
 }

@@ -108,7 +108,7 @@ vi.mock('fs/promises', () => {
 
 // ── Import ipc.ts AFTER mocks are set up ───────────────────────────────────────
 // This triggers registerIpcHandlers() side effects via the mock above
-import { registerIpcHandlers } from './ipc'
+import { registerIpcHandlers, registerDbPath, registerProjectPath } from './ipc'
 
 // Helper to call a captured handler
 async function callHandler(channel: string, ...args: unknown[]) {
@@ -125,6 +125,11 @@ describe('IPC handlers — src/main/ipc.ts', () => {
     vi.clearAllMocks()
     // Re-register handlers (they are cleared by clearAllMocks on ipcMain.handle)
     registerIpcHandlers()
+    // T282: Register test DB paths as allowed for write operations
+    registerDbPath('/fake/project.db')
+    registerDbPath('/fake/db')
+    // T283: Register test project paths as allowed for write operations
+    registerProjectPath('/fake/project')
   })
 
   afterEach(() => {
@@ -145,7 +150,7 @@ describe('IPC handlers — src/main/ipc.ts', () => {
     })
 
     it('should block UPDATE queries', async () => {
-      const result = await callHandler('query-db', dbPath, "UPDATE tasks SET statut='terminé' WHERE id=1")
+      const result = await callHandler('query-db', dbPath, "UPDATE tasks SET statut='done' WHERE id=1")
       expect(result).toMatchObject({ success: false, error: expect.stringContaining('Write operations') })
     })
 
@@ -217,6 +222,12 @@ describe('IPC handlers — src/main/ipc.ts', () => {
 
     it('should block path outside allowedDir', async () => {
       const filePath = '/home/other-user/secret.txt'
+      const result = await callHandler('fs:writeFile', filePath, 'content', allowedDir)
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('not in allowed directory') })
+    })
+
+    it('should block prefix bypass (T318: /project-evil vs /project)', async () => {
+      const filePath = '/home/user/project-evil/exploit.sh'
       const result = await callHandler('fs:writeFile', filePath, 'content', allowedDir)
       expect(result).toMatchObject({ success: false, error: expect.stringContaining('not in allowed directory') })
     })
@@ -425,18 +436,9 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       expect(result).toHaveProperty('success')
     })
 
-    it('should return { success: false, error } when readFile throws (ENOENT)', async () => {
-      const { readFile } = await import('fs/promises')
-      vi.mocked(readFile).mockRejectedValueOnce(new Error('ENOENT: no such file'))
+    it('should return { success: false, error } when dbPath is not registered (T282)', async () => {
       const result = await callHandler('close-agent-sessions', '/invalid/db', 'dev-front')
-      expect(result).toMatchObject({ success: false, error: expect.stringContaining('ENOENT') })
-    })
-
-    it('should return { success: false, error } when readFile throws (EACCES)', async () => {
-      const { readFile } = await import('fs/promises')
-      vi.mocked(readFile).mockRejectedValueOnce(new Error('EACCES: permission denied'))
-      const result = await callHandler('close-agent-sessions', '/locked/db', 'dev-front')
-      expect(result).toMatchObject({ success: false })
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('DB_PATH_NOT_ALLOWED') })
     })
   })
 
@@ -448,11 +450,9 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       expect(result).toHaveProperty('success')
     })
 
-    it('should return { success: false, error } when readFile throws', async () => {
-      const { readFile } = await import('fs/promises')
-      vi.mocked(readFile).mockRejectedValueOnce(new Error('ENOENT'))
+    it('should return { success: false, error } when dbPath is not registered (T282)', async () => {
       const result = await callHandler('rename-agent', '/invalid/db', 1, 'new-name')
-      expect(result).toMatchObject({ success: false, error: expect.stringContaining('ENOENT') })
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('DB_PATH_NOT_ALLOWED') })
     })
   })
 
@@ -464,11 +464,9 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       expect(result).toHaveProperty('success')
     })
 
-    it('should return { success: false, error } when readFile throws', async () => {
-      const { readFile } = await import('fs/promises')
-      vi.mocked(readFile).mockRejectedValueOnce(new Error('ENOENT'))
+    it('should return { success: false, error } when dbPath is not registered (T282)', async () => {
       const result = await callHandler('update-agent-system-prompt', '/invalid/db', 1, 'prompt')
-      expect(result).toMatchObject({ success: false, error: expect.stringContaining('ENOENT') })
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('DB_PATH_NOT_ALLOWED') })
     })
   })
 
@@ -504,11 +502,9 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       expect(result).toHaveProperty('success')
     })
 
-    it('should return { success: false, error } when readFile throws', async () => {
-      const { readFile } = await import('fs/promises')
-      vi.mocked(readFile).mockRejectedValueOnce(new Error('ENOENT'))
+    it('should return { success: false, error } when dbPath is not registered (T282)', async () => {
       const result = await callHandler('update-agent-thinking-mode', '/invalid/db', 1, 'disabled')
-      expect(result).toMatchObject({ success: false, error: expect.stringContaining('ENOENT') })
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('DB_PATH_NOT_ALLOWED') })
     })
 
     it('should reject budget_tokens as an invalid thinking mode', async () => {
@@ -531,11 +527,9 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       expect(result).toHaveProperty('success')
     })
 
-    it('should return { success: false, error } when readFile throws', async () => {
-      const { readFile } = await import('fs/promises')
-      vi.mocked(readFile).mockRejectedValueOnce(new Error('ENOENT'))
+    it('should return { success: false, error } when dbPath is not registered (T282)', async () => {
       const result = await callHandler('update-agent', '/invalid/db', 1, { name: 'new-name' })
-      expect(result).toMatchObject({ success: false, error: expect.stringContaining('ENOENT') })
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('DB_PATH_NOT_ALLOWED') })
     })
   })
 
@@ -547,11 +541,9 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       expect(result).toHaveProperty('success')
     })
 
-    it('should return { success: false, error } when readFile throws', async () => {
-      const { readFile } = await import('fs/promises')
-      vi.mocked(readFile).mockRejectedValueOnce(new Error('ENOENT'))
+    it('should return { success: false, error } when dbPath is not registered (T282)', async () => {
       const result = await callHandler('set-config-value', '/invalid/db', 'key', 'value')
-      expect(result).toMatchObject({ success: false, error: expect.stringContaining('ENOENT') })
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('DB_PATH_NOT_ALLOWED') })
     })
   })
 
@@ -580,11 +572,9 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       expect(result).toHaveProperty('success')
     })
 
-    it('should return { success: false, error } when readFile throws', async () => {
-      const { readFile } = await import('fs/promises')
-      vi.mocked(readFile).mockRejectedValueOnce(new Error('ENOENT'))
+    it('should return { success: false, error } when dbPath is not registered (T282)', async () => {
       const result = await callHandler('session:setConvId', '/invalid/db', 1, validConvId)
-      expect(result).toMatchObject({ success: false, error: expect.stringContaining('ENOENT') })
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('DB_PATH_NOT_ALLOWED') })
     })
   })
 

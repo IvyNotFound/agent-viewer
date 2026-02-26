@@ -21,23 +21,23 @@ agent-viewer utilise un workflow basé sur des tickets stockés dans la base SQL
 ### Cycle de vie d'une tâche
 
 ```
-a_faire → en_cours → terminé → archivé
-                         ↘ (rejet) → a_faire
+todo → in_progress → done → archived
+                       ↘ (rejet) → todo
 ```
 
 | Statut | Description |
 |--------|-------------|
-| `a_faire` | Tâche à faire |
-| `en_cours` | Tâche en cours de traitement |
-| `terminé` | Tâche terminée, en attente de validation |
-| `archivé` | Tâche validée et archivée |
+| `todo` | Tâche à faire |
+| `in_progress` | Tâche en cours de traitement |
+| `done` | Tâche terminée, en attente de validation |
+| `archived` | Tâche validée et archivée |
 
 ### Étapes pour un développeur
 
-1. **Sélectionner une tâche** — Choisir une tâche `a_faire` assignée
+1. **Sélectionner une tâche** — Choisir une tâche `todo` assignée
 2. **Locker les fichiers** — Avant toute modification
 3. **Travailler sur la tâche** — Implémenter, tester
-4. **Terminer la tâche** — Commentaire de sortie obligatoire
+4. **Terminer la tâche** — Commentaire de sortie obligatoire (via `task_comments`)
 5. **Libérer les locks** — En fin de session
 
 ### Requêtes SQL utiles
@@ -46,10 +46,10 @@ a_faire → en_cours → terminé → archivé
 -- Voir les tâches assignées
 SELECT id, titre, statut FROM tasks
 WHERE agent_assigne_id = (SELECT id FROM agents WHERE name = 'dev-front-vuejs')
-AND statut IN ('a_faire', 'en_cours');
+AND statut IN ('todo', 'in_progress');
 
 -- Passer une tâche en cours
-UPDATE tasks SET statut = 'en_cours', started_at = CURRENT_TIMESTAMP
+UPDATE tasks SET statut = 'in_progress', started_at = CURRENT_TIMESTAMP
 WHERE id = 42;
 
 -- Locker un fichier
@@ -57,10 +57,12 @@ INSERT OR REPLACE INTO locks (fichier, agent_id, session_id)
 VALUES ('src/renderer/src/App.vue', 1, 10);
 
 -- Terminer une tâche
-UPDATE tasks SET statut = 'terminé',
-  commentaire = 'App.vue:L1-50 · Added new component · Next: add tests',
-  completed_at = CURRENT_TIMESTAMP
+UPDATE tasks SET statut = 'done', completed_at = CURRENT_TIMESTAMP
 WHERE id = 42;
+
+-- Commentaire de sortie (obligatoire)
+INSERT INTO task_comments (task_id, agent_id, contenu)
+VALUES (42, 1, 'App.vue:L1-50 · Added new component · Next: add tests');
 ```
 
 ---
@@ -164,11 +166,17 @@ docs: mise à jour du README avec les nouvelles commandes
 |---------|-------------|
 | `terminal:getWslUsers` | Liste les utilisateurs WSL disponibles (`/etc/passwd`) |
 | `terminal:getClaudeProfiles` | Liste les profils Claude dans `~/bin/` (WSL) |
+| `terminal:getClaudeInstances` | Détecte les distros WSL avec Claude Code installé |
 | `terminal:create` | Crée un PTY WSL (avec agent/resume/simple bash) |
 | `terminal:write` | Envoie des données au PTY |
 | `terminal:resize` | Redimensionne le PTY |
 | `terminal:kill` | Tue le PTY (graceful pour les sessions agents) |
 | `terminal:subscribe` | No-op — conservé pour re-souscription après hot-reload |
+| `terminal:relaunch` | Relance un PTY crashé avec les mêmes paramètres |
+| `terminal:dismissCrash` | Nettoie les paramètres de crash recovery |
+| `terminal:getActiveCount` | Retourne le nombre de PTY actifs |
+| `terminal:isAlive` | Vérifie si un PTY est toujours actif |
+| `terminal:getMemoryStatus` | Retourne l'utilisation mémoire WSL à la demande |
 
 ### Événements IPC (main → renderer)
 
@@ -177,8 +185,9 @@ docs: mise à jour du README avec les nouvelles commandes
 | `db-changed` | La DB a changé sur le disque (déclenche refresh) |
 | `window-state-changed` | Fenêtre maximisée/restaurée |
 | `terminal:data:<id>` | Données du PTY |
-| `terminal:exit:<id>` | PTY terminé |
+| `terminal:exit:<id>` | PTY terminé (inclut crash recovery info) |
 | `terminal:convId:<id>` | UUID de session Claude Code détecté au démarrage |
+| `terminal:memoryStatus` | Broadcast périodique de l'utilisation mémoire WSL |
 
 ### Ajouter un nouveau handler
 
@@ -220,17 +229,20 @@ npm run test:coverage   # Rapport de couverture Istanbul
 
 ```sql
 INSERT INTO tasks (
-  titre, description, commentaire,
+  titre, description,
   statut, agent_createur_id, agent_assigne_id, perimetre
 ) VALUES (
   'Titre de la tâche',
   'Description complète avec contexte et critères d''acceptation',
-  'Notes pour le développeur',
-  'a_faire',
+  'todo',
   (SELECT id FROM agents WHERE name = 'review'),
   (SELECT id FROM agents WHERE name = 'dev-front-vuejs'),
   'front-vuejs'
 );
+
+-- Commentaire optionnel (notes pour le développeur)
+INSERT INTO task_comments (task_id, agent_id, contenu)
+VALUES (last_insert_rowid(), (SELECT id FROM agents WHERE name = 'review'), 'Notes pour le développeur');
 ```
 
 ---

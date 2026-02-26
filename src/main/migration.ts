@@ -226,6 +226,50 @@ export function runRemoveThinkingModeBudgetTokensMigration(db: Database): boolea
 }
 
 /**
+ * Migration: Adds token tracking columns to the sessions table (task #314).
+ *
+ * Columns added:
+ *   - tokens_in         INTEGER DEFAULT 0   (input tokens consumed)
+ *   - tokens_out        INTEGER DEFAULT 0   (output tokens generated)
+ *   - tokens_cache_read INTEGER DEFAULT 0   (cache read tokens)
+ *   - tokens_cache_write INTEGER DEFAULT 0  (cache write tokens)
+ *
+ * Idempotent: checks PRAGMA table_info before running each ALTER TABLE.
+ *
+ * @returns number of columns actually added (0–4).
+ */
+export function runAddTokensToSessionsMigration(db: Database): number {
+  const colResult = db.exec('PRAGMA table_info(sessions)')
+  if (colResult.length === 0) return 0
+
+  const cols = new Set(colResult[0].values.map((r: unknown[]) => r[1] as string))
+
+  const toAdd: Array<[string, string]> = [
+    ['tokens_in', 'ALTER TABLE sessions ADD COLUMN tokens_in INTEGER DEFAULT 0'],
+    ['tokens_out', 'ALTER TABLE sessions ADD COLUMN tokens_out INTEGER DEFAULT 0'],
+    ['tokens_cache_read', 'ALTER TABLE sessions ADD COLUMN tokens_cache_read INTEGER DEFAULT 0'],
+    ['tokens_cache_write', 'ALTER TABLE sessions ADD COLUMN tokens_cache_write INTEGER DEFAULT 0'],
+  ]
+
+  const missing = toAdd.filter(([name]) => !cols.has(name))
+  if (missing.length === 0) return 0
+
+  // T327: Use SAVEPOINT for atomicity — if any ALTER fails, all are rolled back
+  db.run('SAVEPOINT add_token_cols')
+  try {
+    for (const [, sql] of missing) {
+      db.run(sql)
+    }
+    db.run('RELEASE SAVEPOINT add_token_cols')
+  } catch (err) {
+    db.run('ROLLBACK TO SAVEPOINT add_token_cols')
+    db.run('RELEASE SAVEPOINT add_token_cols')
+    throw err
+  }
+  return missing.length
+}
+
+/**
  * Migration: Adds the `claude_conv_id` column to the sessions table (task #218).
  *
  * Stores the Claude Code CLI conversation/session UUID so the app can resume
@@ -428,4 +472,108 @@ export function runTaskStatusMigration(db: Database): number {
   // and no valid session context exists during DB migration.
 
   return totalMigrated
+}
+
+/**
+ * Migration: Converts French session statut values to English (T329).
+ *
+ * Mapping:
+ *   en_cours → started
+ *   terminé  → completed
+ *   bloqué   → blocked
+ *
+ * Recreates the sessions table with English CHECK constraint if needed,
+ * then converts any remaining French data values.
+ *
+ * Idempotent: returns 0 if schema is already English and no French values remain.
+ *
+ * @returns number of sessions whose statut was converted.
+ */
+export function runSessionStatutI18nMigration(db: Database): number {
+  const schemaResult = db.exec(
+    "SELECT sql FROM sqlite_master WHERE type='table' AND name='sessions'"
+  )
+  if (schemaResult.length === 0 || schemaResult[0].values.length === 0) return 0
+
+  const tableSchema = schemaResult[0].values[0][0] as string
+  const isAlreadyEnglish = tableSchema.includes("'started'")
+
+  // Count remaining French values
+  const countResult = db.exec(
+    "SELECT COUNT(*) FROM sessions WHERE statut IN ('en_cours','terminé','bloqué')"
+  )
+  const frenchCount = countResult.length > 0 ? (countResult[0].values[0][0] as number) : 0
+
+  if (isAlreadyEnglish && frenchCount === 0) return 0
+
+  // If CHECK constraint is still French, recreate the table
+  if (!isAlreadyEnglish) {
+    // Get existing columns
+    const colResult = db.exec('PRAGMA table_info(sessions)')
+    if (colResult.length === 0) return 0
+    const existingCols = colResult[0].values.map((r: unknown[]) => r[1] as string)
+
+    const tempTable = 'sessions_backup_i18n'
+
+    db.run('SAVEPOINT session_i18n')
+    try {
+      db.run(`ALTER TABLE sessions RENAME TO ${tempTable}`)
+
+      // Recreate with English CHECK constraint
+      db.run(`
+        CREATE TABLE sessions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          agent_id INTEGER NOT NULL REFERENCES agents(id),
+          started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          ended_at DATETIME,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          statut TEXT NOT NULL DEFAULT 'started' CHECK(statut IN ('started','completed','blocked')),
+          summary TEXT,
+          claude_conv_id TEXT,
+          tokens_in INTEGER DEFAULT 0,
+          tokens_out INTEGER DEFAULT 0,
+          tokens_cache_read INTEGER DEFAULT 0,
+          tokens_cache_write INTEGER DEFAULT 0
+        )
+      `)
+
+      // All new-table columns: copy existing ones
+      const allNewCols = ['id', 'agent_id', 'started_at', 'ended_at', 'updated_at', 'statut',
+        'summary', 'claude_conv_id', 'tokens_in', 'tokens_out', 'tokens_cache_read', 'tokens_cache_write']
+      const colsToMigrate = allNewCols.filter(c => existingCols.includes(c))
+
+      const selectExprs = colsToMigrate.map(c =>
+        c === 'statut'
+          ? `CASE statut
+               WHEN 'en_cours' THEN 'started'
+               WHEN 'terminé'  THEN 'completed'
+               WHEN 'bloqué'   THEN 'blocked'
+               ELSE statut
+             END`
+          : c
+      )
+
+      db.run(`INSERT INTO sessions (${colsToMigrate.join(', ')}) SELECT ${selectExprs.join(', ')} FROM ${tempTable}`)
+      db.run(`DROP TABLE ${tempTable}`)
+
+      db.run('RELEASE SAVEPOINT session_i18n')
+
+      // All rows were migrated during table recreation
+      return frenchCount
+    } catch (err) {
+      db.run('ROLLBACK TO SAVEPOINT session_i18n')
+      db.run('RELEASE SAVEPOINT session_i18n')
+      throw err
+    }
+  }
+
+  // Schema is already English — just convert remaining French values
+  db.run(`UPDATE sessions SET statut = CASE statut
+    WHEN 'en_cours' THEN 'started'
+    WHEN 'terminé'  THEN 'completed'
+    WHEN 'bloqué'   THEN 'blocked'
+    ELSE statut
+  END WHERE statut IN ('en_cours','terminé','bloqué')`)
+
+  return db.getRowsModified()
 }

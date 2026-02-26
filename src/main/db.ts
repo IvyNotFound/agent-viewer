@@ -1,0 +1,418 @@
+/**
+ * Database infrastructure for agent-viewer
+ *
+ * Provides sql.js (WASM) caching, read/write helpers with concurrency
+ * protection, and security registries for allowed paths.
+ *
+ * @module db
+ */
+
+import { safeStorage } from 'electron'
+import { readFile, writeFile, rename, stat, copyFile, unlink } from 'fs/promises'
+import { join, dirname, resolve } from 'path'
+import {
+  runTaskStatusMigration,
+  runAddPriorityMigration,
+  runTaskStatutI18nMigration,
+  runAddConvIdToSessionsMigration,
+  runAddTokensToSessionsMigration,
+  runRemoveThinkingModeBudgetTokensMigration,
+  runDropCommentaireColumnMigration,
+  runSessionStatutI18nMigration
+} from './migration'
+
+// ── T282: Registry of allowed DB paths ────────────────────────────────────────
+const allowedDbPaths = new Set<string>()
+
+/** Register a dbPath as allowed for write operations. Called by project open/create handlers. */
+export function registerDbPath(dbPath: string | null | undefined): void {
+  if (dbPath) allowedDbPaths.add(resolve(dbPath))
+}
+
+/**
+ * Throws if dbPath was not registered via registerDbPath().
+ * @throws {Error} DB_PATH_NOT_ALLOWED if path is not in the allow-list.
+ */
+export function assertDbPathAllowed(dbPath: string): void {
+  if (!dbPath || !allowedDbPaths.has(resolve(dbPath))) {
+    throw new Error('DB_PATH_NOT_ALLOWED: ' + dbPath)
+  }
+}
+
+// ── T283: Registry of allowed project paths ──────────────────────────────────
+const allowedProjectPaths = new Set<string>()
+
+/** Register a projectPath as allowed for write operations. */
+export function registerProjectPath(projectPath: string | null | undefined): void {
+  if (projectPath) allowedProjectPaths.add(resolve(projectPath))
+}
+
+/**
+ * Throws if projectPath was not registered via registerProjectPath().
+ * @throws {Error} PROJECT_PATH_NOT_ALLOWED if path is not in the allow-list.
+ */
+export function assertProjectPathAllowed(projectPath: string): void {
+  if (!projectPath || !allowedProjectPaths.has(resolve(projectPath))) {
+    throw new Error('PROJECT_PATH_NOT_ALLOWED: ' + projectPath)
+  }
+}
+
+// ── DB Cache ─────────────────────────────────────────────────────────────────
+interface DbCacheEntry {
+  buf: Buffer
+  mtime: number
+  lastAccess: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: any | null // Cached sql.js Database instance (lazily created)
+}
+const dbCache = new Map<string, DbCacheEntry>()
+
+const CACHE_TTL_MS = 60000
+const MAX_CACHE_ENTRIES = 3
+
+function evictStaleCacheEntries(): void {
+  const now = Date.now()
+  for (const [path, entry] of dbCache.entries()) {
+    if (now - entry.lastAccess > CACHE_TTL_MS) {
+      if (entry.db) { try { entry.db.close() } catch { /* already closed */ } }
+      dbCache.delete(path)
+    }
+  }
+}
+
+function enforceMaxCacheEntries(): void {
+  if (dbCache.size >= MAX_CACHE_ENTRIES) {
+    let oldestPath: string | null = null
+    let oldestTime = Infinity
+    for (const [path, entry] of dbCache.entries()) {
+      if (entry.lastAccess < oldestTime) {
+        oldestTime = entry.lastAccess
+        oldestPath = path
+      }
+    }
+    if (oldestPath) {
+      const entry = dbCache.get(oldestPath)
+      if (entry?.db) { try { entry.db.close() } catch { /* already closed */ } }
+      dbCache.delete(oldestPath)
+    }
+  }
+}
+
+/**
+ * Gets database buffer with caching based on file mtime.
+ * Avoids re-reading disk if file hasn't changed.
+ */
+export async function getDbBuffer(dbPath: string): Promise<Buffer> {
+  evictStaleCacheEntries()
+  enforceMaxCacheEntries()
+
+  try {
+    const statResult = await stat(dbPath)
+    const mtimeMs = statResult.mtimeMs
+    const now = Date.now()
+
+    const cached = dbCache.get(dbPath)
+    if (cached && cached.mtime === mtimeMs) {
+      cached.lastAccess = now
+      return cached.buf
+    }
+
+    if (cached?.db) { try { cached.db.close() } catch { /* already closed */ } }
+
+    const buf = await readFile(dbPath)
+    dbCache.set(dbPath, { buf, mtime: mtimeMs, lastAccess: now, db: null })
+    return buf
+  } catch {
+    return readFile(dbPath)
+  }
+}
+
+// ── sql.js singleton ─────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let SQL: any = null
+
+export async function getSqlJs() {
+  if (!SQL) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const initSqlJs = require('sql.js')
+    const wasmDir = dirname(require.resolve('sql.js'))
+    SQL = await initSqlJs({
+      locateFile: (file: string) => join(wasmDir, file)
+    })
+  }
+  return SQL
+}
+
+// ── T313: Per-path write mutex ───────────────────────────────────────────────
+const writeMutex = new Map<string, Promise<unknown>>()
+
+/**
+ * Shared write helper — reads via cached buffer, runs mutation, exports + writes.
+ * Uses per-path mutex and atomic write (temp file + rename).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function writeDb<T = void>(dbPath: string, fn: (db: any) => T): Promise<T> {
+  const prev = writeMutex.get(dbPath) ?? Promise.resolve()
+  let release: () => void
+  const gate = new Promise<void>((r) => { release = r })
+  writeMutex.set(dbPath, gate)
+
+  try {
+    await prev
+    const sqlJs = await getSqlJs()
+    const buf = await getDbBuffer(dbPath)
+    const db = new sqlJs.Database(buf)
+    try {
+      const result = fn(db)
+      const exported = db.export()
+      const tmpPath = dbPath + '.tmp'
+      await writeFile(tmpPath, Buffer.from(exported))
+      await rename(tmpPath, dbPath)
+      const entry = dbCache.get(dbPath)
+      if (entry?.db) { try { entry.db.close() } catch { /* ignore */ } }
+      if (entry) { entry.db = null }
+      return result
+    } finally {
+      db.close()
+    }
+  } finally {
+    release!()
+    if (writeMutex.get(dbPath) === gate) writeMutex.delete(dbPath)
+  }
+}
+
+// ── queryLive ────────────────────────────────────────────────────────────────
+
+export async function queryLive(dbPath: string, query: string, params: unknown[]): Promise<unknown[]> {
+  return queryLiveAttempt(dbPath, query, params, true)
+}
+
+async function queryLiveAttempt(
+  dbPath: string, query: string, params: unknown[], canRetry: boolean
+): Promise<unknown[]> {
+  const sqlJs = await getSqlJs()
+  const buf = await getDbBuffer(dbPath)
+
+  const entry = dbCache.get(dbPath)
+  let db = entry?.db
+  if (!db) {
+    db = new sqlJs.Database(buf)
+    if (entry) entry.db = db
+  }
+
+  try {
+    const stmt = db.prepare(query)
+    const rows: Record<string, unknown>[] = []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    stmt.bind(params as any)
+    while (stmt.step()) {
+      rows.push(stmt.getAsObject())
+    }
+    stmt.free()
+    return rows
+  } catch (err) {
+    if (entry && entry.db === db) {
+      try { db.close() } catch { /* ignore */ }
+      entry.db = null
+    }
+    const msg = String(err)
+    if (canRetry && (msg.includes('malformed') || msg.includes('not a database'))) {
+      dbCache.delete(dbPath)
+      await new Promise((r) => setTimeout(r, 100))
+      return queryLiveAttempt(dbPath, query, params, false)
+    }
+    throw err
+  }
+}
+
+// ── Migration ────────────────────────────────────────────────────────────────
+
+export async function migrateDb(dbPath: string): Promise<{ migrated: number }> {
+  const backupPath = `${dbPath}.bak`
+  await copyFile(dbPath, backupPath)
+
+  const sqlJs = await getSqlJs()
+  const buf = await readFile(dbPath)
+  const db = new sqlJs.Database(buf)
+  let changed = false
+
+  try {
+    const tasksColsBefore = db.exec('PRAGMA table_info(tasks)')
+    const hadCommentaire = tasksColsBefore.length > 0 &&
+      tasksColsBefore[0].values.some((r: unknown[]) => r[1] === 'commentaire')
+    const commentaireMigrated = runDropCommentaireColumnMigration(db)
+    if (hadCommentaire) {
+      changed = true
+      console.log(`[migrateDb] dropped tasks.commentaire column (${commentaireMigrated} rows migrated to task_comments)`)
+    }
+
+    const colResult = db.exec('PRAGMA table_info(agents)')
+    const existingCols = new Set<string>()
+    if (colResult.length > 0) {
+      for (const row of colResult[0].values) existingCols.add(row[1] as string)
+    }
+    if (!existingCols.has('system_prompt')) {
+      db.run('ALTER TABLE agents ADD COLUMN system_prompt TEXT')
+      changed = true
+    }
+    if (!existingCols.has('system_prompt_suffix')) {
+      db.run('ALTER TABLE agents ADD COLUMN system_prompt_suffix TEXT')
+      changed = true
+    }
+    if (!existingCols.has('thinking_mode')) {
+      db.run("ALTER TABLE agents ADD COLUMN thinking_mode TEXT CHECK(thinking_mode IN ('auto', 'disabled'))")
+      changed = true
+    }
+    if (!existingCols.has('allowed_tools')) {
+      db.run('ALTER TABLE agents ADD COLUMN allowed_tools TEXT')
+      changed = true
+    }
+
+    const tableResult = db.exec("SELECT name FROM sqlite_master WHERE type='table'")
+    const existingTables = new Set<string>()
+    if (tableResult.length > 0) {
+      for (const row of tableResult[0].values) existingTables.add(row[0] as string)
+    }
+    if (!existingTables.has('config')) {
+      db.run(`CREATE TABLE config (
+        key        TEXT NOT NULL PRIMARY KEY,
+        value      TEXT NOT NULL,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`)
+      db.run(`INSERT INTO config (key, value) VALUES
+        ('claude_md_commit', ''),
+        ('schema_version', '2'),
+        ('github_token', '')`)
+      changed = true
+    } else {
+      db.run("INSERT OR IGNORE INTO config (key, value) VALUES ('github_token', '')")
+      changed = true
+    }
+
+    if (!existingTables.has('perimetres')) {
+      db.run(`CREATE TABLE perimetres (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        name        TEXT NOT NULL UNIQUE,
+        dossier     TEXT,
+        techno      TEXT,
+        description TEXT,
+        actif       INTEGER NOT NULL DEFAULT 1,
+        created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`)
+      db.run(`INSERT INTO perimetres (name, dossier, techno, description) VALUES
+        ('front-vuejs',   'renderer/', 'Vue 3 + TypeScript + Tailwind CSS', 'Interface utilisateur Electron'),
+        ('back-electron', 'main/',     'Electron + Node.js + SQLite',       'Process principal, IPC, accès DB'),
+        ('global',        '',          '—',                                  'Transversal, aucun périmètre spécifique')`)
+      changed = true
+    }
+
+    db.run('CREATE INDEX IF NOT EXISTS idx_sessions_agent_id ON sessions(agent_id)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_sessions_started_at ON sessions(started_at DESC)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_agent_logs_agent_id ON agent_logs(agent_id)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_agent_logs_created_at ON agent_logs(created_at DESC)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_locks_released_at ON locks(released_at)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_tasks_updated_at ON tasks(updated_at DESC)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_tasks_agent_assigne ON tasks(agent_assigne_id)')
+    changed = true
+
+    const convIdAdded = runAddConvIdToSessionsMigration(db)
+    if (convIdAdded) {
+      changed = true
+      console.log('[migrateDb] added claude_conv_id column to sessions')
+    }
+
+    const tokensAdded = runAddTokensToSessionsMigration(db)
+    if (tokensAdded > 0) {
+      changed = true
+      console.log(`[migrateDb] added ${tokensAdded} token tracking columns to sessions`)
+    }
+
+    const priorityAdded = runAddPriorityMigration(db)
+    if (priorityAdded) {
+      changed = true
+      console.log('[migrateDb] added priority column to tasks')
+    }
+
+    const i18nMigrated = runTaskStatutI18nMigration(db)
+    if (i18nMigrated > 0) {
+      changed = true
+      console.log(`[migrateDb] migrated ${i18nMigrated} tasks statuts from French to English`)
+    }
+
+    const thinkingModeMigrated = runRemoveThinkingModeBudgetTokensMigration(db)
+    if (thinkingModeMigrated) {
+      changed = true
+      console.log('[migrateDb] removed budget_tokens from agents.thinking_mode CHECK constraint')
+    }
+
+    const legacyMigrated = runTaskStatusMigration(db)
+    if (legacyMigrated > 0) {
+      changed = true
+      console.log(`[migrateDb] migrated ${legacyMigrated} tasks via legacy runTaskStatusMigration`)
+    }
+
+    // --- sessions: statut French → English (T329) ---
+    const sessionsMigrated = runSessionStatutI18nMigration(db)
+    if (sessionsMigrated > 0) {
+      changed = true
+      console.log(`[migrateDb] migrated ${sessionsMigrated} sessions statuts from French to English`)
+    }
+
+    if (changed) {
+      const exported = db.export()
+      await writeFile(dbPath, Buffer.from(exported))
+      console.log('[migrateDb] schema updated:', dbPath)
+    }
+
+    await unlink(backupPath).catch(() => {
+      console.warn('[migrateDb] could not delete backup:', backupPath)
+    })
+
+    const migrated = i18nMigrated + legacyMigrated + sessionsMigrated
+    return { migrated }
+  } catch (err) {
+    console.error('[migrateDb] migration failed, backup kept at:', backupPath, err)
+    throw err
+  } finally {
+    db.close()
+  }
+}
+
+// ── Token encryption (safeStorage) ───────────────────────────────────────────
+
+export function encryptToken(plaintext: string): string {
+  if (!plaintext) return ''
+  try {
+    if (safeStorage.isEncryptionAvailable()) {
+      const encrypted = safeStorage.encryptString(plaintext)
+      return encrypted.toString('base64')
+    }
+  } catch (err) {
+    console.warn('[IPC] safeStorage encryption failed:', err)
+  }
+  return plaintext
+}
+
+export function decryptToken(ciphertext: string): string {
+  if (!ciphertext) return ''
+  try {
+    if (safeStorage.isEncryptionAvailable()) {
+      const buffer = Buffer.from(ciphertext, 'base64')
+      return safeStorage.decryptString(buffer)
+    }
+  } catch (err) {
+    console.warn('[IPC] safeStorage decryption failed:', err)
+  }
+  return ciphertext
+}
+
+// ── SQL write guard ──────────────────────────────────────────────────────────
+
+export const FORBIDDEN_WRITE_PATTERN = /\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE|ATTACH|DETACH|VACUUM)\b/i
+
+/** Clear cached DB entry for a given path (used when unwatching). */
+export function clearDbCacheEntry(dbPath: string): void {
+  const entry = dbCache.get(dbPath)
+  if (entry?.db) { try { entry.db.close() } catch { /* ignore */ } }
+  dbCache.delete(dbPath)
+}

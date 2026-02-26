@@ -6,6 +6,7 @@
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving…",
+    "confirm": "Confirm",
     "noProject": "No project open"
   },
   "board": {
@@ -40,6 +41,19 @@
     "prevPage": "Previous page",
     "nextPage": "Next page",
     "refresh": "Refresh"
+  },
+  "tokenStats": {
+    "logsTab": "Logs",
+    "title": "Token Stats",
+    "global": "Global",
+    "today": "Today (24h)",
+    "lastHour": "Last hour",
+    "cache": "Cache",
+    "perAgent": "Per agent",
+    "perSession": "Per session (last 50)",
+    "agent": "Agent",
+    "date": "Date",
+    "noData": "No data"
   },
   "settings": {
     "title": "Settings",
@@ -146,7 +160,11 @@
     "unsaved": "Unsaved changes",
     "closeFileTitle": "Close file",
     "closeFileMessage": "{title} has unsaved changes.",
-    "closeFileDetail": "Close anyway? Changes will be lost."
+    "closeFileDetail": "Close anyway? Changes will be lost.",
+    "closeTerminalTitle": "Active session",
+    "closeTerminalMessage": "This session is still active. Close anyway?",
+    "closeFileConfirm": "Close anyway",
+    "closeTerminalConfirm": "Close"
   },
   "agent": {
     "editTitle": "Edit agent",

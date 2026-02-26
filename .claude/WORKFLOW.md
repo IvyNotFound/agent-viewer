@@ -1,181 +1,121 @@
 # Workflow tickets — SQL complet
 
-> Référence complète des 6 étapes. Résumé rapide → `CLAUDE.md`.
-> **Statuts valides :** `todo` → `in_progress` → `done` → `archived` (retour `todo` si rejeté)
-> **Input session :** écrit en fin de session (`sessions.summary`), lu au démarrage suivant.
+> Statuts : `todo` → `in_progress` → `done` → `archived` (rejeté → retour `todo`)
+> Résumé rapide → `CLAUDE.md` · Input session → `sessions.summary`
 
 ---
 
-## Exécution des requêtes
+## Schéma (project.db)
+
+> **Consulter avant d'écrire du SQL.** Ne jamais deviner les noms de colonnes.
+
+```
+agents          (id PK, name, type, perimetre, system_prompt, system_prompt_suffix, thinking_mode, allowed_tools, created_at)
+sessions        (id PK, agent_id→agents, started_at, ended_at, updated_at, statut, summary, claude_conv_id)
+tasks           (id PK, titre, description, statut, agent_createur_id→agents, agent_assigne_id→agents, agent_valideur_id→agents, parent_task_id→tasks, session_id→sessions, perimetre, effort, priority, created_at, updated_at, started_at, completed_at, validated_at)
+task_comments   (id PK, task_id→tasks, agent_id→agents, contenu, created_at)
+task_links      (id PK, from_task→tasks, to_task→tasks, type, created_at)
+locks           (id PK, fichier, agent_id→agents, session_id→sessions, created_at, released_at)
+agent_logs      (id PK, session_id→sessions, agent_id→agents, niveau, action, detail, fichiers, created_at)
+perimetres      (id PK, name, dossier, techno, description, actif, created_at)
+config          (key PK, value, updated_at)
+```
+
+> **Pièges :** `tasks` n'a **pas** `agent_id` → utiliser `agent_assigne_id`. `task_comments.agent_id` (pas `auteur_agent_id`).
+
+---
+
+## Exécution
 
 ```bash
-# Lecture
-node scripts/dbq.js "<VOTRE SQL>"
-
-# Écriture
-node scripts/dbw.js "<VOTRE SQL>"
+node scripts/dbq.js "<SQL>"   # lecture (sql.js + fs.readFile, bypass lock)
+node scripts/dbw.js "<SQL>"   # écriture
 ```
-
-> Implémentés via `sql.js` + `fs.readFile` — bypasse les file locks Windows (l'app tient la DB ouverte). Disponible après `npm install`.
 
 ---
 
-## Étape 1 — Review crée le ticket
-
-> Acteur : `review` ou `review-master`
+## Primitives SQL réutilisables
 
 ```sql
-INSERT INTO tasks (
-    titre, description,
-    statut, agent_createur_id, agent_assigne_id, perimetre
-) VALUES (
-    '<titre court et explicite>',
-    '<description complète : contexte, symptômes, hypothèses, fichiers concernés, critères d''acceptation>',
-    'todo',
-    (SELECT id FROM agents WHERE name = '<review>'),
-    (SELECT id FROM agents WHERE name = '<agent-cible>'),
-    '<perimetre>'
-);
+-- Commenter un ticket
+INSERT INTO task_comments (task_id, agent_id, contenu) VALUES (:task_id, :agent_id, '<contenu>');
 
--- Points d'attention (risques, dépendances, ce que review vérifiera)
-INSERT INTO task_comments (task_id, agent_id, contenu)
-VALUES (last_insert_rowid(), (SELECT id FROM agents WHERE name = '<review>'), '<commentaire review>');
+-- Locker un fichier (AVANT modification)
+INSERT OR REPLACE INTO locks (fichier, agent_id, session_id) VALUES ('<fichier>', :agent_id, :session_id);
 
-INSERT INTO agent_logs (session_id, agent_id, niveau, action, detail)
-VALUES (:session_id, :agent_id, 'info', 'Task created', 'Task #<id>: <titre>');
+-- Libérer tous les locks
+UPDATE locks SET released_at = CURRENT_TIMESTAMP WHERE agent_id = :agent_id AND session_id = :session_id AND released_at IS NULL;
+
+-- Log (optionnel, omettre si contexte limité)
+INSERT INTO agent_logs (session_id, agent_id, niveau, action, detail) VALUES (:session_id, :agent_id, 'info', '<action>', '<detail>');
 ```
-
-> **Description max verbeuse.** Un agent reprenant le ticket sans contexte doit pouvoir le réaliser seul.
 
 ---
 
-## Étape 2 — L'agent démarre sa session
+## Étapes
 
-> Acteur : agent assigné — obligatoire à chaque début de session.
+### 1. Review crée le ticket
 
 ```sql
--- 1. Enregistrement agent (idempotent)
-INSERT OR IGNORE INTO agents (name, type, perimetre) VALUES ('<agent>', '<type>', '<perimetre>');
-
--- 2. Nouvelle session → conserver :session_id et :agent_id
-INSERT INTO sessions (agent_id) VALUES ((SELECT id FROM agents WHERE name = '<agent>'));
-
--- 3. Charger session précédente + tâches en une seule passe
-node scripts/dbstart.js <agent>
-
--- 4. Vérifier les locks actifs (conflits potentiels)
-SELECT l.fichier, a.name FROM locks l
-JOIN agents a ON a.id = l.agent_id
-WHERE l.released_at IS NULL;
-
--- 5. (optionnel) Log démarrage — omettre si contexte limité
-INSERT INTO agent_logs (session_id, agent_id, niveau, action, detail)
-VALUES (:session_id, :agent_id, 'info', 'Session started', 'Perimetre: <perimetre>.');
+INSERT INTO tasks (titre, description, statut, agent_createur_id, agent_assigne_id, perimetre)
+VALUES ('<titre>', '<description complète : contexte, symptômes, critères acceptation>', 'todo',
+  (SELECT id FROM agents WHERE name = '<review>'),
+  (SELECT id FROM agents WHERE name = '<agent-cible>'), '<perimetre>');
+-- + commentaire (risques, dépendances) via primitive
 ```
 
-> **Règle d'autonomie :** tâches trouvées → commencer immédiatement. Questions de démarrage seulement si aucune tâche ET type/périmètre non inférables.
+> Description max verbeuse — un agent sans contexte doit pouvoir réaliser le ticket seul.
 
----
+### 2. L'agent démarre sa session
 
-## Étape 3 — L'agent prend le ticket
+```bash
+node scripts/dbstart.js <agent> [type] [perimetre]
+```
 
-> Acteur : agent assigné.
+> Fait tout en un appel : enregistre l'agent, crée la session, affiche `agent_id` + `session_id`, session précédente, tâches assignées, locks actifs.
+> Tâches trouvées → commencer immédiatement. Questions seulement si aucune tâche ET type non inférable.
+
+### 3. L'agent prend le ticket
 
 ```sql
--- Lire la description complète
 SELECT titre, description FROM tasks WHERE id = :task_id;
-
--- Lire les 5 derniers commentaires (retours review, corrections)
 SELECT tc.contenu, a.name, tc.created_at FROM task_comments tc
-JOIN agents a ON a.id = tc.agent_id
-WHERE tc.task_id = :task_id ORDER BY tc.created_at DESC LIMIT 5;
-
--- Passer en cours
-UPDATE tasks
-SET statut = 'in_progress', started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-WHERE id = :task_id;
-
--- Locker chaque fichier à modifier (AVANT toute modification)
-INSERT OR REPLACE INTO locks (fichier, agent_id, session_id)
-VALUES ('<fichier>', :agent_id, :session_id);
-
--- (optionnel) Log — omettre si contexte limité
--- INSERT INTO agent_logs ... VALUES (:session_id, :agent_id, 'info', 'Task started', 'Task #<id>');
+  JOIN agents a ON a.id = tc.agent_id WHERE tc.task_id = :task_id ORDER BY tc.created_at DESC LIMIT 5;
+UPDATE tasks SET statut = 'in_progress', started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :task_id;
+-- + lock fichiers via primitive
 ```
 
-> Lock posé **avant** toute modification, jamais après.
+> Lock posé **avant** toute modification.
 
----
-
-## Étape 4 — L'agent termine le ticket
-
-> Acteur : agent assigné — une fois le travail terminé et testé.
+### 4. L'agent termine le ticket
 
 ```sql
-UPDATE tasks
-SET statut       = 'done',
-    completed_at = CURRENT_TIMESTAMP,
-    updated_at   = CURRENT_TIMESTAMP
-WHERE id = :task_id;
-
--- Commentaire de sortie OBLIGATOIRE
-INSERT INTO task_comments (task_id, agent_id, contenu)
-VALUES (:task_id, :agent_id, '<fichiers:lignes · ce qui a été fait · choix techniques · ce qui reste · points à valider>');
-
-UPDATE locks
-SET released_at = CURRENT_TIMESTAMP
-WHERE agent_id = :agent_id AND session_id = :session_id AND released_at IS NULL;
-
--- (optionnel) Log — omettre si contexte limité
--- INSERT INTO agent_logs ... VALUES (:session_id, :agent_id, 'info', 'Task completed', 'Task #<id>');
+UPDATE tasks SET statut = 'done', completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :task_id;
+-- + commentaire de sortie OBLIGATOIRE : fichiers:lignes · fait · choix · reste · à valider
+-- + libérer locks via primitive
 ```
 
-> **Règle de continuité :** après `done`, consulter le backlog. Tâches restantes → prendre la suivante. Backlog vide → étape 5.
+> Après `done` → consulter backlog. Tâches restantes → prendre la suivante. Sinon → étape 5.
 
----
-
-## Étape 5 — L'agent termine sa session
-
-> Acteur : agent assigné — en fin de session.
+### 5. L'agent termine sa session
 
 ```sql
-UPDATE locks SET released_at = CURRENT_TIMESTAMP
-WHERE agent_id = :agent_id AND released_at IS NULL;
-
-UPDATE sessions
-SET statut     = 'terminé',
-    ended_at   = CURRENT_TIMESTAMP,
-    updated_at = CURRENT_TIMESTAMP,
-    summary    = 'Done: <accompli>. Pending: <tickets ouverts>. Next: <prochaine action>.'
-WHERE id = :session_id;
-
--- (optionnel) Log — omettre si contexte limité
--- INSERT INTO agent_logs ... VALUES (:session_id, :agent_id, 'info', 'Session ended', '');
+-- Libérer locks via primitive
+UPDATE sessions SET statut = 'terminé', ended_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
+  summary = 'Done:<accompli>. Pending:<tickets>. Next:<action>.' WHERE id = :session_id;
 ```
 
-> `sessions.summary` doit être autosuffisant — un agent reprenant sans contexte doit savoir exactement où il en est.
+> `summary` autosuffisant (max 200 chars) — un agent reprenant sans contexte doit savoir où il en est.
 
----
-
-## Étape 6 — Review valide ou rejette
-
-> Acteur : `review` ou `review-master`.
+### 6. Review valide ou rejette
 
 ```sql
--- CAS OK : archiver
-UPDATE tasks
-SET statut            = 'archived',
-    agent_valideur_id = (SELECT id FROM agents WHERE name = '<review>'),
-    validated_at      = CURRENT_TIMESTAMP,
-    updated_at        = CURRENT_TIMESTAMP
-WHERE id = :task_id;
+-- OK : archiver
+UPDATE tasks SET statut = 'archived', agent_valideur_id = (SELECT id FROM agents WHERE name = '<review>'),
+  validated_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :task_id;
+-- + commentaire 'ARCHIVÉ — <observations>'
 
-INSERT INTO task_comments (task_id, agent_id, contenu)
-VALUES (:task_id, (SELECT id FROM agents WHERE name = '<review>'), 'ARCHIVÉ — <observations>');
-
--- CAS KO : rejeter
+-- KO : rejeter
 UPDATE tasks SET statut = 'todo', updated_at = CURRENT_TIMESTAMP WHERE id = :task_id;
-
-INSERT INTO task_comments (task_id, agent_id, contenu)
-VALUES (:task_id, (SELECT id FROM agents WHERE name = '<review>'), 'REJETÉ — <motif précis, corrections attendues, critères de re-validation>');
+-- + commentaire 'REJETÉ — <motif précis, corrections attendues, critères re-validation>'
 ```

@@ -145,20 +145,20 @@ async function launch() {
       @click.self="emit('close')"
     >
       <!-- Modal -->
-      <div class="w-96 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="w-96 bg-surface-primary border border-edge-default rounded-xl shadow-2xl flex flex-col overflow-hidden">
         <!-- Header -->
         <div
-          class="flex items-center justify-between px-5 py-4 border-b border-zinc-800"
+          class="flex items-center justify-between px-5 py-4 border-b border-edge-subtle"
           :style="{ borderLeftColor: agentFg(agent.name), borderLeftWidth: '3px' }"
         >
           <div>
-            <p class="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-0.5">{{ t('launch.title') }}</p>
+            <p class="text-xs text-content-subtle uppercase tracking-wider font-semibold mb-0.5">{{ t('launch.title') }}</p>
             <p class="text-base font-mono font-semibold" :style="{ color: agentFg(agent.name) }">
               {{ agent.name }}
             </p>
           </div>
           <button
-            class="w-7 h-7 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors text-sm"
+            class="w-7 h-7 flex items-center justify-center rounded text-content-subtle hover:text-content-secondary hover:bg-surface-secondary transition-colors text-sm"
             @click="emit('close')"
           >✕</button>
         </div>
@@ -168,11 +168,11 @@ async function launch() {
 
           <!-- Claude Code instance selection -->
           <div>
-            <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">{{ t('launch.claudeInstance') }}</p>
+            <p class="text-xs font-semibold text-content-muted uppercase tracking-wider mb-2">{{ t('launch.claudeInstance') }}</p>
 
-            <div v-if="loading" class="text-sm text-zinc-500 animate-pulse">{{ t('common.loading') }}</div>
+            <div v-if="loading" class="text-sm text-content-subtle animate-pulse">{{ t('common.loading') }}</div>
 
-            <div v-else-if="claudeInstances.length === 0" class="text-sm text-zinc-500 italic">
+            <div v-else-if="claudeInstances.length === 0" class="text-sm text-content-subtle italic">
               {{ t('launch.noInstance') }}
             </div>
 
@@ -182,20 +182,21 @@ async function launch() {
                 :key="inst.distro"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
                 :class="selectedInstance?.distro === inst.distro
-                  ? 'border-violet-500/60 bg-violet-950/30'
-                  : 'border-zinc-700 hover:border-zinc-600 bg-zinc-800/40'"
+                  ? ''
+                  : 'border-edge-default hover:border-content-faint bg-surface-secondary/40'"
+                :style="selectedInstance?.distro === inst.distro ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '15' } : {}"
               >
                 <input
                   v-model="selectedInstance"
                   type="radio"
                   :value="inst"
-                  class="accent-violet-500"
+                  :style="{ accentColor: agentFg(agent.name) }"
                 />
-                <span class="flex-1 text-sm font-mono text-zinc-200">{{ inst.distro }}</span>
-                <span class="text-[10px] text-zinc-500 font-mono shrink-0">{{ t('launch.instanceVersion', { version: inst.version }) }}</span>
+                <span class="flex-1 text-sm font-mono text-content-secondary">{{ inst.distro }}</span>
+                <span class="text-[10px] text-content-subtle font-mono shrink-0">{{ t('launch.instanceVersion', { version: inst.version }) }}</span>
                 <span
                   v-if="inst.isDefault"
-                  class="text-[9px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-zinc-700 text-zinc-400 shrink-0"
+                  class="text-[9px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-surface-tertiary text-content-muted shrink-0"
                 >{{ t('launch.defaultBadge') }}</span>
               </label>
             </div>
@@ -203,31 +204,32 @@ async function launch() {
 
           <!-- Resume session (task #218): shown when a previous conv_id exists -->
           <div v-if="lastConvId">
-            <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">{{ t('launch.prevSession') }}</p>
+            <p class="text-xs font-semibold text-content-muted uppercase tracking-wider mb-2">{{ t('launch.prevSession') }}</p>
             <label class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
-              :class="useResume ? 'border-violet-500/60 bg-violet-950/30' : 'border-zinc-700 bg-zinc-800/40 hover:border-zinc-600'"
+              :class="useResume ? '' : 'border-edge-default bg-surface-secondary/40 hover:border-content-faint'"
+              :style="useResume ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '15' } : {}"
             >
-              <input v-model="useResume" type="checkbox" class="accent-violet-500" />
-              <span class="text-sm text-zinc-200">{{ t('launch.resume', { resume: '--resume' }) }}</span>
+              <input v-model="useResume" type="checkbox" :style="{ accentColor: agentFg(agent.name) }" />
+              <span class="text-sm text-content-secondary">{{ t('launch.resume', { resume: '--resume' }) }}</span>
             </label>
-            <p class="text-[10px] text-zinc-600 mt-1">{{ t('launch.resumeNote') }}</p>
+            <p class="text-[10px] text-content-faint mt-1">{{ t('launch.resumeNote') }}</p>
           </div>
 
           <!-- System Prompt (affiché) — masqué en mode resume -->
           <div v-if="fullSystemPrompt && !useResume">
-            <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">{{ t('launch.systemPrompt') }}</p>
-            <div class="bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs font-mono text-zinc-400 max-h-32 overflow-y-auto">
+            <p class="text-xs font-semibold text-content-muted uppercase tracking-wider mb-2">{{ t('launch.systemPrompt') }}</p>
+            <div class="bg-surface-base border border-edge-default rounded-lg px-3 py-2 text-xs font-mono text-content-muted max-h-32 overflow-y-auto">
               <pre class="whitespace-pre-wrap">{{ fullSystemPrompt }}</pre>
             </div>
           </div>
 
           <!-- Thinking mode -->
           <div>
-            <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">{{ t('launch.thinkingMode') }}</p>
+            <p class="text-xs font-semibold text-content-muted uppercase tracking-wider mb-2">{{ t('launch.thinkingMode') }}</p>
             <div class="flex gap-2">
               <button
                 class="flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all"
-                :class="thinkingMode !== 'auto' ? 'border-zinc-700 bg-zinc-800/40 text-zinc-400 hover:border-zinc-600' : ''"
+                :class="thinkingMode !== 'auto' ? 'border-edge-default bg-surface-secondary/40 text-content-muted hover:border-content-faint' : ''"
                 :style="thinkingMode === 'auto' ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
                 @click="thinkingMode = 'auto'"
               >
@@ -235,61 +237,62 @@ async function launch() {
               </button>
               <button
                 class="flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all"
-                :class="thinkingMode !== 'disabled' ? 'border-zinc-700 bg-zinc-800/40 text-zinc-400 hover:border-zinc-600' : ''"
+                :class="thinkingMode !== 'disabled' ? 'border-edge-default bg-surface-secondary/40 text-content-muted hover:border-content-faint' : ''"
                 :style="thinkingMode === 'disabled' ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
                 @click="thinkingMode = 'disabled'"
               >
                 {{ t('launch.disabled') }}
               </button>
             </div>
-            <p class="text-[10px] text-zinc-600 mt-1.5">
+            <p class="text-[10px] text-content-faint mt-1.5">
               {{ t('launch.thinkingNote') }}
             </p>
           </div>
 
           <!-- Profil API Claude (sélecteur masqué si aucun profil alternatif disponible) -->
           <div v-if="activeProfiles.length > 1">
-            <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">{{ t('launch.apiProfile') }}</p>
+            <p class="text-xs font-semibold text-content-muted uppercase tracking-wider mb-2">{{ t('launch.apiProfile') }}</p>
             <div class="flex flex-wrap gap-2">
               <button
                 v-for="profile in activeProfiles"
                 :key="profile"
                 class="px-3 py-2 rounded-lg border text-xs font-medium transition-all"
-                :class="selectedProfile !== profile ? 'border-zinc-700 bg-zinc-800/40 text-zinc-400 hover:border-zinc-600' : ''"
+                :class="selectedProfile !== profile ? 'border-edge-default bg-surface-secondary/40 text-content-muted hover:border-content-faint' : ''"
                 :style="selectedProfile === profile ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
                 @click="selectedProfile = profile"
               >
                 {{ profile }}
               </button>
             </div>
-            <p class="text-[10px] text-zinc-600 mt-1.5">
+            <p class="text-[10px] text-content-faint mt-1.5">
               {{ t('launch.profileNote') }}
             </p>
           </div>
 
           <!-- Prompt personnalisé -->
           <div>
-            <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">{{ t('launch.startPrompt') }}</p>
+            <p class="text-xs font-semibold text-content-muted uppercase tracking-wider mb-2">{{ t('launch.startPrompt') }}</p>
             <textarea
               v-model="customPrompt"
               rows="3"
               :placeholder="t('launch.startPromptPlaceholder')"
-              class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs font-mono text-zinc-200 placeholder-zinc-600 resize-none outline-none focus:ring-1 focus:ring-violet-500 focus:border-violet-500 transition-colors"
+              class="w-full bg-surface-secondary border border-edge-default rounded-lg px-3 py-2 text-xs font-mono text-content-secondary placeholder-content-faint resize-none outline-none focus:ring-1 transition-colors"
+              :style="{ '--tw-ring-color': agentFg(agent.name) }"
             />
             <div class="flex items-center gap-1.5 mt-1.5">
-              <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 text-zinc-600 shrink-0">
+              <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 text-content-faint shrink-0">
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                 <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
               </svg>
-              <span class="text-[10px] text-zinc-600">{{ t('launch.promptNote') }}</span>
+              <span class="text-[10px] text-content-faint">{{ t('launch.promptNote') }}</span>
             </div>
           </div>
         </div>
 
         <!-- Footer -->
-        <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-zinc-800 bg-zinc-950/50">
+        <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-edge-subtle bg-surface-base/50">
           <button
-            class="px-4 py-2 text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-lg transition-colors"
+            class="px-4 py-2 text-sm text-content-muted hover:text-content-secondary hover:bg-surface-secondary rounded-lg transition-colors"
             @click="emit('close')"
           >
             {{ t('launch.cancel') }}

@@ -1,6 +1,22 @@
+/**
+ * Terminal management for agent-viewer.
+ *
+ * Handles WSL PTY sessions via node-pty, including:
+ * - Creating PTY processes (plain bash or Claude Code agent sessions)
+ * - Session resume via `--resume <conv_id>`
+ * - Graceful kill with Ctrl+C for agent sessions
+ * - Crash recovery with stored launch params
+ * - WSL memory monitoring (periodic `free -m` checks)
+ * - Conversation ID detection from Claude Code startup banner
+ *
+ * @module terminal
+ */
 import { ipcMain, app } from 'electron'
 import { spawn, type IPty } from 'node-pty'
 import { execFile } from 'child_process'
+import { writeFile, unlink } from 'fs/promises'
+import { join } from 'path'
+import { tmpdir } from 'os'
 import { promisify } from 'util'
 
 const execPromise = promisify(execFile)
@@ -29,12 +45,114 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 // Used by gracefulKillPty to send Ctrl+C before killing
 const agentPtys = new Set<string>()
 
+// ── T279: Store launch params per PTY for crash recovery ─────────────────
+interface PtyLaunchParams {
+  cols: number
+  rows: number
+  projectPath?: string
+  wslDistro?: string
+  systemPrompt?: string
+  userPrompt?: string
+  thinkingMode?: string
+  claudeCommand?: string
+  convId?: string
+  detectedConvId?: string  // Captured during the session (for --resume)
+}
+const ptyLaunchParams = new Map<string, PtyLaunchParams>()
+
+// ── T279: WSL memory monitoring ──────────────────────────────────────────
+const MEMORY_WARNING_THRESHOLD = 0.80    // Warn at 80% usage
+const MEMORY_CRITICAL_THRESHOLD = 0.85   // T328: Auto release at 85% (available < 15%)
+const MEMORY_RELEASE_COOLDOWN_MS = 60_000 // T328: Min 60s between auto releases
+let memoryCheckTimer: ReturnType<typeof setInterval> | null = null
+let lastAutoReleaseAt = 0
+
+// T328: Adaptive monitoring intervals based on memory pressure
+const INTERVAL_NORMAL = 60_000   // available > 30% → 60s
+const INTERVAL_WARNING = 15_000  // available 15-30% → 15s
+const INTERVAL_CRITICAL = 5_000  // available < 15% → 5s
+
+// T328: WSL drop_caches capability
+let dropCachesAvailable: boolean | null = null // null = not yet checked
+
+async function checkDropCachesCapability(): Promise<boolean> {
+  try {
+    // Test if sudoers NOPASSWD is configured specifically for tee /proc/sys/vm/drop_caches
+    // Executes echo 1 | sudo -n tee to verify NOPASSWD permission on tee specifically
+    // — avoids false negatives for users who only have NOPASSWD on tee (not on all commands)
+    await execPromise('wsl.exe', ['--', 'bash', '-c', 'echo 1 | sudo -n tee /proc/sys/vm/drop_caches > /dev/null'], { timeout: 5000 })
+    dropCachesAvailable = true
+  } catch {
+    dropCachesAvailable = false
+  }
+  return dropCachesAvailable
+}
+
+/**
+ * T328: Release WSL memory — sync flush + optional drop_caches.
+ * @returns {{ synced: boolean, dropped: boolean, error?: string }}
+ */
+async function releaseWslMemory(): Promise<{ synced: boolean; dropped: boolean; error?: string }> {
+  let synced = false
+  let dropped = false
+
+  try {
+    // sync is always possible (no sudo needed)
+    await execPromise('wsl.exe', ['--', 'sync'], { timeout: 10_000 })
+    synced = true
+  } catch (err) {
+    return { synced: false, dropped: false, error: `sync failed: ${err}` }
+  }
+
+  if (dropCachesAvailable) {
+    try {
+      await execPromise('wsl.exe', ['--', 'bash', '-c', 'echo 3 | sudo -n tee /proc/sys/vm/drop_caches'], { timeout: 10_000 })
+      dropped = true
+    } catch (err) {
+      return { synced, dropped: false, error: `drop_caches failed: ${err}` }
+    }
+  }
+
+  return { synced, dropped }
+}
+
+/**
+ * Force-kills a PTY by ID and cleans up tracking maps.
+ * @param id - PTY session identifier.
+ */
 function killPty(id: string): void {
   const pty = ptys.get(id)
   if (!pty) return
   try { pty.kill() } catch { /* already dead */ }
   ptys.delete(id)
   agentPtys.delete(id)
+  // Keep ptyLaunchParams for potential relaunch — cleaned up by terminal:dismissCrash
+}
+
+/**
+ * Parse `free -m` output to extract memory pressure.
+ * Uses the "available" column (real pressure) instead of "used" (includes reclaimable buff/cache).
+ * Returns { usedRatio, totalMB, usedMB, availableMB } or null on parse failure.
+ */
+function parseFreeMOutput(stdout: string): { usedRatio: number; totalMB: number; usedMB: number; availableMB: number } | null {
+  // Typical output:
+  //               total        used        free      shared  buff/cache   available
+  // Mem:           7951        3200        2100          50        2651        4500
+  const memLine = stdout.split('\n').find(l => l.startsWith('Mem:'))
+  if (!memLine) return null
+  const parts = memLine.split(/\s+/)
+  const totalMB = parseInt(parts[1], 10)
+  // T328: Use "available" (col 6) for real memory pressure — "used" includes reclaimable buff/cache
+  const availableMB = parts.length >= 7 ? parseInt(parts[6], 10) : NaN
+  if (isNaN(totalMB) || totalMB === 0) return null
+  if (!isNaN(availableMB)) {
+    const usedMB = totalMB - availableMB
+    return { usedRatio: usedMB / totalMB, totalMB, usedMB, availableMB }
+  }
+  // Fallback: older free(1) without available column
+  const usedMB = parseInt(parts[2], 10)
+  if (isNaN(usedMB)) return null
+  return { usedRatio: usedMB / totalMB, totalMB, usedMB, availableMB: totalMB - usedMB }
 }
 
 /**
@@ -71,19 +189,119 @@ function gracefulKillPty(id: string): void {
   }
 }
 
+/** Kills all active PTY sessions. Called on app quit. */
 function killAllPtys(): void {
   for (const id of [...ptys.keys()]) {
     gracefulKillPty(id)
   }
   webContentsPtys.clear()
+  ptyLaunchParams.clear()
+  stopMemoryMonitoring()
 }
 
+// ── T279+T328: Memory monitoring helpers ─────────────────────────────────
+let currentInterval = INTERVAL_NORMAL
+
+/**
+ * Starts adaptive WSL memory monitoring.
+ * Broadcasts `terminal:memoryStatus` to all renderer windows.
+ * Auto-triggers memory release when pressure is critical.
+ */
+function startMemoryMonitoring(_webContentsId: number): void {
+  if (memoryCheckTimer) return  // Already running
+  if (ptys.size === 0) return   // No active PTYs — skip
+
+  // T328: Check drop_caches capability on first PTY start
+  if (dropCachesAvailable === null) checkDropCachesCapability()
+
+  scheduleMemoryCheck()
+}
+
+function scheduleMemoryCheck(): void {
+  if (memoryCheckTimer) clearInterval(memoryCheckTimer)
+  memoryCheckTimer = setInterval(doMemoryCheck, currentInterval)
+}
+
+let memoryCheckRunning = false
+async function doMemoryCheck(): Promise<void> {
+  if (ptys.size === 0) { stopMemoryMonitoring(); return }
+  if (memoryCheckRunning) return // Guard against re-entrance when execPromise is slow
+  memoryCheckRunning = true
+  try {
+    const { stdout } = await execPromise('wsl.exe', ['--', 'free', '-m'])
+    const mem = parseFreeMOutput(stdout.replace(/\0/g, ''))
+    if (!mem) return
+
+    const availableRatio = mem.availableMB / mem.totalMB
+
+    // T328: Adaptive interval based on memory pressure
+    let newInterval: number
+    if (availableRatio < 0.15) {
+      newInterval = INTERVAL_CRITICAL
+    } else if (availableRatio < 0.30) {
+      newInterval = INTERVAL_WARNING
+    } else {
+      newInterval = INTERVAL_NORMAL
+    }
+    if (newInterval !== currentInterval) {
+      currentInterval = newInterval
+      scheduleMemoryCheck()
+    }
+
+    // T328: Auto release when critical + cooldown elapsed
+    if (mem.usedRatio >= MEMORY_CRITICAL_THRESHOLD) {
+      const now = Date.now()
+      if (now - lastAutoReleaseAt >= MEMORY_RELEASE_COOLDOWN_MS) {
+        lastAutoReleaseAt = now
+        releaseWslMemory().catch(() => { /* ignore */ })
+      }
+    }
+
+    // Broadcast to all active WebContents
+    const { BrowserWindow } = await import('electron')
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) {
+        win.webContents.send('terminal:memoryStatus', {
+          usedMB: mem.usedMB,
+          totalMB: mem.totalMB,
+          availableMB: mem.availableMB,
+          usedRatio: Math.round(mem.usedRatio * 100),
+          warning: mem.usedRatio >= MEMORY_WARNING_THRESHOLD,
+          critical: mem.usedRatio >= MEMORY_CRITICAL_THRESHOLD,
+          activeSessions: ptys.size,
+          dropCachesAvailable: dropCachesAvailable ?? false,
+        })
+      }
+    }
+  } catch { /* WSL not available or command failed — ignore */ } finally {
+    memoryCheckRunning = false
+  }
+}
+
+/** Stops the periodic WSL memory monitoring timer. */
+function stopMemoryMonitoring(): void {
+  if (memoryCheckTimer) {
+    clearInterval(memoryCheckTimer)
+    memoryCheckTimer = null
+  }
+  currentInterval = INTERVAL_NORMAL
+}
+
+/**
+ * Converts a Windows path to its WSL mount path.
+ * @param winPath - Windows-style path (e.g. `C:\Users\foo`).
+ * @returns WSL path (e.g. `/mnt/c/Users/foo`).
+ */
 function toWslPath(winPath: string): string {
   return winPath
     .replace(/\\/g, '/')
     .replace(/^([A-Za-z]):/, (_, d) => `/mnt/${d.toLowerCase()}`)
 }
 
+/**
+ * Registers all terminal-related IPC handlers.
+ * Must be called once during app initialization (from main/index.ts).
+ */
 export function registerTerminalHandlers(): void {
   // Kill all PTYs when the app quits — covers normal close AND crashes
   app.on('before-quit', killAllPtys)
@@ -203,7 +421,7 @@ export function registerTerminalHandlers(): void {
     }
   })
 
-  ipcMain.handle('terminal:create', (event, cols: number, rows: number, projectPath?: string, wslDistro?: string, systemPrompt?: string, userPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string) => {
+  ipcMain.handle('terminal:create', async (event, cols: number, rows: number, projectPath?: string, wslDistro?: string, systemPrompt?: string, userPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string) => {
     // Validate claudeCommand if provided
     if (claudeCommand && !CLAUDE_CMD_REGEX.test(claudeCommand)) {
       throw new Error("Invalid claudeCommand: " + claudeCommand)
@@ -233,6 +451,8 @@ export function registerTerminalHandlers(): void {
     // ── Auto-send userPrompt on readiness (T273) ──────────────────────────
     // Set by the systemPrompt+userPrompt path; consumed by onData handler.
     let pendingUserPrompt: { id: string; text: string } | null = null
+    // Temp script file path (Windows) — cleaned up in onExit
+    let tempScriptWinPath: string | null = null
     const QUIET_MS = 800   // ms of silence to consider Claude ready
     const MAX_WAIT_MS = 15000 // absolute max wait before sending anyway
     let quietTimer: ReturnType<typeof setTimeout> | null = null
@@ -280,7 +500,6 @@ export function registerTerminalHandlers(): void {
     } else if (systemPrompt && userPrompt) {
       // Base64-encode the system prompt to avoid any shell injection risk.
       // Only [A-Za-z0-9+/=] chars in the encoded string — no backticks, $(), quotes, etc.
-      // The $(...) command substitution decodes at runtime; its content is inert base64.
       const b64 = Buffer.from(systemPrompt).toString('base64')
       const cmd = (claudeCommand && CLAUDE_CMD_REGEX.test(claudeCommand)) ? claudeCommand : 'claude'
       // Inject --settings alwaysThinkingEnabled:false when thinking_mode is 'disabled'
@@ -289,12 +508,24 @@ export function registerTerminalHandlers(): void {
       // This flag activates Anthropic prompt caching (~80% token reduction on system prompt
       // after first turn). Checked on v2.1.56: flag does not exist yet.
       // Expected flag: `exec ${cmd} --append-system-prompt '...' --cache-system-prompt`
-      const wrapperScript = `exec ${cmd} --append-system-prompt "$(echo '${b64}' | base64 -d)"${thinkingFlag}`
+
+      // ── Fix T278: write launch script to temp file ──────────────────────
+      // When systemPrompt contains shell-special chars (< | > $ "), passing
+      // the decoded base64 inline via `bash -lc 'exec ... "$(echo B64 | base64 -d)"'`
+      // fails because wsl.exe re-parses the command line and breaks quoting.
+      // Solution: write the full command to a temp .sh file on the Windows FS,
+      // then pass only `bash -l /mnt/c/.../script.sh` through wsl.exe.
+      // Bash reads the script as a file — no wsl.exe command-line reparsing.
+      const scriptName = `agent-prompt-${id}.sh`
+      tempScriptWinPath = join(tmpdir(), scriptName)
+      const scriptContent = `#!/bin/bash\nexec ${cmd} --append-system-prompt "$(echo '${b64}' | base64 -d)"${thinkingFlag}\n`
+      await writeFile(tempScriptWinPath, scriptContent, { encoding: 'utf8' })
+      const scriptWslPath = toWslPath(tempScriptWinPath)
 
       if (projectPath) {
-        args.push('--cd', toWslPath(projectPath), '--', 'bash', '-lc', wrapperScript)
+        args.push('--cd', toWslPath(projectPath), '--', 'bash', '-l', scriptWslPath)
       } else {
-        args.push('--', 'bash', '-lc', wrapperScript)
+        args.push('--', 'bash', '-l', scriptWslPath)
       }
 
       // Send user prompt (autoSend) once Claude is ready.
@@ -356,6 +587,12 @@ export function registerTerminalHandlers(): void {
     }
     ptys.set(id, pty)
 
+    // ── T279: Store launch params for crash recovery ─────────────────────
+    ptyLaunchParams.set(id, { cols, rows, projectPath, wslDistro, systemPrompt, userPrompt, thinkingMode, claudeCommand, convId })
+
+    // ── T279: Start memory monitoring on first PTY ───────────────────────
+    startMemoryMonitoring(wcId)
+
     // Start max timeout for auto-send if a userPrompt is pending
     if (pendingUserPrompt) {
       maxTimer = setTimeout(sendPendingPrompt, MAX_WAIT_MS)
@@ -391,6 +628,9 @@ export function registerTerminalHandlers(): void {
         if (match && match[1]) {
           convIdDetected = true
           convIdBuffer = '' // free memory
+          // T279: Store detected convId for crash recovery (--resume)
+          const params = ptyLaunchParams.get(id)
+          if (params) params.detectedConvId = match[1]
           if (!event.sender.isDestroyed()) {
             event.sender.send(`terminal:convId:${id}`, match[1])
           }
@@ -411,16 +651,37 @@ export function registerTerminalHandlers(): void {
       event.sender.send(`terminal:data:${id}`, data)
     })
 
-    pty.onExit(() => {
+    pty.onExit(({ exitCode }) => {
       // Clean up pending prompt timers to prevent writes to dead PTY
       if (quietTimer) { clearTimeout(quietTimer); quietTimer = null }
       if (maxTimer) { clearTimeout(maxTimer); maxTimer = null }
       pendingUserPrompt = null
       ptys.delete(id)
       webContentsPtys.get(wcId)?.delete(id)
-      if (!event.sender.isDestroyed()) {
-        event.sender.send(`terminal:exit:${id}`)
+      // Clean up temp script file written for system prompt injection (T278)
+      if (tempScriptWinPath) {
+        unlink(tempScriptWinPath).catch(() => { /* file may already be gone */ })
       }
+      // Stop memory monitoring if no PTYs left
+      if (ptys.size === 0) stopMemoryMonitoring()
+
+      if (!event.sender.isDestroyed()) {
+        // ── T279: Enhanced exit with crash recovery info ──────────────────
+        const params = ptyLaunchParams.get(id)
+        const isAgent = agentPtys.has(id)
+        const canResume = !!(params?.detectedConvId || params?.convId)
+        // exitCode !== 0 or signal kill suggests crash (OOM, etc.)
+        const isCrash = exitCode !== 0 && exitCode !== null
+        event.sender.send(`terminal:exit:${id}`, {
+          exitCode,
+          isCrash,
+          isAgent,
+          canResume,
+          resumeConvId: params?.detectedConvId || params?.convId || null,
+        })
+      }
+      agentPtys.delete(id)
+      // Keep ptyLaunchParams[id] for potential relaunch via terminal:relaunch
     })
 
     return id
@@ -446,4 +707,90 @@ export function registerTerminalHandlers(): void {
     // Already subscribed via onData above, this is a no-op
     // but we expose it for re-subscription after hot-reload
   })
+
+  // ── T279: Relaunch a crashed PTY session ─────────────────────────────
+  // Uses stored launch params to re-create the PTY. If a convId was detected
+  // during the previous session, uses --resume for continuity.
+  ipcMain.handle('terminal:relaunch', async (event, oldId: string, useResume?: boolean) => {
+    const params = ptyLaunchParams.get(oldId)
+    if (!params) throw new Error('No launch params found for PTY ' + oldId)
+
+    // Clean up old launch params
+    ptyLaunchParams.delete(oldId)
+
+    // If useResume and we have a detected convId, pass it for --resume
+    const convId = useResume ? (params.detectedConvId || params.convId) : params.convId
+
+    // Return the stored params so the renderer can call terminalCreate again.
+    // We don't re-invoke terminal:create internally — the renderer handles re-creation.
+    return {
+      cols: params.cols,
+      rows: params.rows,
+      projectPath: params.projectPath,
+      wslDistro: params.wslDistro,
+      systemPrompt: params.systemPrompt,
+      userPrompt: params.userPrompt,
+      thinkingMode: params.thinkingMode,
+      claudeCommand: params.claudeCommand,
+      convId: convId || undefined,
+    }
+  })
+
+  // ── T279: Dismiss crash recovery (clean up stored launch params) ─────
+  ipcMain.handle('terminal:dismissCrash', (_event, id: string) => {
+    ptyLaunchParams.delete(id)
+  })
+
+  // ── T279: Get active session count and memory status ─────────────────
+  ipcMain.handle('terminal:getActiveCount', () => {
+    return ptys.size
+  })
+
+  ipcMain.handle('terminal:isAlive', (_event, id: string) => {
+    return ptys.has(id)
+  })
+
+  // ── T279+T328: Get WSL memory status on demand ─────────────────────
+  ipcMain.handle('terminal:getMemoryStatus', async () => {
+    try {
+      const { stdout } = await execPromise('wsl.exe', ['--', 'free', '-m'])
+      const mem = parseFreeMOutput(stdout.replace(/\0/g, ''))
+      if (!mem) return null
+      return {
+        usedMB: mem.usedMB,
+        totalMB: mem.totalMB,
+        availableMB: mem.availableMB,
+        usedRatio: Math.round(mem.usedRatio * 100),
+        warning: mem.usedRatio >= MEMORY_WARNING_THRESHOLD,
+        critical: mem.usedRatio >= MEMORY_CRITICAL_THRESHOLD,
+        activeSessions: ptys.size,
+        dropCachesAvailable: dropCachesAvailable ?? false,
+      }
+    } catch {
+      return null
+    }
+  })
+
+  // ── T328: Release WSL memory (manual or auto) ─────────────────────
+  ipcMain.handle('terminal:releaseMemory', async () => {
+    return releaseWslMemory()
+  })
+}
+
+// ── Test-only exports ─────────────────────────────────────────────────────
+// Exported for unit testing internal helpers without exposing them in the public API.
+export const _testing = {
+  parseFreeMOutput,
+  releaseWslMemory,
+  checkDropCachesCapability,
+  doMemoryCheck,
+  ptys,
+  get dropCachesAvailable() { return dropCachesAvailable },
+  set dropCachesAvailable(v: boolean | null) { dropCachesAvailable = v },
+  get lastAutoReleaseAt() { return lastAutoReleaseAt },
+  set lastAutoReleaseAt(v: number) { lastAutoReleaseAt = v },
+  get memoryCheckRunning() { return memoryCheckRunning },
+  set memoryCheckRunning(v: boolean) { memoryCheckRunning = v },
+  MEMORY_RELEASE_COOLDOWN_MS,
+  MEMORY_CRITICAL_THRESHOLD,
 }

@@ -58,25 +58,25 @@ async function create() {
         </svg>
       </div>
       <div>
-        <h2 class="text-xl font-semibold text-zinc-100 mb-1">agent-viewer</h2>
-        <p class="text-sm text-zinc-500">{{ t('dbSelector.tagline') }}</p>
+        <h2 class="text-xl font-semibold text-content-primary mb-1">agent-viewer</h2>
+        <p class="text-sm text-content-subtle">{{ t('dbSelector.tagline') }}</p>
       </div>
 
       <!-- 2 options -->
       <div class="grid grid-cols-2 gap-3">
         <!-- Ouvrir existant -->
         <button
-          class="flex flex-col items-center gap-2 px-4 py-5 rounded-xl border border-zinc-700 hover:border-zinc-500 bg-zinc-800/40 hover:bg-zinc-800 transition-all group"
+          class="flex flex-col items-center gap-2 px-4 py-5 rounded-xl border border-edge-default hover:border-content-subtle bg-surface-secondary/40 hover:bg-surface-secondary transition-all group"
           @click="store.selectProject()"
         >
-          <div class="w-9 h-9 rounded-lg bg-zinc-700 group-hover:bg-zinc-600 flex items-center justify-center transition-colors">
-            <svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-zinc-300">
+          <div class="w-9 h-9 rounded-lg bg-surface-tertiary group-hover:bg-content-faint flex items-center justify-center transition-colors">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-content-tertiary">
               <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
             </svg>
           </div>
           <div>
-            <p class="text-sm font-medium text-zinc-200">{{ t('dbSelector.open') }}</p>
-            <p class="text-xs text-zinc-500 mt-0.5">{{ t('dbSelector.existingProject') }}</p>
+            <p class="text-sm font-medium text-content-secondary">{{ t('dbSelector.open') }}</p>
+            <p class="text-xs text-content-subtle mt-0.5">{{ t('dbSelector.existingProject') }}</p>
           </div>
         </button>
 
@@ -92,7 +92,7 @@ async function create() {
           </div>
           <div>
             <p class="text-sm font-medium text-violet-300">{{ t('dbSelector.createNew') }}</p>
-            <p class="text-xs text-zinc-500 mt-0.5">{{ t('setup.newProject') }}</p>
+            <p class="text-xs text-content-subtle mt-0.5">{{ t('setup.newProject') }}</p>
           </div>
         </button>
       </div>
@@ -109,7 +109,7 @@ async function create() {
       <!-- Header -->
       <div class="flex items-center gap-3">
         <button
-          class="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+          class="flex items-center gap-1.5 text-xs text-content-subtle hover:text-content-tertiary transition-colors"
           @click="step = 'home'"
         >
           <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
@@ -117,22 +117,22 @@ async function create() {
           </svg>
           {{ t('dbSelector.back') }}
         </button>
-        <h2 class="text-base font-semibold text-zinc-100">{{ t('setup.newProject') }}</h2>
+        <h2 class="text-base font-semibold text-content-primary">{{ t('setup.newProject') }}</h2>
       </div>
 
       <!-- Explication -->
-      <div class="px-3 py-3 rounded-lg bg-zinc-800/60 border border-zinc-700/50 text-xs text-zinc-400 leading-relaxed space-y-1">
-        <p>Le <code class="text-violet-300 bg-zinc-900 px-1 rounded">CLAUDE.md</code> maître sera téléchargé depuis le dépôt de référence et copié dans le dossier choisi.</p>
+      <div class="px-3 py-3 rounded-lg bg-surface-secondary/60 border border-edge-default/50 text-xs text-content-muted leading-relaxed space-y-1">
+        <p>Le <code class="text-violet-300 bg-surface-primary px-1 rounded">CLAUDE.md</code> maître sera téléchargé depuis le dépôt de référence et copié dans le dossier choisi.</p>
         <p>Un terminal <span class="text-violet-300 font-mono">setup</span> sera lancé automatiquement pour initialiser le projet.</p>
       </div>
 
       <!-- WSL user -->
       <div>
-        <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">{{ t('dbSelector.wslUser') }}</p>
+        <p class="text-xs font-semibold text-content-muted uppercase tracking-wider mb-2">{{ t('dbSelector.wslUser') }}</p>
 
-        <div v-if="loadingUsers" class="text-sm text-zinc-500 animate-pulse">{{ t('common.loading') }}</div>
+        <div v-if="loadingUsers" class="text-sm text-content-subtle animate-pulse">{{ t('common.loading') }}</div>
 
-        <div v-else-if="wslUsers.length === 0" class="text-sm text-zinc-500 italic px-1">
+        <div v-else-if="wslUsers.length === 0" class="text-sm text-content-subtle italic px-1">
           {{ t('dbSelector.noUser') }}
         </div>
 
@@ -143,7 +143,7 @@ async function create() {
             class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
             :class="selectedUser === user
               ? 'border-violet-500/60 bg-violet-950/30'
-              : 'border-zinc-700 hover:border-zinc-600 bg-zinc-800/40'"
+              : 'border-edge-default hover:border-content-faint bg-surface-secondary/40'"
           >
             <input
               v-model="selectedUser"
@@ -151,7 +151,7 @@ async function create() {
               :value="user"
               class="accent-violet-500"
             />
-            <span class="text-sm font-mono text-zinc-200">{{ user }}</span>
+            <span class="text-sm font-mono text-content-secondary">{{ user }}</span>
           </label>
         </div>
       </div>

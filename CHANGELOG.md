@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-02-26
+
+### Added
+- **Token Stats** tab in AgentLogsView — global/today/hour/cache stats, per-agent bars, per-session table (T319)
+- **Terminal watchdog** — automatic crash detection and recovery with stored launch params (T279)
+- **WSL memory monitoring** — periodic `free -m` checks with 80% usage warning (T279)
+- **ConfirmDialog** composable and component (`useConfirmDialog.ts`, `ConfirmDialog.vue`)
+- **usePolledData** composable — unified polling lifecycle with visibility guard and cleanup
+- **TokenStatsView.vue** component with auto-refresh via `onDbChanged` + 30s polling
+- Token tracking columns on sessions table (`tokens_in`, `tokens_out`, `tokens_cache_read`, `tokens_cache_write`) (T314)
+- `postinstall` script for automatic native module rebuilding
+- ADR-006 (sql.js rationale), ADR-007 (Windows native Claude Code support)
+- JSDoc documentation across all types and major modules
+
+### Changed
+- **refactor(back):** split monolithic `ipc.ts` into `db.ts`, `ipc-agents.ts`, `ipc-fs.ts`, `ipc-settings.ts` (T322)
+- **refactor(front):** restructured Vue components — extracted composables, cleaned up lifecycle (T321)
+- AgentLogsView uses `usePolledData` instead of manual `setInterval` polling
+- `agentColor.ts` rewritten with memoized hash and improved color palette
+- Sidebar sections restructured with improved scroll and layout
+- TabBar improved with scroll support and middle-click close (T310)
+- ExplorerView refactored with VS Code-style sidebar layout (T308)
+- Migration functions now use SAVEPOINT for atomicity (T327)
+- `default-agents.ts` system prompts cleaned of backticks (prevents bash substitution)
+- Removed `@electron/rebuild` dev dependency (replaced by `postinstall`)
+
+### Fixed
+- **Terminal:** PTY readiness detection replaces fixed setTimeout for userPrompt auto-send (T273)
+- **Terminal:** use `-- bash -lc` instead of `-i -c` for wsl.exe (T268)
+- **i18n:** enable JIT compilation to fix CSP eval violation (T265/T267)
+- **Security:** `isPathAllowed` prefix bypass — added path separator check (T318)
+- **Security:** `dbPath` validation on IPC write handlers (T282)
+- **Security:** `projectPath` validation on `apply-master-md` and `init-new-project` (T283)
+- **Security:** `FORBIDDEN_WRITE_KEYWORDS` bypass via non-space whitespace (T284)
+- **DB:** concurrent write errors — disk I/O / DB malformed (T313)
+- **DB:** COALESCE on all token columns to handle NULL from pre-migration rows (T319 fix)
+- **Perf:** double refresh on `db-changed` event (T285)
+- **Perf:** `queryLive` instantiates WASM DB per call → cached with TTL eviction (T286)
+- **Perf:** write handlers each instantiate WASM DB → shared instance (T287)
+- **Perf:** `TaskDetailModal` markdown render not memoized (T288)
+- **Perf:** Sidebar `taskCountFor`/`agentCountFor` O(N×P) → optimized (T289)
+- **Perf:** AgentLogsView poll 4s without `onDbChanged` → event-driven (T296)
+- **Perf:** App.vue static imports → lazy-loaded heavy components (T297)
+- SQL queries updated after i18n column migration (T275)
+- LaunchSessionModal WSL section uses agent color instead of hardcoded purple (T307)
+- TaskCard border-t visible without badges edge case (T300)
+- CommandPalette debounce timer cleanup on unmount (T302)
+- `will-change: scroll-position` corrected usage (T305)
+
+### Removed
+- Monolithic `ipc.ts` (replaced by modular `db.ts` + `ipc-agents.ts` + `ipc-fs.ts` + `ipc-settings.ts`)
+- `@electron/rebuild` dev dependency
+
 ## [0.3.2] - 2026-02-25
 
 ### Fixed
@@ -109,7 +162,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial prototype with Tauri
 - Basic task board view
 
-[Unreleased]: https://github.com/IvyNotFound/agent-viewer/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/IvyNotFound/agent-viewer/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/IvyNotFound/agent-viewer/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/IvyNotFound/agent-viewer/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/IvyNotFound/agent-viewer/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/IvyNotFound/agent-viewer/releases/tag/v0.3.0

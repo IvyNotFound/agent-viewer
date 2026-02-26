@@ -1,3 +1,13 @@
+/**
+ * Shared TypeScript types for agent-viewer.
+ *
+ * Defines all interfaces used across the renderer (stores, components, utils).
+ * These types mirror the SQLite schema defined in `.claude/SETUP.md`.
+ *
+ * @module types
+ */
+
+/** Agent record from the `agents` table, enriched with latest session info. */
 export interface Agent {
   id: number
   name: string
@@ -8,7 +18,8 @@ export interface Agent {
   thinking_mode: 'auto' | 'disabled' | null
   allowed_tools: string | null
   created_at: string
-  session_statut?: 'en_cours' | 'terminé' | 'bloqué' | null
+  /** Session statut (English, migrated from French in T329). */
+  session_statut?: 'started' | 'completed' | 'blocked' | null
   session_started_at?: string | null
   last_log_at?: string | null
 }
@@ -19,6 +30,7 @@ export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'archived'
 /** Task priority values. */
 export type TaskPriority = 'low' | 'normal' | 'high' | 'critical'
 
+/** Task record from the `tasks` table, enriched with agent names via JOINs. */
 export interface Task {
   id: number
   titre: string
@@ -42,6 +54,7 @@ export interface Task {
   validated_at: string | null
 }
 
+/** Comment on a task, from the `task_comments` table. */
 export interface TaskComment {
   id: number
   task_id: number
@@ -51,6 +64,7 @@ export interface TaskComment {
   created_at: string
 }
 
+/** File lock record from the `locks` table. */
 export interface Lock {
   id: number
   fichier: string
@@ -61,6 +75,7 @@ export interface Lock {
   released_at: string | null
 }
 
+/** Task count statistics grouped by status. */
 export interface Stats {
   todo: number
   in_progress: number
@@ -68,6 +83,7 @@ export interface Stats {
   archived: number
 }
 
+/** Perimeter (scope) record from the `perimetres` table. */
 export interface Perimetre {
   id: number
   name: string
@@ -77,6 +93,7 @@ export interface Perimetre {
   actif: number
 }
 
+/** File tree node used by ExplorerView. */
 export interface FileNode {
   name: string
   path: string
@@ -99,6 +116,23 @@ export interface ClaudeInstance {
   profiles: string[]
 }
 
+/** Agent session record from the `sessions` table. */
+export interface Session {
+  id: number
+  agent_id: number
+  started_at: string
+  ended_at: string | null
+  updated_at: string
+  statut: 'started' | 'completed' | 'blocked'
+  summary: string | null
+  claude_conv_id: string | null
+  tokens_in: number
+  tokens_out: number
+  tokens_cache_read: number
+  tokens_cache_write: number
+}
+
+/** Agent log entry from the `agent_logs` table. */
 export interface AgentLog {
   id: number
   session_id: number

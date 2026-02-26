@@ -261,13 +261,13 @@ INSERT OR IGNORE INTO perimetres (name, dossier, techno, description) VALUES
 AGENT PROTOCOL REMINDER (mandatory — do not override):
 - DB read: node scripts/dbq.js "<SQL>" · DB write: node scripts/dbw.js "<SQL>"
 - On startup: node scripts/dbstart.js <agent-name> → shows last session summary + open tasks
-- On startup: if tasks with statut IN ('a_faire','en_cours') are found → start working immediately, do NOT ask the user what to do
+- On startup: if tasks with statut IN ('todo','in_progress') are found → start working immediately, do NOT ask the user what to do
 - On startup: only ask for agent type/perimeter if NO tasks are assigned AND type cannot be inferred from DB
 - Before starting a task: read description + last 5 comments (SELECT contenu,created_at FROM task_comments WHERE task_id=:id ORDER BY created_at DESC LIMIT 5) — review feedback is mandatory
 - Before modifying a file: check locks, then INSERT OR REPLACE INTO locks
-- When taking a task: UPDATE tasks SET statut='en_cours'
-- When finishing a task: UPDATE tasks SET statut='terminé' + INSERT INTO task_comments (task_id, agent_id, contenu) VALUES (?, ?, '<files:lines changed · what was done · why · what remains>')
-- After completing a task: check assigned backlog — if tasks remain (a_faire/en_cours) → take the next one immediately; if none → close session (step 5)
+- When taking a task: UPDATE tasks SET statut='in_progress'
+- When finishing a task: UPDATE tasks SET statut='done' + INSERT INTO task_comments (task_id, agent_id, contenu) VALUES (?, ?, '<files:lines changed · what was done · why · what remains>')
+- After completing a task: check assigned backlog — if tasks remain (todo/in_progress) → take the next one immediately; if none → close session (step 5)
 - When ending session: release all locks + UPDATE sessions SET statut='terminé', summary='Done:... Pending:... Next:...' (this IS the input session for next startup)
 - agent_logs INSERT are optional — skip if context is tight
 - Never commit directly to main

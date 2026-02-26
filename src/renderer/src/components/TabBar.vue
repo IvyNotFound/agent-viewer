@@ -1,14 +1,49 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTabsStore } from '@renderer/stores/tabs'
 import type { Tab } from '@renderer/stores/tabs'
 import { agentFg, agentBg, agentHue } from '@renderer/utils/agentColor'
+import { useConfirmDialog } from '@renderer/composables/useConfirmDialog'
 
 const { t } = useI18n()
 const store = useTabsStore()
+const { confirm } = useConfirmDialog()
 
 const terminalTabs = computed(() => store.tabs.filter(t => !t.permanent))
+
+// ── Scroll state ─────────────────────────────────────────────────────────────
+const scrollContainer = ref<HTMLDivElement | null>(null)
+const canScrollLeft = ref(false)
+const canScrollRight = ref(false)
+
+function updateScrollState() {
+  const el = scrollContainer.value
+  if (!el) return
+  canScrollLeft.value = el.scrollLeft > 1
+  canScrollRight.value = el.scrollLeft < el.scrollWidth - el.clientWidth - 1
+}
+
+function scrollBy(delta: number) {
+  scrollContainer.value?.scrollBy({ left: delta, behavior: 'smooth' })
+}
+
+function onWheel(e: WheelEvent) {
+  if (!scrollContainer.value) return
+  e.preventDefault()
+  scrollContainer.value.scrollLeft += e.deltaY !== 0 ? e.deltaY : e.deltaX
+}
+
+let resizeObs: ResizeObserver | null = null
+onMounted(() => {
+  nextTick(updateScrollState)
+  if (scrollContainer.value) {
+    resizeObs = new ResizeObserver(updateScrollState)
+    resizeObs.observe(scrollContainer.value)
+  }
+})
+onUnmounted(() => { resizeObs?.disconnect() })
+watch(terminalTabs, () => nextTick(updateScrollState), { deep: true })
 
 // ── Drag & drop ──────────────────────────────────────────────────────────────
 const draggedId = ref<string | null>(null)
@@ -44,14 +79,37 @@ function onDragEnd() {
 
 async function handleCloseTab(tab: Tab): Promise<void> {
   if (tab.type === 'file' && tab.dirty) {
-    const confirmed = await window.electronAPI.showConfirmDialog({
+    const ok = await confirm({
       title: t('tabBar.closeFileTitle'),
       message: t('tabBar.closeFileMessage', { title: tab.title }),
       detail: t('tabBar.closeFileDetail'),
+      type: 'warning',
+      confirmLabel: t('tabBar.closeFileConfirm'),
     })
-    if (!confirmed) return
+    if (!ok) return
+  }
+  if (tab.type === 'terminal') {
+    const alive = tab.ptyId
+      ? await window.electronAPI.terminalIsAlive(tab.ptyId)
+      : true
+    if (alive) {
+      const ok = await confirm({
+        title: t('tabBar.closeTerminalTitle'),
+        message: t('tabBar.closeTerminalMessage'),
+        type: 'danger',
+        confirmLabel: t('tabBar.closeTerminalConfirm'),
+      })
+      if (!ok) return
+    }
   }
   store.closeTab(tab.id)
+}
+
+function onMiddleClick(e: MouseEvent, tab: Tab) {
+  if (e.button === 1) {
+    e.preventDefault()
+    handleCloseTab(tab)
+  }
 }
 
 // ── Styles dynamiques ────────────────────────────────────────────────────────
@@ -81,15 +139,15 @@ function indicatorStyle(tab: Tab): Record<string, string> {
 </script>
 
 <template>
-  <div class="flex items-stretch border-b border-zinc-700 bg-zinc-900 shrink-0 h-10">
+  <div class="flex items-stretch border-b border-edge-default bg-surface-primary shrink-0 h-10">
 
     <!-- Onglet Backlog (fixe, non déplaçable) -->
     <button
       :class="[
-        'flex items-center gap-2 px-5 text-sm font-semibold transition-all relative select-none border-r border-zinc-800 shrink-0',
+        'flex items-center gap-2 px-5 text-sm font-semibold transition-all relative select-none border-r border-edge-subtle shrink-0',
         store.activeTabId === 'backlog'
-          ? 'text-zinc-100 bg-zinc-800'
-          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+          ? 'text-content-primary bg-surface-secondary'
+          : 'text-content-muted hover:text-content-secondary hover:bg-surface-secondary/50'
       ]"
       @click="store.setActive('backlog')"
     >
@@ -103,17 +161,17 @@ function indicatorStyle(tab: Tab): Record<string, string> {
       <!-- Indicateur actif -->
       <span
         v-if="store.activeTabId === 'backlog'"
-        class="absolute bottom-0 left-0 right-0 h-[2px] bg-zinc-500"
+        class="absolute bottom-0 left-0 right-0 h-[2px] bg-content-faint"
       ></span>
     </button>
 
     <!-- Onglet Log (fixe, non fermable) -->
     <button
       :class="[
-        'flex items-center gap-2 px-5 text-sm font-semibold transition-all relative select-none border-r border-zinc-800 shrink-0',
+        'flex items-center gap-2 px-5 text-sm font-semibold transition-all relative select-none border-r border-edge-subtle shrink-0',
         store.activeTabId === 'logs'
-          ? 'text-zinc-100 bg-zinc-800'
-          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+          ? 'text-content-primary bg-surface-secondary'
+          : 'text-content-muted hover:text-content-secondary hover:bg-surface-secondary/50'
       ]"
       @click="store.setActive('logs')"
     >
@@ -124,25 +182,42 @@ function indicatorStyle(tab: Tab): Record<string, string> {
       <span>{{ t('sidebar.logs') }}</span>
       <span
         v-if="store.activeTabId === 'logs'"
-        class="absolute bottom-0 left-0 right-0 h-[2px] bg-zinc-500"
+        class="absolute bottom-0 left-0 right-0 h-[2px] bg-content-faint"
       ></span>
     </button>
 
-    <!-- Onglets terminaux (déplaçables) -->
-    <div class="flex items-stretch gap-0.5 px-1.5 flex-1 min-w-0 overflow-x-auto">
+    <!-- Scroll left arrow -->
+    <button
+      v-show="canScrollLeft"
+      class="flex items-center justify-center w-6 shrink-0 text-content-subtle hover:text-content-secondary hover:bg-surface-secondary/60 transition-colors"
+      @click="scrollBy(-120)"
+    >
+      <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+        <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+      </svg>
+    </button>
+
+    <!-- Onglets terminaux (déplaçables, scrollable) -->
+    <div
+      ref="scrollContainer"
+      class="flex items-stretch gap-0.5 px-1.5 flex-1 min-w-0 overflow-x-hidden"
+      @wheel="onWheel"
+      @scroll="updateScrollState"
+    >
       <button
         v-for="tab in terminalTabs"
         :key="tab.id"
         draggable="true"
         :class="[
           'relative flex items-center gap-2 px-3 text-sm font-medium transition-all select-none rounded-t shrink-0',
-          store.activeTabId !== tab.id && !tab.agentName ? 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60' : '',
+          store.activeTabId !== tab.id && !tab.agentName ? 'text-content-muted hover:text-content-secondary hover:bg-surface-secondary/60' : '',
           draggedId === tab.id ? 'opacity-40' : '',
           dropTargetId === tab.id && draggedId !== tab.id ? 'ring-1 ring-inset ring-violet-500/50' : '',
           'cursor-pointer',
         ]"
         :style="tabStyle(tab)"
         @click="store.setActive(tab.id)"
+        @mousedown="onMiddleClick($event, tab)"
         @dragstart="onDragStart($event, tab.id)"
         @dragover="onDragOver($event, tab.id)"
         @dragleave="dropTargetId = null"
@@ -187,9 +262,20 @@ function indicatorStyle(tab: Tab): Record<string, string> {
       </button>
     </div>
 
-    <!-- Bouton + WSL -->
+    <!-- Scroll right arrow -->
     <button
-      class="flex items-center gap-1.5 px-3 self-center text-sm font-semibold text-violet-300 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 hover:border-violet-500/50 rounded transition-all mr-2 shrink-0 cursor-pointer"
+      v-show="canScrollRight"
+      class="flex items-center justify-center w-6 shrink-0 text-content-subtle hover:text-content-secondary hover:bg-surface-secondary/60 transition-colors"
+      @click="scrollBy(120)"
+    >
+      <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+      </svg>
+    </button>
+
+    <!-- Bouton + WSL (fixed right, never pushed by tabs) -->
+    <button
+      class="flex items-center gap-1.5 px-3 self-center text-sm font-semibold text-violet-300 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 hover:border-violet-500/50 rounded transition-all ml-1 mr-2 shrink-0 cursor-pointer"
       style="height: 28px"
       :title="t('tabBar.newTerminal')"
       @click="store.addTerminal()"

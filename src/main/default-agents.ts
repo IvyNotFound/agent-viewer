@@ -28,7 +28,7 @@ export const DEFAULT_AGENTS: DefaultAgent[] = [
 - Agent à usage unique : une seule session d'initialisation par projet
 - Ne jamais modifier CLAUDE.md (réservé à arch pour les révisions structurantes)
 - Ne jamais éditer project.db manuellement
-- Après initialisation complète : passer la session à terminé et ne plus intervenir
+- Après initialisation complète : passer la session à completed et ne plus intervenir
 - Si le schéma existe déjà : appliquer uniquement les migrations manquantes, ne pas recréer l'existant
 
 ## Référence schéma
@@ -36,7 +36,7 @@ Schéma DB v2 — voir .claude/SETUP.md et .claude/WORKFLOW.md pour le détail d
 
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
-- Passer statut en_cours dès le début du travail
+- Passer la tâche en statut in_progress dès le début du travail
 - Commentaire de sortie : ce qui a été créé/migré · version schéma finale · ce qui reste`,
     system_prompt_suffix: null,
   },
@@ -84,12 +84,12 @@ Stack : Vue 3 (Composition API + script setup) · TypeScript strict · Tailwind 
 ## Tests
 - Vitest + Vue Test Utils
 - Tester les composants critiques (logique conditionnelle, slots, events)
-- 0 test cassé avant de passer un ticket à terminé
+- 0 test cassé avant de passer un ticket à done
 
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
 - Locker les fichiers dans project.db avant toute modification
-- Passer statut en_cours dès le début du travail
+- Passer la tâche en statut in_progress dès le début du travail
 - Commentaire de sortie : fichiers:lignes · ce qui a été fait · choix techniques · ce qui reste
 - Vérifier 0 lint après chaque modification`,
     system_prompt_suffix: null,
@@ -130,12 +130,12 @@ Stack : Electron 28 · Node.js · sql.js + fs.readFile (accès DB) · TypeScript
 ## Tests
 - Vitest — même framework que le frontend (migration.spec.ts, ipc.spec.ts)
 - Mocker ipcMain et les modules Node.js natifs via vi.mock()
-- 0 test cassé avant de passer un ticket à terminé
+- 0 test cassé avant de passer un ticket à done
 
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
 - Locker les fichiers dans project.db avant toute modification
-- Passer statut en_cours dès le début du travail
+- Passer la tâche en statut in_progress dès le début du travail
 - Commentaire de sortie : fichiers:lignes · ce qui a été fait · choix techniques · ce qui reste
 - Vérifier 0 lint après chaque modification`,
     system_prompt_suffix: null,
@@ -155,7 +155,7 @@ Auditer les tickets terminés de ton périmètre, valider ou rejeter le travail,
 - Contrôler la qualité : lisibilité du code, conventions (ESLint, Conventional Commits), absence de régressions
 - Vérifier les tests associés si requis
 - Vérifier que les locks ont été libérés et que la DB est cohérente
-- Archiver le ticket si OK, le rejeter (retour à_faire) avec un commentaire précis si KO
+- Archiver le ticket si OK, le rejeter (retour todo) avec un commentaire précis si KO
 - Créer de nouveaux tickets pour les correctifs ou améliorations détectées
 
 ## Critères de validation
@@ -220,7 +220,7 @@ Exemples :
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
 - Locker les fichiers dans project.db avant toute modification
-- Passer statut en_cours dès le début du travail
+- Passer la tâche en statut in_progress dès le début du travail
 - Commentaire de sortie : fichiers:lignes · ce qui a été fait · choix techniques · ce qui reste`,
     system_prompt_suffix: null,
   },
@@ -300,7 +300,7 @@ Responsabilité : expérience utilisateur, design system, cohérence visuelle, a
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
 - Locker les fichiers dans project.db avant toute modification
-- Passer statut en_cours dès le début du travail
+- Passer la tâche en statut in_progress dès le début du travail
 - Commentaire de sortie : fichiers:lignes · ce qui a été fait · choix visuels · ce qui reste
 - Vérifier 0 lint après chaque modification`,
     system_prompt_suffix: null,
@@ -349,7 +349,7 @@ Ce dépôt master.md est la source de vérité pour tous les projets qui utilise
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
 - Locker les fichiers dans project.db avant toute modification
-- Passer statut en_cours dès le début du travail
+- Passer la tâche en statut in_progress dès le début du travail
 - Commentaire de sortie : fichiers:lignes · ce qui a été fait · ce qui reste`,
     system_prompt_suffix: null,
   },

@@ -73,22 +73,27 @@ onMounted(loadTree)
 <template>
   <div class="flex-1 flex overflow-hidden">
     <!-- Tree panel -->
-    <div class="w-64 shrink-0 border-r border-zinc-800 overflow-y-auto flex flex-col">
-      <div class="flex items-center justify-between px-3 py-2.5 border-b border-zinc-800 shrink-0">
-        <span class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{{ t('explorer.files') }}</span>
+    <div class="w-64 shrink-0 border-r border-edge-subtle overflow-y-auto flex flex-col">
+      <div class="flex items-center justify-between px-3 py-2.5 border-b border-edge-subtle shrink-0">
+        <span class="text-xs font-semibold text-content-subtle uppercase tracking-wider">{{ t('explorer.files') }}</span>
         <button
-          class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+          class="w-5 h-5 flex items-center justify-center rounded text-content-subtle hover:text-content-tertiary hover:bg-surface-secondary transition-colors"
           :title="t('common.refresh')"
           @click="loadTree"
-        >↺</button>
+        >
+          <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
+            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+          </svg>
+        </button>
       </div>
       <div v-if="loadingTree" class="flex-1 flex items-center justify-center">
-        <span class="text-xs text-zinc-600 animate-pulse">{{ t('explorer.loading') }}</span>
+        <span class="text-xs text-content-faint animate-pulse">{{ t('explorer.loading') }}</span>
       </div>
       <div v-else-if="!store.projectPath" class="flex-1 flex items-center justify-center px-4">
-        <span class="text-xs text-zinc-600 text-center">{{ t('common.noProject') }}</span>
+        <span class="text-xs text-content-faint text-center">{{ t('common.noProject') }}</span>
       </div>
-      <div v-else class="flex-1 py-1">
+      <div v-else class="flex-1 py-0.5 select-none">
         <FileTreeNode
           v-for="node in tree"
           :key="node.path"
@@ -103,26 +108,26 @@ onMounted(loadTree)
 
     <!-- Content panel -->
     <div class="flex-1 flex flex-col overflow-hidden">
-      <div class="flex items-center gap-3 px-4 py-2.5 border-b border-zinc-800 shrink-0 min-h-[41px]">
-        <span v-if="selectedPath" class="text-xs font-mono text-zinc-300 truncate">{{ selectedName }}</span>
-        <span v-else class="text-xs text-zinc-600">{{ t('explorer.selectFile') }}</span>
-        <span v-if="fileContent" class="ml-auto text-xs text-zinc-600 shrink-0">
+      <div class="flex items-center gap-3 px-4 py-2.5 border-b border-edge-subtle shrink-0 min-h-[41px]">
+        <span v-if="selectedPath" class="text-xs font-mono text-content-tertiary truncate">{{ selectedName }}</span>
+        <span v-else class="text-xs text-content-faint">{{ t('explorer.selectFile') }}</span>
+        <span v-if="fileContent" class="ml-auto text-xs text-content-faint shrink-0">
           {{ lineCount(fileContent) }} {{ t('explorer.lines') }}
         </span>
       </div>
       <div class="flex-1 overflow-auto">
         <div v-if="loadingFile" class="flex items-center justify-center h-full">
-          <span class="text-xs text-zinc-600 animate-pulse">{{ t('explorer.reading') }}</span>
+          <span class="text-xs text-content-faint animate-pulse">{{ t('explorer.reading') }}</span>
         </div>
         <div v-else-if="fileError" class="flex items-center justify-center h-full px-8">
-          <span class="text-xs text-zinc-500 italic text-center">{{ fileError }}</span>
+          <span class="text-xs text-content-subtle italic text-center">{{ fileError }}</span>
         </div>
         <pre
           v-else-if="fileContent"
-          class="text-xs font-mono text-zinc-300 leading-relaxed p-4 whitespace-pre-wrap break-words"
+          class="text-xs font-mono text-content-tertiary leading-relaxed p-4 whitespace-pre-wrap break-words"
         >{{ fileContent }}</pre>
         <div v-else class="flex items-center justify-center h-full">
-          <span class="text-xs text-zinc-700">—</span>
+          <span class="text-xs text-content-dim">—</span>
         </div>
       </div>
     </div>
@@ -130,8 +135,54 @@ onMounted(loadTree)
 </template>
 
 <script lang="ts">
-// Sub-component: recursive file tree node (defined inline to avoid separate file)
+// Sub-component: recursive file tree node — VS Code-style rendering
 import { defineComponent, h } from 'vue'
+
+// File extension → icon color mapping (VS Code inspired)
+const EXT_COLORS: Record<string, string> = {
+  ts: '#3178c6', tsx: '#3178c6',
+  js: '#f1e05a', jsx: '#f1e05a',
+  vue: '#41b883',
+  json: '#cbcb41',
+  md: '#519aba', txt: '#519aba',
+  css: '#563d7c', scss: '#c6538c', less: '#1d365d',
+  html: '#e34c26', htm: '#e34c26',
+  py: '#3572a5', rs: '#dea584', go: '#00add8',
+  sql: '#e38c00', sh: '#89e051', bash: '#89e051',
+  yaml: '#cb171e', yml: '#cb171e', toml: '#9c4221',
+}
+
+function fileIconColor(name: string): string {
+  const ext = name.split('.').pop()?.toLowerCase() ?? ''
+  return EXT_COLORS[ext] ?? '#9ca3af'
+}
+
+// SVG icon factories (VS Code style, inline)
+function chevronSvg(open: boolean) {
+  return h('svg', {
+    viewBox: '0 0 16 16', fill: 'currentColor',
+    class: ['w-3 h-3 shrink-0 transition-transform duration-150', open ? 'rotate-90' : ''],
+    style: { color: 'var(--content-subtle)' },
+  }, [
+    h('path', { d: 'M6 4l4 4-4 4', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
+  ])
+}
+
+function folderSvg(open: boolean) {
+  return open
+    ? h('svg', { viewBox: '0 0 16 16', fill: 'currentColor', class: 'w-4 h-4 shrink-0', style: { color: '#dcb67a' } }, [
+        h('path', { d: 'M1.75 3A1.75 1.75 0 0 0 0 4.75v7.5C0 13.216.784 14 1.75 14h12.5A1.75 1.75 0 0 0 16 12.25v-6.5A1.75 1.75 0 0 0 14.25 4H8.22a.25.25 0 0 1-.177-.073L6.957 2.841A1.75 1.75 0 0 0 5.721 2.25H1.75zM1.5 4.75a.25.25 0 0 1 .25-.25h3.971c.067 0 .13.026.177.073l1.086 1.086A1.75 1.75 0 0 0 8.22 5.5h6.03a.25.25 0 0 1 .25.25v6.5a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25z' }),
+      ])
+    : h('svg', { viewBox: '0 0 16 16', fill: 'currentColor', class: 'w-4 h-4 shrink-0', style: { color: '#c09553' } }, [
+        h('path', { d: 'M1.75 3A1.75 1.75 0 0 0 0 4.75v7.5C0 13.216.784 14 1.75 14h12.5A1.75 1.75 0 0 0 16 12.25v-6.5A1.75 1.75 0 0 0 14.25 4H8.22a.25.25 0 0 1-.177-.073L6.957 2.841A1.75 1.75 0 0 0 5.721 2.25H1.75zM1.5 4.75a.25.25 0 0 1 .25-.25h3.971c.067 0 .13.026.177.073l1.086 1.086A1.75 1.75 0 0 0 8.22 5.5h6.03a.25.25 0 0 1 .25.25v6.5a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25z' }),
+      ])
+}
+
+function fileSvg(name: string) {
+  return h('svg', { viewBox: '0 0 16 16', fill: 'currentColor', class: 'w-4 h-4 shrink-0', style: { color: fileIconColor(name) } }, [
+    h('path', { d: 'M3.75 1.5a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25V5.414a.25.25 0 0 0-.073-.177L9.263 2.073a.25.25 0 0 0-.177-.073H3.75zM2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l3.164 3.163c.329.328.513.773.513 1.237v8.337A1.75 1.75 0 0 1 12.5 15h-9A1.75 1.75 0 0 1 2 13.25z' }),
+  ])
+}
 
 const FileTreeNode = defineComponent({
   name: 'FileTreeNode',
@@ -147,33 +198,33 @@ const FileTreeNode = defineComponent({
       const node = props.node
       const isOpen = node.isDir && props.openDirs.has(node.path)
       const isSelected = props.selectedPath === node.path
+      const indent = props.depth * 16
 
-      const indent = props.depth * 12
+      // Build indentation guides (thin vertical lines like VS Code)
+      const guides: ReturnType<typeof h>[] = []
+      for (let i = 0; i < props.depth; i++) {
+        guides.push(h('span', {
+          class: 'absolute top-0 bottom-0 w-px',
+          style: { left: `${12 + i * 16}px`, backgroundColor: 'var(--edge-subtle)' },
+        }))
+      }
 
-      // Icône selon le type
-      const icon = node.isDir
-        ? (isOpen ? '▾' : '▸')
-        : getFileIcon(node.name)
-
-      // Couleur selon le type
-      const labelColor = node.isDir
-        ? 'text-amber-400'
-        : getFileColor(node.name)
       const label = h('button', {
         class: [
-          'w-full flex items-center gap-1.5 px-2 py-0.5 text-left text-xs transition-colors rounded',
+          'w-full relative flex items-center gap-1.5 h-[22px] text-left text-[13px] leading-[22px] transition-colors',
           isSelected
-            ? 'bg-violet-500/20 text-violet-300'
-            : node.isDir
-              ? 'text-zinc-300 hover:bg-zinc-800'
-              : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200',
+            ? 'bg-surface-tertiary text-content-primary'
+            : 'text-content-secondary hover:bg-surface-secondary/70',
         ],
         style: { paddingLeft: `${8 + indent}px` },
         onClick: () => emit('select', node),
       }, [
-        node.isDir
-          ? h('span', { class: 'text-zinc-500 text-[10px] w-3 shrink-0 text-center' }, icon)
-          : h('span', { class: 'w-3 shrink-0' }),
+        ...guides,
+        // Chevron (dirs only)
+        node.isDir ? chevronSvg(isOpen) : h('span', { class: 'w-3 shrink-0' }),
+        // Icon
+        node.isDir ? folderSvg(isOpen) : fileSvg(node.name),
+        // Label
         h('span', { class: 'truncate' }, node.name),
       ])
 

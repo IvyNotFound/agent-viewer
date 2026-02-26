@@ -1,6 +1,6 @@
 # agent-viewer
 
-![Version](https://img.shields.io/badge/version-0.3.0-blue)
+![Version](https://img.shields.io/badge/version-0.3.2-blue)
 ![Statut](https://img.shields.io/badge/statut-b%C3%A9ta-orange)
 
 Interface desktop style Trello/Jira pour visualiser en temps réel les tâches des agents Claude depuis une base SQLite locale. L'application permet de gérer des agents, lancer des sessions, et dispose d'un terminal WSL intégré.
@@ -9,16 +9,20 @@ Interface desktop style Trello/Jira pour visualiser en temps réel les tâches d
 
 ## Fonctionnalités principales
 
-- **Board Trello/Jira** : Colonnes par statut (`todo`, `in_progress`, `done`, `archived`), cartes de tâches avec drill-down
-- **Gestion des agents** : Création, configuration, lancement de sessions Claude Code
-- **Terminal WSL intégré** : Sessions multiples, onglets, node-pty + xterm.js
+- **Board Trello/Jira** : Colonnes par statut (`todo`, `in_progress`, `done`, `archived`), cartes de tâches avec drill-down, badge effort S/M/L et priorité
+- **Gestion des agents** : Création, configuration, édition system prompt, thinking mode (auto/disabled), profils API multiples
+- **Terminal WSL intégré** : Sessions multiples, onglets, node-pty + xterm.js, crash recovery avec `--resume`
+- **Multi-instance** : Lancement de plusieurs instances du même agent avec isolation worktree git
 - **Reprise de session** : Les sessions Claude Code sont reprises via `--resume <conv_id>` pour économiser les tokens
+- **Détection multi-distro** : Découverte automatique des distributions WSL avec Claude Code installé
 - **Connexion à un fichier externe** : Ouvre n'importe quel fichier `.claude/project.db`
-- **Explorateur de fichiers** : Navigation et édition de fichiers du projet directement depuis l'app
+- **Explorateur de fichiers** : Navigation et édition de fichiers du projet avec CodeMirror 6
 - **Recherche** : Recherche plein texte dans les tâches avec filtres (statut, agent, périmètre)
 - **Synchronisation CLAUDE.md** : Compare et met à jour depuis un dépôt GitHub master
-- **Mode dark natif** : Thème sombre par défaut
+- **Mode dark / light** : Thème sombre par défaut, mode clair disponible
+- **Internationalisation** : Interface disponible en français et anglais (vue-i18n)
 - **Token GitHub sécurisé** : Chiffrement OS-level via Electron `safeStorage` (DPAPI Windows / Keychain macOS)
+- **Monitoring mémoire WSL** : Surveillance en temps réel de la RAM WSL avec alertes
 
 ## Prérequis
 
@@ -27,7 +31,7 @@ Interface desktop style Trello/Jira pour visualiser en temps réel les tâches d
 | Node.js | ≥ 20 |
 | npm | ≥ 10 |
 | WSL2 | Pour le terminal intégré |
-| sql.js | ^1.14.0 (inclus via `npm install`) | SQLite WASM — couche DB canonique, bypass file locks |
+| sql.js | ≥ 1.14 (inclus via `npm install`) |
 
 ## Installation
 
@@ -86,22 +90,26 @@ agent-viewer/
 │   ├── main/                   # Processus principal Electron
 │   │   ├── index.ts            # Point d'entrée, BrowserWindow, CSP
 │   │   ├── ipc.ts              # Handlers IPC (SQL, fichiers, agents, GitHub…)
-│   │   ├── terminal.ts         # Gestion node-pty + WSL (spawn, resize, kill)
+│   │   ├── terminal.ts         # Gestion node-pty + WSL (spawn, resize, kill, memory)
 │   │   ├── migration.ts        # Migrations SQLite incrémentales (schéma v2+)
+│   │   ├── seed.ts             # Données de démo pour project.db
 │   │   └── default-agents.ts   # Agents par défaut insérés à la création d'un projet
 │   ├── preload/
 │   │   └── index.ts            # contextBridge — expose electronAPI au renderer
 │   └── renderer/               # Application Vue 3
 │       └── src/
-│           ├── main.ts         # Point d'entrée Vue + Pinia
+│           ├── main.ts         # Point d'entrée Vue + Pinia + i18n
 │           ├── App.vue         # Composant racine
 │           ├── stores/         # Stores Pinia
 │           │   ├── tasks.ts    # Tâches, agents, locks, projet
-│           │   ├── tabs.ts     # Gestion des onglets
+│           │   ├── tabs.ts     # Gestion des onglets (multi-type)
 │           │   └── settings.ts # Thème, langue, GitHub, CLAUDE.md
-│           ├── components/     # Composants Vue
+│           ├── components/     # Composants Vue (~20 composants)
+│           ├── locales/        # Traductions i18n (fr.json, en.json)
+│           ├── utils/          # Utilitaires (agentColor…)
 │           └── types/
 │               └── index.ts    # Types TypeScript partagés
+├── scripts/                    # Scripts CLI (dbq.js, dbw.js, dbstart.js)
 ├── electron.vite.config.ts
 ├── electron-builder.config.ts
 └── package.json
@@ -131,10 +139,12 @@ agent-viewer/
 | Frontend | Vue 3 + TypeScript 5 |
 | State management | Pinia 2 |
 | CSS | Tailwind CSS v4 (`@tailwindcss/postcss`) |
+| i18n | vue-i18n 9 (FR/EN) |
 | Terminal | node-pty 1 + @xterm/xterm 5 |
-| Base de données | sql.js 1.14 (SQLite WASM) |
+| Base de données | sql.js 1.14 (SQLite WASM, bypass file locks) |
 | Tests | Vitest 4 |
 | Éditeur de code | CodeMirror 6 |
+| Markdown | marked + DOMPurify |
 
 ## Configuration
 

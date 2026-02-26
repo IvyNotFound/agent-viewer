@@ -155,12 +155,12 @@ function handleKeydown(e: KeyboardEvent) {
       @click.self="emit('close')"
       @keydown="handleKeydown"
     >
-      <div class="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-[440px] flex flex-col max-h-[85vh]">
+      <div class="bg-surface-primary border border-edge-default rounded-xl shadow-2xl w-[750px] flex flex-col max-h-[85vh]">
         <!-- Header -->
-        <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800 shrink-0">
-          <h2 class="text-base font-semibold text-zinc-100">{{ isEditMode ? t('agent.editTitle') : t('agent.newTitle') }}</h2>
+        <div class="flex items-center justify-between px-5 py-4 border-b border-edge-subtle shrink-0">
+          <h2 class="text-base font-semibold text-content-primary">{{ isEditMode ? t('agent.editTitle') : t('agent.newTitle') }}</h2>
           <button
-            class="w-7 h-7 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+            class="w-7 h-7 flex items-center justify-center rounded text-content-subtle hover:text-content-secondary hover:bg-surface-secondary transition-colors"
             @click="emit('close')"
           >
             <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
@@ -174,31 +174,31 @@ function handleKeydown(e: KeyboardEvent) {
 
           <!-- Nom -->
           <div>
-            <label class="block text-xs text-zinc-400 mb-1">{{ t('sidebar.name') }} <span class="text-red-400">*</span></label>
+            <label class="block text-xs text-content-muted mb-1">{{ t('sidebar.name') }} <span class="text-red-400">*</span></label>
             <input
               v-model="name"
               type="text"
               autofocus
               placeholder="dev-back-api"
               :class="[
-                'w-full bg-zinc-800 border rounded-md px-3 py-2 text-sm text-zinc-100 font-mono outline-none focus:ring-1 focus:ring-violet-500 transition-colors',
-                nameError ? 'border-red-500' : 'border-zinc-700'
+                'w-full bg-surface-secondary border rounded-md px-3 py-2 text-sm text-content-primary font-mono outline-none focus:ring-1 focus:ring-violet-500 transition-colors',
+                nameError ? 'border-red-500' : 'border-edge-default'
               ]"
             />
             <p v-if="nameError" class="text-xs text-red-400 mt-1">{{ nameError }}</p>
-            <p v-else class="text-xs text-zinc-600 mt-1">{{ t('agent.nameFormatShort') }}</p>
+            <p v-else class="text-xs text-content-faint mt-1">{{ t('agent.nameFormatShort') }}</p>
           </div>
 
           <!-- Type -->
           <div>
-            <label class="block text-xs text-zinc-400 mb-1">{{ t('agent.type') }}</label>
+            <label class="block text-xs text-content-muted mb-1">{{ t('agent.type') }}</label>
             <div class="grid grid-cols-4 gap-1">
               <button
                 v-for="t in ALL_TYPES"
                 :key="t"
                 :class="[
                   'py-1.5 px-2 rounded text-xs font-mono transition-colors',
-                  type === t ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                  type === t ? 'bg-violet-600 text-white' : 'bg-surface-secondary text-content-muted hover:bg-surface-tertiary'
                 ]"
                 @click="type = t"
               >{{ t }}</button>
@@ -207,35 +207,35 @@ function handleKeydown(e: KeyboardEvent) {
 
           <!-- Périmètre (scoped only) -->
           <div v-if="isScoped">
-            <label class="block text-xs text-zinc-400 mb-1">{{ t('agent.perimeter') }}</label>
+            <label class="block text-xs text-content-muted mb-1">{{ t('agent.perimeter') }}</label>
             <input
               v-model="perimetre"
               type="text"
               placeholder="front-vuejs"
-              class="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-sm text-zinc-100 font-mono outline-none focus:ring-1 focus:ring-violet-500"
+              class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-sm text-content-primary font-mono outline-none focus:ring-1 focus:ring-violet-500"
             />
           </div>
 
           <!-- Description (pour CLAUDE.md) — create mode uniquement -->
           <div v-if="!isEditMode">
-            <label class="block text-xs text-zinc-400 mb-1">{{ t('sidebar.description') }} <span class="text-zinc-600">(CLAUDE.md)</span></label>
+            <label class="block text-xs text-content-muted mb-1">{{ t('sidebar.description') }} <span class="text-content-faint">(CLAUDE.md)</span></label>
             <input
               v-model="description"
               type="text"
-              class="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-sm text-zinc-300 outline-none focus:ring-1 focus:ring-violet-500"
+              class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-sm text-content-tertiary outline-none focus:ring-1 focus:ring-violet-500"
             />
           </div>
 
           <!-- Thinking mode -->
           <div>
-            <label class="block text-xs text-zinc-400 mb-1">{{ t('launch.thinkingMode') }}</label>
+            <label class="block text-xs text-content-muted mb-1">{{ t('launch.thinkingMode') }}</label>
             <div class="flex gap-2">
               <button
-                :class="['flex-1 py-1.5 text-xs rounded transition-colors', thinkingMode === 'auto' ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700']"
+                :class="['flex-1 py-1.5 text-xs rounded transition-colors', thinkingMode === 'auto' ? 'bg-violet-600 text-white' : 'bg-surface-secondary text-content-muted hover:bg-surface-tertiary']"
                 @click="thinkingMode = 'auto'"
               >{{ t('launch.auto') }}</button>
               <button
-                :class="['flex-1 py-1.5 text-xs rounded transition-colors', thinkingMode === 'disabled' ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700']"
+                :class="['flex-1 py-1.5 text-xs rounded transition-colors', thinkingMode === 'disabled' ? 'bg-violet-600 text-white' : 'bg-surface-secondary text-content-muted hover:bg-surface-tertiary']"
                 @click="thinkingMode = 'disabled'"
               >{{ t('launch.disabled') }}</button>
             </div>
@@ -244,7 +244,7 @@ function handleKeydown(e: KeyboardEvent) {
           <!-- System prompt (optionnel, collapsible) -->
           <div>
             <button
-              class="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              class="flex items-center gap-1.5 text-xs text-content-subtle hover:text-content-tertiary transition-colors"
               @click="showPrompt = !showPrompt"
             >
               <svg :class="['w-3 h-3 transition-transform', showPrompt ? 'rotate-90' : '']" viewBox="0 0 16 16" fill="currentColor">
@@ -255,17 +255,17 @@ function handleKeydown(e: KeyboardEvent) {
             <div v-if="showPrompt" class="mt-2 flex flex-col gap-2">
               <textarea
                 v-model="systemPrompt"
-                rows="4"
+                rows="14"
                 placeholder="Instructions spécifiques à cet agent..."
-                class="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-xs text-zinc-300 font-mono outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+                class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-xs text-content-tertiary font-mono outline-none focus:ring-1 focus:ring-violet-500 resize-y"
               />
               <div v-if="isEditMode">
-                <label class="block text-xs text-zinc-500 mb-1">{{ t('agent.hiddenSuffix') }} <span class="text-zinc-600">({{ t('agent.hiddenSuffixCode') }})</span></label>
+                <label class="block text-xs text-content-subtle mb-1">{{ t('agent.hiddenSuffix') }} <span class="text-content-faint">({{ t('agent.hiddenSuffixCode') }})</span></label>
                 <textarea
                   v-model="systemPromptSuffix"
-                  rows="3"
+                  rows="12"
                   placeholder="Suffixe injecté en fin de system prompt (protocole agent, etc.)..."
-                  class="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-xs text-zinc-300 font-mono outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+                  class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-xs text-content-tertiary font-mono outline-none focus:ring-1 focus:ring-violet-500 resize-y"
                 />
               </div>
             </div>
@@ -273,11 +273,11 @@ function handleKeydown(e: KeyboardEvent) {
         </div>
 
         <!-- Footer -->
-        <div class="px-5 py-3 border-t border-zinc-800 flex items-center justify-between shrink-0">
-          <span class="text-xs text-zinc-600">{{ isEditMode ? t('agent.saveShortcut') : t('agent.createShortcut') }}</span>
+        <div class="px-5 py-3 border-t border-edge-subtle flex items-center justify-between shrink-0">
+          <span class="text-xs text-content-faint">{{ isEditMode ? t('agent.saveShortcut') : t('agent.createShortcut') }}</span>
           <div class="flex gap-2">
             <button
-              class="px-4 py-1.5 text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
+              class="px-4 py-1.5 text-sm text-content-muted hover:text-content-secondary transition-colors"
               @click="emit('close')"
             >{{ t('common.cancel') }}</button>
             <button

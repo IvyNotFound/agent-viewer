@@ -6,6 +6,7 @@
     "cancel": "Annuler",
     "save": "Enregistrer",
     "saving": "Enregistrement…",
+    "confirm": "Confirmer",
     "noProject": "Aucun projet ouvert"
   },
   "board": {
@@ -40,6 +41,19 @@
     "prevPage": "Page précédente",
     "nextPage": "Page suivante",
     "refresh": "Actualiser"
+  },
+  "tokenStats": {
+    "logsTab": "Logs",
+    "title": "Token Stats",
+    "global": "Global",
+    "today": "Aujourd'hui (24h)",
+    "lastHour": "Dernière heure",
+    "cache": "Cache",
+    "perAgent": "Par agent",
+    "perSession": "Par session (50 dernières)",
+    "agent": "Agent",
+    "date": "Date",
+    "noData": "Aucune donnée"
   },
   "settings": {
     "title": "Paramètres",
@@ -146,7 +160,11 @@
     "unsaved": "Modifications non enregistrées",
     "closeFileTitle": "Fermer le fichier",
     "closeFileMessage": "{title} contient des modifications non enregistrées.",
-    "closeFileDetail": "Fermer quand même ? Les modifications seront perdues."
+    "closeFileDetail": "Fermer quand même ? Les modifications seront perdues.",
+    "closeTerminalTitle": "Session active",
+    "closeTerminalMessage": "Cette session est encore active. Fermer quand même ?",
+    "closeFileConfirm": "Fermer quand même",
+    "closeTerminalConfirm": "Fermer"
   },
   "agent": {
     "editTitle": "Éditer l'agent",

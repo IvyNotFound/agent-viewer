@@ -1,18 +1,56 @@
+/**
+ * Preload script for agent-viewer.
+ *
+ * Exposes a secure `electronAPI` object to the renderer process via contextBridge.
+ * All Node.js / Electron APIs are accessed through IPC invoke/on — no direct
+ * access to Node.js modules from the renderer.
+ *
+ * Channels are grouped by domain:
+ * - **DB**: queryDb, watchDb, unwatchDb, onDbChanged, migrateDb, getLocks
+ * - **Project**: selectProjectDir, createProjectDb, findProjectDb, initNewProject
+ * - **File system**: fsListDir, fsReadFile, fsWriteFile
+ * - **Window**: windowMinimize, windowMaximize, windowClose, windowIsMaximized
+ * - **Terminal**: terminalCreate, terminalWrite, terminalResize, terminalKill, etc.
+ * - **Agents**: createAgent, updateAgent, renameAgent, buildAgentPrompt, etc.
+ * - **Config**: getConfigValue, setConfigValue
+ * - **GitHub**: testGithubConnection, checkForUpdates, checkMasterClaudeMd
+ * - **Search**: searchTasks
+ *
+ * @module preload
+ */
 import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  // ── Project ────────────────────────────────────────────────────────────────
+
+  /** @returns Project path, DB path, and error info — or null if cancelled. */
   selectProjectDir: (): Promise<{ projectPath: string; dbPath: string | null; error: string | null } | null> =>
     ipcRenderer.invoke('select-project-dir'),
 
+  // ── DB ─────────────────────────────────────────────────────────────────────
+
+  /**
+   * @param dbPath - Absolute path to the SQLite database.
+   * @param query - SQL query string.
+   * @param params - Bind parameters for the query.
+   * @returns Array of result rows.
+   */
   queryDb: (dbPath: string, query: string, params?: unknown[]): Promise<unknown[]> =>
     ipcRenderer.invoke('query-db', dbPath, query, params ?? []),
 
+  /** @param dbPath - DB path to watch for changes (fs.watch). */
   watchDb: (dbPath: string): Promise<void> =>
     ipcRenderer.invoke('watch-db', dbPath),
 
+  /** @param dbPath - Optional DB path to stop watching. Unwatches all if omitted. */
   unwatchDb: (dbPath?: string): Promise<void> =>
     ipcRenderer.invoke('unwatch-db', dbPath),
 
+  /**
+   * Subscribe to DB file change notifications.
+   * @param callback - Called when the DB file changes on disk.
+   * @returns Unsubscribe function.
+   */
   onDbChanged: (callback: () => void): (() => void) => {
     const handler = () => callback()
     ipcRenderer.on('db-changed', handler)
@@ -34,6 +72,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   findProjectDb: (projectPath: string): Promise<string | null> =>
     ipcRenderer.invoke('find-project-db', projectPath),
 
+  /** @param dbPath - Run all pending migrations on the DB. */
   migrateDb: (dbPath: string): Promise<{ success: boolean; error?: string; migrated?: number }> =>
     ipcRenderer.invoke('migrate-db', dbPath),
 
@@ -43,7 +82,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getLocksCount: (dbPath: string): Promise<number> =>
     ipcRenderer.invoke('get-locks-count', dbPath),
 
-  // File system (with allowedDir for security - restricts access to project directory)
+  // ── File system (with allowedDir for security - restricts access to project directory) ──
+
   fsListDir: (dirPath: string, allowedDir?: string): Promise<unknown[]> =>
     ipcRenderer.invoke('fs:listDir', dirPath, allowedDir),
 
@@ -52,6 +92,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   fsWriteFile: (filePath: string, content: string, allowedDir?: string): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('fs:writeFile', filePath, content, allowedDir),
+
+  // ── Window ─────────────────────────────────────────────────────────────────
 
   windowMinimize: (): Promise<void> => ipcRenderer.invoke('window-minimize'),
   windowMaximize: (): Promise<void> => ipcRenderer.invoke('window-maximize'),
@@ -63,14 +105,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.off('window-state-changed', handler)
   },
 
-  // Terminal
+  // ── Terminal ───────────────────────────────────────────────────────────────
+
+  /** @returns List of interactive WSL user names. */
   getWslUsers: (): Promise<string[]> =>
     ipcRenderer.invoke('terminal:getWslUsers'),
 
+  /** @param wslUser - Optional WSL user to scan ~/bin/ for claude-* scripts. */
   getClaudeProfiles: (wslUser?: string): Promise<string[]> =>
     ipcRenderer.invoke('terminal:getClaudeProfiles', wslUser),
 
-  /** Detect WSL distros that have Claude Code installed (replaces raw WSL user selection). */
+  /** @returns Array of ClaudeInstance objects — WSL distros with Claude Code installed. */
   getClaudeInstances: (): Promise<unknown[]> =>
     ipcRenderer.invoke('terminal:getClaudeInstances'),
 
@@ -86,6 +131,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   terminalKill: (id: string): Promise<void> =>
     ipcRenderer.invoke('terminal:kill', id),
 
+  terminalIsAlive: (id: string): Promise<boolean> =>
+    ipcRenderer.invoke('terminal:isAlive', id),
+
   onTerminalData: (id: string, cb: (data: string) => void): (() => void) => {
     const channel = `terminal:data:${id}`
     const handler = (_: unknown, data: string) => cb(data)
@@ -93,9 +141,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.off(channel, handler)
   },
 
-  onTerminalExit: (id: string, cb: () => void): (() => void) => {
+  onTerminalExit: (id: string, cb: (info?: {
+    exitCode: number | null; isCrash: boolean; isAgent: boolean;
+    canResume: boolean; resumeConvId: string | null;
+  }) => void): (() => void) => {
     const channel = `terminal:exit:${id}`
-    const handler = () => cb()
+    const handler = (_: unknown, info?: {
+      exitCode: number | null; isCrash: boolean; isAgent: boolean;
+      canResume: boolean; resumeConvId: string | null;
+    }) => cb(info)
     ipcRenderer.on(channel, handler)
     return () => ipcRenderer.off(channel, handler)
   },
@@ -108,6 +162,47 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on(channel, handler)
     return () => ipcRenderer.off(channel, handler)
   },
+
+  // T279: Relaunch a crashed PTY session — returns original launch params
+  terminalRelaunch: (oldId: string, useResume?: boolean): Promise<{
+    cols: number; rows: number; projectPath?: string; wslDistro?: string;
+    systemPrompt?: string; userPrompt?: string; thinkingMode?: string;
+    claudeCommand?: string; convId?: string;
+  }> => ipcRenderer.invoke('terminal:relaunch', oldId, useResume),
+
+  // T279: Dismiss crash recovery (clean up stored launch params)
+  terminalDismissCrash: (id: string): Promise<void> =>
+    ipcRenderer.invoke('terminal:dismissCrash', id),
+
+  // T279: Get active PTY session count
+  terminalGetActiveCount: (): Promise<number> =>
+    ipcRenderer.invoke('terminal:getActiveCount'),
+
+  // T279+T328: Get WSL memory status on demand
+  terminalGetMemoryStatus: (): Promise<{
+    usedMB: number; totalMB: number; availableMB: number; usedRatio: number;
+    warning: boolean; critical: boolean; activeSessions: number;
+    dropCachesAvailable: boolean;
+  } | null> => ipcRenderer.invoke('terminal:getMemoryStatus'),
+
+  // T279+T328: Listen for periodic memory status broadcasts
+  onMemoryStatus: (cb: (status: {
+    usedMB: number; totalMB: number; availableMB: number; usedRatio: number;
+    warning: boolean; critical: boolean; activeSessions: number;
+    dropCachesAvailable: boolean;
+  }) => void): (() => void) => {
+    const handler = (_: unknown, status: {
+      usedMB: number; totalMB: number; availableMB: number; usedRatio: number;
+      warning: boolean; critical: boolean; activeSessions: number;
+      dropCachesAvailable: boolean;
+    }) => cb(status)
+    ipcRenderer.on('terminal:memoryStatus', handler)
+    return () => ipcRenderer.off('terminal:memoryStatus', handler)
+  },
+
+  // T328: Release WSL memory (sync + optional drop_caches)
+  terminalReleaseMemory: (): Promise<{ synced: boolean; dropped: boolean; error?: string }> =>
+    ipcRenderer.invoke('terminal:releaseMemory'),
 
   setSessionConvId: (dbPath: string, agentId: number, convId: string): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('session:setConvId', dbPath, agentId, convId),

@@ -164,12 +164,12 @@ function handleKeydown(e: KeyboardEvent) {
       @click.self="emit('close')"
       @keydown="handleKeydown"
     >
-      <div class="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-[480px] max-h-[80vh] flex flex-col">
+      <div class="bg-surface-primary border border-edge-default rounded-xl shadow-2xl w-[480px] max-h-[80vh] flex flex-col">
         <!-- Header -->
-        <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800 shrink-0">
-          <h2 class="text-lg font-semibold text-zinc-100">{{ t('settings.title') }}</h2>
+        <div class="flex items-center justify-between px-5 py-4 border-b border-edge-subtle shrink-0">
+          <h2 class="text-lg font-semibold text-content-primary">{{ t('settings.title') }}</h2>
           <button
-            class="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+            class="w-8 h-8 flex items-center justify-center rounded-lg text-content-subtle hover:text-content-secondary hover:bg-surface-secondary transition-colors"
             :title="t('settings.fermer')"
             @click="emit('close')"
           >
@@ -183,15 +183,15 @@ function handleKeydown(e: KeyboardEvent) {
         <div class="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4">
 
           <!-- Language -->
-          <div class="bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3">
-            <p class="text-[11px] text-zinc-500 mb-2 uppercase tracking-wider">{{ t('settings.language') }}</p>
+          <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
+            <p class="text-[11px] text-content-subtle mb-2 uppercase tracking-wider">{{ t('settings.language') }}</p>
             <div class="flex gap-2">
               <button
                 :class="[
                   'flex-1 py-2 px-3 rounded text-sm font-medium transition-colors',
                   settingsStore.language === 'fr'
                     ? 'bg-violet-600 text-white'
-                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                    : 'bg-surface-secondary text-content-muted hover:bg-surface-tertiary'
                 ]"
                 @click="settingsStore.setLanguage('fr')"
               >{{ t('settings.french') }}</button>
@@ -200,7 +200,7 @@ function handleKeydown(e: KeyboardEvent) {
                   'flex-1 py-2 px-3 rounded text-sm font-medium transition-colors',
                   settingsStore.language === 'en'
                     ? 'bg-violet-600 text-white'
-                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                    : 'bg-surface-secondary text-content-muted hover:bg-surface-tertiary'
                 ]"
                 @click="settingsStore.setLanguage('en')"
               >{{ t('settings.english') }}</button>
@@ -208,15 +208,15 @@ function handleKeydown(e: KeyboardEvent) {
           </div>
 
           <!-- Theme -->
-          <div class="bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3">
-            <p class="text-[11px] text-zinc-500 mb-2 uppercase tracking-wider">{{ t('settings.theme') }}</p>
+          <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
+            <p class="text-[11px] text-content-subtle mb-2 uppercase tracking-wider">{{ t('settings.theme') }}</p>
             <div class="flex gap-2">
               <button
                 :class="[
                   'flex-1 py-2 px-3 rounded text-sm font-medium transition-colors',
                   settingsStore.theme === 'dark'
                     ? 'bg-violet-600 text-white'
-                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                    : 'bg-surface-secondary text-content-muted hover:bg-surface-tertiary'
                 ]"
                 @click="settingsStore.setTheme('dark')"
               >{{ t('settings.dark') }}</button>
@@ -225,7 +225,7 @@ function handleKeydown(e: KeyboardEvent) {
                   'flex-1 py-2 px-3 rounded text-sm font-medium transition-colors',
                   settingsStore.theme === 'light'
                     ? 'bg-violet-600 text-white'
-                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                    : 'bg-surface-secondary text-content-muted hover:bg-surface-tertiary'
                 ]"
                 @click="settingsStore.setTheme('light')"
               >{{ t('settings.light') }}</button>
@@ -233,16 +233,16 @@ function handleKeydown(e: KeyboardEvent) {
           </div>
 
           <!-- GitHub Connection -->
-          <div class="bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3">
-            <p class="text-[11px] text-zinc-500 mb-3 uppercase tracking-wider">{{ t('settings.github') }}</p>
+          <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
+            <p class="text-[11px] text-content-subtle mb-3 uppercase tracking-wider">{{ t('settings.github') }}</p>
 
             <!-- Token input -->
             <div class="mb-3">
-              <label class="block text-xs text-zinc-400 mb-1">{{ t('settings.tokenLabel') }}</label>
+              <label class="block text-xs text-content-muted mb-1">{{ t('settings.tokenLabel') }}</label>
               <input
                 v-model="githubToken"
                 type="password"
-                class="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-sm text-zinc-100 font-mono outline-none focus:ring-1 focus:ring-violet-500"
+                class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-sm text-content-primary font-mono outline-none focus:ring-1 focus:ring-violet-500"
                 placeholder="ghp_xxxxxxxxxxxx"
                 :disabled="!store.dbPath"
                 @change="saveToken"
@@ -251,11 +251,11 @@ function handleKeydown(e: KeyboardEvent) {
 
             <!-- Repo URL input -->
             <div class="mb-3">
-              <label class="block text-xs text-zinc-400 mb-1">{{ t('settings.repoLabel') }}</label>
+              <label class="block text-xs text-content-muted mb-1">{{ t('settings.repoLabel') }}</label>
               <input
                 v-model="githubRepo"
                 type="text"
-                class="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-sm text-zinc-100 font-mono outline-none focus:ring-1 focus:ring-violet-500"
+                class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-sm text-content-primary font-mono outline-none focus:ring-1 focus:ring-violet-500"
                 placeholder="https://github.com/owner/repo"
                 @change="settingsStore.setGitHubRepo(githubRepo)"
               />
@@ -268,13 +268,13 @@ function handleKeydown(e: KeyboardEvent) {
                   <span
                     :class="[
                       'inline-block w-2 h-2 rounded-full',
-                      settingsStore.github.connected ? 'bg-emerald-400' : 'bg-zinc-600'
+                      settingsStore.github.connected ? 'bg-emerald-400' : 'bg-content-faint'
                     ]"
                   />
                   <span
                     :class="[
                       'text-sm font-medium',
-                      settingsStore.github.connected ? 'text-emerald-400' : 'text-zinc-500'
+                      settingsStore.github.connected ? 'text-emerald-400' : 'text-content-subtle'
                     ]"
                   >
                     {{ settingsStore.github.connected ? t('settings.connected') : t('settings.notConnected') }}
@@ -294,11 +294,11 @@ function handleKeydown(e: KeyboardEvent) {
           </div>
 
           <!-- Check for Updates -->
-          <div class="bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3">
-            <p class="text-[11px] text-zinc-500 mb-3 uppercase tracking-wider">{{ t('settings.updates') }}</p>
+          <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
+            <p class="text-[11px] text-content-subtle mb-3 uppercase tracking-wider">{{ t('settings.updates') }}</p>
             <div class="flex items-center justify-between">
-              <span class="text-sm text-zinc-400">
-                {{ t('settings.version') }}: <span class="font-mono text-zinc-300">{{ settingsStore.appInfo.version }}</span>
+              <span class="text-sm text-content-muted">
+                {{ t('settings.version') }}: <span class="font-mono text-content-tertiary">{{ settingsStore.appInfo.version }}</span>
               </span>
               <button
                 class="px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-500 text-white rounded-md transition-colors disabled:opacity-50"
@@ -321,11 +321,11 @@ function handleKeydown(e: KeyboardEvent) {
           </div>
 
           <!-- CLAUDE.md Sync -->
-          <div class="bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3">
-            <p class="text-[11px] text-zinc-500 mb-3 uppercase tracking-wider">{{ t('settings.claudeMd') }}</p>
-            <div class="text-sm text-zinc-400 space-y-1 mb-3">
-              <p>{{ t('settings.project') }}: <span class="font-mono text-zinc-300 text-xs">{{ settingsStore.claudeMdInfo.projectCommit ? settingsStore.claudeMdInfo.projectCommit.slice(0, 12) : '—' }}</span></p>
-              <p>{{ t('settings.master') }}: <span class="font-mono text-zinc-300 text-xs">{{ settingsStore.claudeMdInfo.masterCommit ? settingsStore.claudeMdInfo.masterCommit.slice(0, 12) : '—' }}</span></p>
+          <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
+            <p class="text-[11px] text-content-subtle mb-3 uppercase tracking-wider">{{ t('settings.claudeMd') }}</p>
+            <div class="text-sm text-content-muted space-y-1 mb-3">
+              <p>{{ t('settings.project') }}: <span class="font-mono text-content-tertiary text-xs">{{ settingsStore.claudeMdInfo.projectCommit ? settingsStore.claudeMdInfo.projectCommit.slice(0, 12) : '—' }}</span></p>
+              <p>{{ t('settings.master') }}: <span class="font-mono text-content-tertiary text-xs">{{ settingsStore.claudeMdInfo.masterCommit ? settingsStore.claudeMdInfo.masterCommit.slice(0, 12) : '—' }}</span></p>
             </div>
 
             <!-- Status feedback -->
@@ -339,10 +339,10 @@ function handleKeydown(e: KeyboardEvent) {
               {{ claudeMdError }}
             </div>
 
-            <div v-if="!store.dbPath" class="text-xs text-zinc-500">{{ t('settings.noProject') }}</div>
+            <div v-if="!store.dbPath" class="text-xs text-content-subtle">{{ t('settings.noProject') }}</div>
             <div v-else class="flex gap-2">
               <button
-                class="flex-1 py-2 text-sm bg-zinc-700 hover:bg-zinc-600 text-white rounded-md transition-colors disabled:opacity-50"
+                class="flex-1 py-2 text-sm bg-surface-tertiary hover:bg-content-faint text-content-primary rounded-md transition-colors disabled:opacity-50"
                 :disabled="claudeMdChecking || claudeMdApplying"
                 @click="checkClaudeMdStatus"
               >
@@ -360,20 +360,20 @@ function handleKeydown(e: KeyboardEvent) {
           </div>
 
           <!-- About -->
-          <div class="bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3">
-            <p class="text-[11px] text-zinc-500 mb-2 uppercase tracking-wider">{{ t('settings.about') }}</p>
-            <p class="text-sm text-zinc-300">
+          <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
+            <p class="text-[11px] text-content-subtle mb-2 uppercase tracking-wider">{{ t('settings.about') }}</p>
+            <p class="text-sm text-content-tertiary">
               {{ settingsStore.appInfo.name }} v{{ settingsStore.appInfo.version }}
             </p>
-            <p class="text-xs text-zinc-500 mt-1">
+            <p class="text-xs text-content-subtle mt-1">
               {{ t('settings.aboutDesc') }}
             </p>
           </div>
 
           <!-- DB Info -->
-          <div v-if="store.dbPath" class="bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3">
-            <p class="text-[11px] text-zinc-500 mb-2 uppercase tracking-wider">{{ t('settings.database') }}</p>
-            <p class="text-sm text-zinc-400 font-mono break-all">{{ store.dbPath }}</p>
+          <div v-if="store.dbPath" class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
+            <p class="text-[11px] text-content-subtle mb-2 uppercase tracking-wider">{{ t('settings.database') }}</p>
+            <p class="text-sm text-content-muted font-mono break-all">{{ store.dbPath }}</p>
           </div>
 
         </div>

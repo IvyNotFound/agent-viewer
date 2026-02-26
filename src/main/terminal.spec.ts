@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import util from 'util'
 
 // Mock electron BEFORE importing terminal module
 vi.mock('electron', () => ({
@@ -27,11 +28,34 @@ vi.mock('node-pty', () => {
 })
 
 // Mock child_process — provide default export for CJS/ESM interop
+// Add util.promisify.custom so promisify(execFile) returns { stdout, stderr }
 vi.mock('child_process', () => {
   const execFile = vi.fn()
+  // promisify.custom makes promisify(execFile) call this instead of the raw fn
+  ;(execFile as Record<symbol, unknown>)[util.promisify.custom] = (...args: unknown[]) => {
+    return new Promise((resolve, reject) => {
+      execFile(...args, (err: Error | null, stdout?: string, stderr?: string) => {
+        if (err) reject(err)
+        else resolve({ stdout: stdout ?? '', stderr: stderr ?? '' })
+      })
+    })
+  }
   return {
     default: { execFile },
     execFile,
+  }
+})
+
+// Mock fs/promises for temp script file (T278)
+const mockWriteFile = vi.fn().mockResolvedValue(undefined)
+const mockUnlink = vi.fn().mockResolvedValue(undefined)
+vi.mock('fs/promises', () => {
+  const writeFile = (...args: unknown[]) => mockWriteFile(...args)
+  const unlink = (...args: unknown[]) => mockUnlink(...args)
+  return {
+    default: { writeFile, unlink },
+    writeFile,
+    unlink,
   }
 })
 
@@ -254,10 +278,11 @@ describe('terminal utilities', () => {
   })
 
   describe('terminal:create — system prompt injection', () => {
-    it('should inject --append-system-prompt flag when systemPrompt + userPrompt provided', async () => {
+    it('should write temp script and use bash -l when systemPrompt + userPrompt provided', async () => {
       const nodePty = await import('node-pty')
       const mockSpawn = vi.mocked(nodePty.spawn)
       mockSpawn.mockClear()
+      mockWriteFile.mockClear()
 
       const { find } = await getHandlers()
       const handler = find('terminal:create')
@@ -266,21 +291,23 @@ describe('terminal utilities', () => {
       const userPrompt = 'Démarre la session'
       await handler(makeEvent(30), 80, 24, undefined, undefined, systemPrompt, userPrompt, undefined)
 
+      // Should write a temp script file with --append-system-prompt
+      expect(mockWriteFile).toHaveBeenCalledOnce()
+      const [, scriptContent] = mockWriteFile.mock.calls[0]
+      expect(scriptContent).toContain('--append-system-prompt')
+      expect(scriptContent).toContain('base64 -d')
+
       const callArgs = mockSpawn.mock.calls[0]
       const spawnArgs = callArgs[1] as string[]
-      // Should use -- bash -lc to run wrapperScript via login shell
+      // Should use -- bash -l <script_path> (no -lc inline command)
       expect(spawnArgs).toContain('--')
       expect(spawnArgs).toContain('bash')
-      expect(spawnArgs).toContain('-lc')
-      // The wrapper script should include --append-system-prompt
-      const commandStr = spawnArgs.join(' ')
-      expect(commandStr).toContain('--append-system-prompt')
+      expect(spawnArgs).toContain('-l')
+      expect(spawnArgs).not.toContain('-lc')
     })
 
-    it('should include systemPrompt content in spawn args (not as env variable)', async () => {
-      const nodePty = await import('node-pty')
-      const mockSpawn = vi.mocked(nodePty.spawn)
-      mockSpawn.mockClear()
+    it('should include base64-encoded systemPrompt in temp script file', async () => {
+      mockWriteFile.mockClear()
 
       const { find } = await getHandlers()
       const handler = find('terminal:create')
@@ -288,13 +315,15 @@ describe('terminal utilities', () => {
       const systemPrompt = 'Mon prompt spécial avec "guillemets"'
       await handler(makeEvent(31), 80, 24, undefined, undefined, systemPrompt, 'start', undefined)
 
-      const callArgs = mockSpawn.mock.calls[0]
-      const spawnArgs = callArgs[1] as string[]
-      // System prompt should be base64-encoded in the command string for shell safety
-      const commandStr = spawnArgs.join(' ')
+      // The temp script should contain the base64-encoded system prompt
+      expect(mockWriteFile).toHaveBeenCalledOnce()
+      const [scriptPath, scriptContent] = mockWriteFile.mock.calls[0]
       const expectedB64 = Buffer.from(systemPrompt).toString('base64')
-      expect(commandStr).toContain(expectedB64)
-      expect(commandStr).toContain('base64 -d')
+      expect(scriptContent).toContain(expectedB64)
+      expect(scriptContent).toContain('base64 -d')
+      // Script path should be a temp file
+      expect(scriptPath).toContain('agent-prompt-')
+      expect(scriptPath).toMatch(/\.sh$/)
     })
 
     it('should include projectPath via --cd when both projectPath and systemPrompt provided', async () => {
@@ -489,6 +518,240 @@ describe('terminal utilities', () => {
 
       // Second PTY for same webContents should NOT re-register 'destroyed'
       expect(mockOnce).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── T328: parseFreeMOutput ──────────────────────────────────────────────────
+
+  describe('parseFreeMOutput (T328 — available metric)', () => {
+    // Import _testing helpers
+    let parseFreeMOutput: typeof import('./terminal')._testing.parseFreeMOutput
+
+    beforeEach(async () => {
+      const mod = await import('./terminal')
+      parseFreeMOutput = mod._testing.parseFreeMOutput
+    })
+
+    it('should use available column for memory pressure (not used)', () => {
+      const output = [
+        '              total        used        free      shared  buff/cache   available',
+        'Mem:           7951        3200        2100          50        2651        4500',
+        'Swap:          2048           0        2048',
+      ].join('\n')
+
+      const result = parseFreeMOutput(output)
+
+      expect(result).not.toBeNull()
+      // usedRatio = (total - available) / total = (7951 - 4500) / 7951 ≈ 0.434
+      expect(result!.usedRatio).toBeCloseTo((7951 - 4500) / 7951, 3)
+      expect(result!.totalMB).toBe(7951)
+      expect(result!.availableMB).toBe(4500)
+      expect(result!.usedMB).toBe(7951 - 4500)
+    })
+
+    it('should return null when no Mem: line found', () => {
+      const output = 'Swap:  2048  0  2048\n'
+      expect(parseFreeMOutput(output)).toBeNull()
+    })
+
+    it('should return null when total is 0 or NaN', () => {
+      const output = 'Mem:   0   0   0   0   0   0\n'
+      expect(parseFreeMOutput(output)).toBeNull()
+    })
+
+    it('should fallback to used column when available is missing (old free format)', () => {
+      // Old format with only 4 columns: total used free shared
+      const output = 'Mem:   8000  3000  5000  50\n'
+      const result = parseFreeMOutput(output)
+
+      expect(result).not.toBeNull()
+      // Fallback: usedRatio = used / total = 3000/8000
+      expect(result!.usedRatio).toBeCloseTo(3000 / 8000, 3)
+      expect(result!.usedMB).toBe(3000)
+      expect(result!.availableMB).toBe(5000) // total - used
+    })
+
+    it('should handle lines with varying whitespace', () => {
+      const output = 'Mem:     16384   8000   4000    200    4184    7800\n'
+      const result = parseFreeMOutput(output)
+
+      expect(result).not.toBeNull()
+      expect(result!.totalMB).toBe(16384)
+      expect(result!.availableMB).toBe(7800)
+      expect(result!.usedRatio).toBeCloseTo((16384 - 7800) / 16384, 3)
+    })
+  })
+
+  // ── T328: releaseWslMemory ──────────────────────────────────────────────────
+
+  describe('releaseWslMemory (T328)', () => {
+    let releaseWslMemory: typeof import('./terminal')._testing.releaseWslMemory
+    let testing: typeof import('./terminal')._testing
+    let mockExecFile: ReturnType<typeof vi.fn>
+
+    beforeEach(async () => {
+      const mod = await import('./terminal')
+      releaseWslMemory = mod._testing.releaseWslMemory
+      testing = mod._testing
+
+      const cp = await import('child_process')
+      mockExecFile = vi.mocked(cp.execFile)
+    })
+
+    it('should return synced:true, dropped:true when drop_caches is available', async () => {
+      testing.dropCachesAvailable = true
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], opts: unknown, callback?: unknown) => {
+        // execPromise uses promisify(execFile) — mock the callback version
+        if (callback && typeof callback === 'function') {
+          (callback as (err: null, stdout: string, stderr: string) => void)(null, '', '')
+        }
+        return {} as ReturnType<typeof import('child_process').execFile>
+      })
+
+      const result = await releaseWslMemory()
+
+      expect(result.synced).toBe(true)
+      expect(result.dropped).toBe(true)
+      expect(result.error).toBeUndefined()
+    })
+
+    it('should return synced:true, dropped:false when drop_caches is not available', async () => {
+      testing.dropCachesAvailable = false
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], opts: unknown, callback?: unknown) => {
+        if (callback && typeof callback === 'function') {
+          (callback as (err: null, stdout: string, stderr: string) => void)(null, '', '')
+        }
+        return {} as ReturnType<typeof import('child_process').execFile>
+      })
+
+      const result = await releaseWslMemory()
+
+      expect(result.synced).toBe(true)
+      expect(result.dropped).toBe(false)
+      expect(result.error).toBeUndefined()
+    })
+
+    it('should return error when sync fails', async () => {
+      testing.dropCachesAvailable = true
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], opts: unknown, callback?: unknown) => {
+        if (callback && typeof callback === 'function') {
+          (callback as (err: Error) => void)(new Error('WSL not available'))
+        }
+        return {} as ReturnType<typeof import('child_process').execFile>
+      })
+
+      const result = await releaseWslMemory()
+
+      expect(result.synced).toBe(false)
+      expect(result.dropped).toBe(false)
+      expect(result.error).toContain('sync failed')
+    })
+  })
+
+  // ── T328: Cooldown logic in doMemoryCheck ───────────────────────────────────
+
+  describe('auto-release cooldown (T328)', () => {
+    let testing: typeof import('./terminal')._testing
+    let mockExecFile: ReturnType<typeof vi.fn>
+
+    beforeEach(async () => {
+      const mod = await import('./terminal')
+      testing = mod._testing
+
+      const cp = await import('child_process')
+      mockExecFile = vi.mocked(cp.execFile)
+
+      // Reset state
+      testing.dropCachesAvailable = true
+      testing.lastAutoReleaseAt = 0
+      testing.memoryCheckRunning = false
+
+      // Add a fake PTY so doMemoryCheck doesn't exit early
+      testing.ptys.set('test-cooldown', {} as import('node-pty').IPty)
+
+      // Mock BrowserWindow.getAllWindows to return empty array
+      const electron = await import('electron')
+      ;(electron as Record<string, unknown>).BrowserWindow = {
+        getAllWindows: vi.fn(() => []),
+      }
+    })
+
+    afterEach(async () => {
+      const mod = await import('./terminal')
+      mod._testing.ptys.delete('test-cooldown')
+    })
+
+    it('should call releaseWslMemory when cooldown has elapsed', async () => {
+      // lastAutoReleaseAt = 0 means never released → cooldown elapsed
+      testing.lastAutoReleaseAt = 0
+
+      // Mock free -m output with critical memory (available < 15%)
+      const criticalFreeOutput = '              total        used        free      shared  buff/cache   available\nMem:           8000        7500         100          50         400         500\n'
+
+      let callCount = 0
+      mockExecFile.mockImplementation((...args: unknown[]) => {
+        callCount++
+        // promisify calls execFile(cmd, args, cb) or execFile(cmd, args, opts, cb)
+        // Find the callback — it's always the last argument
+        const cb = args[args.length - 1]
+        if (typeof cb === 'function') {
+          if (callCount === 1) {
+            // First call: wsl.exe -- free -m
+            cb(null, criticalFreeOutput, '')
+          } else {
+            // Subsequent calls: sync / drop_caches from releaseWslMemory
+            cb(null, '', '')
+          }
+        }
+        return {} as ReturnType<typeof import('child_process').execFile>
+      })
+
+      await testing.doMemoryCheck()
+
+      // doMemoryCheck sets lastAutoReleaseAt before calling releaseWslMemory (fire-and-forget)
+      // So lastAutoReleaseAt > 0 proves the auto-release was triggered
+      expect(testing.lastAutoReleaseAt).toBeGreaterThan(0)
+      // free -m call happened + at least releaseWslMemory was invoked
+      expect(callCount).toBeGreaterThanOrEqual(1)
+    })
+
+    it('should NOT call releaseWslMemory when within 60s cooldown window', async () => {
+      // Set lastAutoReleaseAt to "just now" — within cooldown
+      testing.lastAutoReleaseAt = Date.now()
+
+      const criticalFreeOutput = '              total        used        free      shared  buff/cache   available\nMem:           8000        7500         100          50         400         500\n'
+
+      let callCount = 0
+      mockExecFile.mockImplementation((...args: unknown[]) => {
+        const cb = args[args.length - 1]
+        if (typeof cb === 'function') {
+          callCount++
+          cb(null, criticalFreeOutput, '')
+        }
+        return {} as ReturnType<typeof import('child_process').execFile>
+      })
+
+      const previousReleaseAt = testing.lastAutoReleaseAt
+
+      await testing.doMemoryCheck()
+
+      // Only 1 call: free -m. No sync/drop_caches because cooldown not elapsed
+      expect(callCount).toBe(1)
+      // lastAutoReleaseAt should NOT have changed
+      expect(testing.lastAutoReleaseAt).toBe(previousReleaseAt)
+    })
+  })
+
+  // ── T328: terminal:releaseMemory IPC ────────────────────────────────────────
+
+  describe('terminal:releaseMemory IPC handler (T328)', () => {
+    it('should register terminal:releaseMemory handler', async () => {
+      const { ipcMain } = await import('electron')
+      vi.mocked(ipcMain.handle).mockClear()
+      registerTerminalHandlers()
+
+      const channels = vi.mocked(ipcMain.handle).mock.calls.map(c => c[0])
+      expect(channels).toContain('terminal:releaseMemory')
     })
   })
 })
