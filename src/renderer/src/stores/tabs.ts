@@ -142,7 +142,6 @@ export const useTabsStore = defineStore('tabs', () => {
         })
         title = `${agentName} (${Math.max(...numbers) + 1})`
       }
-      if (taskId != null) title += ` · #${taskId}`
     } else {
       const n = tabs.value.filter(t => t.type === 'terminal').length + 1
       title = `WSL ${n}`

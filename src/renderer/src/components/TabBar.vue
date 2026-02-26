@@ -247,7 +247,8 @@ function indicatorStyle(tab: Tab): Record<string, string> {
             <line x1="8.5" y1="11" x2="14" y2="11"/>
           </svg>
         </span>
-        <span class="max-w-[120px] truncate">{{ tab.title }}</span>
+        <span class="truncate min-w-0">{{ tab.title }}</span>
+        <span v-if="tab.taskId" class="shrink-0 opacity-70 text-xs font-mono">· #{{ tab.taskId }}</span>
         <span v-if="tab.dirty" class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" :title="t('tabBar.unsaved')" />
         <!-- Fermer -->
         <span
