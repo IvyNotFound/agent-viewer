@@ -448,24 +448,8 @@ export function registerTerminalHandlers(): void {
 
     const args: string[] = []
 
-    // ── Auto-send userPrompt on readiness (T273) ──────────────────────────
-    // Set by the systemPrompt+userPrompt path; consumed by onData handler.
-    let pendingUserPrompt: { id: string; text: string } | null = null
     // Temp script file path (Windows) — cleaned up in onExit
     let tempScriptWinPath: string | null = null
-    const QUIET_MS = 800   // ms of silence to consider Claude ready
-    const MAX_WAIT_MS = 15000 // absolute max wait before sending anyway
-    let quietTimer: ReturnType<typeof setTimeout> | null = null
-    let maxTimer: ReturnType<typeof setTimeout> | null = null
-
-    const sendPendingPrompt = (): void => {
-      if (!pendingUserPrompt) return
-      const p = ptys.get(pendingUserPrompt.id)
-      if (p) p.write(pendingUserPrompt.text + '\r')
-      pendingUserPrompt = null
-      if (quietTimer) { clearTimeout(quietTimer); quietTimer = null }
-      if (maxTimer) { clearTimeout(maxTimer); maxTimer = null }
-    }
 
     // Use -d <distro> to target a specific WSL distro (falls back to default if not provided)
     if (wslDistro) args.push('-d', wslDistro)
@@ -498,27 +482,25 @@ export function registerTerminalHandlers(): void {
     //   (--append recommended to preserve default Claude Code behaviors)
     // - --settings '{"alwaysThinkingEnabled":false}': disables extended thinking when thinking_mode='disabled'
     } else if (systemPrompt && userPrompt) {
-      // Base64-encode the system prompt to avoid any shell injection risk.
-      // Only [A-Za-z0-9+/=] chars in the encoded string — no backticks, $(), quotes, etc.
-      const b64 = Buffer.from(systemPrompt).toString('base64')
+      // Base64-encode system prompt AND user prompt to avoid shell injection.
+      // Only [A-Za-z0-9+/=] chars in encoded strings — safe for shell embedding.
+      const b64System = Buffer.from(systemPrompt).toString('base64')
+      const b64User = Buffer.from(userPrompt).toString('base64')
       const cmd = (claudeCommand && CLAUDE_CMD_REGEX.test(claudeCommand)) ? claudeCommand : 'claude'
       // Inject --settings alwaysThinkingEnabled:false when thinking_mode is 'disabled'
       const thinkingFlag = thinkingMode === 'disabled' ? ` --settings '{"alwaysThinkingEnabled":false}'` : ''
-      // TODO(#219): add --cache-system-prompt flag once supported by Claude Code CLI.
-      // This flag activates Anthropic prompt caching (~80% token reduction on system prompt
-      // after first turn). Checked on v2.1.56: flag does not exist yet.
-      // Expected flag: `exec ${cmd} --append-system-prompt '...' --cache-system-prompt`
 
       // ── Fix T278: write launch script to temp file ──────────────────────
-      // When systemPrompt contains shell-special chars (< | > $ "), passing
-      // the decoded base64 inline via `bash -lc 'exec ... "$(echo B64 | base64 -d)"'`
-      // fails because wsl.exe re-parses the command line and breaks quoting.
+      // wsl.exe re-parses the command line and breaks quoting for inline commands.
       // Solution: write the full command to a temp .sh file on the Windows FS,
       // then pass only `bash -l /mnt/c/.../script.sh` through wsl.exe.
-      // Bash reads the script as a file — no wsl.exe command-line reparsing.
+      //
+      // User prompt is passed as a CLI positional argument to `claude` so it
+      // becomes the first message — no need for PTY readiness detection.
+      // Both prompts are base64-decoded at runtime to prevent shell injection.
       const scriptName = `agent-prompt-${id}.sh`
       tempScriptWinPath = join(tmpdir(), scriptName)
-      const scriptContent = `#!/bin/bash\nexec ${cmd} --append-system-prompt "$(echo '${b64}' | base64 -d)"${thinkingFlag}\n`
+      const scriptContent = `#!/bin/bash\nexec ${cmd} --append-system-prompt "$(echo '${b64System}' | base64 -d)"${thinkingFlag} "$(echo '${b64User}' | base64 -d)"\n`
       await writeFile(tempScriptWinPath, scriptContent, { encoding: 'utf8' })
       const scriptWslPath = toWslPath(tempScriptWinPath)
 
@@ -528,12 +510,8 @@ export function registerTerminalHandlers(): void {
         args.push('--', 'bash', '-l', scriptWslPath)
       }
 
-      // Send user prompt (autoSend) once Claude is ready.
-      // Detects readiness by waiting for a quiet period (no PTY output for
-      // QUIET_MS after receiving some output). This handles variable login shell
-      // load times (bash -lc loads .bashrc/.profile/nvm which can take 3-5s).
-      // A max timeout (MAX_WAIT_MS) acts as a safety net.
-      pendingUserPrompt = { id, text: userPrompt }
+      // User prompt is passed as CLI positional arg → Claude auto-submits it.
+      // No pendingUserPrompt needed — no PTY write required.
     } else if (projectPath) {
       args.push('--cd', toWslPath(projectPath))
     }
@@ -593,11 +571,6 @@ export function registerTerminalHandlers(): void {
     // ── T279: Start memory monitoring on first PTY ───────────────────────
     startMemoryMonitoring(wcId)
 
-    // Start max timeout for auto-send if a userPrompt is pending
-    if (pendingUserPrompt) {
-      maxTimer = setTimeout(sendPendingPrompt, MAX_WAIT_MS)
-    }
-
     // Track agent sessions for graceful kill (normal launch OR resume)
     if (validConvId || (systemPrompt && userPrompt)) {
       agentPtys.add(id)
@@ -615,7 +588,6 @@ export function registerTerminalHandlers(): void {
     pty.onData(data => {
       if (event.sender.isDestroyed()) {
         // Renderer is gone but PTY is still running → kill it gracefully.
-        // Sends Ctrl+C to interrupt Claude, then exit to close bash.
         gracefulKillPty(id)
         webContentsPtys.get(wcId)?.delete(id)
         return
@@ -640,22 +612,10 @@ export function registerTerminalHandlers(): void {
         }
       }
 
-      // ── Readiness detection for auto-send userPrompt (T273) ──────────
-      // After each data event, reset a quiet timer. When no output arrives
-      // for QUIET_MS, Claude is ready → send the pending userPrompt.
-      if (pendingUserPrompt) {
-        if (quietTimer) clearTimeout(quietTimer)
-        quietTimer = setTimeout(sendPendingPrompt, QUIET_MS)
-      }
-
       event.sender.send(`terminal:data:${id}`, data)
     })
 
     pty.onExit(({ exitCode }) => {
-      // Clean up pending prompt timers to prevent writes to dead PTY
-      if (quietTimer) { clearTimeout(quietTimer); quietTimer = null }
-      if (maxTimer) { clearTimeout(maxTimer); maxTimer = null }
-      pendingUserPrompt = null
       ptys.delete(id)
       webContentsPtys.get(wcId)?.delete(id)
       // Clean up temp script file written for system prompt injection (T278)
