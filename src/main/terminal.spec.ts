@@ -1268,6 +1268,19 @@ describe('terminal utilities', () => {
       expect(convIdCalls).toHaveLength(1)
       expect(convIdCalls[0][1]).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
     })
+
+    it('should detect UUID through ANSI escape codes (T589 — Ink TUI format)', async () => {
+      // Claude Code 2.1+ uses Ink TUI which renders "Session ID:" in bold:
+      // \x1b[1mSession ID:\x1b[22m <uuid> — the \x1b[22m code breaks naive [:\s]+ matching
+      const { find } = await getHandlers()
+      const evt = makeEvent(114)
+      snapshotPtyCallbacks()
+      const id = await find('terminal:create')(evt, 80, 24, undefined, undefined, 'p', 'u', undefined)
+
+      lastOnData()('\x1b[1mSession ID:\x1b[22m 550e8400-e29b-41d4-a716-446655440000\n')
+
+      expect(evt.sender.send).toHaveBeenCalledWith(`terminal:convId:${id}`, '550e8400-e29b-41d4-a716-446655440000')
+    })
   })
 
   // ── onExit crash detection ──────────────────────────────────────────────────

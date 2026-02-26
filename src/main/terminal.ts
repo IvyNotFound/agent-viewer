@@ -625,7 +625,10 @@ export function registerTerminalHandlers(): void {
         if (convIdBuffer.length > 512) {
           convIdBuffer = convIdBuffer.slice(-512)
         }
-        const match = CONV_ID_REGEX.exec(convIdBuffer)
+        // Strip ANSI escape sequences before matching — Claude Code TUI (Ink) renders
+        // "Session ID:" in bold, emitting \x1b[1m...\x1b[22m codes that break [:\s]+ matching.
+        const cleanBuffer = convIdBuffer.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '')
+        const match = CONV_ID_REGEX.exec(cleanBuffer)
         if (match && match[1]) {
           convIdDetected = true
           convIdBuffer = '' // free memory
