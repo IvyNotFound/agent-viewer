@@ -8,7 +8,8 @@
 
 import { ipcMain } from 'electron'
 import { readFile, writeFile, rename } from 'fs/promises'
-import { join } from 'path'
+import { join, dirname } from 'path'
+import { homedir } from 'os'
 import { assertDbPathAllowed, assertProjectPathAllowed, queryLive, writeDb } from './db'
 import { insertAgentIntoClaudeMd } from './claude-md'
 
@@ -25,6 +26,67 @@ const STANDARD_AGENT_SUFFIX = [
   '- Never commit directly to main in multi-user mode',
   '- Never edit project.db manually',
 ].join('\n')
+
+// ── Token parsing helpers (T518) ──────────────────────────────────────────────
+
+interface TokenCounts {
+  tokensIn: number
+  tokensOut: number
+  cacheRead: number
+  cacheWrite: number
+}
+
+/**
+ * Derive Claude Code's project slug from a WSL project path.
+ * e.g. '/mnt/c/Users/foo/project' → '-mnt-c-Users-foo-project'
+ */
+function claudeProjectSlug(projectPath: string): string {
+  return projectPath.replace(/\//g, '-')
+}
+
+/**
+ * T518: Parse token usage from a Claude Code conversation JSONL file.
+ * Sums tokens across all finalized assistant messages (stop_reason != null).
+ * Each API call generates 2 JSONL entries with the same requestId:
+ *   - streaming start (stop_reason: null, output_tokens ~1)
+ *   - final message  (stop_reason: e.g. 'tool_use', full output_tokens)
+ * Only the final entry is counted to avoid double-counting.
+ *
+ * @param projectPath - WSL project path (e.g. '/mnt/c/Users/foo/project')
+ * @param convId - Claude Code conversation UUID
+ */
+async function parseConvTokens(projectPath: string, convId: string): Promise<TokenCounts> {
+  const slug = claudeProjectSlug(projectPath)
+  const jsonlPath = join(homedir(), '.claude', 'projects', slug, `${convId}.jsonl`)
+  const content = await readFile(jsonlPath, 'utf-8')
+
+  let tokensIn = 0, tokensOut = 0, cacheRead = 0, cacheWrite = 0
+
+  for (const line of content.split('\n')) {
+    if (!line.trim()) continue
+    try {
+      const obj = JSON.parse(line)
+      // Only count finalized assistant messages (stop_reason != null = streaming start only)
+      if (obj.type !== 'assistant') continue
+      if (!obj.message?.usage || obj.message.stop_reason == null) continue
+      const u = obj.message.usage
+      tokensIn  += (u.input_tokens                ?? 0)
+      tokensOut += (u.output_tokens               ?? 0)
+      cacheRead += (u.cache_read_input_tokens      ?? 0)
+      cacheWrite += (u.cache_creation_input_tokens ?? 0)
+    } catch { /* malformed line — skip */ }
+  }
+
+  return { tokensIn, tokensOut, cacheRead, cacheWrite }
+}
+
+/**
+ * Derive WSL project path from a db path.
+ * e.g. '/mnt/c/Users/foo/project/.claude/project.db' → '/mnt/c/Users/foo/project'
+ */
+function projectPathFromDb(dbPath: string): string {
+  return dirname(dirname(dbPath))
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -288,8 +350,8 @@ export function registerAgentHandlers(): void {
     maxSessions?: number
   }) => {
     if (updates.maxSessions !== undefined) {
-      if (!Number.isInteger(updates.maxSessions) || updates.maxSessions < 1) {
-        return { success: false, error: `Invalid maxSessions value: ${updates.maxSessions}. Must be an integer >= 1.` }
+      if (!Number.isInteger(updates.maxSessions) || (updates.maxSessions < 1 && updates.maxSessions !== -1)) {
+        return { success: false, error: `Invalid maxSessions value: ${updates.maxSessions}. Must be an integer >= 1 or -1 (unlimited).` }
       }
     }
     try {

@@ -72,7 +72,7 @@ initSqlJs().then((SQL) => {
     `SELECT COUNT(*) FROM sessions WHERE agent_id = ${agentId} AND statut = 'started'`
   )
   const activeCount = activeRow[0].values[0][0]
-  if (activeCount >= maxSessions) {
+  if (maxSessions !== -1 && activeCount >= maxSessions) {
     db.close()
     releaseLock(lockPath)  // Manual releaseLock required: process.exit() does not trigger finally blocks.
     console.error(

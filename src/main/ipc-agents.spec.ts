@@ -556,7 +556,7 @@ describe('update-agent — maxSessions (T468)', () => {
     expect(result.error).toContain('maxSessions')
   })
 
-  it('maxSessions=-1 → {success:false, error}', async () => {
+  it('maxSessions=-1 (unlimited) → {success:true} + persisted in DB', async () => {
     const agentId = await insertAgent('agent-max-sessions-neg')
 
     const result = await handlers['update-agent'](
@@ -564,10 +564,12 @@ describe('update-agent — maxSessions (T468)', () => {
       TEST_DB_PATH,
       agentId,
       { maxSessions: -1 }
-    ) as { success: boolean; error: string }
+    ) as { success: boolean }
 
-    expect(result.success).toBe(false)
-    expect(result.error).toContain('maxSessions')
+    expect(result.success).toBe(true)
+
+    const rows = await queryLive(TEST_DB_PATH, 'SELECT max_sessions FROM agents WHERE id = ?', [agentId]) as Array<{ max_sessions: number }>
+    expect(rows[0].max_sessions).toBe(-1)
   })
 
   it('maxSessions=1.5 (float) → {success:false, error}', async () => {
