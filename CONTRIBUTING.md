@@ -1,317 +1,334 @@
-# Contribution à agent-viewer
+# Contributing to agent-viewer
 
-Merci de votre intérêt pour agent-viewer ! Ce guide détaille les conventions et procédures pour contribuer au projet.
+Thank you for your interest in agent-viewer! This guide details the conventions and procedures for contributing to the project.
 
-## Table des matières
+## Table of Contents
 
-1. [Workflow de développement](#workflow-de-développement)
-2. [Conventions de code](#conventions-de-code)
-3. [Architecture IPC](#architecture-ipc)
+1. [Development Workflow](#development-workflow)
+2. [Code Conventions](#code-conventions)
+3. [IPC Architecture](#ipc-architecture)
 4. [Tests](#tests)
-5. [Créer une tâche](#créer-une-tâche)
-6. [Lancer un agent Claude](#lancer-un-agent-claude)
+5. [Creating a Task](#creating-a-task)
+6. [Launching a Claude Agent](#launching-a-claude-agent)
 7. [Versioning](#versioning)
 
 ---
 
-## Workflow de développement
+## Development Workflow
 
-agent-viewer utilise un workflow basé sur des tickets stockés dans la base SQLite du projet.
+agent-viewer uses a ticket-based workflow stored in the project's SQLite database.
 
-### Cycle de vie d'une tâche
+### Task Lifecycle
 
 ```
 todo → in_progress → done → archived
-                       ↘ (rejet) → todo
+                       ↘ (rejected) → todo
 ```
 
-| Statut | Description |
+| Status | Description |
 |--------|-------------|
-| `todo` | Tâche à faire |
-| `in_progress` | Tâche en cours de traitement |
-| `done` | Tâche terminée, en attente de validation |
-| `archived` | Tâche validée et archivée |
+| `todo` | Task to be done |
+| `in_progress` | Task currently being processed |
+| `done` | Task completed, awaiting validation |
+| `archived` | Task validated and archived |
 
-### Étapes pour un développeur
+### Steps for a Developer
 
-1. **Sélectionner une tâche** — Choisir une tâche `todo` assignée
-2. **Locker les fichiers** — Avant toute modification
-3. **Travailler sur la tâche** — Implémenter, tester
-4. **Terminer la tâche** — Commentaire de sortie obligatoire (via `task_comments`)
-5. **Libérer les locks** — En fin de session
+1. **Select a task** — Pick an assigned `todo` task
+2. **Lock files** — Before any modification
+3. **Work on the task** — Implement, test
+4. **Complete the task** — Mandatory exit comment (via `task_comments`)
+5. **Release locks** — At end of session
 
-### Requêtes SQL utiles
+### Useful SQL Queries
 
 ```sql
--- Voir les tâches assignées
+-- View assigned tasks
 SELECT id, titre, statut FROM tasks
 WHERE agent_assigne_id = (SELECT id FROM agents WHERE name = 'dev-front-vuejs')
 AND statut IN ('todo', 'in_progress');
 
--- Passer une tâche en cours
+-- Set a task in progress
 UPDATE tasks SET statut = 'in_progress', started_at = CURRENT_TIMESTAMP
 WHERE id = 42;
 
--- Locker un fichier
+-- Lock a file
 INSERT OR REPLACE INTO locks (fichier, agent_id, session_id)
 VALUES ('src/renderer/src/App.vue', 1, 10);
 
--- Terminer une tâche
+-- Complete a task
 UPDATE tasks SET statut = 'done', completed_at = CURRENT_TIMESTAMP
 WHERE id = 42;
 
--- Commentaire de sortie (obligatoire)
+-- Exit comment (mandatory)
 INSERT INTO task_comments (task_id, agent_id, contenu)
 VALUES (42, 1, 'App.vue:L1-50 · Added new component · Next: add tests');
 ```
 
 ---
 
-## Conventions de code
+## Code Conventions
 
-### Langue
+### Language
 
-- **Documentation utilisateur** : Français
-- **Code et commentaires inline** : Anglais
-- **Messages de commit** : Français (Conventional Commits)
+- **User documentation**: English
+- **Code and inline comments**: English
+- **Commit messages**: English (Conventional Commits)
 
-### Style de code
+### Code Style
 
-| Catégorie | Convention |
-|-----------|------------|
-| TypeScript | Strict, pas de `any` implicite |
-| ESLint | Config v9 (flat config) — `eslint.config.mjs` |
-| Vue | Composition API uniquement |
-| CSS | Tailwind CSS v4 (classes utilitaires) |
-| Tests | Vitest (configuré — `vitest.config.ts`) |
+| Category | Convention |
+|----------|------------|
+| TypeScript | Strict, no implicit `any` |
+| ESLint | v9 config (flat config) — `eslint.config.mjs` |
+| Vue | Composition API only |
+| CSS | Tailwind CSS v4 (utility classes) |
+| Tests | Vitest (configured — `vitest.config.ts`) |
 
 ### Conventional Commits
 
 ```bash
-feat:     # Nouvelle fonctionnalité
-fix:      # Bugfix
-chore:    # Maintenance, dépendance
+feat:     # New feature
+fix:      # Bug fix
+chore:    # Maintenance, dependency
 docs:     # Documentation
 refactor: # Refactoring
 test:     # Tests
 perf:     # Performance
-style:    # Formatage
+style:    # Formatting
+build:    # Build system, CI
 ```
 
-Exemples :
+Examples:
 
 ```bash
-feat: ajout du mode drag-and-drop sur les cartes
-fix: correction du crash lors de la fermeture d'un terminal
-docs: mise à jour du README avec les nouvelles commandes
+feat: add drag-and-drop mode on task cards
+fix: fix crash on terminal close
+docs: update README with new commands
 ```
 
 ---
 
-## Architecture IPC
+## IPC Architecture
 
-### Principes de sécurité
+### Security Principles
 
-- **contextIsolation** : activé
-- **nodeIntegration** : désactivé
-- **sandbox** : activé
-- **Tous les accès Node.js** : via IPC uniquement
-- **Jamais d'accès direct au système de fichiers** depuis le renderer
-- **Token GitHub** : chiffré OS-level via `safeStorage` (DPAPI / Keychain), jamais stocké en clair
+- **contextIsolation**: enabled
+- **nodeIntegration**: disabled
+- **sandbox**: enabled
+- **All Node.js access**: via IPC only
+- **No direct filesystem access** from the renderer
+- **GitHub Token**: OS-level encryption via `safeStorage` (DPAPI / Keychain), never stored in plaintext
 
-### Handlers IPC — `src/main/ipc.ts` (core)
-
-| Handler | Description |
-|---------|-------------|
-| `query-db` | Requête SQL en lecture sur la DB (sql.js, bypass lock via `readFile`) |
-| `watch-db` | Surveille les changements du fichier DB (fs.watch) |
-| `unwatch-db` | Arrête la surveillance |
-| `select-project-dir` | Sélecteur de dossier projet (dialog Electron) |
-| `select-new-project-dir` | Sélecteur pour créer un nouveau projet |
-| `create-project-db` | Crée une DB SQLite vierge dans `.claude/` |
-| `find-project-db` | Cherche `project.db` dans `.claude/` d'un dossier |
-| `init-new-project` | Initialise un projet (crée DB + insère agents par défaut) |
-| `migrate-db` | Migre le schéma SQLite vers la version courante |
-| `get-locks` | Retourne les locks actifs |
-| `show-confirm-dialog` | Affiche une boîte de confirmation native |
-| `window-minimize` | Réduit la fenêtre |
-| `window-maximize` | Maximise / restaure la fenêtre |
-| `window-close` | Ferme l'application |
-| `window-is-maximized` | Retourne l'état maximisé |
-
-### Handlers IPC — `src/main/ipc-agents.ts`
+### IPC Handlers — `src/main/ipc.ts` (core)
 
 | Handler | Description |
 |---------|-------------|
-| `close-agent-sessions` | Clôture les sessions `en_cours` d'un agent |
-| `rename-agent` | Renomme un agent dans la DB |
-| `update-perimetre` | Met à jour le nom/description d'un périmètre et cascade vers tasks/agents |
-| `update-agent-system-prompt` | Met à jour le system prompt d'un agent |
-| `update-agent-thinking-mode` | Met à jour le mode de pensée d'un agent |
-| `update-agent` | Met à jour les champs d'un agent (nom, type, périmètre…) |
-| `get-agent-system-prompt` | Retourne system_prompt, suffix, thinking_mode d'un agent |
-| `build-agent-prompt` | Construit le prompt de lancement avec résumé session + contexte tâches |
-| `create-agent` | Crée un agent + insère dans CLAUDE.md si présent |
-| `search-tasks` | Recherche plein texte dans les tâches avec filtres |
-| `session:setConvId` | Stocke le `claude_conv_id` d'une session pour `--resume` |
+| `query-db` | Read-only SQL query on the DB (sql.js, bypasses lock via `readFile`) |
+| `watch-db` | Watches DB file changes (fs.watch) |
+| `unwatch-db` | Stops watching |
+| `select-project-dir` | Project folder selector (Electron dialog) |
+| `select-new-project-dir` | Selector for creating a new project |
+| `create-project-db` | Creates a blank SQLite DB in `.claude/` |
+| `find-project-db` | Finds `project.db` in a folder's `.claude/` |
+| `init-new-project` | Initializes a project (creates DB + inserts default agents) |
+| `migrate-db` | Migrates the SQLite schema to the current version |
+| `get-locks` | Returns active locks |
+| `show-confirm-dialog` | Displays a native confirmation dialog |
+| `window-minimize` | Minimizes the window |
+| `window-maximize` | Maximizes / restores the window |
+| `window-close` | Closes the application |
+| `window-is-maximized` | Returns the maximized state |
+| `tasks:getArchived` | Paginated archived tasks query (page, pageSize, optional filters) |
 
-### Handlers IPC — `src/main/ipc-fs.ts`
-
-| Handler | Description |
-|---------|-------------|
-| `fs:listDir` | Liste un répertoire (explorateur de fichiers, 4 niveaux max) |
-| `fs:readFile` | Lit un fichier texte (restreint au répertoire projet) |
-| `fs:writeFile` | Écrit un fichier texte (restreint au répertoire projet, chemins sensibles bloqués) |
-
-### Handlers IPC — `src/main/ipc-settings.ts`
+### IPC Handlers — `src/main/ipc-agents.ts`
 
 | Handler | Description |
 |---------|-------------|
-| `get-config-value` | Lit une clé de la table `config` (github_token auto-déchiffré) |
-| `set-config-value` | Écrit une clé dans la table `config` (github_token auto-chiffré) |
-| `check-master-md` | Vérifie CLAUDE.md master sur GitHub (via token chiffré) |
-| `apply-master-md` | Applique le CLAUDE.md master dans le projet |
-| `test-github-connection` | Teste la connexion GitHub avec le token stocké |
-| `check-for-updates` | Vérifie si une nouvelle version est disponible sur GitHub |
+| `close-agent-sessions` | Closes an agent's `en_cours` sessions |
+| `rename-agent` | Renames an agent in the DB |
+| `update-perimetre` | Updates a scope name/description and cascades to tasks/agents |
+| `add-perimetre` | Creates a new scope in the `perimetres` table |
+| `update-agent-system-prompt` | Updates an agent's system prompt |
+| `update-agent-thinking-mode` | Updates an agent's thinking mode |
+| `update-agent` | Updates agent fields (name, type, scope, permission_mode…) |
+| `get-agent-system-prompt` | Returns system_prompt, suffix, thinking_mode of an agent |
+| `build-agent-prompt` | Builds the launch prompt with session summary + task context |
+| `create-agent` | Creates an agent + inserts into CLAUDE.md if present |
+| `delete-agent` | Deletes an agent and all associated data (sessions, locks, tasks) |
+| `task:getAssignees` | Returns all agents assigned to a task (with role) |
+| `task:setAssignees` | Replaces a task's assignee list (primary / support / reviewer) |
+| `search-tasks` | Full-text search in tasks with filters |
+| `session:setConvId` | Stores the `claude_conv_id` of a session for `--resume` |
 
-### Handlers IPC — `src/main/terminal.ts`
+### IPC Handlers — `src/main/ipc-fs.ts`
 
 | Handler | Description |
 |---------|-------------|
-| `terminal:getWslUsers` | Liste les utilisateurs WSL disponibles (`/etc/passwd`) |
-| `terminal:getClaudeProfiles` | Liste les profils Claude dans `~/bin/` (WSL) |
-| `terminal:getClaudeInstances` | Détecte les distros WSL avec Claude Code installé |
-| `terminal:create` | Crée un PTY WSL (avec agent/resume/simple bash) |
-| `terminal:write` | Envoie des données au PTY |
-| `terminal:resize` | Redimensionne le PTY |
-| `terminal:kill` | Tue le PTY (graceful pour les sessions agents) |
-| `terminal:subscribe` | No-op — conservé pour re-souscription après hot-reload |
-| `terminal:relaunch` | Relance un PTY crashé avec les mêmes paramètres |
-| `terminal:dismissCrash` | Nettoie les paramètres de crash recovery |
-| `terminal:getActiveCount` | Retourne le nombre de PTY actifs |
-| `terminal:isAlive` | Vérifie si un PTY est toujours actif |
-| `terminal:getMemoryStatus` | Retourne l'utilisation mémoire WSL à la demande |
-| `terminal:releaseMemory` | Libère la mémoire WSL (sync + drop_caches optionnel) |
+| `fs:listDir` | Lists a directory (file explorer, max 4 levels) |
+| `fs:readFile` | Reads a text file (restricted to project directory) |
+| `fs:writeFile` | Writes a text file (restricted to project directory, sensitive paths blocked) |
 
-### Événements IPC (main → renderer)
+### IPC Handlers — `src/main/ipc-settings.ts`
 
-| Événement | Description |
-|-----------|-------------|
-| `db-changed` | La DB a changé sur le disque (déclenche refresh) |
-| `window-state-changed` | Fenêtre maximisée/restaurée |
-| `terminal:data:<id>` | Données du PTY |
-| `terminal:exit:<id>` | PTY terminé (inclut crash recovery info) |
-| `terminal:convId:<id>` | UUID de session Claude Code détecté au démarrage |
-| `terminal:memoryStatus` | Broadcast périodique de l'utilisation mémoire WSL |
+| Handler | Description |
+|---------|-------------|
+| `get-config-value` | Reads a key from the `config` table (github_token auto-decrypted) |
+| `set-config-value` | Writes a key to the `config` table (github_token auto-encrypted) |
+| `check-master-md` | Checks master CLAUDE.md on GitHub (via encrypted token) |
+| `apply-master-md` | Applies the master CLAUDE.md to the project |
+| `test-github-connection` | Tests the GitHub connection with the stored token |
+| `check-for-updates` | Checks if a new version is available on GitHub |
 
-### Ajouter un nouveau handler
+### IPC Handlers — `src/main/terminal.ts`
 
-1. Définir le handler dans le fichier IPC approprié avec JSDoc (`@param`, `@returns`, `@throws`) :
+| Handler | Description |
+|---------|-------------|
+| `terminal:getWslUsers` | Lists available WSL users (`/etc/passwd`) |
+| `terminal:getClaudeProfiles` | Lists Claude profiles in `~/bin/` (WSL) |
+| `terminal:getClaudeInstances` | Detects WSL distributions with Claude Code installed |
+| `terminal:create` | Creates a WSL PTY (with agent / resume / plain bash) |
+| `terminal:write` | Sends data to the PTY |
+| `terminal:resize` | Resizes the PTY |
+| `terminal:kill` | Kills the PTY (graceful for agent sessions) |
+| `terminal:subscribe` | No-op — kept for re-subscription after hot-reload |
+| `terminal:relaunch` | Relaunches a crashed PTY with the same parameters |
+| `terminal:dismissCrash` | Clears crash recovery parameters |
+| `terminal:getActiveCount` | Returns the number of active PTYs |
+| `terminal:isAlive` | Checks if a PTY is still alive |
+| `terminal:getMemoryStatus` | Returns WSL memory usage on demand |
+| `terminal:releaseMemory` | Releases WSL memory (sync + optional drop_caches) |
+
+### IPC Events (main → renderer)
+
+| Event | Description |
+|-------|-------------|
+| `db-changed` | DB has changed on disk (triggers refresh) |
+| `window-state-changed` | Window maximized/restored |
+| `terminal:data:<id>` | PTY data |
+| `terminal:exit:<id>` | PTY terminated (includes crash recovery info) |
+| `terminal:convId:<id>` | Claude Code session UUID detected at startup |
+| `terminal:memoryStatus` | Periodic broadcast of WSL memory usage |
+
+### Adding a New Handler
+
+1. Define the handler in the appropriate IPC file with JSDoc (`@param`, `@returns`, `@throws`):
    - `src/main/ipc.ts` — core (SQL, window, locks)
-   - `src/main/ipc-agents.ts` — agents (CRUD, sessions, recherche)
-   - `src/main/ipc-fs.ts` — filesystem (lecture/écriture fichiers)
+   - `src/main/ipc-agents.ts` — agents (CRUD, sessions, search)
+   - `src/main/ipc-fs.ts` — filesystem (read/write files)
    - `src/main/ipc-settings.ts` — settings (config, GitHub)
-   - `src/main/terminal.ts` — terminal WSL (PTY)
-2. Exposer via `contextBridge` dans `src/preload/index.ts`
-3. Déclarer le type dans l'interface `Window.electronAPI` dans `src/renderer/src/stores/tasks.ts`
-4. Mettre à jour la table handlers dans `CONTRIBUTING.md`
+   - `src/main/terminal.ts` — WSL terminal (PTY)
+2. Expose via `contextBridge` in `src/preload/index.ts`
+3. Declare the type in the `Window.electronAPI` interface in `src/renderer/src/stores/tasks.ts`
+4. Update the handlers table in `CONTRIBUTING.md`
 
 ---
 
 ## Tests
 
-agent-viewer utilise **Vitest** pour les tests unitaires et d'intégration.
+agent-viewer uses **Vitest** for unit and integration tests.
 
 ```bash
-npm run test            # Exécution une fois
-npm run test:watch      # Mode watch (développement)
-npm run test:coverage   # Rapport de couverture Istanbul
+npm run test            # Run once
+npm run test:watch      # Watch mode (development)
+npm run test:coverage   # Istanbul coverage report
 ```
 
-### Organisation des tests
+### Test Organization
 
-| Fichier | Périmètre |
-|---------|-----------|
+| File | Scope |
+|------|-------|
 | `src/main/ipc.spec.ts` | IPC handlers (main process) |
-| `src/main/db.spec.ts` | Utilitaires SQLite (queryLive, writeLive) |
-| `src/main/migration.spec.ts` | Migrations SQLite |
-| `src/main/terminal.spec.ts` | Terminal WSL (PTY) |
-| `src/main/claude-md.spec.ts` | Manipulation CLAUDE.md |
+| `src/main/ipc-agents.spec.ts` | Agent IPC handlers (CRUD, assignees) |
+| `src/main/db.spec.ts` | SQLite utilities (queryLive, writeLive) |
+| `src/main/migration.spec.ts` | SQLite migrations |
+| `src/main/terminal.spec.ts` | WSL terminal (PTY) |
+| `src/main/claude-md.spec.ts` | CLAUDE.md manipulation |
 | `src/preload/preload.spec.ts` | contextBridge / preload |
-| `src/renderer/src/stores/stores.spec.ts` | Stores Pinia |
-| `src/renderer/src/components/components.spec.ts` | Composants Vue |
-| `src/renderer/src/composables/useAutoLaunch.spec.ts` | Composable auto-launch |
-| `src/renderer/src/utils/agentColor.spec.ts` | Utilitaire couleurs agents |
+| `src/renderer/src/stores/stores.spec.ts` | Pinia stores |
+| `src/renderer/src/components/components.spec.ts` | Vue components |
+| `src/renderer/src/composables/useAutoLaunch.spec.ts` | Auto-launch composable |
+| `src/renderer/src/utils/agentColor.spec.ts` | Agent color utility |
 
 ### Conventions
 
-- Les fichiers de tests se nomment `*.spec.ts` à côté du fichier testé
-- Mocks Electron : `vi.mock('electron', ...)` en tête de fichier
-- Chaque handler IPC critique doit avoir au moins un test nominal et un test d'erreur
+- Test files are named `*.spec.ts` alongside the tested file
+- Electron mocks: `vi.mock('electron', ...)` at the top of the file
+- Each critical IPC handler must have at least one nominal test and one error test
 
 ---
 
-## Créer une tâche
+## Creating a Task
 
 ```sql
 INSERT INTO tasks (
   titre, description,
-  statut, agent_createur_id, agent_assigne_id, perimetre
+  statut, agent_createur_id, agent_assigne_id, perimetre, effort, priority
 ) VALUES (
-  'Titre de la tâche',
-  'Description complète avec contexte et critères d''acceptation',
+  'Task title',
+  'Full description with context and acceptance criteria',
   'todo',
   (SELECT id FROM agents WHERE name = 'review'),
   (SELECT id FROM agents WHERE name = 'dev-front-vuejs'),
-  'front-vuejs'
+  'front-vuejs',
+  2,        -- effort: 1 (small) | 2 (medium) | 3 (large)
+  'normal'  -- priority: low | normal | high | critical
 );
 
--- Commentaire optionnel (notes pour le développeur)
+-- Optional comment (notes for the developer)
 INSERT INTO task_comments (task_id, agent_id, contenu)
-VALUES (last_insert_rowid(), (SELECT id FROM agents WHERE name = 'review'), 'Notes pour le développeur');
+VALUES (last_insert_rowid(), (SELECT id FROM agents WHERE name = 'review'), 'Notes for the developer');
 ```
 
 ---
 
-## Lancer un agent Claude
+## Launching a Claude Agent
 
-1. Sélectionnez un agent dans la sidebar
-2. Cliquez sur "Lancer la session"
-3. Configurez le prompt et les options si nécessaire
-4. Un terminal WSL s'ouvre avec l'agent
+1. Select an agent in the sidebar
+2. Click "Launch session"
+3. Configure the prompt and options if needed
+4. A WSL terminal opens with the agent
 
-L'application tente automatiquement de **reprendre** la session précédente via `--resume <conv_id>` si une session Claude Code valide existe en DB (économise ~2500 tokens de contexte).
+The application automatically attempts to **resume** the previous session via `--resume <conv_id>` if a valid Claude Code session exists in the DB (saves ~2500 context tokens).
 
-### Types d'agents disponibles
+### Available Agent Types
 
-| Type | Périmètre | Description |
-|------|-----------|-------------|
-| `dev` | front-vuejs / back-electron | Développement de features |
-| `test` | front-vuejs / back-electron | Tests unitaires et intégration |
-| `review` | global | Audit et validation |
+| Type | Scope | Description |
+|------|-------|-------------|
+| `dev` | front-vuejs / back-electron | Feature development |
+| `test` | front-vuejs / back-electron | Unit and integration tests |
+| `review` | global | Audit and validation |
 | `doc` | global | Documentation |
 | `devops` | global | CI/CD, releases |
 | `arch` | global | Architecture, ADR, IPC |
-| `ux` | front-vuejs | Interface et expérience utilisateur |
-| `secu` | global | Sécurité |
+| `ux` | front-vuejs | Interface and user experience |
+| `secu` | global | Security |
 | `perf` | global | Performance |
-| `data` | global | Base de données, schéma |
+| `data` | global | Database, schema |
+
+### Permission Mode
+
+Each agent can be configured with a **permission mode**:
+- `default` — Standard mode: Claude Code prompts for tool approval
+- `auto` — Automatic mode: adds `--dangerously-skip-permissions` to bypass all approvals
+
+The auto mode is opt-in and displays a visible warning in the UI. Use only in supervised environments.
 
 ---
 
 ## Versioning
 
-agent-viewer utilise [SemVer](https://semver.org/).
+agent-viewer follows [SemVer](https://semver.org/).
 
-### Règles de bump
+### Bump Rules
 
-| Type de changement | Incrément | Exemple |
-|--------------------|-----------|---------|
-| Bugfix rétrocompatible | PATCH | 0.3.0 → 0.3.1 |
-| Feature rétrocompatible | MINOR | 0.3.0 → 0.4.0 |
+| Change type | Increment | Example |
+|-------------|-----------|---------|
+| Backward-compatible bugfix | PATCH | 0.3.0 → 0.3.1 |
+| Backward-compatible feature | MINOR | 0.3.0 → 0.4.0 |
 | Breaking change | MAJOR | 0.3.0 → 1.0.0 |
 
-### Commandes de release
+### Release Commands
 
 ```bash
 npm run release        # Patch
@@ -319,12 +336,12 @@ npm run release:minor  # Minor
 npm run release:major  # Major
 ```
 
-> **Note** : Les releases nécessitent une connexion GitHub pour créer le tag et le draft release. Le token doit être configuré dans les paramètres de l'application.
+> **Note**: Releases require a GitHub connection to create the tag and draft release. The token must be configured in the application settings.
 
 ---
 
-## Ressources
+## Resources
 
-- [CLAUDE.md](./CLAUDE.md) — Documentation architecturale complète
-- [CHANGELOG.md](./CHANGELOG.md) — Historique des versions
-- [Issues GitHub](https://github.com/IvyNotFound/agent-viewer/issues) — Signalement de bugs et demandes de features
+- [CLAUDE.md](./CLAUDE.md) — Complete architectural documentation
+- [CHANGELOG.md](./CHANGELOG.md) — Version history
+- [GitHub Issues](https://github.com/IvyNotFound/agent-viewer/issues) — Bug reports and feature requests
