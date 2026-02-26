@@ -33,6 +33,18 @@ initSqlJs().then((SQL) => {
   const buf = fs.readFileSync(dbPath)
   const db = new SQL.Database(buf)
 
+  // Guard: reject purely numeric agent names (likely an agent_id passed by mistake)
+  if (/^\d+$/.test(agent)) {
+    const byId = db.exec(`SELECT name FROM agents WHERE id = ${parseInt(agent, 10)}`)
+    const hint =
+      byId.length && byId[0].values.length
+        ? ` Utilisez: node scripts/dbstart.js ${byId[0].values[0][0]}`
+        : ''
+    db.close()
+    console.error(`ERREUR: nom d'agent "${agent}" est un entier (probablement un agent_id).${hint}`)
+    process.exit(3)
+  }
+
   // 1. Register agent (idempotent)
   db.run(
     `INSERT OR IGNORE INTO agents (name, type, perimetre) VALUES ('${agent}', '${type}', '${perimetre}')`
