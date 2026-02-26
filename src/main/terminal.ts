@@ -38,7 +38,7 @@ const CLAUDE_CMD_REGEX = /^claude(-[a-z0-9-]+)?$/
 //   "resuming <uuid>" (dimColor, no colon).
 // For new sessions the banner shows no UUID — handled via --session-id flag instead.
 // Applied against ANSI-stripped buffer to avoid escape-code interference.
-const CONV_ID_REGEX = /(?:session(?:\s+id)?|conversation(?:\s+id)?|resuming)\s+([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
+const CONV_ID_REGEX = /(?:session(?:\s+id)?|conversation(?:\s+id)?|resuming)[:\s]+([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
 
 // Strip ANSI escape sequences from a string before regex matching.
 const ANSI_RE = /\x1b\[[0-9;]*[a-zA-Z]|\x1b[()][a-zA-Z0-9]|\x1b[=>]|\x07|\r/g
