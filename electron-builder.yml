@@ -21,6 +21,18 @@ nsis:
   multiLanguageInstaller: true
   include: build/installer.nsh
 
+mac:
+  icon: build/icon.icns
+
+linux:
+  icon: build/icon.png
+
+extraResources:
+  - from: resources/bin/
+    to: bin/
+    filter:
+      - '**/*'
+
 directories:
   output: dist
   buildResources: build
