@@ -49,3 +49,6 @@ tsconfig.web.tsbuildinfo
 SELECT
 .claude/project-db
 .claude/project_db
+
+# Accidental tilde-expansion artefact
+~/
