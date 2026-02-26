@@ -10,10 +10,11 @@ import SettingsModal from './SettingsModal.vue'
 import ContextMenu from './ContextMenu.vue'
 import CreateAgentModal from './CreateAgentModal.vue'
 import ConfirmModal from './ConfirmModal.vue'
+import ProjectPopup from './ProjectPopup.vue'
 import type { ContextMenuItem } from './ContextMenu.vue'
 import type { Agent, FileNode, Perimetre } from '@renderer/types'
 
-type Section = 'project' | 'perimetres' | 'agents' | 'tree'
+type Section = 'perimetres' | 'agents' | 'tree'
 
 const { t } = useI18n()
 const store = useTasksStore()
@@ -24,6 +25,7 @@ const launchTarget = ref<Agent | null>(null)
 const showCreateAgent = ref(false)
 const activeSection = ref<Section | null>('agents')
 const isSettingsOpen = ref(false)
+const isProjectPopupOpen = ref(false)
 const confirmDeleteGroup = ref<{ groupId: number } | null>(null)
 
 // ── Context menu ──────────────────────────────────────────────────────────────
@@ -85,7 +87,6 @@ function flattenTree(nodes: FileNode[], depth = 0, result: Array<{ node: FileNod
 const flatSidebarTree = computed(() => flattenTree(sidebarTree.value))
 
 const sectionTitles = computed((): Record<Section, string> => ({
-  project: t('sidebar.project'),
   perimetres: t('sidebar.perimeters'),
   agents: t('sidebar.agents'),
   tree: t('sidebar.tree'),
@@ -217,7 +218,10 @@ function onGroupDragOver(event: DragEvent, groupId: number | null) {
   event.dataTransfer!.dropEffect = 'move'
 }
 
-function onGroupDragLeave() {
+function onGroupDragLeave(event: DragEvent) {
+  const target = event.currentTarget as HTMLElement
+  // relatedTarget is null when dragging outside the window — contains(null) returns false → correct reset
+  if (target.contains(event.relatedTarget as Node)) return
   dragOverGroupId.value = null
 }
 
@@ -289,13 +293,6 @@ async function onConfirmDeleteGroup() {
   confirmDeleteGroup.value = null
 }
 
-const appVersion = import.meta.env.VITE_APP_VERSION as string ?? '0.0.0'
-
-const projectName = computed(() => {
-  if (!store.projectPath) return null
-  return store.projectPath.split(/[\\/]/).filter(Boolean).pop() ?? store.projectPath
-})
-
 function isAgentSelected(id: number | string): boolean {
   return store.selectedAgentId !== null && Number(store.selectedAgentId) === Number(id)
 }
@@ -362,20 +359,6 @@ function isLockOld(createdAt: string): boolean {
   return Date.now() - new Date(createdAt).getTime() > 30 * 60 * 1000
 }
 
-async function closeProject() {
-  const openTerminals = tabsStore.tabs.filter(t => t.type === 'terminal')
-  if (openTerminals.length > 0) {
-    const n = openTerminals.length
-    const confirmed = await window.electronAPI.showConfirmDialog({
-      title: 'Fermer le projet',
-      message: `${n} session${n > 1 ? 's' : ''} WSL ouverte${n > 1 ? 's' : ''}`,
-      detail: 'Toutes les sessions WSL seront fermées. Continuer ?',
-    })
-    if (!confirmed) return
-    tabsStore.closeAllTerminals()
-  }
-  store.closeProject()
-}
 </script>
 
 <template>
@@ -439,13 +422,13 @@ async function closeProject() {
       <!-- Spacer -->
       <div class="flex-1" />
 
-      <!-- Projet -->
+      <!-- Projet — ouvre popup centrée -->
       <button
         :title="t('sidebar.project')"
-        :class="['rail-btn', activeSection === 'project' && 'rail-btn--active']"
-        @click="toggleSection('project')"
+        :class="['rail-btn', isProjectPopupOpen && 'rail-btn--active']"
+        @click="isProjectPopupOpen = true"
       >
-        <span v-if="activeSection === 'project'" class="rail-indicator" />
+        <span v-if="isProjectPopupOpen" class="rail-indicator" />
         <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
           <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.98 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z"/>
         </svg>
@@ -457,7 +440,7 @@ async function closeProject() {
         :class="['rail-btn mb-1', isSettingsOpen && 'rail-btn--active']"
         @click="isSettingsOpen = true"
       >
-        <span v-if="activeSection === 'settings'" class="rail-indicator" />
+        <span v-if="isSettingsOpen" class="rail-indicator" />
         <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
           <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
         </svg>
@@ -487,52 +470,8 @@ async function closeProject() {
           </button>
         </div>
 
-        <!-- ── Projet ── -->
-        <template v-if="activeSection === 'project'">
-          <div class="px-4 py-3">
-            <div class="flex items-center justify-between gap-2">
-              <button
-                class="flex-1 min-w-0 text-left group transition-colors"
-                :title="store.projectPath ?? t('sidebar.selectProject')"
-                @click="store.selectProject()"
-              >
-                <span
-                  :class="[
-                    'block text-sm font-medium truncate transition-colors',
-                    store.projectPath
-                      ? 'text-content-secondary group-hover:text-content-primary'
-                      : 'text-content-subtle group-hover:text-content-tertiary italic'
-                  ]"
-                >{{ projectName ?? t('sidebar.select') }}</span>
-                <span
-                  v-if="store.dbPath"
-                  class="block text-xs text-content-subtle group-hover:text-content-muted truncate mt-0.5 font-mono transition-colors"
-                  :title="store.dbPath"
-                >{{ store.dbPath.split(/[\\/]/).slice(-2).join('/') }}</span>
-                <span
-                  v-else-if="store.projectPath && !store.dbPath"
-                  class="block text-xs text-amber-500/70 mt-0.5 font-mono"
-                >{{ t('sidebar.initializing') }}</span>
-              </button>
-              <button
-                v-if="store.projectPath"
-                class="shrink-0 w-6 h-6 flex items-center justify-center rounded text-content-faint hover:text-content-tertiary hover:bg-surface-secondary transition-colors text-xs"
-                :title="t('sidebar.closeProject')"
-                @click="closeProject"
-              >✕</button>
-            </div>
-          </div>
-          <div v-if="store.error" class="mx-4 mb-3 px-3 py-2 bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-800/50 rounded-md">
-            <p class="text-xs text-red-700 dark:text-red-400 break-all">{{ store.error }}</p>
-          </div>
-          <div class="flex-1" />
-          <div class="px-4 py-2 border-t border-edge-subtle">
-            <p class="text-xs text-content-faint font-mono">v{{ appVersion }}</p>
-          </div>
-        </template>
-
         <!-- ── Périmètres ── -->
-        <template v-else-if="activeSection === 'perimetres'">
+        <template v-if="activeSection === 'perimetres'">
           <div class="flex-1 overflow-y-auto min-h-0 px-4 py-3 flex flex-col gap-1">
             <div class="flex items-center justify-between mb-2">
               <p class="text-[11px] font-semibold text-content-subtle uppercase tracking-wider">{{ t('sidebar.perimeters') }}</p>
@@ -1083,6 +1022,11 @@ async function closeProject() {
       </div>
     </div>
   </Teleport>
+
+  <ProjectPopup
+    v-if="isProjectPopupOpen"
+    @close="isProjectPopupOpen = false"
+  />
 </template>
 
 <style scoped>

@@ -85,13 +85,21 @@ function activateAgentGroup(group: TabGroup): void {
   })
 }
 
-// Auto-expand group when its tab becomes active; auto-collapse others when groups are shown
-watch(() => store.activeTabId, (newId) => {
+// Auto-expand group when its tab becomes active; auto-collapse previous group
+watch(() => store.activeTabId, (newId, oldId) => {
   const activeTab = store.tabs.find(t => t.id === newId)
   if (!activeTab) return
-  const agentName = activeTab.agentName ?? null
-  // Always expand the active agent's group
-  collapsedAgents.value.delete(agentName)
+  const newAgentName = activeTab.agentName ?? null
+  // Expand the new active group
+  collapsedAgents.value.delete(newAgentName)
+  // Collapse the previous group if it was a different agent
+  if (oldId) {
+    const oldTab = store.tabs.find(t => t.id === oldId)
+    const oldAgentName = oldTab?.agentName ?? null
+    if (oldAgentName !== null && oldAgentName !== newAgentName) {
+      collapsedAgents.value.add(oldAgentName)
+    }
+  }
 })
 
 // When multiple groups appear, collapse non-active agent groups
@@ -349,9 +357,9 @@ function subTabLabel(tab: Tab): string {
         <!-- Sous-onglets session (masqués si groupe collapsé) -->
         <template v-if="!isGroupCollapsed(group.agentName)">
           <template v-for="tab in group.tabs" :key="tab.id">
-            <!-- Sous-onglet actif : affichage complet -->
+            <!-- Groupe actif : affichage complet pour tous les sous-onglets -->
             <button
-              v-if="store.activeTabId === tab.id"
+              v-if="isGroupActive(group)"
               class="relative flex items-center gap-1.5 px-2.5 text-sm font-medium transition-all select-none rounded-t shrink-0 cursor-pointer"
               :style="tabStyleMap.get(tab.id)"
               :title="subTabLabel(tab)"
@@ -372,7 +380,7 @@ function subTabLabel(tab: Tab): string {
                 :style="indicatorStyleMap.get(tab.id)"
               ></span>
             </button>
-            <!-- Sous-onglet inactif : pastille compacte -->
+            <!-- Groupe inactif : pastille compacte -->
             <button
               v-else
               class="relative flex items-center justify-center w-4 h-6 self-center transition-all select-none rounded shrink-0 cursor-pointer"
