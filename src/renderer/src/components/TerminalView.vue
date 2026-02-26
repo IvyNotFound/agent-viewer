@@ -197,6 +197,9 @@ onMounted(async () => {
     const tab = tabsStore.tabs.find(t => t.id === props.tabId)
     if (tab?.agentName && tasksStore.dbPath) {
       window.electronAPI.closeAgentSessions(tasksStore.dbPath, tab.agentName)
+      // T518: collect token stats from JSONL after session closes
+      window.electronAPI.collectSessionTokens(tasksStore.dbPath, tab.agentName)
+        .catch(err => console.warn('[TerminalView] collectSessionTokens failed:', err))
     }
   })
 
@@ -274,6 +277,9 @@ function resumeListeners() {
     const tab = tabsStore.tabs.find(t => t.id === props.tabId)
     if (tab?.agentName && tasksStore.dbPath) {
       window.electronAPI.closeAgentSessions(tasksStore.dbPath, tab.agentName)
+      // T518: collect token stats from JSONL after session closes
+      window.electronAPI.collectSessionTokens(tasksStore.dbPath, tab.agentName)
+        .catch(err => console.warn('[TerminalView] collectSessionTokens failed:', err))
     }
   })
 }
