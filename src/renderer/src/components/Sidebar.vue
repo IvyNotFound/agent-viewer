@@ -221,6 +221,14 @@ const activeAgents = computed(() =>
   store.agents.filter(a => hasOpenTerminal(a.name))
 )
 
+// ── Review vs regular agents ───────────────────────────────────────────────
+const reviewAgents = computed(() =>
+  store.agents.filter(a => a.name.includes('review') || a.type === 'review')
+)
+const regularAgents = computed(() =>
+  store.agents.filter(a => !a.name.includes('review') && a.type !== 'review')
+)
+
 const appVersion = import.meta.env.VITE_APP_VERSION as string ?? '0.0.0'
 
 const projectName = computed(() => {
@@ -676,80 +684,170 @@ async function closeProject() {
                 >{{ t('sidebar.reset') }}</button>
               </div>
             </div>
-            <div class="space-y-0.5">
-              <div
-                v-for="agent in store.agents"
-                :key="agent.id"
-                class="group"
-                @contextmenu.prevent="openContextMenu($event, agent)"
-              >
-                <!-- Ligne principale -->
-                <div class="relative">
-                  <button
-                    :class="[
-                      'w-full flex items-center gap-3 px-2 py-2 rounded-md text-left transition-colors cursor-pointer pr-[84px]',
-                      isAgentSelected(agent.id) ? 'bg-surface-secondary ring-1 ring-content-faint' : 'hover:bg-surface-primary'
-                    ]"
-                    @click="store.toggleAgentFilter(agent.id)"
-                  >
-                    <!-- Indicateur de statut -->
-                    <span class="relative shrink-0 flex items-center justify-center w-4 h-4">
-                      <svg
-                        v-if="tabsStore.isAgentActive(agent.name)"
-                        class="w-3.5 h-3.5 animate-spin"
-                        viewBox="0 0 16 16" fill="none"
-                        :style="{ color: agentFg(agent.name) }"
-                      >
-                        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" stroke-opacity="0.25"/>
-                        <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      </svg>
-                      <svg
-                        v-else-if="hasOpenTerminal(agent.name) && !tabsStore.isAgentActive(agent.name)"
-                        class="w-3.5 h-3.5 animate-pulse"
-                        viewBox="0 0 14 14" fill="none"
-                        :style="{ color: agentFg(agent.name) }"
-                      >
-                        <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="2"/>
-                        <circle cx="7" cy="7" r="2" fill="currentColor"/>
-                      </svg>
+
+            <!-- ── Sous-section REVIEW ── -->
+            <template v-if="reviewAgents.length > 0">
+              <p class="text-[11px] font-semibold text-amber-500 uppercase tracking-wider mb-1.5 px-1">Review</p>
+              <div class="space-y-0.5 mb-2">
+                <div
+                  v-for="agent in reviewAgents"
+                  :key="agent.id"
+                  class="group"
+                  @contextmenu.prevent="openContextMenu($event, agent)"
+                >
+                  <div class="relative">
+                    <button
+                      :class="[
+                        'w-full flex items-center gap-3 px-2 py-2 rounded-md text-left transition-colors cursor-pointer pr-[84px]',
+                        isAgentSelected(agent.id)
+                          ? 'bg-amber-500/10 ring-1 ring-amber-500/30'
+                          : 'hover:bg-amber-500/5'
+                      ]"
+                      @click="store.toggleAgentFilter(agent.id)"
+                    >
+                      <!-- Indicateur de statut -->
+                      <span class="relative shrink-0 flex items-center justify-center w-4 h-4">
+                        <svg
+                          v-if="tabsStore.isAgentActive(agent.name)"
+                          class="w-3.5 h-3.5 animate-spin"
+                          viewBox="0 0 16 16" fill="none"
+                          :style="{ color: agentFg(agent.name) }"
+                        >
+                          <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" stroke-opacity="0.25"/>
+                          <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <svg
+                          v-else-if="hasOpenTerminal(agent.name) && !tabsStore.isAgentActive(agent.name)"
+                          class="w-3.5 h-3.5 animate-pulse"
+                          viewBox="0 0 14 14" fill="none"
+                          :style="{ color: agentFg(agent.name) }"
+                        >
+                          <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="2"/>
+                          <circle cx="7" cy="7" r="2" fill="currentColor"/>
+                        </svg>
+                        <span
+                          v-else
+                          class="w-2.5 h-2.5 rounded-full"
+                          :style="{ backgroundColor: agentFg(agent.name) }"
+                        />
+                      </span>
                       <span
-                        v-else
-                        class="w-2.5 h-2.5 rounded-full"
-                        :style="{ backgroundColor: agentFg(agent.name) }"
-                      />
-                    </span>
-                    <span
-                      :class="['text-sm truncate font-mono', isAgentSelected(agent.id) ? 'text-content-primary' : 'text-content-muted']"
-                    >{{ agent.name }}</span>
-                  </button>
-                  <!-- Toolbar actions : edit / run -->
-                  <div class="absolute right-1 top-1/2 -translate-y-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <!-- edit agent -->
-                    <button
-                      class="w-6 h-6 flex items-center justify-center rounded transition-colors text-content-subtle hover:text-content-secondary hover:bg-surface-tertiary"
-                      :title="t('sidebar.editAgent')"
-                      @click.stop="editAgentTarget = agent"
-                    >
-                      <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
-                        <path d="M9.5 1.5a2.121 2.121 0 0 1 3 3L4 13H1v-3L9.5 1.5z"/>
-                      </svg>
+                        :class="['text-sm truncate font-mono', isAgentSelected(agent.id) ? 'text-amber-300' : 'text-amber-400/80']"
+                      >{{ agent.name }}</span>
                     </button>
-                    <!-- run -->
-                    <button
-                      class="w-6 h-6 flex items-center justify-center rounded transition-colors"
-                      :style="{ color: agentFg(agent.name), backgroundColor: agentBg(agent.name) }"
-                      :title="t('sidebar.launchAgent', { name: agent.name })"
-                      @click="openLaunchModal($event, agent)"
-                    >
-                      <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
-                        <path d="M3.5 2.635a.5.5 0 0 1 .752-.43l9 5.364a.5.5 0 0 1 0 .862l-9 5.365A.5.5 0 0 1 3.5 13.364V2.635z"/>
-                      </svg>
-                    </button>
+                    <!-- Toolbar actions : edit / run -->
+                    <div class="absolute right-1 top-1/2 -translate-y-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        class="w-6 h-6 flex items-center justify-center rounded transition-colors text-content-subtle hover:text-content-secondary hover:bg-surface-tertiary"
+                        :title="t('sidebar.editAgent')"
+                        @click.stop="editAgentTarget = agent"
+                      >
+                        <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+                          <path d="M9.5 1.5a2.121 2.121 0 0 1 3 3L4 13H1v-3L9.5 1.5z"/>
+                        </svg>
+                      </button>
+                      <button
+                        class="w-6 h-6 flex items-center justify-center rounded transition-colors"
+                        :style="{ color: agentFg(agent.name), backgroundColor: agentBg(agent.name) }"
+                        :title="t('sidebar.launchAgent', { name: agent.name })"
+                        @click="openLaunchModal($event, agent)"
+                      >
+                        <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+                          <path d="M3.5 2.635a.5.5 0 0 1 .752-.43l9 5.364a.5.5 0 0 1 0 .862l-9 5.365A.5.5 0 0 1 3.5 13.364V2.635z"/>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div v-if="store.agents.length === 0" class="text-sm text-content-faint px-2 py-2">{{ t('sidebar.noAgent') }}</div>
-            </div>
+
+              <!-- Séparateur -->
+              <hr class="border-zinc-700 my-2">
+            </template>
+
+            <!-- ── Sous-section AGENTS (non-review) ── -->
+            <template v-if="regularAgents.length > 0 || reviewAgents.length > 0">
+              <p
+                v-if="reviewAgents.length > 0"
+                class="text-[11px] font-semibold text-content-subtle uppercase tracking-wider mb-1.5 px-1"
+              >Agents</p>
+              <div class="space-y-0.5">
+                <div
+                  v-for="agent in regularAgents"
+                  :key="agent.id"
+                  class="group"
+                  @contextmenu.prevent="openContextMenu($event, agent)"
+                >
+                  <!-- Ligne principale -->
+                  <div class="relative">
+                    <button
+                      :class="[
+                        'w-full flex items-center gap-3 px-2 py-2 rounded-md text-left transition-colors cursor-pointer pr-[84px]',
+                        isAgentSelected(agent.id) ? 'bg-surface-secondary ring-1 ring-content-faint' : 'hover:bg-surface-primary'
+                      ]"
+                      @click="store.toggleAgentFilter(agent.id)"
+                    >
+                      <!-- Indicateur de statut -->
+                      <span class="relative shrink-0 flex items-center justify-center w-4 h-4">
+                        <svg
+                          v-if="tabsStore.isAgentActive(agent.name)"
+                          class="w-3.5 h-3.5 animate-spin"
+                          viewBox="0 0 16 16" fill="none"
+                          :style="{ color: agentFg(agent.name) }"
+                        >
+                          <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" stroke-opacity="0.25"/>
+                          <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <svg
+                          v-else-if="hasOpenTerminal(agent.name) && !tabsStore.isAgentActive(agent.name)"
+                          class="w-3.5 h-3.5 animate-pulse"
+                          viewBox="0 0 14 14" fill="none"
+                          :style="{ color: agentFg(agent.name) }"
+                        >
+                          <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="2"/>
+                          <circle cx="7" cy="7" r="2" fill="currentColor"/>
+                        </svg>
+                        <span
+                          v-else
+                          class="w-2.5 h-2.5 rounded-full"
+                          :style="{ backgroundColor: agentFg(agent.name) }"
+                        />
+                      </span>
+                      <span
+                        :class="['text-sm truncate font-mono', isAgentSelected(agent.id) ? 'text-content-primary' : 'text-content-muted']"
+                      >{{ agent.name }}</span>
+                    </button>
+                    <!-- Toolbar actions : edit / run -->
+                    <div class="absolute right-1 top-1/2 -translate-y-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <!-- edit agent -->
+                      <button
+                        class="w-6 h-6 flex items-center justify-center rounded transition-colors text-content-subtle hover:text-content-secondary hover:bg-surface-tertiary"
+                        :title="t('sidebar.editAgent')"
+                        @click.stop="editAgentTarget = agent"
+                      >
+                        <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+                          <path d="M9.5 1.5a2.121 2.121 0 0 1 3 3L4 13H1v-3L9.5 1.5z"/>
+                        </svg>
+                      </button>
+                      <!-- run -->
+                      <button
+                        class="w-6 h-6 flex items-center justify-center rounded transition-colors"
+                        :style="{ color: agentFg(agent.name), backgroundColor: agentBg(agent.name) }"
+                        :title="t('sidebar.launchAgent', { name: agent.name })"
+                        @click="openLaunchModal($event, agent)"
+                      >
+                        <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+                          <path d="M3.5 2.635a.5.5 0 0 1 .752-.43l9 5.364a.5.5 0 0 1 0 .862l-9 5.365A.5.5 0 0 1 3.5 13.364V2.635z"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div v-if="regularAgents.length === 0 && reviewAgents.length === 0" class="text-sm text-content-faint px-2 py-2">{{ t('sidebar.noAgent') }}</div>
+              </div>
+            </template>
+            <div v-else class="text-sm text-content-faint px-2 py-2">{{ t('sidebar.noAgent') }}</div>
+
             <!-- Bouton ajouter -->
             <button
               class="mt-2 flex items-center gap-2 px-2 py-2 rounded-md text-xs text-content-faint hover:text-content-tertiary hover:bg-surface-primary transition-colors w-full"
