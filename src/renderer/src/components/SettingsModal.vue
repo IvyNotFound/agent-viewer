@@ -13,7 +13,6 @@ const { t } = useI18n()
 const settingsStore = useSettingsStore()
 const store = useTasksStore()
 
-const githubToken = ref('')
 const githubRepo = ref(settingsStore.github.repoUrl)
 const checkingUpdates = ref(false)
 const connectionError = ref('')
@@ -30,9 +29,6 @@ const pendingSha = ref<string | null>(null)
 
 onMounted(async () => {
   if (store.dbPath) {
-    const res = await window.electronAPI.getConfigValue(store.dbPath, 'github_token')
-    if (res.success && res.value) githubToken.value = res.value
-
     const shaRes = await window.electronAPI.getConfigValue(store.dbPath, 'claude_md_commit')
     if (shaRes.success && shaRes.value) {
       settingsStore.setClaudeMdInfo({ projectCommit: shaRes.value })
@@ -45,18 +41,8 @@ onMounted(async () => {
   }
 })
 
-async function saveToken() {
-  if (!store.dbPath) return
-  // Don't save empty token
-  if (!githubToken.value.trim()) return
-  await window.electronAPI.setConfigValue(store.dbPath, 'github_token', githubToken.value)
-  settingsStore.setGitHubToken(githubToken.value)
-}
-
 async function testGithubConnection() {
   if (!store.dbPath || !githubRepo.value) return
-  // Bug 1 fix: ensure token is saved before testing
-  await saveToken()
   connectionError.value = ''
   settingsStore.setGitHubRepo(githubRepo.value)
   const result = await window.electronAPI.testGithubConnection(store.dbPath, githubRepo.value)
@@ -286,19 +272,6 @@ function handleKeydown(e: KeyboardEvent) {
           <!-- GitHub Connection -->
           <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
             <p class="text-[11px] text-content-subtle mb-3 uppercase tracking-wider">{{ t('settings.github') }}</p>
-
-            <!-- Token input -->
-            <div class="mb-3">
-              <label class="block text-xs text-content-muted mb-1">{{ t('settings.tokenLabel') }}</label>
-              <input
-                v-model="githubToken"
-                type="password"
-                class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-sm text-content-primary font-mono outline-none focus:ring-1 focus:ring-violet-500"
-                placeholder="ghp_xxxxxxxxxxxx"
-                :disabled="!store.dbPath"
-                @change="saveToken"
-              />
-            </div>
 
             <!-- Repo URL input -->
             <div class="mb-3">

@@ -20,7 +20,6 @@ export type Theme = 'dark' | 'light'
 export type Language = 'fr' | 'en'
 
 interface GitHubSettings {
-  token: string
   repoUrl: string
   owner: string
   repo: string
@@ -52,7 +51,7 @@ interface ClaudeMdInfo {
  * Actions:
  * - setTheme, applyTheme: Theme management
  * - setLanguage: Language switching
- * - setGitHubToken, setGitHubRepo: GitHub config
+ * - setGitHubRepo: GitHub config
  * - setClaudeMdInfo: Update sync status
  *
  * @returns {object} Store instance with state and methods
@@ -111,26 +110,12 @@ export const useSettingsStore = defineStore('settings', () => {
 
   // GitHub settings
   const github = ref<GitHubSettings>({
-    token: localStorage.getItem('github_token') || '',
     repoUrl: localStorage.getItem('github_repo_url') || '',
     owner: '',
     repo: '',
     connected: false,
     lastCheck: localStorage.getItem('github_last_check') || null
   })
-
-  /**
-   * Updates the GitHub token in state and localStorage.
-   * Note: the token is encrypted OS-level (safeStorage) by the main process;
-   * this stores the raw value only in the renderer state for display purposes.
-   *
-   * @param token - Plain-text GitHub personal access token
-   * @returns {void}
-   */
-  function setGitHubToken(token: string) {
-    github.value.token = token
-    localStorage.setItem('github_token', token)
-  }
 
   /**
    * Parses and stores a GitHub repository URL.
@@ -218,7 +203,6 @@ export const useSettingsStore = defineStore('settings', () => {
     setLanguage,
     // GitHub
     github,
-    setGitHubToken,
     setGitHubRepo,
     setGitHubConnected,
     // App info

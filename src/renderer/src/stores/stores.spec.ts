@@ -475,26 +475,6 @@ describe('stores/settings', () => {
     })
   })
 
-  describe('setGitHubToken', () => {
-    it('should set the token and persist to localStorage', () => {
-      const store = useSettingsStore()
-
-      store.setGitHubToken('ghp_mytoken123')
-
-      expect(store.github.token).toBe('ghp_mytoken123')
-      expect(localStorage.getItem('github_token')).toBe('ghp_mytoken123')
-    })
-
-    it('should allow clearing the token with empty string', () => {
-      const store = useSettingsStore()
-      store.setGitHubToken('ghp_existing')
-      store.setGitHubToken('')
-
-      expect(store.github.token).toBe('')
-      expect(localStorage.getItem('github_token')).toBe('')
-    })
-  })
-
   describe('setGitHubConnected', () => {
     it('should set connected to true and update lastCheck', () => {
       const store = useSettingsStore()

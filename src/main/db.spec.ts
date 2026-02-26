@@ -3,7 +3,7 @@
  *
  * Covers: getDbBuffer cache, clearDbCacheEntry, registerDbPath/assertDbPathAllowed,
  * registerProjectPath/assertProjectPathAllowed, getSqlJs, writeDb, queryLive,
- * migrateDb, encryptToken/decryptToken, FORBIDDEN_WRITE_PATTERN.
+ * migrateDb, FORBIDDEN_WRITE_PATTERN.
  *
  * Framework: Vitest (node environment)
  */
@@ -12,18 +12,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { resolve } from 'path'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
-
-const mockIsEncryptionAvailable = vi.fn(() => false)
-const mockEncryptString = vi.fn()
-const mockDecryptString = vi.fn()
-
-vi.mock('electron', () => ({
-  safeStorage: {
-    isEncryptionAvailable: (...args: unknown[]) => mockIsEncryptionAvailable(...args),
-    encryptString: (...args: unknown[]) => mockEncryptString(...args),
-    decryptString: (...args: unknown[]) => mockDecryptString(...args),
-  },
-}))
 
 const mockStat = vi.fn()
 const mockReadFile = vi.fn()
@@ -131,8 +119,6 @@ import {
   writeDb,
   queryLive,
   migrateDb,
-  encryptToken,
-  decryptToken,
   FORBIDDEN_WRITE_PATTERN,
 } from './db'
 
@@ -558,59 +544,6 @@ describe('migrateDb', () => {
 
     const result = await migrateDb(dbPath)
     expect(result).toEqual({ migrated: 10 })
-  })
-})
-
-// ── encryptToken / decryptToken ──────────────────────────────────────────────
-
-describe('encryptToken / decryptToken', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockIsEncryptionAvailable.mockReturnValue(false)
-  })
-
-  it('should roundtrip when encryption is available', () => {
-    mockIsEncryptionAvailable.mockReturnValue(true)
-    const encrypted = Buffer.from('encrypted-data')
-    mockEncryptString.mockReturnValue(encrypted)
-    mockDecryptString.mockReturnValue('my-secret-token')
-
-    const cipher = encryptToken('my-secret-token')
-    expect(cipher).toBe(encrypted.toString('base64'))
-
-    const plain = decryptToken(cipher)
-    expect(plain).toBe('my-secret-token')
-  })
-
-  it('should passthrough when encryption is unavailable', () => {
-    mockIsEncryptionAvailable.mockReturnValue(false)
-
-    const cipher = encryptToken('plain-token')
-    expect(cipher).toBe('plain-token')
-
-    const plain = decryptToken('plain-token')
-    expect(plain).toBe('plain-token')
-  })
-
-  it('should return empty string for empty input', () => {
-    expect(encryptToken('')).toBe('')
-    expect(decryptToken('')).toBe('')
-  })
-
-  it('should passthrough on encryption failure', () => {
-    mockIsEncryptionAvailable.mockReturnValue(true)
-    mockEncryptString.mockImplementation(() => { throw new Error('crypto-fail') })
-
-    const result = encryptToken('my-token')
-    expect(result).toBe('my-token')
-  })
-
-  it('should passthrough on decryption failure (e.g. invalid base64)', () => {
-    mockIsEncryptionAvailable.mockReturnValue(true)
-    mockDecryptString.mockImplementation(() => { throw new Error('bad-decrypt') })
-
-    const result = decryptToken('not-valid-base64!!!')
-    expect(result).toBe('not-valid-base64!!!')
   })
 })
 

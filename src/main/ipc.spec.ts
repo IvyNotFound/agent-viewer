@@ -414,7 +414,7 @@ describe('IPC handlers — src/main/ipc.ts', () => {
     })
 
     it('should return { success, value } shape', async () => {
-      const result = await callHandler('get-config-value', '/nonexistent/db.sqlite', 'github_token') as { success: boolean; value: unknown; error?: string }
+      const result = await callHandler('get-config-value', '/nonexistent/db.sqlite', 'claude_md_commit') as { success: boolean; value: unknown; error?: string }
       // Shape validation — value is null on error
       expect(result).toHaveProperty('success')
       expect(result).toHaveProperty('value')

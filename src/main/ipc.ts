@@ -171,7 +171,7 @@ export function registerIpcHandlers(): void {
           actif INTEGER NOT NULL DEFAULT 1,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
-        INSERT OR IGNORE INTO config (key, value) VALUES ('claude_md_commit',''),('schema_version','3'),('github_token','');
+        INSERT OR IGNORE INTO config (key, value) VALUES ('claude_md_commit',''),('schema_version','3');
         INSERT OR IGNORE INTO perimetres (name, dossier, techno, description) VALUES
           ('front-vuejs','renderer/','Vue 3 + TypeScript + Tailwind CSS','Interface utilisateur Electron'),
           ('back-electron','main/','Electron + Node.js + SQLite','Process principal, IPC, accès DB'),

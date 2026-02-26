@@ -7,7 +7,6 @@
  * @module db
  */
 
-import { safeStorage } from 'electron'
 import { readFile, writeFile, rename, stat, copyFile, unlink } from 'fs/promises'
 import { join, dirname, resolve } from 'path'
 import {
@@ -346,11 +345,7 @@ export async function migrateDb(dbPath: string): Promise<{ migrated: number }> {
       )`)
       db.run(`INSERT INTO config (key, value) VALUES
         ('claude_md_commit', ''),
-        ('schema_version', '2'),
-        ('github_token', '')`)
-      changed = true
-    } else {
-      db.run("INSERT OR IGNORE INTO config (key, value) VALUES ('github_token', '')")
+        ('schema_version', '2')`)
       changed = true
     }
 
@@ -476,51 +471,6 @@ export async function migrateDb(dbPath: string): Promise<{ migrated: number }> {
   } finally {
     db.close()
   }
-}
-
-// ── Token encryption (safeStorage) ───────────────────────────────────────────
-
-/**
- * Encrypt a token using Electron safeStorage (DPAPI on Windows, Keychain on macOS).
- * Falls back to plaintext if encryption is unavailable.
- * @param plaintext - Token to encrypt
- * @returns {string} Base64-encoded ciphertext, or plaintext as fallback
- */
-export function encryptToken(plaintext: string): string {
-  if (!plaintext) return ''
-  try {
-    if (safeStorage.isEncryptionAvailable()) {
-      const encrypted = safeStorage.encryptString(plaintext)
-      return encrypted.toString('base64')
-    }
-    console.warn(
-      '[SECURITY] safeStorage encryption is unavailable on this system. ' +
-      'The GitHub token will be stored in plaintext in project.db. ' +
-      'Ensure the database file has restricted filesystem permissions.'
-    )
-  } catch (err) {
-    console.warn('[IPC] safeStorage encryption failed:', err)
-  }
-  return plaintext
-}
-
-/**
- * Decrypt a token encrypted with encryptToken().
- * Falls back to returning ciphertext as-is if decryption fails.
- * @param ciphertext - Base64-encoded encrypted token
- * @returns {string} Decrypted plaintext token
- */
-export function decryptToken(ciphertext: string): string {
-  if (!ciphertext) return ''
-  try {
-    if (safeStorage.isEncryptionAvailable()) {
-      const buffer = Buffer.from(ciphertext, 'base64')
-      return safeStorage.decryptString(buffer)
-    }
-  } catch (err) {
-    console.warn('[IPC] safeStorage decryption failed:', err)
-  }
-  return ciphertext
 }
 
 // ── SQL write guard ──────────────────────────────────────────────────────────

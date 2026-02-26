@@ -79,7 +79,6 @@
     "dark": "Dark",
     "light": "Light",
     "github": "GitHub Connection",
-    "tokenLabel": "GitHub Token (optional)",
     "repoLabel": "Repository URL",
     "connected": "Connected",
     "notConnected": "Not connected",

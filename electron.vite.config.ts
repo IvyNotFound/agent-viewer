@@ -7,7 +7,13 @@ const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin()],
+    define: {
+      // Baked in at build time: GITHUB_TOKEN env var → constant in bundle
+      // Build with: GITHUB_TOKEN=ghp_xxx npm run build
+      // Without it, token is empty string and GitHub features degrade gracefully
+      '__BUILT_IN_GITHUB_TOKEN__': JSON.stringify(process.env['GITHUB_TOKEN'] || '')
+    }
   },
   preload: {
     plugins: [externalizeDepsPlugin()]
