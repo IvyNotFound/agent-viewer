@@ -18,7 +18,9 @@ import {
   runAddTokensToSessionsMigration,
   runRemoveThinkingModeBudgetTokensMigration,
   runDropCommentaireColumnMigration,
-  runSessionStatutI18nMigration
+  runSessionStatutI18nMigration,
+  runMakeAgentAssigneNotNullMigration,
+  runMakeCommentAgentNotNullMigration
 } from './migration'
 
 // ── T282: Registry of allowed DB paths ────────────────────────────────────────
@@ -349,6 +351,19 @@ export async function migrateDb(dbPath: string): Promise<{ migrated: number }> {
     if (legacyMigrated > 0) {
       changed = true
       console.log(`[migrateDb] migrated ${legacyMigrated} tasks via legacy runTaskStatusMigration`)
+    }
+
+    // --- tasks: agent_assigne_id NOT NULL (T342) ---
+    const assigneMigrated = runMakeAgentAssigneNotNullMigration(db)
+    if (assigneMigrated) {
+      changed = true
+      console.log('[migrateDb] made agent_assigne_id and agent_createur_id NOT NULL on tasks table')
+    }
+
+    const commentAgentMigrated = runMakeCommentAgentNotNullMigration(db)
+    if (commentAgentMigrated) {
+      changed = true
+      console.log('[migrateDb] made agent_id NOT NULL on task_comments table')
     }
 
     // --- sessions: statut French → English (T329) ---

@@ -14,6 +14,7 @@ const mockElectronAPI = {
   showConfirmDialog: vi.fn().mockResolvedValue(true),
   migrateDb: vi.fn().mockResolvedValue({ success: true }),
   terminalKill: vi.fn(),
+  findProjectDb: vi.fn().mockResolvedValue(null),
 }
 
 Object.defineProperty(window, 'electronAPI', {
@@ -155,16 +156,45 @@ describe('stores/tasks', () => {
     })
   })
 
-  describe('normalizeRow', () => {
-    it('should convert Uint8Array to string', () => {
+  describe('normalizeRow (via refresh)', () => {
+    it('should populate tasks after refresh with queryDb data', async () => {
       const store = useTasksStore()
-      const encoder = new TextEncoder()
-      const uint8Array = encoder.encode('test string')
-      const row = { content: uint8Array }
+      store.dbPath = '/test/db'
 
-      // Access the normalizeRow function indirectly through the store's internal logic
-      const result = store.tasks // This will use the store's state
-      expect(result).toEqual([])
+      // Simulate queryDb returning proper rows
+      mockElectronAPI.queryDb
+        .mockResolvedValueOnce([{ id: 1, titre: 'Task One', statut: 'todo', agent_assigne_id: null }]) // tasks
+        .mockResolvedValueOnce([{ id: 10, name: 'dev-front', type: 'scoped', perimetre: 'front-vuejs' }]) // agents
+        .mockResolvedValueOnce([]) // locks
+        .mockResolvedValueOnce([{ statut: 'todo', count: 1 }]) // stats
+        .mockResolvedValueOnce([]) // perimetres
+
+      await store.refresh()
+
+      expect(store.tasks).toHaveLength(1)
+      expect(store.tasks[0].titre).toBe('Task One')
+      expect(store.tasks[0].statut).toBe('todo')
+      expect(store.agents).toHaveLength(1)
+      expect(store.agents[0].name).toBe('dev-front')
+      expect(store.stats.todo).toBe(1)
+    })
+
+    it('should handle string fields from queryDb unchanged', async () => {
+      const store = useTasksStore()
+      store.dbPath = '/test/db'
+
+      mockElectronAPI.queryDb
+        .mockResolvedValueOnce([{ id: 42, titre: 'Already string', statut: 'done', description: 'Some desc' }])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+
+      await store.refresh()
+
+      expect(store.tasks).toHaveLength(1)
+      expect(store.tasks[0].titre).toBe('Already string')
+      expect(store.tasks[0].description).toBe('Some desc')
     })
   })
 
@@ -912,5 +942,452 @@ describe('stores/tabs — missing actions', () => {
       const logsTab = store.tabs.find(t => t.type === 'logs')
       expect(logsTab?.logsAgentId).toBe(42)
     })
+  })
+})
+
+// ── Extended tests: stores/tasks — uncovered actions (T229) ───────────────────
+
+describe('stores/tasks — selectProject', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    mockElectronAPI.queryDb.mockResolvedValue([])
+    mockElectronAPI.migrateDb.mockResolvedValue({ success: true })
+    mockElectronAPI.watchDb.mockResolvedValue(undefined)
+    mockElectronAPI.onDbChanged.mockReturnValue(() => {})
+  })
+
+  it('should call showConfirmDialog when terminals are open', async () => {
+    const tasksStore = useTasksStore()
+    const tabsStore = useTabsStore()
+    tabsStore.addTerminal('agent-1')
+    tabsStore.addTerminal('agent-2')
+    mockElectronAPI.showConfirmDialog.mockResolvedValue(false)
+
+    await tasksStore.selectProject()
+
+    expect(mockElectronAPI.showConfirmDialog).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Changer de projet' })
+    )
+  })
+
+  it('should abort when user refuses confirmation dialog', async () => {
+    const tasksStore = useTasksStore()
+    const tabsStore = useTabsStore()
+    tabsStore.addTerminal('agent-1')
+    mockElectronAPI.showConfirmDialog.mockResolvedValue(false)
+
+    await tasksStore.selectProject()
+
+    expect(mockElectronAPI.selectProjectDir).not.toHaveBeenCalled()
+  })
+
+  it('should proceed to selectProjectDir when user accepts confirmation', async () => {
+    const tasksStore = useTasksStore()
+    const tabsStore = useTabsStore()
+    tabsStore.addTerminal('agent-1')
+    mockElectronAPI.showConfirmDialog.mockResolvedValue(true)
+    mockElectronAPI.selectProjectDir.mockResolvedValue(null)
+
+    await tasksStore.selectProject()
+
+    expect(mockElectronAPI.selectProjectDir).toHaveBeenCalled()
+  })
+
+  it('should skip confirmation when no terminals are open', async () => {
+    const tasksStore = useTasksStore()
+    mockElectronAPI.selectProjectDir.mockResolvedValue(null)
+
+    await tasksStore.selectProject()
+
+    expect(mockElectronAPI.showConfirmDialog).not.toHaveBeenCalled()
+    expect(mockElectronAPI.selectProjectDir).toHaveBeenCalled()
+  })
+
+  it('should do nothing when selectProjectDir returns null', async () => {
+    const tasksStore = useTasksStore()
+    mockElectronAPI.selectProjectDir.mockResolvedValue(null)
+    const prevPath = tasksStore.projectPath
+
+    await tasksStore.selectProject()
+
+    expect(tasksStore.projectPath).toBe(prevPath)
+  })
+
+  it('should call setProject when selectProjectDir returns dbPath', async () => {
+    const tasksStore = useTasksStore()
+    mockElectronAPI.selectProjectDir.mockResolvedValue({
+      projectPath: '/new/project',
+      dbPath: '/new/project/.claude/project.db',
+      error: null,
+      hasCLAUDEmd: true,
+    })
+
+    await tasksStore.selectProject()
+
+    expect(tasksStore.projectPath).toBe('/new/project')
+    expect(tasksStore.dbPath).toBe('/new/project/.claude/project.db')
+  })
+
+  it('should show WSL label when all terminals have wslDistro', async () => {
+    const tasksStore = useTasksStore()
+    const tabsStore = useTabsStore()
+    tabsStore.addTerminal('agent-1', 'Ubuntu')
+    tabsStore.addTerminal('agent-2', 'Debian')
+    mockElectronAPI.showConfirmDialog.mockResolvedValue(false)
+
+    await tasksStore.selectProject()
+
+    expect(mockElectronAPI.showConfirmDialog).toHaveBeenCalledWith(
+      expect.objectContaining({ message: '2 sessions WSL ouvertes' })
+    )
+  })
+
+  it('should show mixed label when terminals include WSL and non-WSL', async () => {
+    const tasksStore = useTasksStore()
+    const tabsStore = useTabsStore()
+    tabsStore.addTerminal('agent-1', 'Ubuntu')
+    tabsStore.addTerminal('agent-2') // no wslDistro
+    tabsStore.addTerminal('agent-3', 'Debian')
+    mockElectronAPI.showConfirmDialog.mockResolvedValue(false)
+
+    await tasksStore.selectProject()
+
+    expect(mockElectronAPI.showConfirmDialog).toHaveBeenCalledWith(
+      expect.objectContaining({ message: '2 sessions WSL + 1 terminal' })
+    )
+  })
+
+  it('should show terminal label when no terminals have wslDistro', async () => {
+    const tasksStore = useTasksStore()
+    const tabsStore = useTabsStore()
+    tabsStore.addTerminal('agent-1')
+    tabsStore.addTerminal('agent-2')
+    mockElectronAPI.showConfirmDialog.mockResolvedValue(false)
+
+    await tasksStore.selectProject()
+
+    expect(mockElectronAPI.showConfirmDialog).toHaveBeenCalledWith(
+      expect.objectContaining({ message: '2 sessions terminal ouvertes' })
+    )
+  })
+
+  it('should show setupWizard when selectProjectDir returns no dbPath', async () => {
+    const tasksStore = useTasksStore()
+    mockElectronAPI.selectProjectDir.mockResolvedValue({
+      projectPath: '/new/project',
+      dbPath: null,
+      error: null,
+      hasCLAUDEmd: false,
+    })
+
+    await tasksStore.selectProject()
+
+    expect(tasksStore.setupWizardTarget).toEqual({
+      projectPath: '/new/project',
+      hasCLAUDEmd: false,
+    })
+  })
+})
+
+describe('stores/tasks — agentRefresh', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    mockElectronAPI.queryDb.mockResolvedValue([])
+    mockElectronAPI.migrateDb.mockResolvedValue({ success: true })
+    mockElectronAPI.watchDb.mockResolvedValue(undefined)
+    mockElectronAPI.onDbChanged.mockReturnValue(() => {})
+  })
+
+  it('should not call queryDb when dbPath is null', async () => {
+    const store = useTasksStore()
+    store.dbPath = null
+
+    await store.agentRefresh()
+
+    expect(mockElectronAPI.queryDb).not.toHaveBeenCalled()
+  })
+
+  it('should call queryDb for agents and locks when dbPath is valid', async () => {
+    const store = useTasksStore()
+    await store.setProject('/p', '/p/.claude/db')
+    mockElectronAPI.queryDb.mockClear()
+    const agentData = [{ id: 1, name: 'review', type: 'global' }]
+    const lockData = [{ id: 1, fichier: 'test.ts', agent_name: 'review' }]
+    mockElectronAPI.queryDb
+      .mockResolvedValueOnce(agentData)
+      .mockResolvedValueOnce(lockData)
+
+    await store.agentRefresh()
+
+    expect(mockElectronAPI.queryDb).toHaveBeenCalledTimes(2)
+    expect(store.agents).toEqual(agentData)
+    expect(store.locks).toEqual(lockData)
+  })
+
+  it('should not throw when queryDb fails (silent catch)', async () => {
+    const store = useTasksStore()
+    await store.setProject('/p', '/p/.claude/db')
+    mockElectronAPI.queryDb.mockRejectedValue(new Error('DB error'))
+
+    await expect(store.agentRefresh()).resolves.not.toThrow()
+  })
+
+  it('should skip refresh when document is hidden', async () => {
+    const store = useTasksStore()
+    await store.setProject('/p', '/p/.claude/db')
+    mockElectronAPI.queryDb.mockClear()
+    // Simulate hidden tab
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', writable: true })
+
+    await store.agentRefresh()
+
+    expect(mockElectronAPI.queryDb).not.toHaveBeenCalled()
+
+    // Restore
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: true })
+  })
+})
+
+describe('stores/tasks — watchForDb', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    mockElectronAPI.queryDb.mockResolvedValue([])
+    mockElectronAPI.migrateDb.mockResolvedValue({ success: true })
+    mockElectronAPI.watchDb.mockResolvedValue(undefined)
+    mockElectronAPI.onDbChanged.mockReturnValue(() => {})
+  })
+
+  it('should call findProjectDb on interval tick', async () => {
+    vi.useFakeTimers()
+    const store = useTasksStore()
+    mockElectronAPI.findProjectDb.mockResolvedValue(null)
+
+    store.watchForDb('/my/project')
+
+    await vi.advanceTimersByTimeAsync(2000)
+
+    expect(mockElectronAPI.findProjectDb).toHaveBeenCalledWith('/my/project')
+
+    vi.useRealTimers()
+  })
+
+  it('should call setProject when findProjectDb returns a db path', async () => {
+    vi.useFakeTimers()
+    const store = useTasksStore()
+    mockElectronAPI.findProjectDb.mockResolvedValue('/my/project/.claude/project.db')
+
+    store.watchForDb('/my/project')
+
+    await vi.advanceTimersByTimeAsync(2000)
+
+    expect(store.projectPath).toBe('/my/project')
+    expect(store.dbPath).toBe('/my/project/.claude/project.db')
+
+    vi.useRealTimers()
+  })
+
+  it('should stop polling once db is found', async () => {
+    vi.useFakeTimers()
+    const store = useTasksStore()
+    mockElectronAPI.findProjectDb.mockResolvedValueOnce('/my/project/.claude/project.db')
+
+    store.watchForDb('/my/project')
+
+    await vi.advanceTimersByTimeAsync(2000)
+    mockElectronAPI.findProjectDb.mockClear()
+
+    await vi.advanceTimersByTimeAsync(4000)
+
+    // findProjectDb should not be called again after db was found
+    expect(mockElectronAPI.findProjectDb).not.toHaveBeenCalled()
+
+    vi.useRealTimers()
+  })
+
+  it('should clear previous interval when called again', async () => {
+    vi.useFakeTimers()
+    const store = useTasksStore()
+    mockElectronAPI.findProjectDb.mockResolvedValue(null)
+
+    store.watchForDb('/first')
+    store.watchForDb('/second')
+
+    await vi.advanceTimersByTimeAsync(2000)
+
+    // Should only call with '/second' (not '/first') — first interval was cleared
+    expect(mockElectronAPI.findProjectDb).toHaveBeenCalledWith('/second')
+    expect(mockElectronAPI.findProjectDb).not.toHaveBeenCalledWith('/first')
+
+    vi.useRealTimers()
+  })
+})
+
+describe('stores/tasks — setProjectPathOnly', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    mockElectronAPI.queryDb.mockResolvedValue([])
+    mockElectronAPI.migrateDb.mockResolvedValue({ success: true })
+    mockElectronAPI.watchDb.mockResolvedValue(undefined)
+    mockElectronAPI.onDbChanged.mockReturnValue(() => {})
+  })
+
+  it('should set projectPath and persist to localStorage', () => {
+    const store = useTasksStore()
+
+    store.setProjectPathOnly('/my/project')
+
+    expect(store.projectPath).toBe('/my/project')
+    expect(localStorage.getItem('projectPath')).toBe('/my/project')
+  })
+
+  it('should not set dbPath', () => {
+    const store = useTasksStore()
+
+    store.setProjectPathOnly('/my/project')
+
+    expect(store.dbPath).toBeNull()
+  })
+})
+
+describe('stores/tasks — closeWizard', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    mockElectronAPI.queryDb.mockResolvedValue([])
+    mockElectronAPI.migrateDb.mockResolvedValue({ success: true })
+    mockElectronAPI.watchDb.mockResolvedValue(undefined)
+    mockElectronAPI.onDbChanged.mockReturnValue(() => {})
+  })
+
+  it('should set setupWizardTarget to null', () => {
+    const store = useTasksStore()
+    store.setupWizardTarget = { projectPath: '/p', hasCLAUDEmd: true } as never
+
+    store.closeWizard()
+
+    expect(store.setupWizardTarget).toBeNull()
+  })
+})
+
+describe('stores/tasks — startWatching', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    mockElectronAPI.queryDb.mockResolvedValue([])
+    mockElectronAPI.migrateDb.mockResolvedValue({ success: true })
+    mockElectronAPI.watchDb.mockResolvedValue(undefined)
+    mockElectronAPI.onDbChanged.mockReturnValue(() => {})
+  })
+
+  it('should register onDbChanged callback via setProject', async () => {
+    const store = useTasksStore()
+
+    await store.setProject('/p', '/p/.claude/db')
+
+    expect(mockElectronAPI.onDbChanged).toHaveBeenCalled()
+  })
+
+  it('should call refresh when onDbChanged callback fires', async () => {
+    const store = useTasksStore()
+    let dbChangedCallback: (() => void) | null = null
+    mockElectronAPI.onDbChanged.mockImplementation((cb: () => void) => {
+      dbChangedCallback = cb
+      return () => {}
+    })
+
+    await store.setProject('/p', '/p/.claude/db')
+    mockElectronAPI.queryDb.mockClear()
+
+    // Simulate DB change event
+    dbChangedCallback!()
+    // Give the async refresh a tick to fire
+    await vi.waitFor(() => {
+      expect(mockElectronAPI.queryDb).toHaveBeenCalled()
+    })
+  })
+})
+
+// ── useToast composable (T246) ────────────────────────────────────────────────
+
+describe('composables/useToast', () => {
+  let useToast: typeof import('@renderer/composables/useToast').useToast
+
+  beforeEach(async () => {
+    vi.useFakeTimers()
+    // Reset module to get a fresh singleton each test
+    vi.resetModules()
+    const mod = await import('@renderer/composables/useToast')
+    useToast = mod.useToast
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('push() adds a toast with incremental id and default type error', () => {
+    const { toasts, push } = useToast()
+    push('Something failed')
+    expect(toasts.value).toHaveLength(1)
+    expect(toasts.value[0].message).toBe('Something failed')
+    expect(toasts.value[0].type).toBe('error')
+    expect(toasts.value[0].id).toBeGreaterThan(0)
+  })
+
+  it('push() with type warn sets toast.type to warn', () => {
+    const { toasts, push } = useToast()
+    push('Watch out', 'warn')
+    expect(toasts.value[0].type).toBe('warn')
+  })
+
+  it('push() limits to 5 toasts — shifts oldest when full', () => {
+    const { toasts, push } = useToast()
+    for (let i = 0; i < 6; i++) push(`msg${i}`)
+    expect(toasts.value).toHaveLength(5)
+    // First message should have been shifted out
+    expect(toasts.value[0].message).toBe('msg1')
+    expect(toasts.value[4].message).toBe('msg5')
+  })
+
+  it('push() auto-dismisses after duration via setTimeout', () => {
+    const { toasts, push } = useToast()
+    push('temp', 'info', 3000)
+    expect(toasts.value).toHaveLength(1)
+    vi.advanceTimersByTime(3000)
+    expect(toasts.value).toHaveLength(0)
+  })
+
+  it('dismiss(id) removes the matching toast', () => {
+    const { toasts, push, dismiss } = useToast()
+    push('a')
+    push('b')
+    const idA = toasts.value[0].id
+    dismiss(idA)
+    expect(toasts.value).toHaveLength(1)
+    expect(toasts.value[0].message).toBe('b')
+  })
+
+  it('dismiss(nonexistent id) is a no-op', () => {
+    const { toasts, push, dismiss } = useToast()
+    push('a')
+    dismiss(99999)
+    expect(toasts.value).toHaveLength(1)
+  })
+
+  it('singleton: two useToast() calls share the same toasts array', () => {
+    const t1 = useToast()
+    const t2 = useToast()
+    t1.push('from t1')
+    expect(t2.toasts.value).toHaveLength(1)
+    expect(t2.toasts.value[0].message).toBe('from t1')
   })
 })

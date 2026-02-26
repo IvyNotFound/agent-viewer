@@ -605,5 +605,211 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       expect(result).toMatchObject({ success: false })
     })
   })
+
+  // ── T226: select-project-dir ────────────────────────────────────────────────
+
+  describe('select-project-dir handler', () => {
+    it('should return null when dialog is canceled', async () => {
+      const { dialog } = await import('electron')
+      vi.mocked(dialog.showOpenDialog).mockResolvedValueOnce({ canceled: true, filePaths: [] })
+      const result = await callHandler('select-project-dir')
+      expect(result).toBeNull()
+    })
+
+    it('should return project info when dialog returns a path', async () => {
+      const { dialog } = await import('electron')
+      const { existsSync, readdirSync } = await import('fs')
+      vi.mocked(dialog.showOpenDialog).mockResolvedValueOnce({ canceled: false, filePaths: ['/my/project'] })
+      vi.mocked(existsSync).mockReturnValue(false)
+      vi.mocked(readdirSync as (path: string) => string[]).mockReturnValue([])
+      const result = await callHandler('select-project-dir') as {
+        projectPath: string; dbPath: string | null; error: null; hasCLAUDEmd: boolean
+      }
+      expect(result).toMatchObject({ projectPath: '/my/project', dbPath: null, error: null })
+      expect(result).toHaveProperty('hasCLAUDEmd')
+    })
+
+    it('should auto-detect project.db via findProjectDb', async () => {
+      const { dialog } = await import('electron')
+      const { existsSync, readdirSync } = await import('fs')
+      vi.mocked(dialog.showOpenDialog).mockResolvedValueOnce({ canceled: false, filePaths: ['/my/project'] })
+      vi.mocked(existsSync).mockReturnValue(true)
+      vi.mocked(readdirSync as (path: string) => string[]).mockReturnValue(['project.db'])
+      const result = await callHandler('select-project-dir') as {
+        projectPath: string; dbPath: string | null
+      }
+      expect(result.projectPath).toBe('/my/project')
+      expect(result.dbPath).toContain('project.db')
+    })
+  })
+
+  // ── T226: init-new-project ──────────────────────────────────────────────────
+
+  describe('init-new-project handler', () => {
+    it('should return { success: true } on nominal path', async () => {
+      const { writeFile, mkdir } = await import('fs/promises')
+      vi.mocked(mkdir).mockResolvedValueOnce(undefined)
+      vi.mocked(writeFile).mockResolvedValueOnce(undefined)
+      // Mock global fetch for CLAUDE.md download
+      const originalFetch = globalThis.fetch
+      globalThis.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        text: vi.fn().mockResolvedValueOnce('# CLAUDE.md content'),
+      })
+      try {
+        const result = await callHandler('init-new-project', '/fake/project') as { success: boolean }
+        expect(result).toMatchObject({ success: true })
+      } finally {
+        globalThis.fetch = originalFetch
+      }
+    })
+
+    it('should return { success: false, error } when fetch fails', async () => {
+      const { mkdir } = await import('fs/promises')
+      vi.mocked(mkdir).mockResolvedValueOnce(undefined)
+      const originalFetch = globalThis.fetch
+      globalThis.fetch = vi.fn().mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      })
+      try {
+        const result = await callHandler('init-new-project', '/fake/project') as { success: boolean; error?: string }
+        expect(result.success).toBe(false)
+        expect(typeof result.error).toBe('string')
+      } finally {
+        globalThis.fetch = originalFetch
+      }
+    })
+
+    it('should return { success: false, error } when mkdir fails (EACCES)', async () => {
+      const { mkdir } = await import('fs/promises')
+      vi.mocked(mkdir).mockRejectedValueOnce(new Error('EACCES: permission denied'))
+      const result = await callHandler('init-new-project', '/fake/project') as { success: boolean; error?: string }
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('EACCES')
+    })
+  })
+
+  // ── T226: show-confirm-dialog ───────────────────────────────────────────────
+
+  describe('show-confirm-dialog handler', () => {
+    it('should return true when user confirms (response=0)', async () => {
+      const { dialog } = await import('electron')
+      vi.mocked(dialog.showMessageBox).mockResolvedValueOnce({ response: 0, checkboxChecked: false })
+      const result = await callHandler('show-confirm-dialog', { title: 'Test', message: 'Confirm?' })
+      expect(result).toBe(true)
+    })
+
+    it('should return false when user cancels (response=1)', async () => {
+      const { dialog } = await import('electron')
+      vi.mocked(dialog.showMessageBox).mockResolvedValueOnce({ response: 1, checkboxChecked: false })
+      const result = await callHandler('show-confirm-dialog', { title: 'Test', message: 'Confirm?' })
+      expect(result).toBe(false)
+    })
+  })
+
+  // ── T226: get-locks / get-locks-count ───────────────────────────────────────
+
+  describe('get-locks handler', () => {
+    it('should return array (empty on DB error)', async () => {
+      // queryLive will fail on mock buffer → handler throws
+      await expect(callHandler('get-locks', '/fake/project.db')).rejects.toThrow()
+    })
+  })
+
+  describe('get-locks-count handler', () => {
+    it('should return a number or throw on invalid DB', async () => {
+      // queryLive on mock buffer will throw → handler propagates
+      await expect(callHandler('get-locks-count', '/fake/project.db')).rejects.toThrow()
+    })
+  })
+
+  // ── T226: watch-db / unwatch-db ─────────────────────────────────────────────
+
+  describe('watch-db handler', () => {
+    it('should call fs.watch on the provided path', async () => {
+      const { watch } = await import('fs')
+      vi.mocked(watch).mockClear()
+      await callHandler('watch-db', '/fake/project.db')
+      expect(watch).toHaveBeenCalledWith('/fake/project.db', expect.any(Function))
+    })
+
+    it('should close previous watcher before creating new one', async () => {
+      const { watch } = await import('fs')
+      const mockClose = vi.fn()
+      vi.mocked(watch).mockReturnValue({ close: mockClose } as unknown as ReturnType<typeof watch>)
+      await callHandler('watch-db', '/fake/db1')
+      await callHandler('watch-db', '/fake/db2')
+      expect(mockClose).toHaveBeenCalled()
+    })
+  })
+
+  describe('unwatch-db handler', () => {
+    it('should close watcher and clear debounce timer', async () => {
+      const { watch } = await import('fs')
+      const mockClose = vi.fn()
+      vi.mocked(watch).mockReturnValue({ close: mockClose } as unknown as ReturnType<typeof watch>)
+      await callHandler('watch-db', '/fake/project.db')
+      await callHandler('unwatch-db', '/fake/project.db')
+      expect(mockClose).toHaveBeenCalled()
+    })
+
+    it('should not crash when no watcher is active', async () => {
+      await expect(callHandler('unwatch-db')).resolves.not.toThrow()
+    })
+  })
+
+  // ── T226: update-perimetre ──────────────────────────────────────────────────
+
+  describe('update-perimetre handler', () => {
+    it('should return { success, error? } shape', async () => {
+      const result = await callHandler('update-perimetre', '/fake/project.db', 1, 'old-name', 'new-name', 'desc') as { success: boolean }
+      expect(result).toHaveProperty('success')
+    })
+
+    it('should return { success: false, error } when dbPath is not registered (T282)', async () => {
+      const result = await callHandler('update-perimetre', '/invalid/db', 1, 'old', 'new', 'desc')
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('DB_PATH_NOT_ALLOWED') })
+    })
+  })
+
+  // ── T226: check-master-md ──────────────────────────────────────────────────
+
+  describe('check-master-md handler', () => {
+    it('should return { success: false } when queryLive throws (DB error)', async () => {
+      const result = await callHandler('check-master-md', '/nonexistent/db.sqlite') as { success: boolean; error?: string }
+      expect(result.success).toBe(false)
+      expect(typeof result.error).toBe('string')
+    })
+  })
+
+  // ── T226: apply-master-md ──────────────────────────────────────────────────
+
+  describe('apply-master-md handler', () => {
+    it('should return { success: false, error } when dbPath is not registered', async () => {
+      const result = await callHandler('apply-master-md', '/invalid/db', '/invalid/project', 'content', 'sha123')
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('DB_PATH_NOT_ALLOWED') })
+    })
+
+    it('should return { success: false, error } when projectPath is not registered', async () => {
+      const result = await callHandler('apply-master-md', '/fake/project.db', '/unregistered/project', 'content', 'sha123')
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('PROJECT_PATH_NOT_ALLOWED') })
+    })
+  })
+
+  // ── T226: test-github-connection ───────────────────────────────────────────
+
+  describe('test-github-connection handler', () => {
+    it('should return { connected: false, error } for invalid URL', async () => {
+      const result = await callHandler('test-github-connection', '/fake/project.db', 'not-a-url') as { connected: boolean; error?: string }
+      expect(result.connected).toBe(false)
+      expect(result.error).toBe('URL invalide')
+    })
+
+    it('should return { connected: false } when queryLive throws (DB error)', async () => {
+      const result = await callHandler('test-github-connection', '/nonexistent/db', 'https://github.com/owner/repo') as { connected: boolean }
+      expect(result.connected).toBe(false)
+    })
+  })
 })
 

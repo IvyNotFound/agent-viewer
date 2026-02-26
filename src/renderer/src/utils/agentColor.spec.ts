@@ -1,7 +1,19 @@
-import { describe, it, expect } from 'vitest'
-import { agentHue, agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { agentHue, agentFg, agentBg, agentBorder, setDarkMode as setDarkModeReactive } from '@renderer/utils/agentColor'
+
+/** Toggle dark mode on document.documentElement and reactive ref for testing */
+function setDarkMode(enabled: boolean) {
+  if (enabled) {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
+  setDarkModeReactive(enabled)
+}
 
 describe('agentColor', () => {
+  afterEach(() => setDarkMode(false))
+
   describe('agentHue', () => {
     it('should return a number between 0 and 359', () => {
       const hue = agentHue('test-agent')
@@ -51,7 +63,6 @@ describe('agentColor', () => {
     })
 
     it('should be case-sensitive (uppercase ≠ lowercase)', () => {
-      // The hash function is case-sensitive by design
       const hueUpper = agentHue('AGENT')
       const hueLower = agentHue('agent')
       expect(hueUpper).toBeGreaterThanOrEqual(0)
@@ -77,23 +88,24 @@ describe('agentColor', () => {
       expect(agentFg('test')).toBe(agentFg('test'))
     })
 
-    it('should have high lightness (readable on dark background)', () => {
-      // agentFg uses 68% lightness — bright enough for dark mode
-      const fg = agentFg('test')
-      const match = fg.match(/(\d+)%\)$/)
-      const lightness = match ? parseInt(match[1]) : 0
-      expect(lightness).toBeGreaterThanOrEqual(60)
-    })
-
     it('should use the exact hue from agentHue', () => {
       const name = 'my-agent'
       const hue = agentHue(name)
-      expect(agentFg(name)).toBe(`hsl(${hue}, 70%, 68%)`)
+      expect(agentFg(name)).toContain(`hsl(${hue},`)
     })
 
-    it('should have fixed saturation of 70%', () => {
-      const fg = agentFg('any-agent')
-      expect(fg).toMatch(/hsl\(\d+, 70%, \d+%\)/)
+    it('should return light-mode values when dark class absent', () => {
+      setDarkMode(false)
+      const name = 'my-agent'
+      const hue = agentHue(name)
+      expect(agentFg(name)).toBe(`hsl(${hue}, 65%, 38%)`)
+    })
+
+    it('should return dark-mode values when dark class present', () => {
+      setDarkMode(true)
+      const name = 'my-agent'
+      const hue = agentHue(name)
+      expect(agentFg(name)).toBe(`hsl(${hue}, 70%, 68%)`)
     })
   })
 
@@ -103,8 +115,16 @@ describe('agentColor', () => {
       expect(bg).toMatch(/^hsl\(\d+, \d+%, \d+%\)$/)
     })
 
-    it('should have low lightness (dark background for badge)', () => {
-      // agentBg uses 18% lightness — dark enough for a subtle badge background
+    it('should return light-mode values (high lightness) when dark class absent', () => {
+      setDarkMode(false)
+      const bg = agentBg('test')
+      const match = bg.match(/(\d+)%\)$/)
+      const lightness = match ? parseInt(match[1]) : 0
+      expect(lightness).toBeGreaterThanOrEqual(85)
+    })
+
+    it('should return dark-mode values (low lightness) when dark class present', () => {
+      setDarkMode(true)
       const bg = agentBg('test')
       const match = bg.match(/(\d+)%\)$/)
       const lightness = match ? parseInt(match[1]) : 100
@@ -114,16 +134,7 @@ describe('agentColor', () => {
     it('should use the exact hue from agentHue', () => {
       const name = 'my-agent'
       const hue = agentHue(name)
-      expect(agentBg(name)).toBe(`hsl(${hue}, 40%, 18%)`)
-    })
-
-    it('should use lower saturation than agentFg (40% vs 70%)', () => {
-      const name = 'test-agent'
-      const bg = agentBg(name)
-      const fg = agentFg(name)
-      const bgSat = parseInt(bg.match(/, (\d+)%,/)![1])
-      const fgSat = parseInt(fg.match(/, (\d+)%,/)![1])
-      expect(bgSat).toBeLessThan(fgSat)
+      expect(agentBg(name)).toContain(`hsl(${hue},`)
     })
   })
 
@@ -133,33 +144,15 @@ describe('agentColor', () => {
       expect(border).toMatch(/^hsl\(\d+, \d+%, \d+%\)$/)
     })
 
-    it('should have higher lightness than agentBg (border is lighter than background)', () => {
-      const name = 'dev-front'
-      const bg = agentBg(name)
-      const border = agentBorder(name)
-      const bgLightness = parseInt(bg.match(/(\d+)%\)$/)![1])
-      const borderLightness = parseInt(border.match(/(\d+)%\)$/)![1])
-      expect(borderLightness).toBeGreaterThan(bgLightness)
-    })
-
     it('should use the exact hue from agentHue', () => {
       const name = 'my-agent'
       const hue = agentHue(name)
-      expect(agentBorder(name)).toBe(`hsl(${hue}, 40%, 32%)`)
-    })
-
-    it('should share saturation with agentBg (coherent color scheme)', () => {
-      const name = 'test-agent'
-      const bg = agentBg(name)
-      const border = agentBorder(name)
-      const bgSat = parseInt(bg.match(/, (\d+)%,/)![1])
-      const borderSat = parseInt(border.match(/, (\d+)%,/)![1])
-      expect(bgSat).toBe(borderSat)
+      expect(agentBorder(name)).toContain(`hsl(${hue},`)
     })
   })
 
   describe('color scheme coherence', () => {
-    it('all four functions should use the same hue for a given name', () => {
+    it('all three functions should use the same hue for a given name', () => {
       const name = 'test-agent-123'
       const hue = agentHue(name)
       expect(agentFg(name)).toContain(`hsl(${hue},`)
@@ -167,13 +160,24 @@ describe('agentColor', () => {
       expect(agentBorder(name)).toContain(`hsl(${hue},`)
     })
 
-    it('lightness order: agentBg < agentBorder < agentFg', () => {
+    it('dark mode: lightness order agentBg < agentBorder < agentFg', () => {
+      setDarkMode(true)
       const name = 'review-master'
       const bgL = parseInt(agentBg(name).match(/(\d+)%\)$/)![1])
       const borderL = parseInt(agentBorder(name).match(/(\d+)%\)$/)![1])
       const fgL = parseInt(agentFg(name).match(/(\d+)%\)$/)![1])
       expect(bgL).toBeLessThan(borderL)
       expect(borderL).toBeLessThan(fgL)
+    })
+
+    it('light mode: lightness order agentFg < agentBorder < agentBg', () => {
+      setDarkMode(false)
+      const name = 'review-master'
+      const fgL = parseInt(agentFg(name).match(/(\d+)%\)$/)![1])
+      const borderL = parseInt(agentBorder(name).match(/(\d+)%\)$/)![1])
+      const bgL = parseInt(agentBg(name).match(/(\d+)%\)$/)![1])
+      expect(fgL).toBeLessThan(borderL)
+      expect(borderL).toBeLessThan(bgL)
     })
   })
 })

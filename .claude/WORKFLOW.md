@@ -32,6 +32,19 @@ node scripts/dbq.js "<SQL>"   # lecture (sql.js + fs.readFile, bypass lock)
 node scripts/dbw.js "<SQL>"   # écriture
 ```
 
+> **⚠ SQL contenant backticks, `$()` ou quotes** : ne PAS passer en argument positionnel.
+> Utiliser le **mode stdin (heredoc)** pour éviter que bash interprète les caractères spéciaux :
+>
+> ```bash
+> node scripts/dbw.js <<'SQL'
+> INSERT INTO tasks (titre, description, statut, agent_createur_id, perimetre, effort, priority)
+> VALUES ('fix(terminal): mon titre', 'Description avec des backticks `code` et $(variables) et des quotes ''simples''', 'todo', (SELECT id FROM agents WHERE name = 'review'), 'back-electron', 1, 'normal');
+> SQL
+> ```
+>
+> Le heredoc `<<'SQL'` (quotes autour du délimiteur) désactive **toute** interprétation shell.
+> Même syntaxe pour `dbq.js` en lecture.
+
 ---
 
 ## Primitives SQL réutilisables

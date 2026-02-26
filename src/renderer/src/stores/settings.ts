@@ -14,6 +14,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import i18n from '../plugins/i18n'
+import { setDarkMode } from '../utils/agentColor'
 
 export type Theme = 'dark' | 'light'
 export type Language = 'fr' | 'en'
@@ -80,11 +81,13 @@ export const useSettingsStore = defineStore('settings', () => {
    * @returns {void}
    */
   function applyTheme(t: Theme) {
-    if (t === 'dark') {
+    const dark = t === 'dark'
+    if (dark) {
       document.documentElement.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
     }
+    setDarkMode(dark)
   }
 
   // Apply theme on load
@@ -167,6 +170,29 @@ export const useSettingsStore = defineStore('settings', () => {
     name: 'Agent Viewer'
   })
 
+  // Auto-launch agent sessions (T340)
+  const autoLaunchAgentSessions = ref<boolean>(localStorage.getItem('autoLaunchAgentSessions') !== 'false')
+
+  function setAutoLaunchAgentSessions(enabled: boolean) {
+    autoLaunchAgentSessions.value = enabled
+    localStorage.setItem('autoLaunchAgentSessions', String(enabled))
+  }
+
+  // Auto-launch review sessions (T341)
+  const autoReviewEnabled = ref<boolean>(localStorage.getItem('autoReviewEnabled') !== 'false')
+  const autoReviewThreshold = ref<number>(Math.max(3, parseInt(localStorage.getItem('autoReviewThreshold') ?? '10', 10) || 10))
+
+  function setAutoReviewEnabled(enabled: boolean) {
+    autoReviewEnabled.value = enabled
+    localStorage.setItem('autoReviewEnabled', String(enabled))
+  }
+
+  function setAutoReviewThreshold(n: number) {
+    const clamped = Math.max(3, n)
+    autoReviewThreshold.value = clamped
+    localStorage.setItem('autoReviewThreshold', String(clamped))
+  }
+
   // CLAUDE.md sync
   const claudeMdInfo = ref<ClaudeMdInfo>({
     projectCommit: null,
@@ -195,6 +221,14 @@ export const useSettingsStore = defineStore('settings', () => {
     appInfo,
     // CLAUDE.md
     claudeMdInfo,
-    setClaudeMdInfo
+    setClaudeMdInfo,
+    // Auto-launch (T340)
+    autoLaunchAgentSessions,
+    setAutoLaunchAgentSessions,
+    // Auto-review (T341)
+    autoReviewEnabled,
+    autoReviewThreshold,
+    setAutoReviewEnabled,
+    setAutoReviewThreshold
   }
 })

@@ -36,8 +36,8 @@ export interface Task {
   titre: string
   description: string | null
   statut: TaskStatus
-  agent_assigne_id: number | null
-  agent_createur_id: number | null
+  agent_assigne_id: number
+  agent_createur_id: number
   agent_valideur_id: number | null
   agent_name: string | null
   agent_createur_name: string | null
@@ -58,7 +58,7 @@ export interface Task {
 export interface TaskComment {
   id: number
   task_id: number
-  agent_id: number | null
+  agent_id: number
   agent_name: string | null
   contenu: string
   created_at: string

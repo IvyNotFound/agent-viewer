@@ -89,10 +89,10 @@ const archivedByAgent = computed(() => {
       <div class="flex items-center gap-2 flex-wrap">
         <span
           v-if="activeAgentName"
-          class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs bg-violet-500/20 text-violet-300 border border-violet-500/30 font-mono"
+          class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs bg-violet-500/20 text-violet-700 dark:text-violet-300 border border-violet-500/30 font-mono"
         >
           {{ activeAgentName }}
-          <button class="hover:text-white transition-colors" @click="store.selectedAgentId = null">✕</button>
+          <button class="hover:opacity-70 transition-colors" @click="store.selectedAgentId = null">✕</button>
         </span>
         <span
           v-if="store.selectedPerimetre"
@@ -100,7 +100,7 @@ const archivedByAgent = computed(() => {
           :style="{ color: agentFg(store.selectedPerimetre), backgroundColor: agentBg(store.selectedPerimetre), borderColor: agentBorder(store.selectedPerimetre) }"
         >
           {{ store.selectedPerimetre }}
-          <button class="hover:text-white transition-colors" @click="store.selectedPerimetre = null">✕</button>
+          <button class="hover:opacity-70 transition-colors" @click="store.selectedPerimetre = null">✕</button>
         </span>
         <div v-if="store.error" class="text-xs text-red-400">{{ store.error }}</div>
       </div>
@@ -131,10 +131,13 @@ const archivedByAgent = computed(() => {
           <!-- Group header -->
           <div class="flex items-center gap-2 mb-2">
             <span
-              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono border"
+              :class="[
+                'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono border',
+                agentName === UNASSIGNED_SENTINEL ? 'text-content-subtle bg-surface-secondary border-edge-default' : ''
+              ]"
               :style="agentName !== UNASSIGNED_SENTINEL
                 ? { color: agentFg(agentName), backgroundColor: agentBg(agentName), borderColor: agentBorder(agentName) }
-                : { color: '#71717a', backgroundColor: '#18181b', borderColor: '#3f3f46' }"
+                : {}"
             >{{ agentName === UNASSIGNED_SENTINEL ? t('board.unassigned') : agentName }}</span>
             <span class="text-[10px] text-content-faint font-mono">{{ tasks.length }} {{ t('board.tickets', tasks.length) }}</span>
           </div>

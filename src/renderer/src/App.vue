@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineAsyncComponent } from 'vue'
+import { ref, computed, defineAsyncComponent } from 'vue'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useTabsStore } from '@renderer/stores/tabs'
 import TitleBar from '@renderer/components/TitleBar.vue'
@@ -18,10 +18,18 @@ const AgentLogsView = defineAsyncComponent(() => import('@renderer/components/Ag
 const ExplorerView = defineAsyncComponent(() => import('@renderer/components/ExplorerView.vue'))
 const CommandPalette = defineAsyncComponent(() => import('@renderer/components/CommandPalette.vue'))
 const SetupWizard = defineAsyncComponent(() => import('@renderer/components/SetupWizard.vue'))
+import { useAutoLaunch } from '@renderer/composables/useAutoLaunch'
 import type { Task } from '@renderer/types'
 
 const store = useTasksStore()
 const tabsStore = useTabsStore()
+
+// Auto-launch agent terminals when tasks are created with assigned agents (T340)
+useAutoLaunch({
+  tasks: computed(() => store.tasks),
+  agents: computed(() => store.agents),
+  dbPath: computed(() => store.dbPath),
+})
 
 const isCommandPaletteOpen = ref(false)
 

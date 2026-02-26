@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { runTaskStatusMigration, runAddPriorityMigration, runTaskStatutI18nMigration, runAddConvIdToSessionsMigration, runAddTokensToSessionsMigration, runRemoveThinkingModeBudgetTokensMigration, runDropCommentaireColumnMigration, runSessionStatutI18nMigration } from './migration'
+import { runTaskStatusMigration, runAddPriorityMigration, runTaskStatutI18nMigration, runAddConvIdToSessionsMigration, runAddTokensToSessionsMigration, runRemoveThinkingModeBudgetTokensMigration, runDropCommentaireColumnMigration, runSessionStatutI18nMigration, runMakeAgentAssigneNotNullMigration, runMakeCommentAgentNotNullMigration } from './migration'
 
 // Mock Database for sql.js
 interface MockDatabase {
@@ -928,5 +928,250 @@ describe('runSessionStatutI18nMigration', () => {
     expect(calls.some(s => s.includes('SAVEPOINT session_i18n'))).toBe(true)
     expect(calls.some(s => s.includes('ROLLBACK TO SAVEPOINT session_i18n'))).toBe(true)
     expect(calls.some(s => s.includes('RELEASE SAVEPOINT session_i18n'))).toBe(true)
+  })
+})
+
+// ── runMakeAgentAssigneNotNullMigration ──────────────────────────────────────
+
+describe('runMakeAgentAssigneNotNullMigration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const allCols = ['id', 'titre', 'description', 'statut', 'agent_createur_id', 'agent_assigne_id', 'agent_valideur_id', 'parent_task_id', 'session_id', 'perimetre', 'effort', 'priority', 'created_at', 'updated_at', 'started_at', 'completed_at', 'validated_at']
+
+  function createNotNullMockDb(opts: {
+    notnull?: number // 0 = nullable, 1 = already NOT NULL
+    hasReviewAgent?: boolean
+    hasAnyAgent?: boolean
+  }): MockDatabase {
+    const { notnull = 0, hasReviewAgent = true, hasAnyAgent = true } = opts
+    const pragmaValues = allCols.map((name, idx) => [
+      idx, name, name === 'agent_assigne_id' ? 'INTEGER' : 'TEXT',
+      name === 'agent_assigne_id' ? notnull : 0, null, name === 'id' ? 1 : 0
+    ])
+
+    return {
+      exec: vi.fn().mockImplementation((query: string) => {
+        if (query.includes('PRAGMA table_info(tasks)')) {
+          return [{ columns: ['cid', 'name', 'type', 'notnull', 'dflt_value', 'pk'], values: pragmaValues }]
+        }
+        if (query.includes("agents WHERE name = 'review'")) {
+          if (hasReviewAgent) return [{ columns: ['id'], values: [[4]] }]
+          return []
+        }
+        if (query.includes('SELECT id FROM agents ORDER BY id LIMIT 1')) {
+          if (hasAnyAgent) return [{ columns: ['id'], values: [[1]] }]
+          return []
+        }
+        return []
+      }),
+      run: vi.fn(),
+      getRowsModified: vi.fn().mockReturnValue(0)
+    }
+  }
+
+  it('should return false when agent_assigne_id is already NOT NULL (idempotent)', () => {
+    const mockDb = createNotNullMockDb({ notnull: 1 })
+
+    const result = runMakeAgentAssigneNotNullMigration(mockDb as unknown as import('sql.js').Database)
+
+    expect(result).toBe(false)
+    expect(mockDb.run).not.toHaveBeenCalled()
+  })
+
+  it('should return false when tasks table does not exist', () => {
+    const mockDb: MockDatabase = {
+      exec: vi.fn().mockReturnValue([]),
+      run: vi.fn(),
+      getRowsModified: vi.fn().mockReturnValue(0)
+    }
+
+    const result = runMakeAgentAssigneNotNullMigration(mockDb as unknown as import('sql.js').Database)
+
+    expect(result).toBe(false)
+    expect(mockDb.run).not.toHaveBeenCalled()
+  })
+
+  it('should return false when no agents exist (cannot apply constraint)', () => {
+    const mockDb = createNotNullMockDb({ hasReviewAgent: false, hasAnyAgent: false })
+
+    const result = runMakeAgentAssigneNotNullMigration(mockDb as unknown as import('sql.js').Database)
+
+    expect(result).toBe(false)
+  })
+
+  it('should assign orphan tasks by perimetre then fallback, and recreate table', () => {
+    const mockDb = createNotNullMockDb({ notnull: 0 })
+
+    const result = runMakeAgentAssigneNotNullMigration(mockDb as unknown as import('sql.js').Database)
+
+    expect(result).toBe(true)
+    const calls = (mockDb.run as ReturnType<typeof vi.fn>).mock.calls.map((c: unknown[]) => c[0] as string)
+
+    // Should update orphans by perimetre match
+    expect(calls.some(s => s.includes('UPDATE tasks SET agent_assigne_id') && s.includes('perimetre'))).toBe(true)
+    // Should update remaining orphans with fallback agent
+    expect(calls.some(s => s.includes('UPDATE tasks SET agent_assigne_id = ?'))).toBe(true)
+    // Should use SAVEPOINT
+    expect(calls.some(s => s.includes('SAVEPOINT make_assigne_notnull'))).toBe(true)
+    // Should rename old table
+    expect(calls.some(s => s.includes('ALTER TABLE tasks RENAME TO tasks_backup_notnull'))).toBe(true)
+    // Should also update orphan agent_createur_id
+    expect(calls.some(s => s.includes('UPDATE tasks SET agent_createur_id') && s.includes('perimetre'))).toBe(true)
+    expect(calls.some(s => s.includes('UPDATE tasks SET agent_createur_id = ?'))).toBe(true)
+    // Should create new table with NOT NULL on both agent columns
+    expect(calls.some(s => s.includes('agent_assigne_id  INTEGER NOT NULL'))).toBe(true)
+    expect(calls.some(s => s.includes('agent_createur_id INTEGER NOT NULL'))).toBe(true)
+    // Should INSERT SELECT from backup
+    expect(calls.some(s => s.includes('INSERT INTO tasks') && s.includes('FROM tasks_backup_notnull'))).toBe(true)
+    // Should drop backup table
+    expect(calls.some(s => s.includes('DROP TABLE tasks_backup_notnull'))).toBe(true)
+    // Should release savepoint
+    expect(calls.some(s => s.includes('RELEASE SAVEPOINT make_assigne_notnull'))).toBe(true)
+  })
+
+  it('should use first agent as fallback when review agent does not exist', () => {
+    const mockDb = createNotNullMockDb({ hasReviewAgent: false, hasAnyAgent: true })
+
+    const result = runMakeAgentAssigneNotNullMigration(mockDb as unknown as import('sql.js').Database)
+
+    expect(result).toBe(true)
+    // Fallback UPDATE should use agent id 1 (first agent)
+    const updateCalls = (mockDb.run as ReturnType<typeof vi.fn>).mock.calls.filter(
+      (c: unknown[]) => typeof c[0] === 'string' && (c[0] as string).includes('UPDATE tasks SET agent_assigne_id = ?')
+    )
+    expect(updateCalls.length).toBe(1)
+    expect(updateCalls[0][1]).toEqual([1]) // fallback agent id
+  })
+
+  it('should rollback on error during table recreation', () => {
+    const mockDb = createNotNullMockDb({ notnull: 0 })
+    mockDb.run.mockImplementation((sql: string) => {
+      if (sql.includes('ALTER TABLE tasks RENAME TO')) {
+        throw new Error('simulated failure')
+      }
+    })
+
+    expect(() => {
+      runMakeAgentAssigneNotNullMigration(mockDb as unknown as import('sql.js').Database)
+    }).toThrow('simulated failure')
+
+    const calls = (mockDb.run as ReturnType<typeof vi.fn>).mock.calls.map((c: unknown[]) => c[0] as string)
+    expect(calls.some(s => s.includes('ROLLBACK TO SAVEPOINT make_assigne_notnull'))).toBe(true)
+    expect(calls.some(s => s.includes('RELEASE SAVEPOINT make_assigne_notnull'))).toBe(true)
+  })
+})
+
+// ── runMakeCommentAgentNotNullMigration ──────────────────────────────────────
+
+describe('runMakeCommentAgentNotNullMigration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const commentCols = ['id', 'task_id', 'agent_id', 'contenu', 'created_at']
+
+  function createCommentNotNullMockDb(opts: {
+    notnull?: number
+    hasReviewAgent?: boolean
+    hasAnyAgent?: boolean
+  }): MockDatabase {
+    const { notnull = 0, hasReviewAgent = true, hasAnyAgent = true } = opts
+    const pragmaValues = commentCols.map((name, idx) => [
+      idx, name, name === 'agent_id' ? 'INTEGER' : 'TEXT',
+      name === 'agent_id' ? notnull : (name === 'task_id' || name === 'contenu' ? 1 : 0),
+      null, name === 'id' ? 1 : 0
+    ])
+
+    return {
+      exec: vi.fn().mockImplementation((query: string) => {
+        if (query.includes('PRAGMA table_info(task_comments)')) {
+          return [{ columns: ['cid', 'name', 'type', 'notnull', 'dflt_value', 'pk'], values: pragmaValues }]
+        }
+        if (query.includes("agents WHERE name = 'review'")) {
+          if (hasReviewAgent) return [{ columns: ['id'], values: [[4]] }]
+          return []
+        }
+        if (query.includes('SELECT id FROM agents ORDER BY id LIMIT 1')) {
+          if (hasAnyAgent) return [{ columns: ['id'], values: [[1]] }]
+          return []
+        }
+        return []
+      }),
+      run: vi.fn(),
+      getRowsModified: vi.fn().mockReturnValue(0)
+    }
+  }
+
+  it('should return false when agent_id is already NOT NULL (idempotent)', () => {
+    const mockDb = createCommentNotNullMockDb({ notnull: 1 })
+
+    const result = runMakeCommentAgentNotNullMigration(mockDb as unknown as import('sql.js').Database)
+
+    expect(result).toBe(false)
+    expect(mockDb.run).not.toHaveBeenCalled()
+  })
+
+  it('should return false when task_comments table does not exist', () => {
+    const mockDb: MockDatabase = {
+      exec: vi.fn().mockReturnValue([]),
+      run: vi.fn(),
+      getRowsModified: vi.fn().mockReturnValue(0)
+    }
+
+    const result = runMakeCommentAgentNotNullMigration(mockDb as unknown as import('sql.js').Database)
+
+    expect(result).toBe(false)
+    expect(mockDb.run).not.toHaveBeenCalled()
+  })
+
+  it('should return false when no agents exist', () => {
+    const mockDb = createCommentNotNullMockDb({ hasReviewAgent: false, hasAnyAgent: false })
+
+    const result = runMakeCommentAgentNotNullMigration(mockDb as unknown as import('sql.js').Database)
+
+    expect(result).toBe(false)
+  })
+
+  it('should assign orphan comments and recreate table with NOT NULL', () => {
+    const mockDb = createCommentNotNullMockDb({ notnull: 0 })
+
+    const result = runMakeCommentAgentNotNullMigration(mockDb as unknown as import('sql.js').Database)
+
+    expect(result).toBe(true)
+    const calls = (mockDb.run as ReturnType<typeof vi.fn>).mock.calls.map((c: unknown[]) => c[0] as string)
+
+    // Should update orphan comments with fallback agent
+    expect(calls.some(s => s.includes('UPDATE task_comments SET agent_id = ?'))).toBe(true)
+    // Should use SAVEPOINT
+    expect(calls.some(s => s.includes('SAVEPOINT make_comment_agent_notnull'))).toBe(true)
+    // Should rename old table
+    expect(calls.some(s => s.includes('ALTER TABLE task_comments RENAME TO task_comments_backup_notnull'))).toBe(true)
+    // Should create new table with NOT NULL on agent_id
+    expect(calls.some(s => s.includes('agent_id   INTEGER NOT NULL'))).toBe(true)
+    // Should INSERT SELECT from backup
+    expect(calls.some(s => s.includes('INSERT INTO task_comments') && s.includes('FROM task_comments_backup_notnull'))).toBe(true)
+    // Should drop backup
+    expect(calls.some(s => s.includes('DROP TABLE task_comments_backup_notnull'))).toBe(true)
+    // Should release savepoint
+    expect(calls.some(s => s.includes('RELEASE SAVEPOINT make_comment_agent_notnull'))).toBe(true)
+  })
+
+  it('should rollback on error during table recreation', () => {
+    const mockDb = createCommentNotNullMockDb({ notnull: 0 })
+    mockDb.run.mockImplementation((sql: string) => {
+      if (sql.includes('ALTER TABLE task_comments RENAME TO')) {
+        throw new Error('simulated failure')
+      }
+    })
+
+    expect(() => {
+      runMakeCommentAgentNotNullMigration(mockDb as unknown as import('sql.js').Database)
+    }).toThrow('simulated failure')
+
+    const calls = (mockDb.run as ReturnType<typeof vi.fn>).mock.calls.map((c: unknown[]) => c[0] as string)
+    expect(calls.some(s => s.includes('ROLLBACK TO SAVEPOINT make_comment_agent_notnull'))).toBe(true)
+    expect(calls.some(s => s.includes('RELEASE SAVEPOINT make_comment_agent_notnull'))).toBe(true)
   })
 })

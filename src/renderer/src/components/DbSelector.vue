@@ -91,13 +91,13 @@ async function create() {
             </svg>
           </div>
           <div>
-            <p class="text-sm font-medium text-violet-300">{{ t('dbSelector.createNew') }}</p>
+            <p class="text-sm font-medium text-violet-600 dark:text-violet-300">{{ t('dbSelector.createNew') }}</p>
             <p class="text-xs text-content-subtle mt-0.5">{{ t('setup.newProject') }}</p>
           </div>
         </button>
       </div>
 
-      <p v-if="store.error" class="text-xs text-red-400 bg-red-950/40 border border-red-800/50 rounded px-3 py-2">
+      <p v-if="store.error" class="text-xs text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-800/50 rounded px-3 py-2">
         {{ store.error }}
       </p>
     </div>
@@ -122,8 +122,8 @@ async function create() {
 
       <!-- Explication -->
       <div class="px-3 py-3 rounded-lg bg-surface-secondary/60 border border-edge-default/50 text-xs text-content-muted leading-relaxed space-y-1">
-        <p>Le <code class="text-violet-300 bg-surface-primary px-1 rounded">CLAUDE.md</code> maître sera téléchargé depuis le dépôt de référence et copié dans le dossier choisi.</p>
-        <p>Un terminal <span class="text-violet-300 font-mono">setup</span> sera lancé automatiquement pour initialiser le projet.</p>
+        <p>Le <code class="text-violet-600 dark:text-violet-300 bg-surface-primary px-1 rounded">CLAUDE.md</code> maître sera téléchargé depuis le dépôt de référence et copié dans le dossier choisi.</p>
+        <p>Un terminal <span class="text-violet-600 dark:text-violet-300 font-mono">setup</span> sera lancé automatiquement pour initialiser le projet.</p>
       </div>
 
       <!-- WSL user -->
@@ -142,7 +142,7 @@ async function create() {
             :key="user"
             class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
             :class="selectedUser === user
-              ? 'border-violet-500/60 bg-violet-950/30'
+              ? 'border-violet-500/60 bg-violet-100 dark:bg-violet-950/30'
               : 'border-edge-default hover:border-content-faint bg-surface-secondary/40'"
           >
             <input
@@ -172,7 +172,7 @@ async function create() {
         {{ creating ? t('setup.creating') : t('dbSelector.selectAndInit') }}
       </button>
 
-      <p v-if="creatingError" class="text-xs text-red-400 bg-red-950/40 border border-red-800/50 rounded px-3 py-2">
+      <p v-if="creatingError" class="text-xs text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-800/50 rounded px-3 py-2">
         {{ creatingError }}
       </p>
     </div>

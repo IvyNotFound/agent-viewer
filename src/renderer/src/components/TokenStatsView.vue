@@ -153,8 +153,8 @@ function barWidth(total: number): string {
         <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint">{{ t('tokenStats.global') }}</span>
         <span class="text-lg font-bold text-content-primary tabular-nums">{{ formatNumber(globalStats.total) }}</span>
         <div class="flex gap-2 text-[10px] font-mono text-content-subtle">
-          <span class="text-emerald-400">↓ {{ formatNumber(globalStats.tokens_in) }}</span>
-          <span class="text-sky-400">↑ {{ formatNumber(globalStats.tokens_out) }}</span>
+          <span class="text-emerald-600 dark:text-emerald-400">↓ {{ formatNumber(globalStats.tokens_in) }}</span>
+          <span class="text-sky-600 dark:text-sky-400">↑ {{ formatNumber(globalStats.tokens_out) }}</span>
         </div>
       </div>
 
@@ -163,8 +163,8 @@ function barWidth(total: number): string {
         <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint">{{ t('tokenStats.today') }}</span>
         <span class="text-lg font-bold text-content-primary tabular-nums">{{ formatNumber(todayStats.total) }}</span>
         <div class="flex gap-2 text-[10px] font-mono text-content-subtle">
-          <span class="text-emerald-400">↓ {{ formatNumber(todayStats.tokens_in) }}</span>
-          <span class="text-sky-400">↑ {{ formatNumber(todayStats.tokens_out) }}</span>
+          <span class="text-emerald-600 dark:text-emerald-400">↓ {{ formatNumber(todayStats.tokens_in) }}</span>
+          <span class="text-sky-600 dark:text-sky-400">↑ {{ formatNumber(todayStats.tokens_out) }}</span>
         </div>
       </div>
 
@@ -173,8 +173,8 @@ function barWidth(total: number): string {
         <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint">{{ t('tokenStats.lastHour') }}</span>
         <span class="text-lg font-bold text-content-primary tabular-nums">{{ formatNumber(hourStats.total) }}</span>
         <div class="flex gap-2 text-[10px] font-mono text-content-subtle">
-          <span class="text-emerald-400">↓ {{ formatNumber(hourStats.tokens_in) }}</span>
-          <span class="text-sky-400">↑ {{ formatNumber(hourStats.tokens_out) }}</span>
+          <span class="text-emerald-600 dark:text-emerald-400">↓ {{ formatNumber(hourStats.tokens_in) }}</span>
+          <span class="text-sky-600 dark:text-sky-400">↑ {{ formatNumber(hourStats.tokens_out) }}</span>
         </div>
       </div>
 
@@ -183,8 +183,8 @@ function barWidth(total: number): string {
         <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint">{{ t('tokenStats.cache') }}</span>
         <span class="text-lg font-bold text-content-primary tabular-nums">{{ formatNumber(globalStats.tokens_cache_read + globalStats.tokens_cache_write) }}</span>
         <div class="flex gap-2 text-[10px] font-mono text-content-subtle">
-          <span class="text-amber-400">R {{ formatNumber(globalStats.tokens_cache_read) }}</span>
-          <span class="text-violet-400">W {{ formatNumber(globalStats.tokens_cache_write) }}</span>
+          <span class="text-amber-600 dark:text-amber-400">R {{ formatNumber(globalStats.tokens_cache_read) }}</span>
+          <span class="text-violet-600 dark:text-violet-400">W {{ formatNumber(globalStats.tokens_cache_write) }}</span>
         </div>
       </div>
     </div>
@@ -230,8 +230,8 @@ function barWidth(total: number): string {
 
             <!-- Details on hover -->
             <div class="shrink-0 flex gap-2 text-[10px] font-mono text-content-subtle w-40 justify-end">
-              <span class="text-emerald-400">↓{{ formatNumber(row.tokens_in) }}</span>
-              <span class="text-sky-400">↑{{ formatNumber(row.tokens_out) }}</span>
+              <span class="text-emerald-600 dark:text-emerald-400">↓{{ formatNumber(row.tokens_in) }}</span>
+              <span class="text-sky-600 dark:text-sky-400">↑{{ formatNumber(row.tokens_out) }}</span>
               <span class="text-content-faint">{{ row.session_count }}s</span>
             </div>
           </div>
@@ -252,8 +252,8 @@ function barWidth(total: number): string {
               <th class="py-1.5 px-2 font-medium">ID</th>
               <th class="py-1.5 px-2 font-medium">{{ t('tokenStats.agent') }}</th>
               <th class="py-1.5 px-2 font-medium">{{ t('tokenStats.date') }}</th>
-              <th class="py-1.5 px-2 font-medium text-right text-emerald-400">↓ In</th>
-              <th class="py-1.5 px-2 font-medium text-right text-sky-400">↑ Out</th>
+              <th class="py-1.5 px-2 font-medium text-right text-emerald-600 dark:text-emerald-400">↓ In</th>
+              <th class="py-1.5 px-2 font-medium text-right text-sky-600 dark:text-sky-400">↑ Out</th>
               <th class="py-1.5 px-2 font-medium text-right">Total</th>
             </tr>
           </thead>
@@ -277,8 +277,8 @@ function barWidth(total: number): string {
                 <span v-else class="text-content-dim">—</span>
               </td>
               <td class="py-1.5 px-2 text-content-subtle">{{ formatDate(s.started_at) }}</td>
-              <td class="py-1.5 px-2 text-right text-emerald-400 tabular-nums">{{ formatNumber(s.tokens_in) }}</td>
-              <td class="py-1.5 px-2 text-right text-sky-400 tabular-nums">{{ formatNumber(s.tokens_out) }}</td>
+              <td class="py-1.5 px-2 text-right text-emerald-600 dark:text-emerald-400 tabular-nums">{{ formatNumber(s.tokens_in) }}</td>
+              <td class="py-1.5 px-2 text-right text-sky-600 dark:text-sky-400 tabular-nums">{{ formatNumber(s.tokens_out) }}</td>
               <td class="py-1.5 px-2 text-right text-content-secondary font-semibold tabular-nums">{{ formatNumber(s.total) }}</td>
             </tr>
           </tbody>

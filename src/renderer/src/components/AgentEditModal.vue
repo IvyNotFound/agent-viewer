@@ -99,7 +99,7 @@ async function save() {
                 :class="[
                   'flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all',
                   thinkingMode === 'auto'
-                    ? 'border-violet-500/60 bg-violet-950/30 text-violet-300'
+                    ? 'border-violet-500/60 bg-violet-100 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300'
                     : 'border-edge-default bg-surface-secondary/40 text-content-muted hover:border-content-faint'
                 ]"
                 @click="thinkingMode = 'auto'"
@@ -108,7 +108,7 @@ async function save() {
                 :class="[
                   'flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all',
                   thinkingMode === 'disabled'
-                    ? 'border-amber-500/60 bg-amber-950/30 text-amber-300'
+                    ? 'border-amber-500/60 bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300'
                     : 'border-edge-default bg-surface-secondary/40 text-content-muted hover:border-content-faint'
                 ]"
                 @click="thinkingMode = 'disabled'"
@@ -133,8 +133,8 @@ async function save() {
           </div>
 
           <!-- Erreur -->
-          <div v-if="error" class="px-3 py-2 bg-red-950/40 border border-red-800/50 rounded-md">
-            <p class="text-xs text-red-400">{{ error }}</p>
+          <div v-if="error" class="px-3 py-2 bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-800/50 rounded-md">
+            <p class="text-xs text-red-700 dark:text-red-400">{{ error }}</p>
           </div>
 
         </div>

@@ -10,8 +10,8 @@ const ICON: Record<Toast['type'], string> = {
 }
 
 const COLOR: Record<Toast['type'], string> = {
-  error: 'bg-red-900/90 border-red-700/60 text-red-200',
-  warn:  'bg-amber-900/90 border-amber-700/60 text-amber-200',
+  error: 'bg-red-100 dark:bg-red-900/90 border-red-300 dark:border-red-700/60 text-red-800 dark:text-red-200',
+  warn:  'bg-amber-100 dark:bg-amber-900/90 border-amber-300 dark:border-amber-700/60 text-amber-800 dark:text-amber-200',
   info:  'bg-surface-secondary/90 border-edge-default text-content-secondary',
 }
 </script>

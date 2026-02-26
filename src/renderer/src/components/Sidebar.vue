@@ -436,10 +436,10 @@ async function closeProject() {
 
             <!-- Compteurs -->
             <div class="flex items-center gap-2">
-              <span class="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-amber-950/40 border border-amber-800/40 text-amber-400">
+              <span class="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-amber-100 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/40 text-amber-700 dark:text-amber-400">
                 {{ store.tasksByStatus.todo.length }} {{ t('sidebar.todo') }}
               </span>
-              <span class="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950/40 border border-emerald-800/40 text-emerald-400">
+              <span class="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400">
                 {{ store.tasksByStatus.in_progress.length }} {{ t('sidebar.inProgress') }}
               </span>
               <span class="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-surface-secondary border border-edge-default text-content-muted">
@@ -513,8 +513,8 @@ async function closeProject() {
               <div class="flex items-center gap-1.5 min-w-0">
                 <span :class="[
                   'text-[9px] font-bold uppercase tracking-wide shrink-0 px-1 rounded',
-                  log.niveau === 'error' ? 'bg-red-950/60 text-red-400' :
-                  log.niveau === 'warn'  ? 'bg-amber-950/60 text-amber-400' :
+                  log.niveau === 'error' ? 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400' :
+                  log.niveau === 'warn'  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400' :
                   log.niveau === 'debug' ? 'bg-surface-secondary text-content-faint' :
                   'bg-surface-secondary text-content-subtle'
                 ]">{{ log.niveau }}</span>
@@ -566,8 +566,8 @@ async function closeProject() {
               >✕</button>
             </div>
           </div>
-          <div v-if="store.error" class="mx-4 mb-3 px-3 py-2 bg-red-950/40 border border-red-800/50 rounded-md">
-            <p class="text-xs text-red-400 break-all">{{ store.error }}</p>
+          <div v-if="store.error" class="mx-4 mb-3 px-3 py-2 bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-800/50 rounded-md">
+            <p class="text-xs text-red-700 dark:text-red-400 break-all">{{ store.error }}</p>
           </div>
           <div class="flex-1" />
           <div class="px-4 py-2 border-t border-edge-subtle">

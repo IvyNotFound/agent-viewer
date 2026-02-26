@@ -183,7 +183,7 @@
 
   /* links */
   & a {
-    color: #a78bfa; /* violet-400 */
+    color: #7c3aed; /* violet-600 — good contrast on light bg */
     text-decoration: underline;
   }
 
@@ -195,16 +195,36 @@
   }
 }
 
-/* In comment bubbles, override code colors to stay readable against agent backgrounds */
+/* Dark mode link color override */
+.dark {
+  .md-content a,
+  .md-bubble a {
+    color: #a78bfa; /* violet-400 — bright for dark bg */
+  }
+}
+
+/* In comment bubbles, override code colors to stay readable against agent backgrounds.
+   agentBg() now adapts to theme, so dark overlays work in dark mode
+   and lighter overlays work in light mode. */
 .md-bubble {
   & code:not(pre code) {
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.08);
     color: inherit;
+  }
+  & pre {
+    background-color: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+  & pre code { color: inherit; }
+  & blockquote { border-left-color: rgba(0, 0, 0, 0.2); }
+}
+.dark .md-bubble {
+  & code:not(pre code) {
+    background-color: rgba(0, 0, 0, 0.3);
   }
   & pre {
     background-color: rgba(0, 0, 0, 0.35);
     border-color: rgba(0, 0, 0, 0.3);
   }
-  & pre code { color: inherit; }
   & blockquote { border-left-color: rgba(255, 255, 255, 0.25); }
 }

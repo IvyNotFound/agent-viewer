@@ -141,10 +141,10 @@ function absoluteTime(dateStr: string): string {
 
 // ── Level styling ─────────────────────────────────────────────────────────
 const levelConfig: Record<string, { label: string; text: string; bg: string; dot: string }> = {
-  info:  { label: 'info',  text: 'text-sky-400',     bg: 'bg-sky-950/60',    dot: 'bg-sky-400' },
-  warn:  { label: 'warn',  text: 'text-amber-400',   bg: 'bg-amber-950/60',  dot: 'bg-amber-400' },
-  error: { label: 'error', text: 'text-red-400',     bg: 'bg-red-950/60',    dot: 'bg-red-400' },
-  debug: { label: 'debug', text: 'text-violet-400',  bg: 'bg-violet-950/60', dot: 'bg-violet-400' },
+  info:  { label: 'info',  text: 'text-sky-700 dark:text-sky-400',       bg: 'bg-sky-100 dark:bg-sky-950/60',       dot: 'bg-sky-500 dark:bg-sky-400' },
+  warn:  { label: 'warn',  text: 'text-amber-700 dark:text-amber-400',   bg: 'bg-amber-100 dark:bg-amber-950/60',   dot: 'bg-amber-500 dark:bg-amber-400' },
+  error: { label: 'error', text: 'text-red-700 dark:text-red-400',       bg: 'bg-red-100 dark:bg-red-950/60',       dot: 'bg-red-500 dark:bg-red-400' },
+  debug: { label: 'debug', text: 'text-violet-700 dark:text-violet-400', bg: 'bg-violet-100 dark:bg-violet-950/60', dot: 'bg-violet-500 dark:bg-violet-400' },
 }
 
 function levelCfg(niveau: string) {
@@ -153,10 +153,10 @@ function levelCfg(niveau: string) {
 
 const filterLevelConfig: Record<string, string> = {
   all:   'text-content-tertiary bg-surface-secondary ring-edge-default',
-  info:  'text-sky-400 bg-sky-950/60 ring-sky-800',
-  warn:  'text-amber-400 bg-amber-950/60 ring-amber-800',
-  error: 'text-red-400 bg-red-950/60 ring-red-800',
-  debug: 'text-violet-400 bg-violet-950/60 ring-violet-800',
+  info:  'text-sky-700 dark:text-sky-400 bg-sky-100 dark:bg-sky-950/60 ring-sky-300 dark:ring-sky-800',
+  warn:  'text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 ring-amber-300 dark:ring-amber-800',
+  error: 'text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/60 ring-red-300 dark:ring-red-800',
+  debug: 'text-violet-700 dark:text-violet-400 bg-violet-100 dark:bg-violet-950/60 ring-violet-300 dark:ring-violet-800',
 }
 
 // ── Detail toggle ─────────────────────────────────────────────────────────

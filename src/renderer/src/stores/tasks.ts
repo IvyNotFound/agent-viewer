@@ -206,10 +206,20 @@ export const useTasksStore = defineStore('tasks', () => {
 
     if (openTerminals.length > 0) {
       const n = openTerminals.length
+      const wslCount = openTerminals.filter(t => t.wslDistro).length
+      const nonWslCount = n - wslCount
+      let label: string
+      if (wslCount === n) {
+        label = `${n} session${n > 1 ? 's' : ''} WSL ouverte${n > 1 ? 's' : ''}`
+      } else if (wslCount === 0) {
+        label = `${n} session${n > 1 ? 's' : ''} terminal ouverte${n > 1 ? 's' : ''}`
+      } else {
+        label = `${wslCount} session${wslCount > 1 ? 's' : ''} WSL + ${nonWslCount} terminal`
+      }
       const confirmed = await window.electronAPI.showConfirmDialog({
         title: 'Changer de projet',
-        message: `${n} session${n > 1 ? 's' : ''} WSL ouverte${n > 1 ? 's' : ''}`,
-        detail: 'Toutes les sessions WSL seront fermées. Continuer ?',
+        message: label,
+        detail: 'Toutes les sessions terminal seront fermées. Continuer ?',
       })
       if (!confirmed) return
       tabsStore.closeAllTerminals()

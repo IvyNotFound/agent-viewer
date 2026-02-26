@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTabsStore } from '@renderer/stores/tabs'
 import type { Tab } from '@renderer/stores/tabs'
-import { agentFg, agentBg, agentHue } from '@renderer/utils/agentColor'
+import { agentFg, agentBg, agentHue, isDark } from '@renderer/utils/agentColor'
 import { useConfirmDialog } from '@renderer/composables/useConfirmDialog'
 
 const { t } = useI18n()
@@ -116,7 +116,10 @@ function onMiddleClick(e: MouseEvent, tab: Tab) {
 function tabStyle(tab: Tab): Record<string, string> {
   const isActive = store.activeTabId === tab.id
   if (!tab.agentName) {
-    return isActive ? { color: '#f4f4f5', backgroundColor: '#27272a' } : {}
+    if (!isActive) return {}
+    return isDark()
+      ? { color: '#f4f4f5', backgroundColor: '#27272a' }
+      : { color: '#18181b', backgroundColor: '#e4e4e7' }
   }
   const h = agentHue(tab.agentName)
   if (isActive) {
@@ -126,10 +129,9 @@ function tabStyle(tab: Tab): Record<string, string> {
     }
   }
   // Inactif mais agent connu : teinte subtile
-  return {
-    color: `hsla(${h}, 65%, 65%, 0.65)`,
-    backgroundColor: `hsla(${h}, 38%, 16%, 0.55)`,
-  }
+  return isDark()
+    ? { color: `hsla(${h}, 65%, 65%, 0.65)`, backgroundColor: `hsla(${h}, 38%, 16%, 0.55)` }
+    : { color: `hsla(${h}, 55%, 40%, 0.7)`, backgroundColor: `hsla(${h}, 45%, 92%, 0.6)` }
 }
 
 function indicatorStyle(tab: Tab): Record<string, string> {
@@ -275,7 +277,7 @@ function indicatorStyle(tab: Tab): Record<string, string> {
 
     <!-- Bouton + WSL (fixed right, never pushed by tabs) -->
     <button
-      class="flex items-center gap-1.5 px-3 self-center text-sm font-semibold text-violet-300 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 hover:border-violet-500/50 rounded transition-all ml-1 mr-2 shrink-0 cursor-pointer"
+      class="flex items-center gap-1.5 px-3 self-center text-sm font-semibold text-violet-700 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/40 hover:border-violet-500/60 dark:text-violet-300 dark:border-violet-500/30 dark:hover:border-violet-500/50 rounded transition-all ml-1 mr-2 shrink-0 cursor-pointer"
       style="height: 28px"
       :title="t('tabBar.newTerminal')"
       @click="store.addTerminal()"

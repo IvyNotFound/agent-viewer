@@ -5,8 +5,14 @@
  * Each agent always gets the same hue, ensuring consistent visual identity
  * across the UI (badges, borders, sidebar dots).
  *
+ * Theme-aware: returns different lightness/saturation values for dark vs light mode.
+ * Uses a Vue ref for reactivity — call setDarkMode() from the settings store
+ * so that all computed styles update instantly on theme toggle.
+ *
  * @module utils/agentColor
  */
+
+import { ref } from 'vue'
 
 /**
  * Simple hash function for strings.
@@ -20,6 +26,19 @@ function hash(name: string): number {
 }
 
 const hueCache = new Map<string, number>()
+
+/** Reactive dark mode flag — kept in sync by setDarkMode(). */
+const darkMode = ref(document.documentElement.classList.contains('dark'))
+
+/** Update the reactive dark mode flag. Call this from the settings store on theme change. */
+export function setDarkMode(dark: boolean): void {
+  darkMode.value = dark
+}
+
+/** Returns true when the app is in dark mode. Reactive — reads from the darkMode ref. */
+export function isDark(): boolean {
+  return darkMode.value
+}
 
 /**
  * Returns a deterministic hue (0–359) for a given agent name.
@@ -38,54 +57,66 @@ export function agentHue(name: string): number {
 
 /**
  * Primary foreground color for an agent (text, dots).
- * @param name - Agent name.
- * @returns HSL color string.
+ * Dark: bright text (68% L) · Light: darker text (38% L) for contrast on white.
  */
 export function agentFg(name: string): string {
-  return `hsl(${agentHue(name)}, 70%, 68%)`
+  const h = agentHue(name)
+  return isDark()
+    ? `hsl(${h}, 70%, 68%)`
+    : `hsl(${h}, 65%, 38%)`
 }
 
 /**
- * Light background color for agent badge.
- * @param name - Agent name.
- * @returns HSL color string.
+ * Background color for agent badge.
+ * Dark: dark tinted bg (18% L) · Light: soft pastel bg (92% L).
  */
 export function agentBg(name: string): string {
-  return `hsl(${agentHue(name)}, 40%, 18%)`
+  const h = agentHue(name)
+  return isDark()
+    ? `hsl(${h}, 40%, 18%)`
+    : `hsl(${h}, 50%, 92%)`
 }
 
 /**
  * Border color for agent badge.
- * @param name - Agent name.
- * @returns HSL color string.
+ * Dark: medium border (32% L) · Light: subtle border (78% L).
  */
 export function agentBorder(name: string): string {
-  return `hsl(${agentHue(name)}, 40%, 32%)`
+  const h = agentHue(name)
+  return isDark()
+    ? `hsl(${h}, 40%, 32%)`
+    : `hsl(${h}, 40%, 78%)`
 }
 
 /**
  * Foreground color for perimeter badge (softer than agentFg).
- * @param name - Perimeter name.
- * @returns HSL color string.
+ * Dark: bright text (70% L) · Light: darker text (35% L).
  */
 export function perimeterFg(name: string): string {
-  return `hsl(${agentHue(name)}, 60%, 70%)`
+  const h = agentHue(name)
+  return isDark()
+    ? `hsl(${h}, 60%, 70%)`
+    : `hsl(${h}, 55%, 35%)`
 }
 
 /**
- * Light background color for perimeter badge.
- * @param name - Perimeter name.
- * @returns HSL color string.
+ * Background color for perimeter badge.
+ * Dark: very dark bg (15% L) · Light: soft pastel bg (93% L).
  */
 export function perimeterBg(name: string): string {
-  return `hsl(${agentHue(name)}, 30%, 15%)`
+  const h = agentHue(name)
+  return isDark()
+    ? `hsl(${h}, 30%, 15%)`
+    : `hsl(${h}, 40%, 93%)`
 }
 
 /**
  * Border color for perimeter badge.
- * @param name - Perimeter name.
- * @returns HSL color string.
+ * Dark: medium border (27% L) · Light: subtle border (80% L).
  */
 export function perimeterBorder(name: string): string {
-  return `hsl(${agentHue(name)}, 30%, 27%)`
+  const h = agentHue(name)
+  return isDark()
+    ? `hsl(${h}, 30%, 27%)`
+    : `hsl(${h}, 30%, 80%)`
 }

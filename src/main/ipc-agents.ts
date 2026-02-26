@@ -10,6 +10,7 @@ import { ipcMain } from 'electron'
 import { readFile, writeFile, rename } from 'fs/promises'
 import { join } from 'path'
 import { assertDbPathAllowed, assertProjectPathAllowed, queryLive, writeDb } from './db'
+import { insertAgentIntoClaudeMd } from './claude-md'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -25,41 +26,12 @@ const STANDARD_AGENT_SUFFIX = [
   '- Never edit project.db manually',
 ].join('\n')
 
-const SCOPED_TYPES = new Set(['dev', 'test', 'ux'])
-
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 interface SearchFilters {
   statut?: string
   agent_id?: number
   perimetre?: string
-}
-
-function insertAgentIntoClaudeMd(content: string, agentType: string, agentName: string, agentDescription: string): string {
-  const isScoped = SCOPED_TYPES.has(agentType)
-  const sectionHeader = isScoped ? '### Scopés par périmètre' : '### Globaux'
-  const newRow = isScoped
-    ? `| **${agentType}** | \`${agentName}\` | ${agentDescription} |`
-    : `| **${agentName}** | ${agentDescription} |`
-
-  const sectionIdx = content.indexOf(sectionHeader)
-  if (sectionIdx === -1) return content
-
-  const afterSection = content.slice(sectionIdx)
-  const lines = afterSection.split('\n')
-  let lastTableLineIdx = -1
-  let inTable = false
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith('|')) {
-      inTable = true
-      lastTableLineIdx = i
-    } else if (inTable && lines[i].trim() === '') {
-      break
-    }
-  }
-  if (lastTableLineIdx === -1) return content
-  lines.splice(lastTableLineIdx + 1, 0, newRow)
-  return content.slice(0, sectionIdx) + lines.join('\n')
 }
 
 // ── Handler registration ─────────────────────────────────────────────────────

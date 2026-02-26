@@ -145,7 +145,7 @@ async function handleSetup() {
             <!-- Optional: generate CLAUDE.md -->
             <label class="flex items-start gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all"
               :class="generateClaudeMd
-                ? 'bg-violet-950/20 border-violet-500/40'
+                ? 'bg-violet-100 dark:bg-violet-950/20 border-violet-500/40'
                 : 'bg-surface-secondary/40 border-edge-default/50 hover:border-content-faint'"
             >
               <input
@@ -162,7 +162,7 @@ async function handleSetup() {
         </template>
 
         <!-- Error -->
-        <p v-if="errorMsg" class="text-xs text-red-400 bg-red-950/40 border border-red-800/50 rounded px-3 py-2">
+        <p v-if="errorMsg" class="text-xs text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-800/50 rounded px-3 py-2">
           {{ errorMsg }}
         </p>
       </div>
