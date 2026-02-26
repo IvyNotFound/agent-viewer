@@ -134,6 +134,9 @@ describe('IPC handlers — src/main/ipc.ts', () => {
     registerDbPath('/fake/db')
     // T283: Register test project paths as allowed for write operations
     registerProjectPath('/fake/project')
+    // T527/T528: Register paths used in find-project-db and create-project-db tests
+    registerProjectPath('/empty/project')
+    registerProjectPath('/my/project')
   })
 
   afterEach(() => {
@@ -241,16 +244,16 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       expect(result).toMatchObject({ success: false, error: expect.stringContaining('not in allowed directory') })
     })
 
-    it('should block writing to .ssh directory', async () => {
+    it('should block writing to .ssh directory (T531: extension whitelist)', async () => {
       const filePath = '/home/user/project/.ssh/authorized_keys'
       const result = await callHandler('fs:writeFile', filePath, 'content', allowedDir)
-      expect(result).toMatchObject({ success: false, error: expect.stringContaining('sensitive') })
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('File type not allowed') })
     })
 
-    it('should block writing to .bashrc', async () => {
+    it('should block writing to .bashrc (T531: extension whitelist)', async () => {
       const filePath = '/home/user/project/.bashrc'
       const result = await callHandler('fs:writeFile', filePath, 'content', allowedDir)
-      expect(result).toMatchObject({ success: false, error: expect.stringContaining('sensitive') })
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('File type not allowed') })
     })
 
     it('should block writing to /etc/ paths', async () => {
@@ -258,6 +261,24 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       const result = await callHandler('fs:writeFile', filePath, 'content', allowedDir)
       // Should be blocked by either path traversal, allowedDir, or sensitive check
       expect(result).toMatchObject({ success: false })
+    })
+
+    it('T531: should block .npmrc (previously uncovered by blacklist)', async () => {
+      const filePath = '/home/user/project/.npmrc'
+      const result = await callHandler('fs:writeFile', filePath, 'content', allowedDir)
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('File type not allowed') })
+    })
+
+    it('T531: should block .gitconfig (previously uncovered by blacklist)', async () => {
+      const filePath = '/home/user/project/.gitconfig'
+      const result = await callHandler('fs:writeFile', filePath, 'content', allowedDir)
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('File type not allowed') })
+    })
+
+    it('T531: should allow writing .ts files within allowedDir', async () => {
+      const filePath = '/home/user/project/src/component.ts'
+      const result = await callHandler('fs:writeFile', filePath, 'content', allowedDir)
+      expect(result).toMatchObject({ success: true })
     })
 
     it('should reject write when allowedDir is missing (undefined)', async () => {
@@ -360,6 +381,10 @@ describe('IPC handlers — src/main/ipc.ts', () => {
         .mockResolvedValueOnce(['project.db']) // root: has .db file
       const result = await callHandler('find-project-db', '/my/project')
       expect(result).toContain('project.db')
+    })
+
+    it('T527: should throw when projectPath is not in allowed list', async () => {
+      await expect(callHandler('find-project-db', '/unregistered/path')).rejects.toThrow('PROJECT_PATH_NOT_ALLOWED')
     })
   })
 
@@ -875,6 +900,10 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       }
       expect(result.success).toBe(false)
       expect(result.error).toContain('EACCES')
+    })
+
+    it('T528: should throw when projectPath is not in allowed list', async () => {
+      await expect(callHandler('create-project-db', '/unregistered/path')).rejects.toThrow('PROJECT_PATH_NOT_ALLOWED')
     })
   })
 
