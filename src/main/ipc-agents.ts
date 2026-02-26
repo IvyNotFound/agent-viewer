@@ -145,6 +145,7 @@ export function registerAgentHandlers(): void {
     if (!dbPath || !agentId) return base
 
     try {
+      assertDbPathAllowed(dbPath)
       const [sessionRows, taskRows] = await Promise.all([
         queryLive(
           dbPath,
@@ -221,6 +222,7 @@ export function registerAgentHandlers(): void {
    */
   ipcMain.handle('get-agent-system-prompt', async (_event, dbPath: string, agentId: number) => {
     try {
+      assertDbPathAllowed(dbPath)
       const rows = await queryLive(
         dbPath,
         'SELECT system_prompt, system_prompt_suffix, thinking_mode, permission_mode FROM agents WHERE id = ?',
@@ -327,6 +329,7 @@ export function registerAgentHandlers(): void {
       return { success: false, assignees: [], error: 'Invalid taskId' }
     }
     try {
+      assertDbPathAllowed(dbPath)
       const rows = await queryLive(
         dbPath,
         `SELECT ta.agent_id, a.name as agent_name, ta.role, ta.assigned_at
@@ -408,6 +411,7 @@ export function registerAgentHandlers(): void {
     filters?: SearchFilters
   ) => {
     try {
+      assertDbPathAllowed(dbPath)
       const conditions: string[] = []
       const params: unknown[] = []
 

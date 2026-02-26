@@ -28,6 +28,7 @@ export function registerSettingsHandlers(): void {
    */
   ipcMain.handle('get-config-value', async (_event, dbPath: string, key: string) => {
     try {
+      assertDbPathAllowed(dbPath)
       const rows = await queryLive(dbPath, 'SELECT value FROM config WHERE key = ?', [key])
       return { success: true, value: rows.length > 0 ? (rows[0] as { value: string }).value : null }
     } catch (err) {
