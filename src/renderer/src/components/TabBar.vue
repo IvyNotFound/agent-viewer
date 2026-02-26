@@ -348,32 +348,45 @@ function subTabLabel(tab: Tab): string {
 
         <!-- Sous-onglets session (masqués si groupe collapsé) -->
         <template v-if="!isGroupCollapsed(group.agentName)">
-          <button
-            v-for="tab in group.tabs"
-            :key="tab.id"
-            :class="[
-              'relative flex items-center gap-1.5 px-2.5 text-sm font-medium transition-all select-none rounded-t shrink-0 cursor-pointer',
-              store.activeTabId !== tab.id ? 'opacity-70 hover:opacity-90' : '',
-            ]"
-            :style="tabStyleMap.get(tab.id)"
-            @click="store.setActive(tab.id)"
-            @mousedown="onMiddleClick($event, tab)"
-          >
-            <span class="font-mono text-xs shrink-0">{{ subTabLabel(tab) }}</span>
-            <span v-if="tab.dirty" class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" :title="t('tabBar.unsaved')" />
-            <!-- Fermer -->
-            <span
-              class="flex items-center justify-center w-4 h-4 rounded opacity-40 hover:opacity-100 hover:text-red-400 hover:bg-black/20 transition-all text-xs cursor-pointer"
-              :title="t('tabBar.closeTab')"
-              @click.stop="handleCloseTab(tab)"
-            >✕</span>
-            <!-- Indicateur actif -->
-            <span
+          <template v-for="tab in group.tabs" :key="tab.id">
+            <!-- Sous-onglet actif : affichage complet -->
+            <button
               v-if="store.activeTabId === tab.id"
-              class="absolute bottom-0 left-0 right-0 h-[2px]"
-              :style="indicatorStyleMap.get(tab.id)"
-            ></span>
-          </button>
+              class="relative flex items-center gap-1.5 px-2.5 text-sm font-medium transition-all select-none rounded-t shrink-0 cursor-pointer"
+              :style="tabStyleMap.get(tab.id)"
+              :title="subTabLabel(tab)"
+              @click="store.setActive(tab.id)"
+              @mousedown="onMiddleClick($event, tab)"
+            >
+              <span class="font-mono text-xs shrink-0">{{ subTabLabel(tab) }}</span>
+              <span v-if="tab.dirty" class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" :title="t('tabBar.unsaved')" />
+              <!-- Fermer -->
+              <span
+                class="flex items-center justify-center w-4 h-4 rounded opacity-40 hover:opacity-100 hover:text-red-400 hover:bg-black/20 transition-all text-xs cursor-pointer"
+                :title="t('tabBar.closeTab')"
+                @click.stop="handleCloseTab(tab)"
+              >✕</span>
+              <!-- Indicateur actif -->
+              <span
+                class="absolute bottom-0 left-0 right-0 h-[2px]"
+                :style="indicatorStyleMap.get(tab.id)"
+              ></span>
+            </button>
+            <!-- Sous-onglet inactif : pastille compacte -->
+            <button
+              v-else
+              class="relative flex items-center justify-center w-4 h-6 self-center transition-all select-none rounded shrink-0 cursor-pointer"
+              :title="subTabLabel(tab)"
+              @click="store.setActive(tab.id)"
+              @mousedown="onMiddleClick($event, tab)"
+            >
+              <span
+                class="w-1.5 h-1.5 rounded-full opacity-70 hover:opacity-100 transition-opacity"
+                :class="tab.dirty ? 'bg-amber-400' : ''"
+                :style="tab.dirty ? {} : indicatorStyleMap.get(tab.id)"
+              ></span>
+            </button>
+          </template>
         </template>
       </div>
     </div>
