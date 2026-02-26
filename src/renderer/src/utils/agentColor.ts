@@ -38,10 +38,14 @@ const perimeterBorderCache = new Map<string, string>()
 /** Reactive dark mode flag — kept in sync by setDarkMode(). */
 const darkMode = ref(document.documentElement.classList.contains('dark'))
 
+/** Incremented on every theme change to force reactive invalidation of color bindings. */
+export const colorVersion = ref(0)
+
 /** Update the reactive dark mode flag. Call this from the settings store on theme change. */
 export function setDarkMode(dark: boolean): void {
   if (darkMode.value === dark) return
   darkMode.value = dark
+  colorVersion.value++
   // Invalidate color caches on theme change.
   agentFgCache.clear()
   agentBgCache.clear()
@@ -76,6 +80,7 @@ export function agentHue(name: string): number {
  * Dark: bright text (68% L) · Light: darker text (38% L) for contrast on white.
  */
 export function agentFg(name: string): string {
+  colorVersion.value // track reactive dependency
   let v = agentFgCache.get(name)
   if (v === undefined) {
     const h = agentHue(name)
@@ -90,6 +95,7 @@ export function agentFg(name: string): string {
  * Dark: dark tinted bg (18% L) · Light: soft pastel bg (92% L).
  */
 export function agentBg(name: string): string {
+  colorVersion.value // track reactive dependency
   let v = agentBgCache.get(name)
   if (v === undefined) {
     const h = agentHue(name)
@@ -104,6 +110,7 @@ export function agentBg(name: string): string {
  * Dark: medium border (32% L) · Light: subtle border (78% L).
  */
 export function agentBorder(name: string): string {
+  colorVersion.value // track reactive dependency
   let v = agentBorderCache.get(name)
   if (v === undefined) {
     const h = agentHue(name)
@@ -118,6 +125,7 @@ export function agentBorder(name: string): string {
  * Dark: bright text (70% L) · Light: darker text (35% L).
  */
 export function perimeterFg(name: string): string {
+  colorVersion.value // track reactive dependency
   let v = perimeterFgCache.get(name)
   if (v === undefined) {
     const h = agentHue(name)
@@ -132,6 +140,7 @@ export function perimeterFg(name: string): string {
  * Dark: very dark bg (15% L) · Light: soft pastel bg (93% L).
  */
 export function perimeterBg(name: string): string {
+  colorVersion.value // track reactive dependency
   let v = perimeterBgCache.get(name)
   if (v === undefined) {
     const h = agentHue(name)
@@ -146,6 +155,7 @@ export function perimeterBg(name: string): string {
  * Dark: medium border (27% L) · Light: subtle border (80% L).
  */
 export function perimeterBorder(name: string): string {
+  colorVersion.value // track reactive dependency
   let v = perimeterBorderCache.get(name)
   if (v === undefined) {
     const h = agentHue(name)

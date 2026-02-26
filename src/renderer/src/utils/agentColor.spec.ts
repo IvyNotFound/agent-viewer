@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { agentHue, agentFg, agentBg, agentBorder, setDarkMode as setDarkModeReactive } from '@renderer/utils/agentColor'
+import { agentHue, agentFg, agentBg, agentBorder, perimeterFg, setDarkMode as setDarkModeReactive, colorVersion } from '@renderer/utils/agentColor'
 
 /** Toggle dark mode on document.documentElement and reactive ref for testing */
 function setDarkMode(enabled: boolean) {
@@ -148,6 +148,42 @@ describe('agentColor', () => {
       const name = 'my-agent'
       const hue = agentHue(name)
       expect(agentBorder(name)).toContain(`hsl(${hue},`)
+    })
+  })
+
+  describe('setDarkMode reactivity (colorVersion)', () => {
+    it('colorVersion increments on theme switch', () => {
+      setDarkMode(false)
+      const v0 = colorVersion.value
+      setDarkMode(true)
+      expect(colorVersion.value).toBe(v0 + 1)
+      setDarkMode(false)
+      expect(colorVersion.value).toBe(v0 + 2)
+    })
+
+    it('colorVersion does not increment when theme unchanged', () => {
+      setDarkMode(false)
+      const v0 = colorVersion.value
+      setDarkMode(false)
+      expect(colorVersion.value).toBe(v0)
+    })
+
+    it('agentFg returns light values after switching dark→light', () => {
+      const name = 'test-agent-reactive'
+      const hue = agentHue(name)
+      setDarkMode(true)
+      expect(agentFg(name)).toBe(`hsl(${hue}, 70%, 68%)`)
+      setDarkMode(false)
+      expect(agentFg(name)).toBe(`hsl(${hue}, 65%, 38%)`)
+    })
+
+    it('perimeterFg returns light values after switching dark→light', () => {
+      const name = 'front-vuejs'
+      const hue = agentHue(name)
+      setDarkMode(true)
+      expect(perimeterFg(name)).toBe(`hsl(${hue}, 60%, 70%)`)
+      setDarkMode(false)
+      expect(perimeterFg(name)).toBe(`hsl(${hue}, 55%, 35%)`)
     })
   })
 
