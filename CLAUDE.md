@@ -61,6 +61,14 @@ SQL détaillé → `.claude/WORKFLOW.md`
 
 ---
 
+## Valeurs valides — création de tâche
+
+- `effort` : `1` (small) · `2` (medium) · `3` (large) — `CHECK(effort IN (1,2,3))`, valeur hors plage rejetée silencieusement par SQLite
+- `priority` : `low` · `normal` · `high` · `critical`
+- `statut` : `todo` → `in_progress` → `done` → `archived`
+
+---
+
 ## Règles inter-agents
 
 - Un agent = un périmètre — ne jamais déborder sans signaler
