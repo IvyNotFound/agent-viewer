@@ -5,12 +5,14 @@ import { useTasksStore } from '@renderer/stores/tasks'
 import { agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
 import { useLaunchSession } from '@renderer/composables/useLaunchSession'
 import { useToast } from '@renderer/composables/useToast'
+import { useArchivedPagination } from '@renderer/composables/useArchivedPagination'
 import StatusColumn from './StatusColumn.vue'
 
 const { t, locale } = useI18n()
 const store = useTasksStore()
 const { launchAgentTerminal } = useLaunchSession()
 const toast = useToast()
+const pagination = useArchivedPagination()
 
 type BoardTab = 'backlog' | 'archive'
 const activeTab = ref<BoardTab>('backlog')
@@ -19,17 +21,24 @@ const emptyTasks = { todo: [], in_progress: [], done: [], archived: [] }
 const tasks = computed(() => store.tasksByStatus ?? emptyTasks)
 
 // Auto-switch to Archive tab when backlog is empty but archives exist
+// Uses stats.archived (from GROUP BY query) since archived tasks are excluded from refresh()
 const shouldAutoSwitchToArchive = computed(() => {
   const t = tasks.value
   const backlogCount = (t.todo?.length || 0) + (t.in_progress?.length || 0) + (t.done?.length || 0)
-  const archiveCount = t.archived?.length || 0
-  return backlogCount === 0 && archiveCount > 0
+  return backlogCount === 0 && store.stats.archived > 0
 })
 
 // Watch for backlog becoming empty and auto-switch to archive
 watch(shouldAutoSwitchToArchive, (shouldSwitch) => {
   if (shouldSwitch) {
     activeTab.value = 'archive'
+  }
+})
+
+// Load page 0 when switching to archive tab
+watch(activeTab, (tab) => {
+  if (tab === 'archive') {
+    pagination.loadPage(0)
   }
 })
 
@@ -75,12 +84,10 @@ async function onTaskDropped(taskId: number): Promise<void> {
 
 const UNASSIGNED_SENTINEL = '__unassigned__'
 
-// Lazy computed: only compute when archive tab is active
+// Group current page of archived tasks by agent
 const archivedByAgent = computed(() => {
-  // Only compute if on archive tab to avoid unnecessary recalculations
-  if (activeTab.value !== 'archive') return []
-  const archived = tasks.value?.archived || []
-  if (!archived || archived.length === 0) return []
+  const archived = pagination.archivedTasks.value
+  if (!archived.length) return []
   const groups = new Map<string, typeof archived>()
   for (const task of archived) {
     const key = task.agent_name ?? UNASSIGNED_SENTINEL
@@ -108,7 +115,7 @@ const archivedByAgent = computed(() => {
           ]"
           @click="activeTab = tab"
         >
-          {{ tab === 'backlog' ? t('board.backlog') : t('board.archive', { count: tasks?.archived?.length || 0 }) }}
+          {{ tab === 'backlog' ? t('board.backlog') : t('board.archive', { count: store.stats.archived }) }}
         </button>
       </div>
 
@@ -149,48 +156,98 @@ const archivedByAgent = computed(() => {
     </div>
 
     <!-- Archive view -->
-    <div v-else class="flex-1 min-h-0 overflow-y-auto px-4 py-3">
-      <div v-if="!tasks?.archived?.length" class="flex items-center justify-center h-full">
+    <div v-else class="flex-1 min-h-0 flex flex-col overflow-hidden">
+      <!-- Loading state -->
+      <div v-if="pagination.loading.value && !pagination.archivedTasks.value.length" class="flex items-center justify-center flex-1">
+        <p class="text-sm text-content-faint italic">{{ t('common.loading') }}</p>
+      </div>
+
+      <!-- Empty state -->
+      <div v-else-if="!pagination.loading.value && pagination.total.value === 0" class="flex items-center justify-center flex-1">
         <p class="text-sm text-content-faint italic">{{ t('board.noArchived') }}</p>
       </div>
-      <div v-else class="flex flex-col gap-4">
-        <!-- Group by agent -->
-        <div v-for="[agentName, tasks] in archivedByAgent" :key="agentName">
-          <!-- Group header -->
-          <div class="flex items-center gap-2 mb-2">
-            <span
-              :class="[
-                'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono border',
-                agentName === UNASSIGNED_SENTINEL ? 'text-content-subtle bg-surface-secondary border-edge-default' : ''
-              ]"
-              :style="agentName !== UNASSIGNED_SENTINEL
-                ? { color: agentFg(agentName), backgroundColor: agentBg(agentName), borderColor: agentBorder(agentName) }
-                : {}"
-            >{{ agentName === UNASSIGNED_SENTINEL ? t('board.unassigned') : agentName }}</span>
-            <span class="text-[10px] text-content-faint font-mono">{{ tasks.length }} {{ t('board.tickets', tasks.length) }}</span>
-          </div>
-          <!-- Tasks in group -->
-          <div class="space-y-1.5">
-            <button
-              v-for="task in tasks"
-              :key="task.id"
-              class="w-full text-left px-4 py-3 bg-surface-primary hover:bg-surface-secondary border border-edge-subtle hover:border-edge-default rounded-lg transition-colors group"
-              @click="store.openTask(task)"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm text-content-tertiary group-hover:text-content-primary truncate transition-colors">{{ task.titre }}</p>
-                  <span v-if="task.perimetre" class="text-[10px] font-mono text-content-faint mt-1 block">{{ task.perimetre }}</span>
-                </div>
-                <div class="shrink-0 text-right">
-                  <span class="text-[10px] text-content-faint font-mono">{{ formatDate(task.updated_at) }}</span>
-                  <p class="text-[10px] text-content-dim font-mono mt-0.5">#{{ task.id }}</p>
-                </div>
+
+      <!-- Tasks list + pagination -->
+      <template v-else>
+        <!-- Scrollable tasks list -->
+        <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3">
+          <div class="flex flex-col gap-4">
+            <!-- Group by agent -->
+            <div v-for="[agentName, agentTasks] in archivedByAgent" :key="agentName">
+              <!-- Group header -->
+              <div class="flex items-center gap-2 mb-2">
+                <span
+                  :class="[
+                    'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono border',
+                    agentName === UNASSIGNED_SENTINEL ? 'text-content-subtle bg-surface-secondary border-edge-default' : ''
+                  ]"
+                  :style="agentName !== UNASSIGNED_SENTINEL
+                    ? { color: agentFg(agentName), backgroundColor: agentBg(agentName), borderColor: agentBorder(agentName) }
+                    : {}"
+                >{{ agentName === UNASSIGNED_SENTINEL ? t('board.unassigned') : agentName }}</span>
+                <span class="text-[10px] text-content-faint font-mono">{{ agentTasks.length }} {{ t('board.tickets', agentTasks.length) }}</span>
               </div>
-            </button>
+              <!-- Tasks in group -->
+              <div class="space-y-1.5">
+                <button
+                  v-for="task in agentTasks"
+                  :key="task.id"
+                  class="w-full text-left px-4 py-3 bg-surface-primary hover:bg-surface-secondary border border-edge-subtle hover:border-edge-default rounded-lg transition-colors group"
+                  @click="store.openTask(task)"
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm text-content-tertiary group-hover:text-content-primary truncate transition-colors">{{ task.titre }}</p>
+                      <span v-if="task.perimetre" class="text-[10px] font-mono text-content-subtle mt-1 block">{{ task.perimetre }}</span>
+                    </div>
+                    <div class="shrink-0 text-right space-y-0.5">
+                      <p class="text-[10px] text-content-muted font-mono tabular-nums">{{ formatDate(task.updated_at) }}</p>
+                      <p class="text-[10px] text-content-subtle font-mono">#{{ task.id }}</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+
+        <!-- Pagination controls -->
+        <div class="shrink-0 flex items-center justify-between px-4 py-2 border-t border-edge-subtle bg-surface-primary">
+          <button
+            :disabled="pagination.page.value === 0"
+            :class="[
+              'px-3 py-1 text-xs font-medium rounded-md transition-colors',
+              pagination.page.value === 0
+                ? 'text-content-subtle opacity-40 cursor-not-allowed'
+                : 'text-content-tertiary hover:text-content-primary hover:bg-surface-secondary'
+            ]"
+            @click="pagination.loadPage(pagination.page.value - 1)"
+          >
+            {{ t('board.prevPage') }}
+          </button>
+
+          <span class="text-[11px] text-content-faint font-mono tabular-nums">
+            {{ t('board.pageOf', {
+              page: pagination.page.value + 1,
+              total: pagination.totalPages.value,
+              count: pagination.total.value
+            }) }}
+          </span>
+
+          <button
+            :disabled="pagination.page.value >= pagination.totalPages.value - 1"
+            :class="[
+              'px-3 py-1 text-xs font-medium rounded-md transition-colors',
+              pagination.page.value >= pagination.totalPages.value - 1
+                ? 'text-content-subtle opacity-40 cursor-not-allowed'
+                : 'text-content-tertiary hover:text-content-primary hover:bg-surface-secondary'
+            ]"
+            @click="pagination.loadPage(pagination.page.value + 1)"
+          >
+            {{ t('board.nextPage') }}
+          </button>
+        </div>
+      </template>
     </div>
   </div>
 </template>

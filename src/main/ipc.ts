@@ -386,6 +386,50 @@ export function registerIpcHandlers(): void {
     }
   })
 
+  // ── Archived tasks pagination ─────────────────────────────────────────────
+
+  /**
+   * Paginated query for archived tasks — independent of refresh().
+   * @param dbPath - Registered DB path
+   * @param params - { page, pageSize, agentId?, perimetre? }
+   * @returns {{ rows: Record<string,unknown>[], total: number }}
+   */
+  ipcMain.handle('tasks:getArchived', async (_event, dbPath: string, params: {
+    page: number
+    pageSize: number
+    agentId?: number | null
+    perimetre?: string | null
+  }) => {
+    assertDbPathAllowed(dbPath)
+    const offset = params.page * params.pageSize
+    const conditions: string[] = ["t.statut = 'archived'"]
+    const binds: unknown[] = []
+    if (params.agentId != null) {
+      conditions.push('t.agent_assigne_id = ?')
+      binds.push(params.agentId)
+    }
+    if (params.perimetre != null) {
+      conditions.push('t.perimetre = ?')
+      binds.push(params.perimetre)
+    }
+    const where = conditions.join(' AND ')
+    const [rows, countRows] = await Promise.all([
+      queryLive(dbPath, `
+        SELECT t.*, a.name as agent_name, a.perimetre as agent_perimetre,
+          c.name as agent_createur_name
+        FROM tasks t
+        LEFT JOIN agents a ON a.id = t.agent_assigne_id
+        LEFT JOIN agents c ON c.id = t.agent_createur_id
+        WHERE ${where}
+        ORDER BY t.updated_at DESC
+        LIMIT ? OFFSET ?
+      `, [...binds, params.pageSize, offset]),
+      queryLive(dbPath, `SELECT COUNT(*) as total FROM tasks t WHERE ${where}`, binds)
+    ])
+    const total = (countRows[0] as Record<string, unknown>)?.total ?? 0
+    return { rows, total: Number(total) }
+  })
+
   // ── Domain-specific handlers ─────────────────────────────────────────────
 
   registerFsHandlers()
