@@ -630,7 +630,15 @@ export function registerTerminalHandlers(): void {
           convIdDetected = true
           convIdBuffer = '' // free memory
           const params = ptyLaunchParams.get(id)
-          if (params) params.detectedConvId = match[1]
+          if (params) {
+            params.detectedConvId = match[1]
+            // T561: Free large prompt strings once convId is captured.
+            // Relaunch will use --resume <convId> — systemPrompt not needed.
+            // Edge case: if PTY crashes BEFORE convId is detected (< ~2s),
+            // systemPrompt is still available since this block is never reached.
+            params.systemPrompt = undefined
+            params.userPrompt = undefined
+          }
           if (!event.sender.isDestroyed()) {
             event.sender.send(`terminal:convId:${id}`, match[1])
           }
