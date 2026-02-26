@@ -48,7 +48,11 @@
     "agents": "Agents",
     "creator": "Creator",
     "assigned": "Assigned",
-    "validator": "Validator"
+    "validator": "Validator",
+    "dependencies": "Dependencies",
+    "blocks": "Blocks",
+    "blockedBy": "Blocked by",
+    "relatedTo": "Related to"
   },
   "logs": {
     "allAgents": "All agents",

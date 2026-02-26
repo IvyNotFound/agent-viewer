@@ -304,4 +304,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Duplicate an agent (copies all fields, generates unique name <name>-copy)
   duplicateAgent: (dbPath: string, agentId: number): Promise<{ success: boolean; agentId?: number; name?: string; error?: string }> =>
     ipcRenderer.invoke('agent:duplicate', dbPath, agentId),
+
+  // Task dependency links
+  getTaskLinks: (dbPath: string, taskId: number): Promise<{ success: boolean; links: Array<{ id: number; type: string; from_task: number; to_task: number; from_titre: string; from_statut: string; to_titre: string; to_statut: string }>; error?: string }> =>
+    ipcRenderer.invoke('task:getLinks', dbPath, taskId),
 })

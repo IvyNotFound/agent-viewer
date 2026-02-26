@@ -73,7 +73,7 @@ const PRIORITY_LABEL: Record<string, string> = {
   >
     <!-- Top row: title + effort/priority -->
     <div class="flex items-start justify-between gap-2 mb-2">
-      <p class="text-sm text-content-primary font-medium leading-snug flex-1 min-w-0">{{ task.titre }}</p>
+      <p class="text-sm text-content-primary font-medium leading-snug flex-1 min-w-0 break-words">{{ task.titre }}</p>
       <div class="flex items-center gap-1 shrink-0">
         <span
           v-if="task.priority && task.priority !== 'normal' && task.priority !== 'low'"

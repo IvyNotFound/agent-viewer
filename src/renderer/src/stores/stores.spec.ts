@@ -16,6 +16,7 @@ const mockElectronAPI = {
   migrateDb: vi.fn().mockResolvedValue({ success: true }),
   terminalKill: vi.fn(),
   findProjectDb: vi.fn().mockResolvedValue(null),
+  getTaskLinks: vi.fn().mockResolvedValue({ success: true, links: [] }),
 }
 
 Object.defineProperty(window, 'electronAPI', {

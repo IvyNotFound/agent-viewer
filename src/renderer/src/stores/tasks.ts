@@ -13,7 +13,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { Task, Agent, Lock, Stats, TaskComment, FileNode, Perimetre } from '@renderer/types'
+import type { Task, Agent, Lock, Stats, TaskComment, TaskLink, FileNode, Perimetre } from '@renderer/types'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useToast } from '@renderer/composables/useToast'
 
@@ -77,6 +77,7 @@ declare global {
       addPerimetre(dbPath: string, name: string): Promise<{ success: boolean; id?: number; error?: string }>
       tasksUpdateStatus(dbPath: string, taskId: number, statut: string): Promise<{ success: boolean; error?: string }>
       duplicateAgent(dbPath: string, agentId: number): Promise<{ success: boolean; agentId?: number; name?: string; error?: string }>
+      getTaskLinks(dbPath: string, taskId: number): Promise<{ success: boolean; links: Array<{ id: number; type: string; from_task: number; to_task: number; from_titre: string; from_statut: string; to_titre: string; to_statut: string }>; error?: string }>
     }
   }
 }
@@ -164,6 +165,7 @@ export const useTasksStore = defineStore('tasks', () => {
   const selectedPerimetre = ref<string | null>(null)
   const selectedTask = ref<Task | null>(null)
   const taskComments = ref<TaskComment[]>([])
+  const taskLinks = ref<TaskLink[]>([])
   const setupWizardTarget = ref<{ projectPath: string; hasCLAUDEmd: boolean } | null>(null)
 
   let pollInterval: ReturnType<typeof setInterval> | null = null
@@ -391,23 +393,26 @@ export const useTasksStore = defineStore('tasks', () => {
   async function openTask(task: Task): Promise<void> {
     selectedTask.value = task
     taskComments.value = []
-    try {
-      const rows = await query<TaskComment>(`
-        SELECT tc.*, a.name as agent_name
-        FROM task_comments tc
-        LEFT JOIN agents a ON a.id = tc.agent_id
-        WHERE tc.task_id = ?
-        ORDER BY tc.created_at ASC
-      `, [task.id])
-      taskComments.value = rows.map(normalizeRow)
-    } catch {
-      // table absente ou erreur : on affiche le modal sans commentaires
-    }
+    taskLinks.value = []
+    const commentsPromise = query<TaskComment>(`
+      SELECT tc.*, a.name as agent_name
+      FROM task_comments tc
+      LEFT JOIN agents a ON a.id = tc.agent_id
+      WHERE tc.task_id = ?
+      ORDER BY tc.created_at ASC
+    `, [task.id]).then(rows => { taskComments.value = rows.map(normalizeRow) }).catch(() => {})
+    const linksPromise = dbPath.value
+      ? window.electronAPI.getTaskLinks(dbPath.value, task.id)
+          .then(res => { if (res.success) taskLinks.value = res.links as TaskLink[] })
+          .catch(() => {})
+      : Promise.resolve()
+    await Promise.all([commentsPromise, linksPromise])
   }
 
   function closeTask(): void {
     selectedTask.value = null
     taskComments.value = []
+    taskLinks.value = []
   }
 
   function closeWizard(): void {
@@ -489,7 +494,7 @@ export const useTasksStore = defineStore('tasks', () => {
     filteredTasks, tasksByStatus,
     setProject, selectProject, closeProject, setProjectPathOnly, watchForDb,
     refresh, agentRefresh, startPolling, stopPolling, query, setTaskStatut,
-    selectedTask, taskComments, openTask, closeTask,
+    selectedTask, taskComments, taskLinks, openTask, closeTask,
     setupWizardTarget, closeWizard
   }
 })

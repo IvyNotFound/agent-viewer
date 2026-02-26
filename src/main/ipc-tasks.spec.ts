@@ -479,3 +479,89 @@ describe('tasks:updateStatus — behavioural (T474)', () => {
     expect(result.success).toBe(true)
   })
 })
+
+// ── Tests: task:getLinks ──────────────────────────────────────────────────────
+
+describe('task:getLinks (T511)', () => {
+  async function insertLink(fromTask: number, toTask: number, type: string): Promise<void> {
+    await writeDb<void>(TEST_DB_PATH, (db) => {
+      db.run('INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, ?)', [fromTask, toTask, type])
+    })
+  }
+
+  it('returns { success: true, links: [] } for task with no links', async () => {
+    const taskId = await insertTask({ titre: 'task-no-links' })
+
+    const result = await handlers['task:getLinks'](null, TEST_DB_PATH, taskId) as { success: boolean; links: unknown[] }
+
+    expect(result.success).toBe(true)
+    expect(result.links).toHaveLength(0)
+  })
+
+  it('returns links where task is from_task', async () => {
+    const t1 = await insertTask({ titre: 'source', statut: 'in_progress' })
+    const t2 = await insertTask({ titre: 'target', statut: 'todo' })
+    await insertLink(t1, t2, 'bloque')
+
+    const result = await handlers['task:getLinks'](null, TEST_DB_PATH, t1) as {
+      success: boolean
+      links: Array<{ type: string; from_task: number; to_task: number; from_titre: string; to_titre: string; from_statut: string; to_statut: string }>
+    }
+
+    expect(result.success).toBe(true)
+    expect(result.links).toHaveLength(1)
+    expect(result.links[0].type).toBe('bloque')
+    expect(result.links[0].from_task).toBe(t1)
+    expect(result.links[0].to_task).toBe(t2)
+    expect(result.links[0].from_titre).toBe('source')
+    expect(result.links[0].to_titre).toBe('target')
+    expect(result.links[0].to_statut).toBe('todo')
+  })
+
+  it('returns links where task is to_task', async () => {
+    const t1 = await insertTask({ titre: 'blocker', statut: 'done' })
+    const t2 = await insertTask({ titre: 'blocked', statut: 'todo' })
+    await insertLink(t1, t2, 'depend_de')
+
+    const result = await handlers['task:getLinks'](null, TEST_DB_PATH, t2) as {
+      success: boolean
+      links: Array<{ type: string; from_task: number; to_task: number }>
+    }
+
+    expect(result.success).toBe(true)
+    expect(result.links).toHaveLength(1)
+    expect(result.links[0].from_task).toBe(t1)
+    expect(result.links[0].to_task).toBe(t2)
+  })
+
+  it('returns all link types including lie_a and duplique', async () => {
+    const t1 = await insertTask({ titre: 'task-a' })
+    const t2 = await insertTask({ titre: 'task-b' })
+    const t3 = await insertTask({ titre: 'task-c' })
+    await insertLink(t1, t2, 'lie_a')
+    await insertLink(t1, t3, 'duplique')
+
+    const result = await handlers['task:getLinks'](null, TEST_DB_PATH, t1) as {
+      success: boolean
+      links: Array<{ type: string }>
+    }
+
+    expect(result.success).toBe(true)
+    expect(result.links).toHaveLength(2)
+    const types = result.links.map(l => l.type).sort()
+    expect(types).toEqual(['duplique', 'lie_a'])
+  })
+
+  it('invalid taskId returns { success: false }', async () => {
+    const result = await handlers['task:getLinks'](null, TEST_DB_PATH, 'bad' as unknown as number) as { success: boolean; error: string }
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('Invalid taskId')
+  })
+
+  it('rejects unregistered dbPath', async () => {
+    await expect(
+      handlers['task:getLinks'](null, '/unregistered/evil.db', 1)
+    ).rejects.toThrow('DB_PATH_NOT_ALLOWED')
+  })
+})

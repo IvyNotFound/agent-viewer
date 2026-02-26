@@ -80,6 +80,18 @@ export interface TaskComment {
   created_at: string
 }
 
+/** Task dependency link from the `task_links` table. */
+export interface TaskLink {
+  id: number
+  type: string
+  from_task: number
+  to_task: number
+  from_titre: string
+  from_statut: string
+  to_titre: string
+  to_statut: string
+}
+
 /** File lock record from the `locks` table. */
 export interface Lock {
   id: number

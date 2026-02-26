@@ -628,4 +628,35 @@ export function registerAgentHandlers(): void {
       return { success: false, error: String(err) }
     }
   })
+
+  /**
+   * Fetch all dependency links for a task from task_links.
+   * Returns links where the task is source or target, joined with task titles and statuses.
+   * @param dbPath - DB path
+   * @param taskId - Task ID
+   * @returns {{ success: boolean, links: TaskLink[], error?: string }}
+   */
+  ipcMain.handle('task:getLinks', async (_event, dbPath: string, taskId: number) => {
+    if (typeof taskId !== 'number' || !Number.isInteger(taskId)) {
+      return { success: false, links: [], error: 'Invalid taskId' }
+    }
+    assertDbPathAllowed(dbPath)
+    try {
+      const rows = await queryLive(
+        dbPath,
+        `SELECT tl.id, tl.type, tl.from_task, tl.to_task,
+          tf.titre as from_titre, tf.statut as from_statut,
+          tt.titre as to_titre, tt.statut as to_statut
+         FROM task_links tl
+         JOIN tasks tf ON tf.id = tl.from_task
+         JOIN tasks tt ON tt.id = tl.to_task
+         WHERE tl.from_task = ? OR tl.to_task = ?`,
+        [taskId, taskId]
+      )
+      return { success: true, links: rows }
+    } catch (err) {
+      console.error('[IPC task:getLinks]', err)
+      return { success: false, links: [], error: String(err) }
+    }
+  })
 }
