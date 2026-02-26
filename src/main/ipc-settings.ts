@@ -12,11 +12,17 @@ import { writeFile, rename } from 'fs/promises'
 import { join } from 'path'
 import { assertDbPathAllowed, assertProjectPathAllowed, queryLive, writeDb } from './db'
 
-// GitHub token baked in at build time via electron.vite.config.ts define
-declare const __BUILT_IN_GITHUB_TOKEN__: string
-const BUILT_IN_GITHUB_TOKEN: string = (typeof __BUILT_IN_GITHUB_TOKEN__ !== 'undefined' ? __BUILT_IN_GITHUB_TOKEN__ : '')
-
 // ── Handler registration ─────────────────────────────────────────────────────
+
+/** Read github_token from config table; returns empty string if absent. */
+async function getGitHubToken(dbPath: string): Promise<string> {
+  try {
+    const rows = await queryLive(dbPath, "SELECT value FROM config WHERE key = 'github_token'", [])
+    return rows.length > 0 ? ((rows[0] as { value: string }).value ?? '') : ''
+  } catch {
+    return ''
+  }
+}
 
 /** Register all settings & GitHub IPC handlers. */
 export function registerSettingsHandlers(): void {
@@ -38,7 +44,7 @@ export function registerSettingsHandlers(): void {
   })
 
   /**
-   * Write a config value. github_token is blocked (token is now build-time only).
+   * Write a config value.
    * @param dbPath - Registered DB path
    * @param key - Config key
    * @param value - Value to store
@@ -47,11 +53,6 @@ export function registerSettingsHandlers(): void {
   ipcMain.handle('set-config-value', async (_event, dbPath: string, key: string, value: string) => {
     try {
       assertDbPathAllowed(dbPath)
-      if (key === 'github_token') {
-        // Token is embedded at build time — not stored in DB
-        return { success: false, error: 'github_token is not configurable at runtime' }
-      }
-
       await writeDb(dbPath, (db) => {
         db.run(
           'INSERT OR REPLACE INTO config (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)',
@@ -80,8 +81,9 @@ export function registerSettingsHandlers(): void {
       const configMap = new Map(configRows.map(r => [r.key, r.value]))
       const localSha = configMap.get('claude_md_commit') ?? ''
 
+      const githubToken = await getGitHubToken(dbPath)
       const headers: Record<string, string> = { Accept: 'application/vnd.github.v3+json' }
-      if (BUILT_IN_GITHUB_TOKEN) headers['Authorization'] = `token ${BUILT_IN_GITHUB_TOKEN}`
+      if (githubToken) headers['Authorization'] = `token ${githubToken}`
 
       // T304: 10s timeout prevents UI freeze when GitHub is unreachable
       const response = await fetch(
@@ -153,8 +155,9 @@ export function registerSettingsHandlers(): void {
         return { connected: false, error: 'owner/repo invalide' }
       }
 
+      const githubToken = await getGitHubToken(dbPath)
       const headers: Record<string, string> = {}
-      if (BUILT_IN_GITHUB_TOKEN) headers['Authorization'] = `token ${BUILT_IN_GITHUB_TOKEN}`
+      if (githubToken) headers['Authorization'] = `token ${githubToken}`
 
       const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers })
       return { connected: response.ok }
@@ -182,8 +185,9 @@ export function registerSettingsHandlers(): void {
         return { hasUpdate: false, latestVersion: '', error: 'owner/repo invalide' }
       }
 
+      const githubToken = await getGitHubToken(dbPath)
       const headers: Record<string, string> = { Accept: 'application/vnd.github.v3+json' }
-      if (BUILT_IN_GITHUB_TOKEN) headers['Authorization'] = `token ${BUILT_IN_GITHUB_TOKEN}`
+      if (githubToken) headers['Authorization'] = `token ${githubToken}`
 
       // T304: 10s timeout prevents UI freeze when GitHub is unreachable
       const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`, { headers, signal: AbortSignal.timeout(10_000) })
