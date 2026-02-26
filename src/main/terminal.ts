@@ -674,15 +674,21 @@ export function registerTerminalHandlers(): void {
     return id
   })
 
-  ipcMain.handle('terminal:write', (_event, id: string, data: string) => {
+  ipcMain.handle('terminal:write', (event, id: string, data: string) => {
+    const wcId = event.sender.id
+    if (!webContentsPtys.get(wcId)?.has(id)) throw new Error('PTY ownership denied')
     ptys.get(id)?.write(data)
   })
 
-  ipcMain.handle('terminal:resize', (_event, id: string, cols: number, rows: number) => {
+  ipcMain.handle('terminal:resize', (event, id: string, cols: number, rows: number) => {
+    const wcId = event.sender.id
+    if (!webContentsPtys.get(wcId)?.has(id)) throw new Error('PTY ownership denied')
     ptys.get(id)?.resize(cols, rows)
   })
 
-  ipcMain.handle('terminal:kill', (_event, id: string) => {
+  ipcMain.handle('terminal:kill', (event, id: string) => {
+    const wcId = event.sender.id
+    if (!webContentsPtys.get(wcId)?.has(id)) throw new Error('PTY ownership denied')
     gracefulKillPty(id)
     // Remove from webContents tracking
     for (const ids of webContentsPtys.values()) {
@@ -699,6 +705,8 @@ export function registerTerminalHandlers(): void {
   // Uses stored launch params to re-create the PTY. If a convId was detected
   // during the previous session, uses --resume for continuity.
   ipcMain.handle('terminal:relaunch', async (event, oldId: string, useResume?: boolean) => {
+    const wcId = event.sender.id
+    if (!webContentsPtys.get(wcId)?.has(oldId)) throw new Error('PTY ownership denied')
     const params = ptyLaunchParams.get(oldId)
     if (!params) throw new Error('No launch params found for PTY ' + oldId)
 

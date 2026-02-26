@@ -210,16 +210,17 @@ describe('terminal utilities', () => {
       const createHandler = find('terminal:create')
       const killHandler = find('terminal:kill')
 
-      const id = await createHandler(makeEvent(3), 80, 24)
-      await killHandler({}, id)
+      const evt = makeEvent(3)
+      const id = await createHandler(evt, 80, 24)
+      await killHandler(evt, id)
 
       expect(mockPty.kill).toHaveBeenCalled()
     })
 
-    it('should not throw when killing a non-existent PTY id', async () => {
+    it('T532: should throw PTY ownership denied when sender does not own the PTY', async () => {
       const { find } = await getHandlers()
       const killHandler = find('terminal:kill')
-      expect(() => killHandler({}, 'nonexistent-id-9999')).not.toThrow()
+      expect(() => killHandler(makeEvent(9999), 'nonexistent-id-9999')).toThrow('PTY ownership denied')
     })
   })
 
@@ -231,16 +232,17 @@ describe('terminal utilities', () => {
       const createHandler = find('terminal:create')
       const writeHandler = find('terminal:write')
 
-      const id = await createHandler(makeEvent(10), 80, 24)
-      await writeHandler({}, id, 'hello world\n')
+      const evt = makeEvent(10)
+      const id = await createHandler(evt, 80, 24)
+      await writeHandler(evt, id, 'hello world\n')
 
       expect(mockPty.write).toHaveBeenCalledWith('hello world\n')
     })
 
-    it('should be a no-op for non-existent PTY id (no crash)', async () => {
+    it('T532: should throw PTY ownership denied when sender does not own the PTY', async () => {
       const { find } = await getHandlers()
       const writeHandler = find('terminal:write')
-      expect(() => writeHandler({}, 'nonexistent-99', 'data')).not.toThrow()
+      expect(() => writeHandler(makeEvent(9998), 'nonexistent-99', 'data')).toThrow('PTY ownership denied')
     })
   })
 
@@ -252,16 +254,17 @@ describe('terminal utilities', () => {
       const createHandler = find('terminal:create')
       const resizeHandler = find('terminal:resize')
 
-      const id = await createHandler(makeEvent(20), 80, 24)
-      await resizeHandler({}, id, 120, 40)
+      const evt = makeEvent(20)
+      const id = await createHandler(evt, 80, 24)
+      await resizeHandler(evt, id, 120, 40)
 
       expect(mockPty.resize).toHaveBeenCalledWith(120, 40)
     })
 
-    it('should be a no-op for non-existent PTY id (no crash)', async () => {
+    it('T532: should throw PTY ownership denied when sender does not own the PTY', async () => {
       const { find } = await getHandlers()
       const resizeHandler = find('terminal:resize')
-      expect(() => resizeHandler({}, 'nonexistent-99', 100, 30)).not.toThrow()
+      expect(() => resizeHandler(makeEvent(9997), 'nonexistent-99', 100, 30)).toThrow('PTY ownership denied')
     })
   })
 
@@ -1075,7 +1078,8 @@ describe('terminal utilities', () => {
       const onDataCb = lastOnData()
       onDataCb('Session ID: abcd1234-aaaa-bbbb-cccc-ddddeeee1111')
 
-      const result = await relaunchHandler(makeEvent(81), id, true) as Record<string, unknown>
+      // T532: relaunch must use the same sender that created the PTY
+      const result = await relaunchHandler(evt, id, true) as Record<string, unknown>
       expect(result.cols).toBe(80)
       expect(result.rows).toBe(24)
       expect(result.projectPath).toBe('C:\\Projects\\app')
@@ -1084,9 +1088,9 @@ describe('terminal utilities', () => {
       expect(result.convId).toBe('abcd1234-aaaa-bbbb-cccc-ddddeeee1111')
     })
 
-    it('should throw when no launch params exist', async () => {
+    it('T532: should throw PTY ownership denied when sender does not own the PTY', async () => {
       const { find } = await getHandlers()
-      await expect(find('terminal:relaunch')(makeEvent(82), 'nonexistent-9999')).rejects.toThrow('No launch params found')
+      await expect(find('terminal:relaunch')(makeEvent(82), 'nonexistent-9999')).rejects.toThrow('PTY ownership denied')
     })
   })
 
@@ -1096,15 +1100,18 @@ describe('terminal utilities', () => {
     it('should delete stored ptyLaunchParams so relaunch fails', async () => {
       const { find } = await getHandlers()
       // Create a PTY — launch params are stored
-      const id = await find('terminal:create')(makeEvent(83), 80, 24, 'C:\\p', undefined, 'p', 'u', undefined)
+      const evt = makeEvent(83)
+      const id = await find('terminal:create')(evt, 80, 24, 'C:\\p', undefined, 'p', 'u', undefined)
 
       // Verify relaunch would succeed (params exist)
       // Use a fresh handler set to avoid side effects — but we need the same module state
       // Just check that dismissCrash actually removes the params:
       await find('terminal:dismissCrash')({}, id)
 
-      // Now relaunch should fail because dismissCrash deleted the params
-      await expect(find('terminal:relaunch')(makeEvent(84), id)).rejects.toThrow('No launch params found')
+      // T532: relaunch uses same sender; dismissCrash only removes ptyLaunchParams, not ownership
+      // So ownership check passes (wcId 83 still owns the PTY id in webContentsPtys)
+      // but params are deleted → throws 'No launch params found'
+      await expect(find('terminal:relaunch')(evt, id)).rejects.toThrow('No launch params found')
     })
   })
 
@@ -1180,8 +1187,10 @@ describe('terminal utilities', () => {
       mockPty.kill.mockClear()
 
       const { find } = await getHandlers()
-      const id = await find('terminal:create')(makeEvent(100), 80, 24, undefined, undefined, 'prompt', 'start', undefined)
-      await find('terminal:kill')({}, id)
+      const evt = makeEvent(100)
+      const id = await find('terminal:create')(evt, 80, 24, undefined, undefined, 'prompt', 'start', undefined)
+      // T532: use the same sender that created the PTY
+      await find('terminal:kill')(evt, id)
 
       expect(mockPty.write).toHaveBeenCalledWith('\x03\x03')
       vi.advanceTimersByTime(110)
@@ -1197,8 +1206,10 @@ describe('terminal utilities', () => {
       mockPty.kill.mockClear()
 
       const { find } = await getHandlers()
-      const id = await find('terminal:create')(makeEvent(101), 80, 24, 'C:\\Projects\\app', undefined, undefined, undefined, undefined)
-      await find('terminal:kill')({}, id)
+      const evt = makeEvent(101)
+      const id = await find('terminal:create')(evt, 80, 24, 'C:\\Projects\\app', undefined, undefined, undefined, undefined)
+      // T532: use the same sender that created the PTY
+      await find('terminal:kill')(evt, id)
 
       expect(mockPty.write).not.toHaveBeenCalledWith('\x03\x03')
       expect(mockPty.kill).toHaveBeenCalled()
