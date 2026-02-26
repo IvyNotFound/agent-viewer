@@ -10,7 +10,7 @@
  * @module main
  */
 
-import { app, BrowserWindow, session } from 'electron'
+import { app, BrowserWindow, session, Menu, MenuItem } from 'electron'
 import { join } from 'path'
 import { registerIpcHandlers } from './ipc'
 import { registerTerminalHandlers } from './terminal'
@@ -111,6 +111,30 @@ function createWindow(): void {
 
   win.on('maximize', () => win.webContents.send('window-state-changed', true))
   win.on('unmaximize', () => win.webContents.send('window-state-changed', false))
+
+  // Windows spell-check context menu: show correction suggestions on right-click
+  win.webContents.on('context-menu', (_event, params) => {
+    const menu = new Menu()
+
+    for (const suggestion of params.dictionarySuggestions) {
+      menu.append(new MenuItem({
+        label: suggestion,
+        click: () => win.webContents.replaceMisspelling(suggestion)
+      }))
+    }
+
+    if (params.misspelledWord) {
+      menu.append(new MenuItem({ type: 'separator' }))
+      menu.append(new MenuItem({
+        label: 'Ajouter au dictionnaire',
+        click: () => win.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord)
+      }))
+    }
+
+    if (menu.items.length > 0) {
+      menu.popup()
+    }
+  })
 
   if (process.env['ELECTRON_RENDERER_URL']) {
     win.loadURL(process.env['ELECTRON_RENDERER_URL'])
