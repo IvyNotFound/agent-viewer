@@ -90,6 +90,7 @@ export function registerIpcHandlers(): void {
    * @returns {{ success: boolean, dbPath: string, error?: string }}
    */
   ipcMain.handle('create-project-db', async (_event, projectPath: string) => {
+    assertProjectPathAllowed(projectPath)
     try {
       const claudeDir = join(projectPath, '.claude')
       await mkdir(claudeDir, { recursive: true })
@@ -319,6 +320,7 @@ export function registerIpcHandlers(): void {
    * @returns {string|null} Found DB path, or null
    */
   ipcMain.handle('find-project-db', async (_event, projectPath: string) => {
+    assertProjectPathAllowed(projectPath)
     const dbPath = await findProjectDb(projectPath)
     registerDbPath(dbPath)
     return dbPath
