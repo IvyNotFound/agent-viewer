@@ -11,6 +11,9 @@ import { onMounted, onUnmounted } from 'vue'
  * The listener is registered on `document` when the component mounts and
  * automatically cleaned up on unmount. This guarantees consistent Escape
  * behaviour across all current and future modals without manual boilerplate.
+ *
+ * @param onClose - Callback invoked when the Escape key is pressed.
+ * @returns void
  */
 export function useModalEscape(onClose: () => void): void {
   function handleKeydown(e: KeyboardEvent): void {

@@ -1,6 +1,6 @@
 # agent-viewer
 
-![Version](https://img.shields.io/badge/version-0.8.0-blue)
+![Version](https://img.shields.io/badge/version-0.9.0-blue)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 
 Desktop interface in Trello/Jira style for real-time visualization of Claude agent tasks from a local SQLite database. The application manages agents, launches sessions, and includes an embedded WSL terminal.
@@ -10,11 +10,12 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 ## Key Features
 
 - **Trello/Jira Board**: Columns by status (`todo`, `in_progress`, `done`, `archived`), task cards with drill-down, S/M/L effort badge and priority
-- **Agent Management**: Creation, configuration, system prompt editing, thinking mode (auto/disabled), mandatory assignment, right-click delete/duplicate, max sessions limit
+- **Agent Management**: Creation, configuration, system prompt editing, thinking mode (auto/disabled), mandatory assignment, right-click delete/duplicate, max sessions limit; review agents highlighted with amber accent in a dedicated sidebar section
+- **Keyboard Shortcuts**: Press `Escape` to close any modal (standardised via `useModalEscape` composable)
 - **Multi-agent Assignments**: Multiple agents per task (primary / support / reviewer roles), task card avatars
 - **Permission Mode per Agent**: Configure each agent to run Claude with `--dangerously-skip-permissions` (auto mode, opt-in with visible warning)
 - **Kanban Drag & Drop**: Drag task cards between columns to update status directly in the database
-- **Integrated WSL Terminal**: Multiple sessions, tabs, node-pty + xterm.js, crash recovery with `--resume`
+- **Integrated WSL Terminal**: Multiple sessions, tabs grouped by agent with collapsible parent tab, node-pty + xterm.js, crash recovery with `--resume`
 - **Auto-launch Terminals**: Automatic agent session launch on task creation with assignment
 - **Auto-trigger Review**: Automatic review session launch when ≥10 tasks reach `done` status (configurable threshold, cooldown)
 - **Archive Pagination**: Paginated archive view (50 tasks per page), archives excluded from main refresh for better performance
@@ -119,7 +120,7 @@ agent-viewer/
 │           │   ├── tabs.ts     # Tab management (multi-type)
 │           │   └── settings.ts # Theme, language, GitHub, CLAUDE.md
 │           ├── components/     # Vue components (~20 components)
-│           ├── composables/    # Vue composables (useAutoLaunch, useArchivedPagination…)
+│           ├── composables/    # Vue composables (useAutoLaunch, useArchivedPagination, useModalEscape…)
 │           ├── locales/        # i18n translations (fr.json, en.json)
 │           ├── utils/          # Utilities (agentColor…)
 │           └── types/
