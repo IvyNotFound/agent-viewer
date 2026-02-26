@@ -18,6 +18,7 @@ import { writeFile, unlink } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { promisify } from 'util'
+import { randomUUID } from 'crypto'
 
 const execPromise = promisify(execFile)
 
@@ -32,11 +33,18 @@ let nextId = 1
 // Regex pour valider les noms de profils Claude (claude ou claude-<suffix>)
 const CLAUDE_CMD_REGEX = /^claude(-[a-z0-9-]+)?$/
 
-// Regex to detect a Claude Code session/conversation UUID in PTY output.
-// Claude Code CLI displays the session ID at startup in formats like:
-//   "Session ID: <uuid>" or just as a standalone UUID in a status line.
-// We match any UUID v4 pattern (8-4-4-4-12 hex) appearing after common labels.
-const CONV_ID_REGEX = /(?:session(?:\s+id)?|conversation(?:\s+id)?|resuming)[:\s]+([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
+// Regex to detect a Claude Code session UUID in PTY output.
+// Claude Code CLI v2.x displays the session ID only when resuming, in the format:
+//   "resuming <uuid>" (dimColor, no colon).
+// For new sessions the banner shows no UUID — handled via --session-id flag instead.
+// Applied against ANSI-stripped buffer to avoid escape-code interference.
+const CONV_ID_REGEX = /(?:session(?:\s+id)?|conversation(?:\s+id)?|resuming)\s+([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
+
+// Strip ANSI escape sequences from a string before regex matching.
+const ANSI_RE = /\x1b\[[0-9;]*[a-zA-Z]|\x1b[()][a-zA-Z0-9]|\x1b[=>]|\x07|\r/g
+function stripAnsi(s: string): string {
+  return s.replace(ANSI_RE, '')
+}
 
 // Validate a string is a well-formed UUID (8-4-4-4-12)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -472,6 +480,10 @@ export function registerTerminalHandlers(): void {
     // Temp script file path (Windows) — cleaned up in onExit
     let tempScriptWinPath: string | null = null
 
+    // T589: UUID pre-assigned for new agent sessions via --session-id flag.
+    // Populated in the systemPrompt+userPrompt branch below; null for resume/bash sessions.
+    let newSessionId: string | null = null
+
     // Use -d <distro> to target a specific WSL distro (falls back to default if not provided)
     if (wslDistro) args.push('-d', wslDistro)
 
@@ -521,9 +533,16 @@ export function registerTerminalHandlers(): void {
       // User prompt is passed as a CLI positional argument to `claude` so it
       // becomes the first message — no need for PTY readiness detection.
       // Both prompts are base64-decoded at runtime to prevent shell injection.
+      // T589: Use --session-id to control the UUID for this new session.
+      // Claude Code v2.x never displays the session ID in the startup banner for
+      // new sessions (only shows "resuming <uuid>" when resuming). By injecting a
+      // known UUID via --session-id, we can emit terminal:convId immediately without
+      // any PTY output scanning.
+      newSessionId = randomUUID()
+
       const scriptName = `agent-prompt-${id}.sh`
       tempScriptWinPath = join(tmpdir(), scriptName)
-      const scriptContent = `#!/bin/bash\nexec ${cmd}${skipPermissionsFlag} --append-system-prompt "$(echo '${b64System}' | base64 -d)"${thinkingFlag} "$(echo '${b64User}' | base64 -d)"\n`
+      const scriptContent = `#!/bin/bash\nexec ${cmd}${skipPermissionsFlag} --session-id ${newSessionId} --append-system-prompt "$(echo '${b64System}' | base64 -d)"${thinkingFlag} "$(echo '${b64User}' | base64 -d)"\n`
       await writeFile(tempScriptWinPath, scriptContent, { encoding: 'utf8' })
       const scriptWslPath = toWslPath(tempScriptWinPath)
 
@@ -599,12 +618,26 @@ export function registerTerminalHandlers(): void {
       agentPtys.add(id)
     }
 
-    // ── Conv ID capture (task #218) ─────────────────────────────────────────
-    // Monitor early PTY output to detect Claude Code's session UUID.
-    // Once found, emit `terminal:convId:<id>` so the renderer can store it
-    // in the DB via `session:setConvId` for future `--resume` launches.
-    // We only scan the first ~8KB of output (startup banner) to avoid overhead.
-    let convIdDetected = false
+    // ── T589: Emit conv_id immediately for new sessions launched with --session-id ──
+    // For new agent sessions, we inject --session-id <uuid> into the launch script so
+    // we know the conv_id before any PTY output arrives. Emit now so the renderer can
+    // store it in the DB without waiting for banner scanning.
+    if (newSessionId) {
+      const params = ptyLaunchParams.get(id)!
+      params.detectedConvId = newSessionId
+      params.systemPrompt = undefined
+      params.userPrompt = undefined
+      if (!event.sender.isDestroyed()) {
+        event.sender.send(`terminal:convId:${id}`, newSessionId)
+      }
+    }
+
+    // ── Conv ID capture (task #218 / T589) ──────────────────────────────────
+    // Fallback: scan early PTY output for "resuming <uuid>" (shown when using --resume).
+    // For new sessions --session-id is injected above, so convIdDetected starts true.
+    // ANSI codes are stripped before regex matching to handle TUI escape sequences.
+    // We only scan the first ~8KB of output to avoid overhead.
+    let convIdDetected = !!newSessionId
     let convIdBuffer = ''
     let convIdBytesRead = 0
     const CONV_ID_SCAN_LIMIT = 8192
@@ -625,10 +658,7 @@ export function registerTerminalHandlers(): void {
         if (convIdBuffer.length > 512) {
           convIdBuffer = convIdBuffer.slice(-512)
         }
-        // Strip ANSI escape sequences before matching — Claude Code TUI (Ink) renders
-        // "Session ID:" in bold, emitting \x1b[1m...\x1b[22m codes that break [:\s]+ matching.
-        const cleanBuffer = convIdBuffer.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '')
-        const match = CONV_ID_REGEX.exec(cleanBuffer)
+        const match = CONV_ID_REGEX.exec(stripAnsi(convIdBuffer))
         if (match && match[1]) {
           convIdDetected = true
           convIdBuffer = '' // free memory
