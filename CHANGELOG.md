@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.8.0] - 2026-02-26
+
+### Changes
+- chore(git): ignore accidental tilde-expansion artefact directory (e85076c)
+- feat(agents): add maxSessions + permissionMode to updateAgent IPC type declaration (d7cba25)
+- feat(agents): add max_sessions field — AgentEditModal UI (4d1b2a8)
+- fix(back): handle missing max_sessions column gracefully in dbstart.js (ccb2d69)
+- feat(agents): add duplicate via context menu (ed5ab4e)
+- feat(kanban): persist task status to DB on drag & drop (95332f5)
+- test(agentColor): update assertions for variable saturation (T464) (421330a)
+- test(components): remove 40 implementation-detail tests (4078→3439 lines) (2122bcc)
+- feat(ux): add spell check context menu (146c6c1)
+- feat(agents): add max_sessions field — DB migration + IPC + dbstart (59a7c58)
+- fix(arch): update session close instruction to statut=completed (1605f81)
+- feat(ux): expand agent color palette with saturation variation (47c1655)
+- fix(scripts): use English session status values (started/completed) (aed8da9)
+- feat(ux): always show task ID in agent tab when task is active (0540096)
+- fix(auto-close): poll for statut=completed (was terminé) (2897cd5)
+- feat(ux): enable spellcheck on prompt textareas (96219b2)
+- feat(ux): enable spellcheck on prompt textareas (3a8d353)
+- fix(board): skip launch when task already in_progress (50515c0)
+- fix(ux): document onNameInput and move shortcut hint near Save button (4844f9c)
+- fix(ux): remove system prompt display block from LaunchSessionModal (d3aa592)
+- fix(ux): move delete button to left side of CreateAgentModal footer (0a786cd)
+- feat(build): embed GitHub token at build time (69a956a)
+- fix(agentColor): make tag colors reactive on theme switch (0d7d3e2)
+- fix(sidebar): remove redundant "edit system prompt" context menu item (3b61b73)
+- fix(tabs): do not steal focus when auto-launching agent terminal (e69c98f)
+- fix(ui): move assigned agent to right column in ticket detail view (9fda96e)
+- feat(agents): add delete button to CreateAgentModal edit mode (18cad0f)
+- fix(store): re-register dbPath on cold start to fix DB_PATH_NOT_ALLOWED (1c0ec79)
 ## [Unreleased]
 
 ## [0.7.0] - 2026-02-26
