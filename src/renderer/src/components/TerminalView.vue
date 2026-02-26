@@ -25,6 +25,9 @@ let ptyId: string | null = null
 let autoSendTimeout: ReturnType<typeof setTimeout> | null = null
 let fitTimeout: ReturnType<typeof setTimeout> | null = null
 let resizeRafId: number | null = null
+let xtermTextarea: HTMLTextAreaElement | null = null
+let pasteHandler: ((e: ClipboardEvent) => void) | null = null
+let contextMenuHandler: ((e: MouseEvent) => void) | null = null
 
 function doFit() {
   if (!fitAddon || !term) return
@@ -99,11 +102,12 @@ onMounted(async () => {
   // Prevent xterm's native paste event — paste is handled exclusively by attachCustomKeyEventHandler
   // (Ctrl+V fires both a keydown and a paste DOM event; blocking paste here prevents double-write)
   // Use capture phase to run BEFORE xterm's handler, and stopImmediatePropagation to block xterm's handler
-  const xtermTextarea = container.value?.querySelector('.xterm-helper-textarea') as HTMLTextAreaElement | null
-  xtermTextarea?.addEventListener('paste', (e) => {
+  xtermTextarea = container.value?.querySelector('.xterm-helper-textarea') as HTMLTextAreaElement | null
+  pasteHandler = (e: ClipboardEvent) => {
     e.preventDefault()
     e.stopImmediatePropagation()
-  }, true) // capture: true = runs before bubble phase handlers (like xterm's)
+  }
+  xtermTextarea?.addEventListener('paste', pasteHandler, true) // capture: true = runs before bubble phase handlers (like xterm's)
 
   // Wait for DOM to have proper dimensions before fitting
   // Use nextTick + Promise-based delay for more precise timing
@@ -214,13 +218,14 @@ onMounted(async () => {
   })
 
   // Context menu for copy (since copyOnSelect is disabled)
-  container.value?.addEventListener('contextmenu', (e) => {
+  contextMenuHandler = (e: MouseEvent) => {
     e.preventDefault()
     const selection = term?.getSelection()
     if (selection) {
       navigator.clipboard.writeText(selection)
     }
-  })
+  }
+  container.value?.addEventListener('contextmenu', contextMenuHandler)
 
   // Ctrl+C and Ctrl+V intercepted by Electron before xterm — handle copy/paste manually
   term.attachCustomKeyEventHandler((e) => {
@@ -338,8 +343,21 @@ onUnmounted(() => {
   unsubExit?.()
   unsubConvId?.()
   resizeObserver?.disconnect()
+  if (pasteHandler && xtermTextarea) {
+    xtermTextarea.removeEventListener('paste', pasteHandler, true)
+    pasteHandler = null
+  }
+  if (contextMenuHandler && container.value) {
+    container.value.removeEventListener('contextmenu', contextMenuHandler)
+    contextMenuHandler = null
+  }
+  xtermTextarea = null
   webglAddon?.dispose()
   term?.dispose()
+  // xterm 5.5 disposes its PerformanceObserver on term.dispose() — clear any
+  // residual entries as a safety net to prevent PerformanceEventTiming accumulation
+  performance.clearMeasures()
+  performance.clearMarks()
 })
 </script>
 
