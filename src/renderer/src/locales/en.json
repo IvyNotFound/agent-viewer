@@ -204,7 +204,14 @@
     "permissionMode": "Permission mode",
     "permissionModeDefault": "Standard",
     "permissionModeAuto": "Automatic",
-    "permissionModeWarning": "Bypasses all tool approval prompts"
+    "permissionModeWarning": "Bypasses all tool approval prompts",
+    "deleteAgent": "Delete agent",
+    "deleteAgentConfirm": "Permanently delete agent \"{name}\"? This action cannot be undone.",
+    "deleteAgentHistoryError": "Cannot delete: this agent has history (associated sessions, tasks or logs).",
+    "deleting": "Deleting…",
+    "newPerimetre": "New perimeter",
+    "newPerimetrePlaceholder": "perimeter-name",
+    "noPerimetre": "No existing perimeter"
   },
   "dbSelector": {
     "tagline": "View your Claude agents' tasks in real time.",

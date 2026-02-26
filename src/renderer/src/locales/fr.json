@@ -204,7 +204,14 @@
     "permissionMode": "Mode permissions",
     "permissionModeDefault": "Standard",
     "permissionModeAuto": "Automatique",
-    "permissionModeWarning": "Bypass toutes les approbations d'outils"
+    "permissionModeWarning": "Bypass toutes les approbations d'outils",
+    "deleteAgent": "Supprimer l'agent",
+    "deleteAgentConfirm": "Supprimer définitivement l'agent « {name} » ? Cette action est irréversible.",
+    "deleteAgentHistoryError": "Impossible de supprimer : cet agent possède un historique (sessions, tâches ou logs associés).",
+    "deleting": "Suppression…",
+    "newPerimetre": "Nouveau périmètre",
+    "newPerimetrePlaceholder": "nom-du-perimetre",
+    "noPerimetre": "Aucun périmètre existant"
   },
   "dbSelector": {
     "tagline": "Visualisez les tâches de vos agents Claude en temps réel.",

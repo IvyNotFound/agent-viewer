@@ -21,7 +21,11 @@ const permissionMode = ref<'default' | 'auto'>(
 const allowedTools = ref(props.agent.allowed_tools ?? '')
 const autoLaunch = ref(props.agent.auto_launch !== 0)
 const saving = ref(false)
+const deleting = ref(false)
 const error = ref<string | null>(null)
+const newPerimetreName = ref('')
+const addingPerimetre = ref(false)
+const perimètreError = ref<string | null>(null)
 
 onMounted(async () => {
   if (store.dbPath) {
@@ -32,6 +36,47 @@ onMounted(async () => {
     }
   }
 })
+
+async function deleteAgent() {
+  if (!store.dbPath) return
+  const confirmed = window.confirm(t('agent.deleteAgentConfirm', { name: props.agent.name }))
+  if (!confirmed) return
+  deleting.value = true
+  error.value = null
+  try {
+    const result = await window.electronAPI.deleteAgent(store.dbPath, props.agent.id)
+    if (result.hasHistory) {
+      error.value = t('agent.deleteAgentHistoryError')
+      return
+    }
+    if (!result.success) {
+      error.value = result.error ?? 'Erreur inconnue'
+      return
+    }
+    await store.refresh()
+    emit('saved')
+    emit('close')
+  } finally {
+    deleting.value = false
+  }
+}
+
+async function addPerimetre() {
+  if (!store.dbPath || !newPerimetreName.value.trim()) return
+  addingPerimetre.value = true
+  perimètreError.value = null
+  try {
+    const result = await window.electronAPI.addPerimetre(store.dbPath, newPerimetreName.value.trim())
+    if (!result.success) {
+      perimètreError.value = result.error ?? 'Erreur inconnue'
+      return
+    }
+    newPerimetreName.value = ''
+    await store.refresh()
+  } finally {
+    addingPerimetre.value = false
+  }
+}
 
 async function save() {
   if (!store.dbPath || !name.value.trim()) return
@@ -186,6 +231,36 @@ async function save() {
             <p v-if="permissionMode === 'auto'" class="text-[10px] text-red-400 dark:text-red-400 mt-1.5 font-medium">⚠ {{ t('agent.permissionModeWarning') }}</p>
           </div>
 
+          <!-- Périmètres -->
+          <div>
+            <label class="block text-xs font-semibold text-content-muted uppercase tracking-wider mb-2">{{ t('agent.perimeter') }}</label>
+            <div v-if="store.perimetresData.length === 0" class="text-xs text-content-faint italic mb-2">{{ t('agent.noPerimetre') }}</div>
+            <div v-else class="flex flex-wrap gap-1.5 mb-2">
+              <span
+                v-for="p in store.perimetresData"
+                :key="p.id"
+                class="px-2 py-0.5 rounded text-xs font-mono bg-surface-secondary border border-edge-default text-content-secondary"
+              >{{ p.name }}</span>
+            </div>
+            <div class="flex gap-2">
+              <input
+                v-model="newPerimetreName"
+                class="flex-1 bg-surface-secondary border border-edge-default rounded-lg px-3 py-1.5 text-xs font-mono text-content-primary outline-none focus:ring-1 focus:ring-violet-500 focus:border-violet-500 transition-colors"
+                :placeholder="t('agent.newPerimetrePlaceholder')"
+                @keydown.enter="addPerimetre"
+                @keydown.esc="newPerimetreName = ''"
+              />
+              <button
+                class="px-3 py-1.5 text-xs font-medium rounded-lg border border-edge-default bg-surface-secondary text-content-secondary hover:border-violet-500 hover:text-violet-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                :disabled="addingPerimetre || !newPerimetreName.trim()"
+                @click="addPerimetre"
+              >{{ t('agent.newPerimetre') }}</button>
+            </div>
+            <div v-if="perimètreError" class="mt-1.5 px-3 py-1.5 bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-800/50 rounded-md">
+              <p class="text-xs text-red-700 dark:text-red-400">{{ perimètreError }}</p>
+            </div>
+          </div>
+
           <!-- Erreur -->
           <div v-if="error" class="px-3 py-2 bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-800/50 rounded-md">
             <p class="text-xs text-red-700 dark:text-red-400">{{ error }}</p>
@@ -194,17 +269,24 @@ async function save() {
         </div>
 
         <!-- Footer -->
-        <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-edge-subtle bg-surface-base/50">
+        <div class="flex items-center justify-between gap-2 px-5 py-4 border-t border-edge-subtle bg-surface-base/50">
           <button
-            class="px-4 py-2 text-sm text-content-muted hover:text-content-secondary hover:bg-surface-secondary rounded-lg transition-colors"
-            @click="emit('close')"
-          >{{ t('common.cancel') }}</button>
-          <button
-            class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            :style="{ backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name), borderColor: agentBorder(agent.name), borderWidth: '1px' }"
-            :disabled="saving || !name.trim()"
-            @click="save"
-          >{{ saving ? t('common.saving') : t('common.save') }}</button>
+            class="px-4 py-2 text-sm font-medium text-red-500 hover:text-red-400 hover:bg-red-950/20 border border-red-800/40 hover:border-red-700/60 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            :disabled="deleting || saving"
+            @click="deleteAgent"
+          >{{ deleting ? t('agent.deleting') : t('agent.deleteAgent') }}</button>
+          <div class="flex items-center gap-2">
+            <button
+              class="px-4 py-2 text-sm text-content-muted hover:text-content-secondary hover:bg-surface-secondary rounded-lg transition-colors"
+              @click="emit('close')"
+            >{{ t('common.cancel') }}</button>
+            <button
+              class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              :style="{ backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name), borderColor: agentBorder(agent.name), borderWidth: '1px' }"
+              :disabled="saving || deleting || !name.trim()"
+              @click="save"
+            >{{ saving ? t('common.saving') : t('common.save') }}</button>
+          </div>
         </div>
 
       </div>
