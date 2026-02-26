@@ -33,6 +33,8 @@ const systemPromptSuffix = ref('')
 const description = ref('')
 const showPrompt = ref(false)
 const loading = ref(false)
+const deleting = ref(false)
+const deleteError = ref<string | null>(null)
 const nameError = ref('')
 
 const isScoped = computed(() => SCOPED_TYPES.includes(type.value))
@@ -139,6 +141,29 @@ async function submit() {
     emit('close')
   } finally {
     loading.value = false
+  }
+}
+
+async function deleteAgent() {
+  if (!store.dbPath || !props.agent) return
+  const confirmed = window.confirm(t('agent.deleteAgentConfirm', { name: props.agent.name }))
+  if (!confirmed) return
+  deleting.value = true
+  deleteError.value = null
+  try {
+    const result = await window.electronAPI.deleteAgent(store.dbPath, props.agent.id)
+    if (result.hasHistory) {
+      deleteError.value = t('agent.deleteAgentHistoryError')
+      return
+    }
+    if (!result.success) {
+      deleteError.value = result.error ?? 'Erreur inconnue'
+      return
+    }
+    await store.refresh()
+    emit('close')
+  } finally {
+    deleting.value = false
   }
 }
 
@@ -273,20 +298,29 @@ function handleKeydown(e: KeyboardEvent) {
         </div>
 
         <!-- Footer -->
-        <div class="px-5 py-3 border-t border-edge-subtle flex items-center justify-between shrink-0">
-          <span class="text-xs text-content-faint">{{ isEditMode ? t('agent.saveShortcut') : t('agent.createShortcut') }}</span>
-          <div class="flex gap-2">
-            <button
-              class="px-4 py-1.5 text-sm text-content-muted hover:text-content-secondary transition-colors"
-              @click="emit('close')"
-            >{{ t('common.cancel') }}</button>
-            <button
-              class="px-4 py-1.5 text-sm bg-violet-600 hover:bg-violet-500 text-white rounded-md transition-colors disabled:opacity-50"
-              :disabled="loading || !name.trim()"
-              @click="submit"
-            >
-              {{ loading ? (isEditMode ? t('common.saving') : t('agent.creating')) : (isEditMode ? t('common.save') : t('agent.create')) }}
-            </button>
+        <div class="px-5 py-3 border-t border-edge-subtle flex flex-col gap-2 shrink-0">
+          <p v-if="deleteError" class="text-xs text-red-400">{{ deleteError }}</p>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-content-faint">{{ isEditMode ? t('agent.saveShortcut') : t('agent.createShortcut') }}</span>
+            <div class="flex gap-2">
+              <button
+                v-if="isEditMode"
+                class="px-4 py-1.5 text-sm bg-red-700 hover:bg-red-600 text-white rounded-md transition-colors disabled:opacity-50"
+                :disabled="deleting || loading"
+                @click="deleteAgent"
+              >{{ deleting ? t('agent.deleting') : t('agent.deleteAgent') }}</button>
+              <button
+                class="px-4 py-1.5 text-sm text-content-muted hover:text-content-secondary transition-colors"
+                @click="emit('close')"
+              >{{ t('common.cancel') }}</button>
+              <button
+                class="px-4 py-1.5 text-sm bg-violet-600 hover:bg-violet-500 text-white rounded-md transition-colors disabled:opacity-50"
+                :disabled="loading || !name.trim()"
+                @click="submit"
+              >
+                {{ loading ? (isEditMode ? t('common.saving') : t('agent.creating')) : (isEditMode ? t('common.save') : t('agent.create')) }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
