@@ -3,14 +3,14 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
-import { useLaunchSession } from '@renderer/composables/useLaunchSession'
+import { useLaunchSession, MAX_AGENT_SESSIONS } from '@renderer/composables/useLaunchSession'
 import { useToast } from '@renderer/composables/useToast'
 import { useArchivedPagination } from '@renderer/composables/useArchivedPagination'
 import StatusColumn from './StatusColumn.vue'
 
 const { t, locale } = useI18n()
 const store = useTasksStore()
-const { launchAgentTerminal } = useLaunchSession()
+const { launchAgentTerminal, canLaunchSession } = useLaunchSession()
 const toast = useToast()
 const pagination = useArchivedPagination()
 
@@ -65,8 +65,6 @@ async function onTaskDropped(taskId: number, targetStatut: string): Promise<void
   if (task.statut === 'in_progress') return
 
   if (targetStatut === 'in_progress') {
-    await store.setTaskStatut(taskId, 'in_progress')
-
     if (!task.agent_assigne_id) {
       toast.push(t('board.noAgentAssigned'), 'warn')
       return
@@ -78,10 +76,16 @@ async function onTaskDropped(taskId: number, targetStatut: string): Promise<void
       return
     }
 
+    // Check session limit BEFORE changing DB
+    if (!canLaunchSession(agent.name)) {
+      toast.push(t('board.sessionLimitReached', { agent: agent.name, max: MAX_AGENT_SESSIONS }), 'warn')
+      return
+    }
+
+    // All checks passed → update DB then launch
+    await store.setTaskStatut(taskId, 'in_progress')
     const result = await launchAgentTerminal(agent, task)
-    if (result === 'session-limit') {
-      toast.push(t('board.sessionLimitReached', { agent: agent.name, max: 3 }), 'warn')
-    } else if (result === 'error') {
+    if (result === 'error') {
       toast.push(t('board.launchFailed', { agent: agent.name }), 'error')
     }
   }

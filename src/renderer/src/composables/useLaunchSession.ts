@@ -11,7 +11,7 @@ import { useTabsStore } from '@renderer/stores/tabs'
 import { useTasksStore } from '@renderer/stores/tasks'
 import type { Task, Agent } from '@renderer/types'
 
-const MAX_AGENT_SESSIONS = 3
+export const MAX_AGENT_SESSIONS = 3
 
 interface ClaudeInstance {
   distro: string
@@ -157,5 +157,13 @@ export function useLaunchSession() {
     }
   }
 
-  return { launchAgentTerminal, launchReviewSession }
+  /**
+   * Check whether a new session can be launched for the given agent.
+   * Returns false if the agent has already reached MAX_AGENT_SESSIONS open terminals.
+   */
+  function canLaunchSession(agentName: string): boolean {
+    return agentTerminalCount(agentName) < MAX_AGENT_SESSIONS
+  }
+
+  return { launchAgentTerminal, launchReviewSession, canLaunchSession }
 }

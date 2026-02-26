@@ -151,6 +151,42 @@ describe('composables/useLaunchSession', () => {
     })
   })
 
+  describe('canLaunchSession', () => {
+    it('should return true when agent has no terminals', () => {
+      const { canLaunchSession } = useLaunchSession()
+      expect(canLaunchSession('dev-front-vuejs')).toBe(true)
+    })
+
+    it('should return true when agent has fewer than MAX_AGENT_SESSIONS terminals', () => {
+      const tabsStore = useTabsStore()
+      tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
+      tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
+
+      const { canLaunchSession } = useLaunchSession()
+      expect(canLaunchSession('dev-front-vuejs')).toBe(true)
+    })
+
+    it('should return false when agent has reached MAX_AGENT_SESSIONS terminals', () => {
+      const tabsStore = useTabsStore()
+      tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
+      tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
+      tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
+
+      const { canLaunchSession } = useLaunchSession()
+      expect(canLaunchSession('dev-front-vuejs')).toBe(false)
+    })
+
+    it('should not affect other agents', () => {
+      const tabsStore = useTabsStore()
+      tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
+      tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
+      tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
+
+      const { canLaunchSession } = useLaunchSession()
+      expect(canLaunchSession('other-agent')).toBe(true)
+    })
+  })
+
   describe('launchReviewSession', () => {
     it('should return true and add terminal on success', async () => {
       const reviewAgent = makeAgent({ id: 99, name: 'review-master', type: 'review' })
