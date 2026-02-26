@@ -157,7 +157,7 @@ function hasOpenTerminal(agentName: string): boolean {
 function openAgentSession(agent: Agent) {
   const terminalCount = tabsStore.tabs.filter(t => t.type === 'terminal' && t.agentName === agent.name).length
   const maxSessions = agent.max_sessions ?? 1
-  if (terminalCount >= maxSessions) {
+  if (maxSessions !== -1 && terminalCount >= maxSessions) {
     const existing = tabsStore.tabs.find(t => t.type === 'terminal' && t.agentName === agent.name)
     if (existing) { tabsStore.setActive(existing.id); return }
   }
@@ -176,11 +176,16 @@ function openContextMenu(event: MouseEvent, agent: Agent) {
 }
 
 function contextMenuItemsFor(agent: Agent): ContextMenuItem[] {
+  const terminalCount = tabsStore.tabs.filter(t => t.type === 'terminal' && t.agentName === agent.name).length
+  const maxSessions = agent.max_sessions ?? 1
+  const multiSession = maxSessions === -1 || maxSessions > 1
+  const atLimit = maxSessions !== -1 && terminalCount >= maxSessions
+  const primaryLabel = multiSession && !atLimit
+    ? 'Nouvelle session'
+    : (hasOpenTerminal(agent.name) ? 'Aller à la session' : 'Ouvrir session')
   return [
     {
-      label: (agent.max_sessions ?? 1) > 1
-        ? 'Nouvelle session'
-        : (hasOpenTerminal(agent.name) ? 'Aller à la session' : 'Ouvrir session'),
+      label: primaryLabel,
       action: () => openAgentSession(agent)
     },
     {

@@ -189,15 +189,6 @@ export const useTabsStore = defineStore('tabs', () => {
     if (tab && title.trim()) tab.title = title.trim()
   }
 
-  function reorderTab(fromId: string, toId: string): void {
-    const fromIdx = tabs.value.findIndex(t => t.id === fromId)
-    const toIdx = tabs.value.findIndex(t => t.id === toId)
-    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return
-    const [tab] = tabs.value.splice(fromIdx, 1)
-    const newToIdx = tabs.value.findIndex(t => t.id === toId)
-    tabs.value.splice(newToIdx, 0, tab)
-  }
-
   function closeAllTerminals(): void {
     const terminals = tabs.value.filter(t => t.type === 'terminal')
     for (const tab of terminals) {
@@ -215,5 +206,5 @@ export const useTabsStore = defineStore('tabs', () => {
     }
   }
 
-  return { tabs, activeTabId, activeTab, tabActivity, setActive, addTerminal, addLogs, addExplorer, openFile, setTabDirty, setPtyId, closeTab, renameTab, reorderTab, closeAllTerminals, markTabActive, isAgentActive, hasAgentTerminal }
+  return { tabs, activeTabId, activeTab, tabActivity, setActive, addTerminal, addLogs, addExplorer, openFile, setTabDirty, setPtyId, closeTab, renameTab, closeAllTerminals, markTabActive, isAgentActive, hasAgentTerminal }
 })

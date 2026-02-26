@@ -20,23 +20,34 @@ interface TabGroup {
 
 const collapsedAgents = ref<Set<string | null>>(new Set())
 
-const groupedTerminalTabs = computed<TabGroup[]>(() => {
-  const activeAgentName = store.activeTab?.agentName ?? null
+// Base grouping — no dependency on activeTab (stable during intra-group tab switches)
+const groupedTerminalTabsBase = computed<TabGroup[]>(() => {
   const groupMap = new Map<string | null, Tab[]>()
   for (const tab of terminalTabs.value) {
     const key = tab.agentName
     if (!groupMap.has(key)) groupMap.set(key, [])
     groupMap.get(key)!.push(tab)
   }
-  const entries = [...groupMap.entries()]
-  entries.sort(([a], [b]) => {
-    if (a === activeAgentName) return -1
-    if (b === activeAgentName) return 1
-    if (a === null) return 1
-    if (b === null) return -1
-    return a.localeCompare(b)
+  return [...groupMap.entries()].map(([agentName, tabs]) => ({ agentName, tabs }))
+})
+
+// Primitive computed — Vue short-circuits downstream if agentName is unchanged on intra-group switch
+const activeAgentName = computed(() => store.activeTab?.agentName ?? null)
+
+// Sorted groups — active agent first. Recomputes only on inter-group switch or tab list change.
+const groupedTerminalTabs = computed<TabGroup[]>(() => {
+  const active = activeAgentName.value
+  const groups = groupedTerminalTabsBase.value
+  if (!active) return groups
+  const sorted = [...groups]
+  sorted.sort((a, b) => {
+    if (a.agentName === active) return -1
+    if (b.agentName === active) return 1
+    if (a.agentName === null) return 1
+    if (b.agentName === null) return -1
+    return a.agentName.localeCompare(b.agentName)
   })
-  return entries.map(([agentName, tabs]) => ({ agentName, tabs }))
+  return sorted
 })
 
 function toggleGroup(agentName: string | null): void {
@@ -127,37 +138,6 @@ onMounted(() => {
 onUnmounted(() => { resizeObs?.disconnect() })
 watch(() => terminalTabs.value.map(t => t.id).join(), () => nextTick(updateScrollState))
 
-// ── Drag & drop ──────────────────────────────────────────────────────────────
-const draggedId = ref<string | null>(null)
-const dropTargetId = ref<string | null>(null)
-
-function onDragStart(e: DragEvent, tabId: string) {
-  draggedId.value = tabId
-  if (e.dataTransfer) {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', tabId)
-  }
-}
-
-function onDragOver(e: DragEvent, tabId: string) {
-  if (!draggedId.value || draggedId.value === tabId) return
-  e.preventDefault()
-  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
-  dropTargetId.value = tabId
-}
-
-function onDrop(e: DragEvent, tabId: string) {
-  e.preventDefault()
-  if (!draggedId.value || draggedId.value === tabId) return
-  store.reorderTab(draggedId.value, tabId)
-  draggedId.value = null
-  dropTargetId.value = null
-}
-
-function onDragEnd() {
-  draggedId.value = null
-  dropTargetId.value = null
-}
 
 async function handleCloseTab(tab: Tab): Promise<void> {
   if (tab.type === 'file' && tab.dirty) {
@@ -348,7 +328,7 @@ function subTabLabel(tab: Tab): string {
           <svg
             viewBox="0 0 16 16" fill="currentColor"
             class="w-2.5 h-2.5 shrink-0 transition-transform duration-150"
-            :class="isGroupCollapsed(group.agentName) ? '-rotate-90' : ''"
+            :class="isGroupCollapsed(group.agentName) ? '' : '-rotate-90'"
             @click.stop="toggleGroup(group.agentName)"
           >
             <path d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
@@ -371,21 +351,13 @@ function subTabLabel(tab: Tab): string {
           <button
             v-for="tab in group.tabs"
             :key="tab.id"
-            draggable="true"
             :class="[
               'relative flex items-center gap-1.5 px-2.5 text-sm font-medium transition-all select-none rounded-t shrink-0 cursor-pointer',
               store.activeTabId !== tab.id ? 'opacity-70 hover:opacity-90' : '',
-              draggedId === tab.id ? 'opacity-40' : '',
-              dropTargetId === tab.id && draggedId !== tab.id ? 'ring-1 ring-inset ring-violet-500/50' : '',
             ]"
             :style="tabStyleMap.get(tab.id)"
             @click="store.setActive(tab.id)"
             @mousedown="onMiddleClick($event, tab)"
-            @dragstart="onDragStart($event, tab.id)"
-            @dragover="onDragOver($event, tab.id)"
-            @dragleave="dropTargetId = null"
-            @drop="onDrop($event, tab.id)"
-            @dragend="onDragEnd"
           >
             <span class="font-mono text-xs shrink-0">{{ subTabLabel(tab) }}</span>
             <span v-if="tab.dirty" class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" :title="t('tabBar.unsaved')" />

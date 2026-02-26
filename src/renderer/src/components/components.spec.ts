@@ -3361,28 +3361,30 @@ describe('TaskDetailModal — multi-agents', () => {
     vi.clearAllMocks()
   })
 
-  it('calls getTaskAssignees with task.id when modal opens', async () => {
-    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
-    api.getTaskAssignees.mockResolvedValue({ success: true, assignees: [] })
-
+  it('syncs local assignees from store.taskAssignees when modal opens (T521 — batching)', async () => {
+    // Since T521, getTaskAssignees is called by store.openTask (not the component).
+    // The component syncs its local assignees via watch(() => store.taskAssignees).
+    const mockAssignees = [{ agent_id: 5, agent_name: 'review-master', role: 'reviewer', assigned_at: new Date().toISOString() }]
     const task = makeTask({ id: 42 })
     const pinia = createTestingPinia({
-      initialState: { tasks: { selectedTask: null, agents: [], dbPath: '/p/db', taskComments: [] } },
+      initialState: { tasks: { selectedTask: null, agents: [], dbPath: '/p/db', taskComments: [], taskAssignees: [] } },
     })
-    shallowMount(TaskDetailModal, {
+    const wrapper = shallowMount(TaskDetailModal, {
       global: {
         plugins: [pinia, i18n],
         stubs: { AgentBadge: true, Transition: false },
       },
     })
 
-    // Trigger watch by changing selectedTask null → task
     const { useTasksStore } = await import('@renderer/stores/tasks')
     const store = useTasksStore()
     store.selectedTask = task
+    // Simulate store.openTask populating taskAssignees
+    store.taskAssignees = mockAssignees as never
     await flushPromises()
 
-    expect(api.getTaskAssignees).toHaveBeenCalledWith('/p/db', 42)
+    // Component's local assignees should mirror store.taskAssignees
+    expect(wrapper.text()).toContain('review-master')
   })
 
 

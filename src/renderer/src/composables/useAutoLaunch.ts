@@ -112,8 +112,10 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
   })
 
   function checkReviewThreshold(currentTasks: Task[]): void {
-    const doneTasks = currentTasks.filter(t => t.statut === 'done')
-    if (doneTasks.length < settingsStore.autoReviewThreshold) return
+    // Fast O(N) count without array allocation — filter only when threshold is met (T533)
+    let doneCount = 0
+    for (const t of currentTasks) if (t.statut === 'done') doneCount++
+    if (doneCount < settingsStore.autoReviewThreshold) return
 
     if (Date.now() - lastReviewLaunchedAt < REVIEW_COOLDOWN_MS) return
 
@@ -123,7 +125,7 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     if (tabsStore.hasAgentTerminal(reviewAgent.name)) return
 
     lastReviewLaunchedAt = Date.now()
-    launchReviewSession(reviewAgent, doneTasks)
+    launchReviewSession(reviewAgent, currentTasks.filter(t => t.statut === 'done'))
   }
 
   function doClose(agentName: string): void {

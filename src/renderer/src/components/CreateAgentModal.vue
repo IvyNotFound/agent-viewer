@@ -31,7 +31,10 @@ const thinkingMode = ref<'auto' | 'disabled'>('auto')
 const systemPrompt = ref('')
 const systemPromptSuffix = ref('')
 const description = ref('')
-const maxSessions = ref(props.agent?.max_sessions ?? 3)
+// String to allow empty value (empty → -1 = unlimited in DB)
+const maxSessions = ref(props.agent?.max_sessions === -1 ? '' : String(props.agent?.max_sessions ?? 3))
+const maxSessionsInvalid = computed(() => maxSessions.value !== '' && (!/^\d+$/.test(maxSessions.value) || parseInt(maxSessions.value) < 1))
+const maxSessionsDbValue = computed(() => maxSessions.value === '' ? -1 : parseInt(maxSessions.value))
 const showPrompt = ref(false)
 const loading = ref(false)
 const deleting = ref(false)
@@ -85,7 +88,7 @@ onMounted(async () => {
     type.value = ALL_TYPES.includes(a.type) ? a.type : 'dev'
     perimetre.value = a.perimetre ?? ''
     thinkingMode.value = a.thinking_mode === 'disabled' ? 'disabled' : 'auto'
-    maxSessions.value = a.max_sessions ?? 3
+    maxSessions.value = a.max_sessions === -1 ? '' : String(a.max_sessions ?? 3)
     // Load system_prompt and system_prompt_suffix from DB (may be more up-to-date than agent prop)
     if (store.dbPath) {
       const result = await window.electronAPI.getAgentSystemPrompt(store.dbPath, a.id)
@@ -110,7 +113,7 @@ async function submit() {
   try {
     // ── Edit mode ──────────────────────────────────────────────────────────
     if (isEditMode.value && props.agent) {
-      if (!Number.isInteger(maxSessions.value) || maxSessions.value < 1) return
+      if (maxSessionsInvalid.value) return
       const result = await window.electronAPI.updateAgent(store.dbPath, props.agent.id, {
         name: trimmed,
         type: type.value,
@@ -118,7 +121,7 @@ async function submit() {
         thinkingMode: thinkingMode.value,
         systemPrompt: systemPrompt.value.trim() || null,
         systemPromptSuffix: systemPromptSuffix.value.trim() || null,
-        maxSessions: maxSessions.value,
+        maxSessions: maxSessionsDbValue.value,
       })
       if (!result.success) {
         emit('toast', result.error ?? 'Erreur lors de la sauvegarde', 'error')
@@ -289,15 +292,15 @@ function handleKeydown(e: KeyboardEvent) {
           <div v-if="isEditMode">
             <label class="block text-xs text-content-muted mb-1">{{ t('agent.maxSessions') }}</label>
             <input
-              v-model.number="maxSessions"
-              type="number"
-              min="1"
-              max="20"
+              v-model="maxSessions"
+              type="text"
+              inputmode="numeric"
+              :placeholder="t('agent.maxSessionsUnlimited')"
               class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-sm font-mono text-content-primary outline-none focus:ring-1 focus:ring-violet-500 transition-colors"
-              :class="{ 'border-red-500 focus:ring-red-500': maxSessions < 1 || !Number.isInteger(maxSessions) }"
+              :class="{ 'border-red-500 focus:ring-red-500': maxSessionsInvalid }"
             />
             <p class="text-xs text-content-faint mt-1">{{ t('agent.maxSessionsNote') }}</p>
-            <p v-if="maxSessions < 1 || !Number.isInteger(maxSessions)" class="text-xs text-red-400 mt-1">{{ t('agent.maxSessionsError') }}</p>
+            <p v-if="maxSessionsInvalid" class="text-xs text-red-400 mt-1">{{ t('agent.maxSessionsError') }}</p>
           </div>
 
           <!-- System prompt (optionnel, collapsible) -->
@@ -355,7 +358,7 @@ function handleKeydown(e: KeyboardEvent) {
               >{{ t('common.cancel') }}</button>
               <button
                 class="px-4 py-1.5 text-sm bg-violet-600 hover:bg-violet-500 text-white rounded-md transition-colors disabled:opacity-50"
-                :disabled="loading || !name.trim() || (isEditMode && (maxSessions < 1 || !Number.isInteger(maxSessions)))"
+                :disabled="loading || !name.trim() || (isEditMode && maxSessionsInvalid)"
                 @click="submit"
               >
                 {{ loading ? (isEditMode ? t('common.saving') : t('agent.creating')) : (isEditMode ? t('common.save') : t('agent.create')) }}

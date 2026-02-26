@@ -17,6 +17,11 @@ const store = useTasksStore()
 const { push: pushToast } = useToast()
 const task = computed(() => store.selectedTask)
 
+// ── Agents lookup ─────────────────────────────────────────────────────────────
+const valideurAgent = computed(() =>
+  store.agents.find(a => a.id === task.value?.agent_valideur_id) ?? null
+)
+
 const statusLabel = (key: string) => ({
   todo:        t('columns.todo'),
   in_progress: t('columns.in_progress'),
@@ -80,11 +85,14 @@ function relativeTime(iso: string): string {
 }
 
 // ── Assignees (ADR-008) ───────────────────────────────────────────────────────
+// Local editable copy — seeded from store.taskAssignees (loaded in store.openTask, T521)
 
 const assignees = ref<TaskAssignee[]>([])
-const loadingAssignees = ref(false)
 const savingAssignees = ref(false)
 const showAgentDropdown = ref(false)
+
+// Sync local editable copy whenever the store loads assignees for the current task
+watch(() => store.taskAssignees, (val) => { assignees.value = Array.isArray(val) ? [...val] : [] }, { immediate: true })
 
 const sortedAssignees = computed(() =>
   [...assignees.value].sort((a, b) => {
@@ -93,19 +101,6 @@ const sortedAssignees = computed(() =>
     return 0
   })
 )
-
-async function loadAssignees(taskId: number): Promise<void> {
-  if (!store.dbPath) return
-  loadingAssignees.value = true
-  try {
-    const res = await window.electronAPI.getTaskAssignees(store.dbPath, taskId)
-    if (res.success) assignees.value = res.assignees as TaskAssignee[]
-  } catch {
-    assignees.value = []
-  } finally {
-    loadingAssignees.value = false
-  }
-}
 
 function isAssigned(agentId: number): boolean {
   return assignees.value.some(a => a.agent_id === agentId)
@@ -200,11 +195,10 @@ function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') store.closeTask()
 }
 
-watch(task, async (val) => {
+watch(task, (val) => {
   if (val) {
     document.removeEventListener('keydown', handleKeydown)
     document.addEventListener('keydown', handleKeydown)
-    await loadAssignees(val.id)
   } else {
     document.removeEventListener('keydown', handleKeydown)
     assignees.value = []
@@ -370,7 +364,6 @@ onUnmounted(() => {
               <div class="flex items-center justify-between mb-2">
                 <p class="text-[10px] font-semibold text-content-subtle uppercase tracking-wider">
                   {{ t('taskDetail.assignees') }}
-                  <span v-if="loadingAssignees" class="ml-1 text-content-faint">…</span>
                 </p>
                 <button
                   class="text-[10px] text-content-muted hover:text-content-secondary transition-colors"
@@ -403,7 +396,7 @@ onUnmounted(() => {
                   >✕</button>
                 </div>
               </div>
-              <p v-else-if="!showAgentDropdown && !loadingAssignees" class="text-xs text-content-faint italic mb-2">
+              <p v-else-if="!showAgentDropdown" class="text-xs text-content-faint italic mb-2">
                 {{ t('taskDetail.noAssignees') }}
               </p>
 

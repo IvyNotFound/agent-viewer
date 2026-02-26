@@ -17,6 +17,7 @@ const mockElectronAPI = {
   terminalKill: vi.fn(),
   findProjectDb: vi.fn().mockResolvedValue(null),
   getTaskLinks: vi.fn().mockResolvedValue({ success: true, links: [] }),
+  getTaskAssignees: vi.fn().mockResolvedValue({ success: true, assignees: [] }),
 }
 
 Object.defineProperty(window, 'electronAPI', {
@@ -849,60 +850,6 @@ describe('stores/tabs — missing actions', () => {
     it('should be a no-op for non-existent tab id', () => {
       const store = useTabsStore()
       expect(() => store.renameTab('nonexistent-id', 'new name')).not.toThrow()
-    })
-  })
-
-  describe('reorderTab', () => {
-    it('should handle valid from and to IDs without throwing', () => {
-      const store = useTabsStore()
-      store.addTerminal('agent-A')
-      store.addTerminal('agent-B')
-
-      const termTabs = store.tabs.filter(t => t.type === 'terminal')
-      // Should not throw with valid IDs
-      expect(() => store.reorderTab(termTabs[0].id, termTabs[1].id)).not.toThrow()
-    })
-
-    it('should be a no-op when fromId does not exist', () => {
-      const store = useTabsStore()
-      store.addTerminal('agent-A')
-      const tabsBefore = store.tabs.map(t => t.id)
-
-      store.reorderTab('nonexistent', store.tabs[0].id)
-
-      expect(store.tabs.map(t => t.id)).toEqual(tabsBefore)
-    })
-
-    it('should be a no-op when toId does not exist', () => {
-      const store = useTabsStore()
-      store.addTerminal('agent-A')
-      const tabsBefore = store.tabs.map(t => t.id)
-
-      store.reorderTab(store.tabs[0].id, 'nonexistent')
-
-      expect(store.tabs.map(t => t.id)).toEqual(tabsBefore)
-    })
-
-    it('should be a no-op when fromId === toId', () => {
-      const store = useTabsStore()
-      store.addTerminal('agent-A')
-      const [tabA] = store.tabs.filter(t => t.type === 'terminal')
-      const tabsBefore = [...store.tabs.map(t => t.id)]
-
-      store.reorderTab(tabA.id, tabA.id)
-
-      expect(store.tabs.map(t => t.id)).toEqual(tabsBefore)
-    })
-
-    it('should be a no-op when either ID does not exist', () => {
-      const store = useTabsStore()
-      store.addTerminal('agent-A')
-      const tabsBefore = [...store.tabs.map(t => t.id)]
-
-      store.reorderTab('nonexistent', store.tabs[0].id)
-      store.reorderTab(store.tabs[0].id, 'nonexistent')
-
-      expect(store.tabs.map(t => t.id)).toEqual(tabsBefore)
     })
   })
 
