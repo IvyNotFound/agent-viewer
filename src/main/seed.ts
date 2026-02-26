@@ -11,13 +11,17 @@
  *
  * @module seed
  */
-import { Database } from 'node-sqlite3-wasm'
+import initSqlJs from 'sql.js'
+import { readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 
-const dbPath = process.argv[2] ?? join(process.cwd(), '.claude/project.db')
-const db = new Database(dbPath)
+async function main() {
+  const dbPath = process.argv[2] ?? join(process.cwd(), '.claude/project.db')
+  const SQL = await initSqlJs()
+  const buffer = readFileSync(dbPath)
+  const db = new SQL.Database(buffer)
 
-db.exec(`
+  db.run(`
 INSERT OR IGNORE INTO agents (name, type, perimetre) VALUES
   ('dev-front-vuejs', 'dev', 'front-vuejs'),
   ('dev-back-electron', 'dev', 'back-electron'),
@@ -56,5 +60,13 @@ INSERT INTO locks (fichier, agent_id) VALUES
     (SELECT id FROM agents WHERE name = 'dev-front-vuejs'));
 `)
 
-console.log('Seed OK —', dbPath)
-db.close()
+  const data = db.export()
+  writeFileSync(dbPath, Buffer.from(data))
+  console.log('Seed OK —', dbPath)
+  db.close()
+}
+
+main().catch((err) => {
+  console.error(err)
+  process.exit(1)
+})
