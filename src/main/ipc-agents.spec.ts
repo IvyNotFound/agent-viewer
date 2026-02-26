@@ -907,3 +907,108 @@ describe('get-agent-system-prompt — permissionMode (T436)', () => {
     expect(result.permissionMode).toBeNull()
   })
 })
+
+// ── T475: agent:duplicate ─────────────────────────────────────────────────────
+// Uses a real in-memory DB (via dbBuffer) — writeDb succeeds on valid schema.
+
+describe('agent:duplicate handler', () => {
+  it('returns { success: false, error: Invalid agentId } for non-integer agentId', async () => {
+    const result = await handlers['agent:duplicate'](null, TEST_DB_PATH, 'abc') as {
+      success: boolean; error?: string
+    }
+    expect(result).toMatchObject({ success: false, error: 'Invalid agentId' })
+  })
+
+  it('returns { success: false, error: Invalid agentId } for float agentId', async () => {
+    const result = await handlers['agent:duplicate'](null, TEST_DB_PATH, 1.5) as {
+      success: boolean; error?: string
+    }
+    expect(result).toMatchObject({ success: false, error: 'Invalid agentId' })
+  })
+
+  it('returns { success: false, error } when agentId does not exist', async () => {
+    const result = await handlers['agent:duplicate'](null, TEST_DB_PATH, 99999) as {
+      success: boolean; error?: string
+    }
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('Agent not found')
+  })
+
+  it('returns { success: true, agentId, name: "<name>-copy" } for valid agent', async () => {
+    const agentId = await insertAgent('myagent')
+    const result = await handlers['agent:duplicate'](null, TEST_DB_PATH, agentId) as {
+      success: boolean; agentId?: number; name?: string
+    }
+    expect(result.success).toBe(true)
+    expect(result.name).toBe('myagent-copy')
+    expect(typeof result.agentId).toBe('number')
+  })
+
+  it('generates unique name "<name>-copy-2" when "<name>-copy" already exists', async () => {
+    const agentId = await insertAgent('dupe-agent')
+    // First duplicate → dupe-agent-copy
+    await handlers['agent:duplicate'](null, TEST_DB_PATH, agentId)
+    // Second duplicate → dupe-agent-copy-2
+    const result = await handlers['agent:duplicate'](null, TEST_DB_PATH, agentId) as {
+      success: boolean; name?: string
+    }
+    expect(result.success).toBe(true)
+    expect(result.name).toBe('dupe-agent-copy-2')
+  })
+
+  it('generates "<name>-copy-3" on third duplication', async () => {
+    const agentId = await insertAgent('triple-agent')
+    await handlers['agent:duplicate'](null, TEST_DB_PATH, agentId)
+    await handlers['agent:duplicate'](null, TEST_DB_PATH, agentId)
+    const result = await handlers['agent:duplicate'](null, TEST_DB_PATH, agentId) as {
+      success: boolean; name?: string
+    }
+    expect(result.success).toBe(true)
+    expect(result.name).toBe('triple-agent-copy-3')
+  })
+
+  it('copies all fields: name, type, perimetre, thinking_mode, system_prompt, system_prompt_suffix, allowed_tools', async () => {
+    // Insert agent with all fields populated
+    await writeDb<void>(TEST_DB_PATH, (db) => {
+      db.run(
+        'INSERT INTO agents (name, type, perimetre, thinking_mode, system_prompt, system_prompt_suffix, allowed_tools) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        ['full-agent', 'dev', 'back-electron', 'auto', 'You are dev', 'Always respond in english', '["Bash","Read"]']
+      )
+    })
+    const rows = await queryLive(TEST_DB_PATH, 'SELECT id FROM agents WHERE name = ?', ['full-agent']) as Array<{ id: number }>
+    const agentId = rows[0].id
+
+    const result = await handlers['agent:duplicate'](null, TEST_DB_PATH, agentId) as {
+      success: boolean; agentId?: number; name?: string
+    }
+    expect(result.success).toBe(true)
+
+    // Verify copied fields in DB
+    const copied = await queryLive(TEST_DB_PATH, 'SELECT * FROM agents WHERE id = ?', [result.agentId]) as Array<Record<string, unknown>>
+    expect(copied[0].type).toBe('dev')
+    expect(copied[0].perimetre).toBe('back-electron')
+    expect(copied[0].thinking_mode).toBe('auto')
+    expect(copied[0].system_prompt).toBe('You are dev')
+    expect(copied[0].system_prompt_suffix).toBe('Always respond in english')
+    expect(copied[0].allowed_tools).toBe('["Bash","Read"]')
+  })
+
+  it('returns { success: false, error: DB_PATH_NOT_ALLOWED } for unregistered dbPath', async () => {
+    const result = await handlers['agent:duplicate'](null, '/unregistered/evil.db', 1) as {
+      success: boolean; error?: string
+    }
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('DB_PATH_NOT_ALLOWED')
+  })
+
+  it('duplicate creates a new row in agents table', async () => {
+    const agentId = await insertAgent('count-agent')
+    const beforeRows = await queryLive(TEST_DB_PATH, 'SELECT COUNT(*) as n FROM agents', []) as Array<{ n: number }>
+    const before = Number(beforeRows[0].n)
+
+    await handlers['agent:duplicate'](null, TEST_DB_PATH, agentId)
+
+    const afterRows = await queryLive(TEST_DB_PATH, 'SELECT COUNT(*) as n FROM agents', []) as Array<{ n: number }>
+    expect(Number(afterRows[0].n)).toBe(before + 1)
+  })
+})

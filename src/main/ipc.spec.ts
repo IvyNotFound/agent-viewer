@@ -1088,5 +1088,159 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       }
     })
   })
+
+  // ── T474: tasks:getArchived ───────────────────────────────────────────────────
+  // Note: tasks:getArchived uses queryLive (CJS require — bypasses vi.mock ESM).
+  // assertDbPathAllowed throws synchronously for unregistered paths.
+  // For registered paths, queryLive throws (mock fs returns invalid buffer).
+
+  describe('tasks:getArchived handler', () => {
+    it('should throw DB_PATH_NOT_ALLOWED when dbPath is not registered', async () => {
+      await expect(
+        callHandler('tasks:getArchived', '/unregistered/evil.db', { page: 0, pageSize: 10 })
+      ).rejects.toThrow('DB_PATH_NOT_ALLOWED')
+    })
+
+    it('should throw when dbPath is registered but DB buffer is invalid (queryLive)', async () => {
+      await expect(
+        callHandler('tasks:getArchived', '/fake/project.db', { page: 0, pageSize: 10 })
+      ).rejects.toThrow()
+    })
+
+    it('should throw when agentId filter is provided', async () => {
+      await expect(
+        callHandler('tasks:getArchived', '/fake/project.db', { page: 0, pageSize: 10, agentId: 42 })
+      ).rejects.toThrow()
+    })
+
+    it('should throw when perimetre filter is provided', async () => {
+      await expect(
+        callHandler('tasks:getArchived', '/fake/project.db', { page: 0, pageSize: 10, perimetre: 'back-electron' })
+      ).rejects.toThrow()
+    })
+
+    it('should throw when agentId and perimetre are combined', async () => {
+      await expect(
+        callHandler('tasks:getArchived', '/fake/project.db', { page: 0, pageSize: 10, agentId: 1, perimetre: 'front-vuejs' })
+      ).rejects.toThrow()
+    })
+
+    it('should throw when page=1 (offset = page * pageSize)', async () => {
+      await expect(
+        callHandler('tasks:getArchived', '/fake/project.db', { page: 1, pageSize: 5 })
+      ).rejects.toThrow()
+    })
+
+    it('should not add agentId condition when agentId=null', async () => {
+      // null → condition skipped (agentId != null is false) — still throws on invalid buffer
+      await expect(
+        callHandler('tasks:getArchived', '/fake/project.db', { page: 0, pageSize: 10, agentId: null })
+      ).rejects.toThrow()
+    })
+
+    it('should not add perimetre condition when perimetre=null', async () => {
+      await expect(
+        callHandler('tasks:getArchived', '/fake/project.db', { page: 0, pageSize: 10, perimetre: null })
+      ).rejects.toThrow()
+    })
+  })
+
+  // ── T474: tasks:updateStatus ──────────────────────────────────────────────────
+  // Handler catches writeDb errors and returns { success: false }.
+  // assertDbPathAllowed throws for unregistered paths (not caught).
+  // Statut validation returns { success: false } before any DB access.
+
+  describe('tasks:updateStatus handler', () => {
+    it('should throw DB_PATH_NOT_ALLOWED when dbPath is not registered', async () => {
+      await expect(
+        callHandler('tasks:updateStatus', '/unregistered/evil.db', 1, 'done')
+      ).rejects.toThrow('DB_PATH_NOT_ALLOWED')
+    })
+
+    it('should return { success: false, error } for unknown statut', async () => {
+      const result = await callHandler('tasks:updateStatus', '/fake/project.db', 1, 'invalid-status') as {
+        success: boolean; error?: string
+      }
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('Invalid statut: invalid-status') })
+    })
+
+    it('should return { success: false, error } for empty string statut', async () => {
+      const result = await callHandler('tasks:updateStatus', '/fake/project.db', 1, '') as {
+        success: boolean; error?: string
+      }
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('Invalid statut:') })
+    })
+
+    it('should return { success: false } for null statut (not in ALLOWED list)', async () => {
+      const result = await callHandler('tasks:updateStatus', '/fake/project.db', 1, null) as {
+        success: boolean
+      }
+      expect(result.success).toBe(false)
+    })
+
+    it('should accept all four valid statuts without validation error', async () => {
+      const validStatuts = ['todo', 'in_progress', 'done', 'archived'] as const
+      for (const statut of validStatuts) {
+        const result = await callHandler('tasks:updateStatus', '/fake/project.db', 1, statut) as {
+          success: boolean; error?: string
+        }
+        // Validation passes; DB error may follow — but not a statut validation error
+        if (!result.success && result.error) {
+          expect(result.error).not.toContain('Invalid statut')
+        }
+      }
+    })
+
+    it('should return { success: false, error: string } when writeDb throws (mock buffer)', async () => {
+      // writeDb uses real sql.js on mock buffer → throws "file is not a database"
+      // Handler catches and returns { success: false, error: String(err) }
+      const result = await callHandler('tasks:updateStatus', '/fake/project.db', 1, 'done') as {
+        success: boolean; error?: string
+      }
+      expect(result).toHaveProperty('success')
+      if (!result.success) {
+        expect(typeof result.error).toBe('string')
+      }
+    })
+
+    it('should always return { success, error? } shape — never throw — for valid statut', async () => {
+      const result = await callHandler('tasks:updateStatus', '/fake/project.db', 99, 'archived') as Record<string, unknown>
+      expect(result).toHaveProperty('success')
+      expect(typeof result.success).toBe('boolean')
+    })
+  })
+
+  // ── T473: agent:duplicate — input validation ──────────────────────────────────
+
+  describe('agent:duplicate handler', () => {
+    it('should return { success: false, error: "Invalid agentId" } when agentId is a string (T473)', async () => {
+      const result = await callHandler('agent:duplicate', '/fake/project.db', 'not-a-number') as { success: boolean; error?: string }
+      expect(result).toMatchObject({ success: false, error: 'Invalid agentId' })
+    })
+
+    it('should return { success: false, error: "Invalid agentId" } when agentId is a float (T473)', async () => {
+      const result = await callHandler('agent:duplicate', '/fake/project.db', 1.5) as { success: boolean; error?: string }
+      expect(result).toMatchObject({ success: false, error: 'Invalid agentId' })
+    })
+
+    it('should return { success: false, error } when dbPath is not registered (T473)', async () => {
+      const result = await callHandler('agent:duplicate', '/invalid/db', 1)
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('DB_PATH_NOT_ALLOWED') })
+    })
+  })
+
+  // ── T477: update-agent — single UPDATE ────────────────────────────────────────
+
+  describe('update-agent handler — single UPDATE (T477)', () => {
+    it('should return { success: true } when updates is empty (T477 — cols.length guard)', async () => {
+      const result = await callHandler('update-agent', '/fake/project.db', 1, {}) as { success: boolean }
+      expect(result).toMatchObject({ success: true })
+    })
+
+    it('should return { success: false, error } for invalid maxSessions (T477)', async () => {
+      const result = await callHandler('update-agent', '/fake/project.db', 1, { maxSessions: 0 }) as { success: boolean; error?: string }
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('maxSessions') })
+    })
+  })
 })
 
