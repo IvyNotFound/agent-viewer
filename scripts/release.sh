@@ -55,6 +55,8 @@ fi
 echo ""
 echo "=== Bumping Version ==="
 NEW_VERSION=$(npm version "$BUMP_TYPE" --no-git-tag-version --allow-same-version)
+# Strip leading 'v' prefix from npm version output to avoid double-v (vv0.x.0)
+NEW_VERSION="${NEW_VERSION#v}"
 echo "New version: $NEW_VERSION"
 
 # Generate/update CHANGELOG.md

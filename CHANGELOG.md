@@ -4,13 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-## [v0.5.0] - 2026-02-26
-
-### Changes
-- feat: auto-launch terminals, review auto-trigger, mandatory assignee, tests & fixes (a98edf7)
-- fix(terminal): use \r instead of \n for userPrompt auto-send (f91053e)
-
 ## [Unreleased]
+
+## [0.5.0] - 2026-02-26
+
+### Added
+- **Auto-launch terminals** — agent terminal sessions auto-start when task is created with assignee (`useAutoLaunch` composable, 18 tests)
+- **Auto-trigger review** — review session launches automatically when 10+ tasks reach done status (configurable threshold, cooldown)
+- **Mandatory assignee** — `agent_assigne_id` required on tasks (DB migration + UI validation + agent suggestion by scope)
+- **CLAUDE.md injection** — `insertAgentIntoClaudeMd` exported for unit testing (10 tests)
+- `src/main/claude-md.ts` + `claude-md.spec.ts` — CLAUDE.md manipulation module
+- `src/main/db.spec.ts` — DB utility tests (7 tests)
+- `src/renderer/src/composables/useAutoLaunch.ts` + spec
+
+### Changed
+- Massive test expansion: 491 tests across 10 suites (components, stores, IPC, migration, utils)
+- `agentColor.ts` reactive to dark/light mode switching (24 tests)
+- IPC agents restructured (`ipc-agents.ts`)
+- Default agents system prompts expanded
+- Settings store extended with auto-launch toggle
+- WORKFLOW.md updated with heredoc stdin reminder + system_prompt_suffix docs
+
+### Fixed
+- Light/dark mode agent colors now reactive to theme changes
+- Visual bugs in light mode (agent colors, terminal tabs, log tags)
+- Conditional WSL cleanup — only when WSL sessions actually exist
 
 ## [0.4.0] - 2026-02-26
 
@@ -167,7 +185,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial prototype with Tauri
 - Basic task board view
 
-[Unreleased]: https://github.com/IvyNotFound/agent-viewer/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/IvyNotFound/agent-viewer/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/IvyNotFound/agent-viewer/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/IvyNotFound/agent-viewer/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/IvyNotFound/agent-viewer/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/IvyNotFound/agent-viewer/compare/v0.3.0...v0.3.1
