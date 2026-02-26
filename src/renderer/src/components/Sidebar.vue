@@ -154,10 +154,10 @@ function hasOpenTerminal(agentName: string): boolean {
   return openTerminalAgents.value.has(agentName)
 }
 
-const MULTI_INSTANCE_TYPES = ['review']
-
 function openAgentSession(agent: Agent) {
-  if (!MULTI_INSTANCE_TYPES.includes(agent.type)) {
+  const terminalCount = tabsStore.tabs.filter(t => t.type === 'terminal' && t.agentName === agent.name).length
+  const maxSessions = agent.max_sessions ?? 1
+  if (terminalCount >= maxSessions) {
     const existing = tabsStore.tabs.find(t => t.type === 'terminal' && t.agentName === agent.name)
     if (existing) { tabsStore.setActive(existing.id); return }
   }
@@ -178,7 +178,7 @@ function openContextMenu(event: MouseEvent, agent: Agent) {
 function contextMenuItemsFor(agent: Agent): ContextMenuItem[] {
   return [
     {
-      label: MULTI_INSTANCE_TYPES.includes(agent.type)
+      label: (agent.max_sessions ?? 1) > 1
         ? 'Nouvelle session'
         : (hasOpenTerminal(agent.name) ? 'Aller à la session' : 'Ouvrir session'),
       action: () => openAgentSession(agent)
@@ -354,18 +354,6 @@ async function closeProject() {
       <!-- Divider -->
       <hr class="border-edge-subtle w-6 my-0.5">
 
-      <!-- Projet -->
-      <button
-        :title="t('sidebar.project')"
-        :class="['rail-btn', activeSection === 'project' && 'rail-btn--active']"
-        @click="toggleSection('project')"
-      >
-        <span v-if="activeSection === 'project'" class="rail-indicator" />
-        <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
-          <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.98 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z"/>
-        </svg>
-      </button>
-
       <!-- Agents -->
       <button
         :title="t('sidebar.agents')"
@@ -404,6 +392,18 @@ async function closeProject() {
 
       <!-- Spacer -->
       <div class="flex-1" />
+
+      <!-- Projet -->
+      <button
+        :title="t('sidebar.project')"
+        :class="['rail-btn', activeSection === 'project' && 'rail-btn--active']"
+        @click="toggleSection('project')"
+      >
+        <span v-if="activeSection === 'project'" class="rail-indicator" />
+        <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
+          <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.98 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z"/>
+        </svg>
+      </button>
 
       <!-- Paramètres (bas) -->
       <button
