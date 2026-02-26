@@ -3,12 +3,20 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Task } from '@renderer/types'
 import AgentBadge from './AgentBadge.vue'
+import ContextMenu from './ContextMenu.vue'
+import type { ContextMenuItem } from './ContextMenu.vue'
 import { useTasksStore } from '@renderer/stores/tasks'
+import { useTabsStore } from '@renderer/stores/tabs'
+import { useLaunchSession, MAX_AGENT_SESSIONS } from '@renderer/composables/useLaunchSession'
+import { useToast } from '@renderer/composables/useToast'
 import { agentFg, agentBg, agentBorder, perimeterFg, perimeterBg, perimeterBorder } from '@renderer/utils/agentColor'
 
 const { t, locale } = useI18n()
 const props = defineProps<{ task: Task }>()
 const store = useTasksStore()
+const tabsStore = useTabsStore()
+const { launchAgentTerminal, canLaunchSession } = useLaunchSession()
+const toast = useToast()
 
 // Multi-agent avatars (lazy-loaded on mount)
 interface AssigneeAvatar { agent_id: number; agent_name: string; role: string | null }
@@ -31,6 +39,50 @@ function onDragStart(e: DragEvent): void {
   e.dataTransfer.effectAllowed = 'move'
   e.dataTransfer.setData('application/x-task-id', String(props.task.id))
 }
+
+// ── Context menu (right-click relaunch for in_progress tasks) ─────────────────
+const contextMenu = ref<{ x: number; y: number } | null>(null)
+
+function onContextMenu(event: MouseEvent): void {
+  if (props.task.statut !== 'in_progress') return
+  event.preventDefault()
+  contextMenu.value = { x: event.clientX, y: event.clientY }
+}
+
+async function handleRelaunch(): Promise<void> {
+  if (!props.task.agent_assigne_id) {
+    toast.push(t('board.noAgentAssigned'), 'warn')
+    return
+  }
+  const agent = store.agents.find(a => a.id === props.task.agent_assigne_id)
+  if (!agent) {
+    toast.push(t('board.agentNotFound'), 'error')
+    return
+  }
+  if (!canLaunchSession(agent.name)) {
+    toast.push(t('board.sessionLimitReached', { agent: agent.name, max: MAX_AGENT_SESSIONS }), 'warn')
+    return
+  }
+  const result = await launchAgentTerminal(agent, props.task)
+  if (result === 'error') {
+    toast.push(t('board.launchFailed', { agent: agent.name }), 'error')
+  }
+}
+
+const contextMenuItems = computed<ContextMenuItem[]>(() => {
+  if (props.task.statut !== 'in_progress') return []
+  const alreadyOpen = tabsStore.tabs.some(
+    tab => tab.type === 'terminal' && tab.taskId === props.task.id
+  )
+  return [{
+    label: alreadyOpen
+      ? t('taskCard.sessionAlreadyOpen')
+      : t('taskCard.relaunchAgent'),
+    action: alreadyOpen
+      ? () => { toast.push(t('taskCard.sessionAlreadyOpenDetail', { id: props.task.id }), 'info') }
+      : () => { handleRelaunch() },
+  }]
+})
 
 function formatDate(iso: string): string {
   const loc = locale.value === 'fr' ? 'fr-FR' : 'en-US'
@@ -70,6 +122,7 @@ const PRIORITY_LABEL: Record<string, string> = {
     :draggable="task.statut === 'todo' || task.statut === 'in_progress'"
     @click="store.openTask(task)"
     @dragstart="onDragStart"
+    @contextmenu="onContextMenu"
   >
     <!-- Top row: title + effort/priority -->
     <div class="flex items-start justify-between gap-2 mb-2">
@@ -128,4 +181,12 @@ const PRIORITY_LABEL: Record<string, string> = {
       <span class="text-xs text-content-faint font-mono shrink-0">#{{ task.id }}</span>
     </div>
   </div>
+
+  <ContextMenu
+    v-if="contextMenu"
+    :x="contextMenu.x"
+    :y="contextMenu.y"
+    :items="contextMenuItems"
+    @close="contextMenu = null"
+  />
 </template>

@@ -467,6 +467,78 @@ describe('TaskCard', () => {
     const badges = wrapper.findAll('span').filter(s => labels.includes(s.text().trim()))
     expect(badges.length).toBe(0)
   })
+
+  // ── T575: context menu on in_progress tasks ──
+  it('shows ContextMenu on right-click when task is in_progress (T575)', async () => {
+    const task = makeTask({ statut: 'in_progress' })
+    const pinia = createTestingPinia({
+      initialState: { tasks: { agents: [], dbPath: '/p/db' }, tabs: { tabs: [] } },
+    })
+    const wrapper = shallowMount(TaskCard, {
+      props: { task },
+      global: { plugins: [pinia, i18n] },
+    })
+    expect(wrapper.findComponent({ name: 'ContextMenu' }).exists()).toBe(false)
+    await wrapper.find('div').trigger('contextmenu', { clientX: 100, clientY: 200 })
+    await nextTick()
+    const menu = wrapper.findComponent({ name: 'ContextMenu' })
+    expect(menu.exists()).toBe(true)
+    expect(menu.props('x')).toBe(100)
+    expect(menu.props('y')).toBe(200)
+  })
+
+  it('does not show ContextMenu on right-click when task is todo (T575)', async () => {
+    const task = makeTask({ statut: 'todo' })
+    const pinia = createTestingPinia({
+      initialState: { tasks: { agents: [], dbPath: '/p/db' }, tabs: { tabs: [] } },
+    })
+    const wrapper = shallowMount(TaskCard, {
+      props: { task },
+      global: { plugins: [pinia, i18n] },
+    })
+    await wrapper.find('div').trigger('contextmenu', { clientX: 50, clientY: 50 })
+    await nextTick()
+    expect(wrapper.findComponent({ name: 'ContextMenu' }).exists()).toBe(false)
+  })
+
+  it('closes ContextMenu when @close is emitted (T575)', async () => {
+    const task = makeTask({ statut: 'in_progress' })
+    const pinia = createTestingPinia({
+      initialState: { tasks: { agents: [], dbPath: '/p/db' }, tabs: { tabs: [] } },
+    })
+    const wrapper = shallowMount(TaskCard, {
+      props: { task },
+      global: { plugins: [pinia, i18n] },
+    })
+    await wrapper.find('div').trigger('contextmenu', { clientX: 10, clientY: 10 })
+    await nextTick()
+    const menu = wrapper.findComponent({ name: 'ContextMenu' })
+    expect(menu.exists()).toBe(true)
+    await menu.vm.$emit('close')
+    await nextTick()
+    expect(wrapper.findComponent({ name: 'ContextMenu' }).exists()).toBe(false)
+  })
+
+  it('shows "Session already active" label when tab already open for task (T575)', async () => {
+    const task = makeTask({ statut: 'in_progress', id: 42 })
+    const pinia = createTestingPinia({
+      initialState: {
+        tasks: { agents: [], dbPath: '/p/db' },
+        tabs: { tabs: [{ id: 't1', type: 'terminal', taskId: 42, agentName: 'dev' }] },
+      },
+    })
+    const wrapper = shallowMount(TaskCard, {
+      props: { task },
+      global: { plugins: [pinia, i18n] },
+    })
+    await wrapper.find('div').trigger('contextmenu', { clientX: 10, clientY: 10 })
+    await nextTick()
+    const menu = wrapper.findComponent({ name: 'ContextMenu' })
+    expect(menu.exists()).toBe(true)
+    const items = menu.props('items') as Array<{ label: string }>
+    // Label should be "Session already active" (en) or "Session déjà active" (fr)
+    expect(items[0].label).toMatch(/session/i)
+  })
 })
 
 // ── Sidebar (T230) ───────────────────────────────────────────────────────────
