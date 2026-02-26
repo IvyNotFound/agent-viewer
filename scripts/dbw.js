@@ -6,9 +6,8 @@
  *   node scripts/dbw.js "UPDATE tasks SET statut='en_cours' WHERE id=250"
  *   echo "UPDATE ..." | node scripts/dbw.js   # stdin (safe for complex queries)
  *
- * Load → modify in memory → export. fs.writeFile holds lock only during the
- * brief write (milliseconds). Not safe for concurrent writes — use DB locks
- * (INSERT OR REPLACE INTO locks) before calling this script.
+ * Load → modify in memory → export. Uses an OS-level advisory lock (.wlock file)
+ * to serialize concurrent writes and prevent lost-update races between agents.
  *
  * Stdin mode avoids shell interpretation of backticks, $(), quotes and newlines.
  * Useful for long UPDATE/INSERT with system_prompt content or multi-line SQL.
@@ -17,6 +16,7 @@
 const initSqlJs = require('sql.js')
 const fs = require('fs')
 const path = require('path')
+const { acquireLock, releaseLock } = require('./dblock')
 
 const sqlArg = process.argv[2]
 
@@ -24,18 +24,24 @@ const dbPath = path.resolve(process.cwd(), '.claude/project.db')
 
 /**
  * Executes a write SQL statement and persists the result.
+ * Serialized via advisory lock to prevent concurrent lost-update races.
  * @param {string} sql
  */
 function run(sql) {
   initSqlJs().then((SQL) => {
-    const buf = fs.readFileSync(dbPath)
-    const db = new SQL.Database(buf)
-    db.run(sql)
-    // T313: Atomic write — temp file + rename prevents partial reads
-    const tmpPath = dbPath + '.tmp'
-    fs.writeFileSync(tmpPath, Buffer.from(db.export()))
-    fs.renameSync(tmpPath, dbPath)
-    db.close()
+    const lockPath = acquireLock(dbPath)
+    try {
+      const buf = fs.readFileSync(dbPath)
+      const db = new SQL.Database(buf)
+      db.run(sql)
+      // T313: Atomic write — unique temp file + rename prevents partial reads
+      const tmpPath = `${dbPath}.tmp.${process.pid}.${Date.now()}`
+      fs.writeFileSync(tmpPath, Buffer.from(db.export()))
+      fs.renameSync(tmpPath, dbPath)
+      db.close()
+    } finally {
+      releaseLock(lockPath)
+    }
   })
 }
 

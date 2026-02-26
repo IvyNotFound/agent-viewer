@@ -17,6 +17,7 @@
 const initSqlJs = require('sql.js')
 const fs = require('fs')
 const path = require('path')
+const { acquireLock, releaseLock } = require('./dblock')
 
 const agent = process.argv[2]
 const type = process.argv[3] || agent
@@ -30,6 +31,7 @@ if (!agent) {
 const dbPath = path.resolve(process.cwd(), '.claude/project.db')
 
 initSqlJs().then((SQL) => {
+  const lockPath = acquireLock(dbPath)
   const buf = fs.readFileSync(dbPath)
   const db = new SQL.Database(buf)
 
@@ -41,6 +43,7 @@ initSqlJs().then((SQL) => {
         ? ` Utilisez: node scripts/dbstart.js ${byId[0].values[0][0]}`
         : ''
     db.close()
+    releaseLock(lockPath)
     console.error(`ERREUR: nom d'agent "${agent}" est un entier (probablement un agent_id).${hint}`)
     process.exit(3)
   }
@@ -68,6 +71,7 @@ initSqlJs().then((SQL) => {
   const activeCount = activeRow[0].values[0][0]
   if (activeCount >= maxSessions) {
     db.close()
+    releaseLock(lockPath)
     console.error(
       `ERREUR: ${agent} a déjà ${activeCount} session(s) active(s) (max ${maxSessions}). Terminer une session avant d'en ouvrir une nouvelle.`
     )
@@ -142,10 +146,11 @@ initSqlJs().then((SQL) => {
     console.log(`\n[auto-release] ${zombieSessionCount} zombie session(s) marked as completed`)
   }
 
-  // Persist writes (atomic: tmp + rename)
-  const tmpPath = dbPath + '.tmp'
+  // Persist writes (atomic: unique tmp + rename, serialized by .wlock)
+  const tmpPath = `${dbPath}.tmp.${process.pid}.${Date.now()}`
   fs.writeFileSync(tmpPath, Buffer.from(db.export()))
   fs.renameSync(tmpPath, dbPath)
+  releaseLock(lockPath)
 
   // === OUTPUT ===
 
