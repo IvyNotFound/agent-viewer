@@ -202,7 +202,6 @@ onUnmounted(() => {
                   borderColor: perimeterBorder(task.perimetre),
                 }"
               >{{ task.perimetre }}</span>
-              <AgentBadge v-if="task.agent_name" :name="task.agent_name" :perimetre="task.agent_perimetre" />
               <span
                 v-if="task.effort"
                 :class="['text-xs font-bold px-2 py-0.5 rounded font-mono border', EFFORT_BADGE[task.effort]]"
@@ -233,6 +232,25 @@ onUnmounted(() => {
 
           <!-- Colonne droite : assignés + commentaires -->
           <div class="w-72 shrink-0 flex flex-col min-h-0">
+
+            <!-- Section Agents (créateur / assigné / valideur) -->
+            <div class="px-4 py-3 border-b border-edge-subtle shrink-0">
+              <p class="text-[10px] font-semibold text-content-subtle uppercase tracking-wider mb-2">{{ t('taskDetail.agents') }}</p>
+              <div class="space-y-1.5">
+                <div v-if="task.agent_createur_name" class="flex items-center gap-2">
+                  <span class="text-[10px] text-content-faint w-14 shrink-0">{{ t('taskDetail.creator') }}</span>
+                  <AgentBadge :name="task.agent_createur_name" />
+                </div>
+                <div v-if="task.agent_name" class="flex items-center gap-2">
+                  <span class="text-[10px] text-content-faint w-14 shrink-0">{{ t('taskDetail.assigned') }}</span>
+                  <AgentBadge :name="task.agent_name" />
+                </div>
+                <div v-if="valideurAgent" class="flex items-center gap-2">
+                  <span class="text-[10px] text-content-faint w-14 shrink-0">{{ t('taskDetail.validator') }}</span>
+                  <AgentBadge :name="valideurAgent.name" />
+                </div>
+              </div>
+            </div>
 
             <!-- Section Assignés -->
             <div class="px-4 py-3 border-b border-edge-subtle shrink-0">

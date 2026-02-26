@@ -44,7 +44,11 @@
     "assignees": "Assignés",
     "addAssignee": "Ajouter",
     "noAssignees": "Aucun agent assigné",
-    "saveError": "Erreur lors de l'enregistrement des assignés"
+    "saveError": "Erreur lors de l'enregistrement des assignés",
+    "agents": "Agents",
+    "creator": "Créateur",
+    "assigned": "Assigné",
+    "validator": "Valideur"
   },
   "logs": {
     "allAgents": "Tous les agents",

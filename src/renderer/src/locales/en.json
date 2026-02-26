@@ -44,7 +44,11 @@
     "assignees": "Assignees",
     "addAssignee": "Add",
     "noAssignees": "No agent assigned",
-    "saveError": "Failed to save assignees"
+    "saveError": "Failed to save assignees",
+    "agents": "Agents",
+    "creator": "Creator",
+    "assigned": "Assigned",
+    "validator": "Validator"
   },
   "logs": {
     "allAgents": "All agents",
