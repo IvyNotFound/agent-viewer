@@ -547,6 +547,188 @@ describe('task:getAssignees — validation guards', () => {
   })
 })
 
+// ── Tests: delete-agent (T437) ────────────────────────────────────────────────
+
+describe('delete-agent — T437', () => {
+  it('agent without history → deleted from DB', async () => {
+    const agentId = await insertAgent('agent-no-history')
+
+    const result = await handlers['delete-agent'](
+      null,
+      TEST_DB_PATH,
+      agentId
+    ) as { success: boolean; hasHistory: boolean }
+
+    expect(result.success).toBe(true)
+    expect(result.hasHistory).toBe(false)
+
+    const rows = await queryLive(TEST_DB_PATH, 'SELECT id FROM agents WHERE id = ?', [agentId]) as Array<{ id: number }>
+    expect(rows).toHaveLength(0)
+  })
+
+  it('agent with sessions → hasHistory=true, not deleted', async () => {
+    const agentId = await insertAgent('agent-has-session')
+    await writeDb<void>(TEST_DB_PATH, (db) => {
+      db.run('INSERT INTO sessions (agent_id, statut) VALUES (?, ?)', [agentId, 'completed'])
+    })
+
+    const result = await handlers['delete-agent'](
+      null,
+      TEST_DB_PATH,
+      agentId
+    ) as { success: boolean; hasHistory: boolean }
+
+    expect(result.success).toBe(true)
+    expect(result.hasHistory).toBe(true)
+
+    const rows = await queryLive(TEST_DB_PATH, 'SELECT id FROM agents WHERE id = ?', [agentId]) as Array<{ id: number }>
+    expect(rows).toHaveLength(1)
+  })
+
+  it('agent with assigned tasks → hasHistory=true, not deleted', async () => {
+    const agentId = await insertAgent('agent-has-tasks')
+    const taskId = await insertTask('task-assigned')
+    await writeDb<void>(TEST_DB_PATH, (db) => {
+      db.run('UPDATE tasks SET agent_assigne_id = ? WHERE id = ?', [agentId, taskId])
+    })
+
+    const result = await handlers['delete-agent'](
+      null,
+      TEST_DB_PATH,
+      agentId
+    ) as { success: boolean; hasHistory: boolean }
+
+    expect(result.success).toBe(true)
+    expect(result.hasHistory).toBe(true)
+  })
+
+  it('agent with task_comments → hasHistory=true, not deleted', async () => {
+    const agentId = await insertAgent('agent-has-comments')
+    const taskId = await insertTask('task-commented')
+    await writeDb<void>(TEST_DB_PATH, (db) => {
+      db.run('INSERT INTO task_comments (task_id, agent_id, contenu) VALUES (?, ?, ?)', [taskId, agentId, 'comment'])
+    })
+
+    const result = await handlers['delete-agent'](
+      null,
+      TEST_DB_PATH,
+      agentId
+    ) as { success: boolean; hasHistory: boolean }
+
+    expect(result.success).toBe(true)
+    expect(result.hasHistory).toBe(true)
+  })
+
+  it('invalid agentId (float) → {success:false, error}', async () => {
+    const result = await handlers['delete-agent'](
+      null,
+      TEST_DB_PATH,
+      1.5
+    ) as { success: boolean; error: string }
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('Invalid agentId')
+  })
+
+  it('delete releases active locks for the agent', async () => {
+    const agentId = await insertAgent('agent-with-locks')
+    await writeDb<void>(TEST_DB_PATH, (db) => {
+      db.run('INSERT INTO locks (fichier, agent_id) VALUES (?, ?)', ['some/file.ts', agentId])
+    })
+
+    const result = await handlers['delete-agent'](
+      null,
+      TEST_DB_PATH,
+      agentId
+    ) as { success: boolean; hasHistory: boolean }
+
+    expect(result.success).toBe(true)
+    expect(result.hasHistory).toBe(false)
+
+    const locks = await queryLive(
+      TEST_DB_PATH,
+      'SELECT released_at FROM locks WHERE agent_id = ?',
+      [agentId]
+    ) as Array<{ released_at: string | null }>
+    expect(locks[0]?.released_at).not.toBeNull()
+  })
+})
+
+// ── Tests: add-perimetre (T438) ───────────────────────────────────────────────
+
+describe('add-perimetre — T438', () => {
+  it('valid name → inserted and returns id', async () => {
+    const result = await handlers['add-perimetre'](
+      null,
+      TEST_DB_PATH,
+      'front-vuejs'
+    ) as { success: boolean; id: number }
+
+    expect(result.success).toBe(true)
+    expect(typeof result.id).toBe('number')
+    expect(result.id).toBeGreaterThan(0)
+
+    const rows = await queryLive(
+      TEST_DB_PATH,
+      'SELECT name FROM perimetres WHERE id = ?',
+      [result.id]
+    ) as Array<{ name: string }>
+    expect(rows[0]?.name).toBe('front-vuejs')
+  })
+
+  it('trims whitespace from name', async () => {
+    const result = await handlers['add-perimetre'](
+      null,
+      TEST_DB_PATH,
+      '  back-electron  '
+    ) as { success: boolean; id: number }
+
+    expect(result.success).toBe(true)
+
+    const rows = await queryLive(
+      TEST_DB_PATH,
+      'SELECT name FROM perimetres WHERE id = ?',
+      [result.id]
+    ) as Array<{ name: string }>
+    expect(rows[0]?.name).toBe('back-electron')
+  })
+
+  it('duplicate name → {success:false, error}', async () => {
+    await handlers['add-perimetre'](null, TEST_DB_PATH, 'unique-scope')
+
+    const result = await handlers['add-perimetre'](
+      null,
+      TEST_DB_PATH,
+      'unique-scope'
+    ) as { success: boolean; error: string }
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('unique-scope')
+  })
+
+  it('empty name → {success:false, error}', async () => {
+    const result = await handlers['add-perimetre'](
+      null,
+      TEST_DB_PATH,
+      '   '
+    ) as { success: boolean; error: string }
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('Invalid perimeter name')
+  })
+
+  it('missing name → {success:false, error}', async () => {
+    const result = await handlers['add-perimetre'](
+      null,
+      TEST_DB_PATH,
+      ''
+    ) as { success: boolean; error: string }
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('Invalid perimeter name')
+  })
+})
+
 // ── Tests: update-agent permissionMode (T436) ─────────────────────────────────
 
 describe('update-agent — permissionMode (T436)', () => {

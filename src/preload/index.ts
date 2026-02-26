@@ -253,6 +253,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('apply-master-md', dbPath, projectPath, content, sha),
 
   // Agents
+  deleteAgent: (dbPath: string, agentId: number): Promise<{ success: boolean; hasHistory?: boolean; error?: string }> =>
+    ipcRenderer.invoke('delete-agent', dbPath, agentId),
+
+  addPerimetre: (dbPath: string, name: string): Promise<{ success: boolean; id?: number; error?: string }> =>
+    ipcRenderer.invoke('add-perimetre', dbPath, name),
+
   createAgent: (
     dbPath: string,
     projectPath: string,

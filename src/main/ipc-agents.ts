@@ -467,6 +467,75 @@ export function registerAgentHandlers(): void {
   })
 
   /**
+   * Delete an agent if it has no associated history (sessions, tasks, comments, logs).
+   * @param dbPath - Registered DB path
+   * @param agentId - Agent ID to delete
+   * @returns {{ success: boolean, hasHistory?: boolean, error?: string }}
+   *   hasHistory=true means deletion was blocked (agent has history)
+   */
+  ipcMain.handle('delete-agent', async (_event, dbPath: string, agentId: number) => {
+    if (typeof agentId !== 'number' || !Number.isInteger(agentId)) {
+      return { success: false, error: 'Invalid agentId' }
+    }
+    try {
+      assertDbPathAllowed(dbPath)
+      const historyRows = await queryLive(
+        dbPath,
+        `SELECT (
+          (SELECT COUNT(*) FROM sessions WHERE agent_id = ?) +
+          (SELECT COUNT(*) FROM tasks WHERE agent_assigne_id = ?) +
+          (SELECT COUNT(*) FROM task_comments WHERE agent_id = ?) +
+          (SELECT COUNT(*) FROM agent_logs WHERE agent_id = ?)
+        ) as history_count`,
+        [agentId, agentId, agentId, agentId]
+      ) as Array<{ history_count: number }>
+
+      if ((historyRows[0]?.history_count ?? 0) > 0) {
+        return { success: true, hasHistory: true }
+      }
+
+      await writeDb(dbPath, (db) => {
+        db.run(
+          "UPDATE locks SET released_at = datetime('now') WHERE agent_id = ? AND released_at IS NULL",
+          [agentId]
+        )
+        db.run('DELETE FROM agents WHERE id = ?', [agentId])
+      })
+      return { success: true, hasHistory: false }
+    } catch (err) {
+      console.error('[IPC delete-agent]', err)
+      return { success: false, error: String(err) }
+    }
+  })
+
+  /**
+   * Insert a new perimeter into the perimetres table.
+   * @param dbPath - Registered DB path
+   * @param name - Perimeter name (must be unique)
+   * @returns {{ success: boolean, id?: number, error?: string }}
+   */
+  ipcMain.handle('add-perimetre', async (_event, dbPath: string, name: string) => {
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return { success: false, error: 'Invalid perimeter name' }
+    }
+    try {
+      assertDbPathAllowed(dbPath)
+      const id = await writeDb<number>(dbPath, (db) => {
+        db.run('INSERT INTO perimetres (name) VALUES (?)', [name.trim()])
+        const rows = db.exec('SELECT last_insert_rowid() as id')
+        return rows[0].values[0][0] as number
+      })
+      return { success: true, id }
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('UNIQUE constraint failed')) {
+        return { success: false, error: `Un périmètre nommé "${name}" existe déjà` }
+      }
+      console.error('[IPC add-perimetre]', err)
+      return { success: false, error: String(err) }
+    }
+  })
+
+  /**
    * Create a new agent and optionally insert it into CLAUDE.md.
    * @param dbPath - Registered DB path
    * @param projectPath - Project root (for CLAUDE.md update)

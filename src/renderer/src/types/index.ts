@@ -26,6 +26,8 @@ export interface Agent {
   session_statut?: 'started' | 'completed' | 'blocked' | null
   session_started_at?: string | null
   last_log_at?: string | null
+  /** 1 if the agent has associated sessions, tasks, comments, or logs; 0 otherwise. */
+  has_history?: number
 }
 
 /** Task statut values (English, as stored in DB from v0.4.0+). */

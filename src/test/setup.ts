@@ -52,6 +52,9 @@ const mockElectronAPI = {
   setSessionConvId: vi.fn().mockResolvedValue(undefined),
   getTaskAssignees: vi.fn().mockResolvedValue({ success: true, assignees: [] }),
   setTaskAssignees: vi.fn().mockResolvedValue({ success: true }),
+  tasksGetArchived: vi.fn().mockResolvedValue({ rows: [], total: 0 }),
+  deleteAgent: vi.fn().mockResolvedValue({ success: true, hasHistory: false }),
+  addPerimetre: vi.fn().mockResolvedValue({ success: true, id: 1 }),
 }
 
 // Make it available globally (jsdom only — node environment has no window)

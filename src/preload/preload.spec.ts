@@ -123,6 +123,12 @@ describe('preload/index', () => {
     expect(exposedMethods).toContain('testGithubConnection')
     expect(exposedMethods).toContain('checkForUpdates')
     expect(exposedMethods).toContain('searchTasks')
+    expect(exposedMethods).toContain('tasksGetArchived')
+  })
+
+  it('should expose agent management methods (T437/T438)', () => {
+    expect(exposedMethods).toContain('deleteAgent')
+    expect(exposedMethods).toContain('addPerimetre')
   })
 
   it('should expose total of 40+ API methods', () => {

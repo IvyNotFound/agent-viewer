@@ -72,6 +72,9 @@ declare global {
       // Task assignees (multi-agent — ADR-008)
       getTaskAssignees(dbPath: string, taskId: number): Promise<{ success: boolean; assignees: Array<{ agent_id: number; agent_name: string; role: string | null; assigned_at: string }>; error?: string }>
       setTaskAssignees(dbPath: string, taskId: number, assignees: Array<{ agentId: number; role?: string | null }>): Promise<{ success: boolean; error?: string }>
+      tasksGetArchived(dbPath: string, params: { page: number; pageSize: number; agentId?: number | null; perimetre?: string | null }): Promise<{ rows: unknown[]; total: number }>
+      deleteAgent(dbPath: string, agentId: number): Promise<{ success: boolean; hasHistory?: boolean; error?: string }>
+      addPerimetre(dbPath: string, name: string): Promise<{ success: boolean; id?: number; error?: string }>
     }
   }
 }
@@ -108,7 +111,7 @@ function normalizeRow<T extends Record<string, unknown>>(row: T): T {
  *
  * @returns {object} Store instance with state and methods
  */
-// Shared SQL: agent list with latest session + last log timestamp
+// Shared SQL: agent list with latest session + last log timestamp + has_history flag
 const AGENT_CTE_SQL = `
   WITH latest_sessions AS (
     SELECT agent_id, statut, started_at,
@@ -118,11 +121,22 @@ const AGENT_CTE_SQL = `
   max_logs AS (
     SELECT agent_id, MAX(created_at) as last_log_at
     FROM agent_logs GROUP BY agent_id
+  ),
+  agent_history AS (
+    SELECT a.id,
+      CASE WHEN (
+        (SELECT COUNT(*) FROM sessions WHERE agent_id = a.id) +
+        (SELECT COUNT(*) FROM tasks WHERE agent_assigne_id = a.id) +
+        (SELECT COUNT(*) FROM task_comments WHERE agent_id = a.id) +
+        (SELECT COUNT(*) FROM agent_logs WHERE agent_id = a.id)
+      ) > 0 THEN 1 ELSE 0 END as has_history
+    FROM agents a
   )
-  SELECT a.*, ls.statut as session_statut, ls.started_at as session_started_at, ml.last_log_at
+  SELECT a.*, ls.statut as session_statut, ls.started_at as session_started_at, ml.last_log_at, ah.has_history
   FROM agents a
   LEFT JOIN latest_sessions ls ON ls.agent_id = a.id AND ls.rn = 1
   LEFT JOIN max_logs ml ON ml.agent_id = a.id
+  LEFT JOIN agent_history ah ON ah.id = a.id
   WHERE a.type != 'setup' ORDER BY a.name
 `
 
@@ -303,6 +317,7 @@ export const useTasksStore = defineStore('tasks', () => {
           FROM tasks t
           LEFT JOIN agents a ON a.id = t.agent_assigne_id
           LEFT JOIN agents c ON c.id = t.agent_createur_id
+          WHERE t.statut != 'archived'
           ORDER BY t.updated_at DESC
         `),
         query<Agent>(AGENT_CTE_SQL),
