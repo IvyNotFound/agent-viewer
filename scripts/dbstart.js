@@ -23,6 +23,11 @@ const agent = process.argv[2]
 const type = process.argv[3] || agent
 const perimetre = process.argv[4] || 'global'
 
+if (agent === '--help' || agent === '-h') {
+  console.log('Usage: node scripts/dbstart.js <agent-name> [type] [perimetre]')
+  process.exit(0)
+}
+
 if (!agent) {
   console.error('Usage: node scripts/dbstart.js <agent-name> [type] [perimetre]')
   process.exit(1)
