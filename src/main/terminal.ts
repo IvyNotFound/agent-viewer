@@ -450,7 +450,7 @@ export function registerTerminalHandlers(): void {
     }
   })
 
-  ipcMain.handle('terminal:create', async (event, cols: number, rows: number, projectPath?: string, wslDistro?: string, systemPrompt?: string, userPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string, permissionMode?: string) => {
+  ipcMain.handle('terminal:create', async (event, cols: number, rows: number, projectPath?: string, wslDistro?: string, systemPrompt?: string, userPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string, permissionMode?: string, outputFormat?: string) => {
     // Validate claudeCommand if provided
     if (claudeCommand && !CLAUDE_CMD_REGEX.test(claudeCommand)) {
       throw new Error("Invalid claudeCommand: " + claudeCommand)
@@ -498,7 +498,9 @@ export function registerTerminalHandlers(): void {
       const skipPermissionsFlag = permissionMode === 'auto' ? ' --dangerously-skip-permissions' : ''
       // Inject --settings alwaysThinkingEnabled:false when thinking_mode is 'disabled'
       const thinkingFlag = thinkingMode === 'disabled' ? ` --settings '{"alwaysThinkingEnabled":false}'` : ''
-      const resumeScript = `exec ${cmd}${skipPermissionsFlag} --resume ${validConvId}${thinkingFlag}`
+      // T597 POC: inject --output-format stream-json for StreamView sessions
+      const outputFormatFlag = outputFormat === 'stream-json' ? ' --output-format stream-json' : ''
+      const resumeScript = `exec ${cmd}${skipPermissionsFlag} --resume ${validConvId}${thinkingFlag}${outputFormatFlag}`
       if (projectPath) {
         args.push('--cd', toWslPath(projectPath), '--', 'bash', '-lc', resumeScript)
       } else {
@@ -524,6 +526,8 @@ export function registerTerminalHandlers(): void {
       const skipPermissionsFlag = permissionMode === 'auto' ? ' --dangerously-skip-permissions' : ''
       // Inject --settings alwaysThinkingEnabled:false when thinking_mode is 'disabled'
       const thinkingFlag = thinkingMode === 'disabled' ? ` --settings '{"alwaysThinkingEnabled":false}'` : ''
+      // T597 POC: inject --output-format stream-json for StreamView sessions
+      const outputFormatFlag = outputFormat === 'stream-json' ? ' --output-format stream-json' : ''
 
       // ── Fix T278: write launch script to temp file ──────────────────────
       // wsl.exe re-parses the command line and breaks quoting for inline commands.
@@ -542,7 +546,7 @@ export function registerTerminalHandlers(): void {
 
       const scriptName = `agent-prompt-${id}.sh`
       tempScriptWinPath = join(tmpdir(), scriptName)
-      const scriptContent = `#!/bin/bash\nexec ${cmd}${skipPermissionsFlag} --session-id ${newSessionId} --append-system-prompt "$(echo '${b64System}' | base64 -d)"${thinkingFlag} "$(echo '${b64User}' | base64 -d)"\n`
+      const scriptContent = `#!/bin/bash\nexec ${cmd}${skipPermissionsFlag} --session-id ${newSessionId} --append-system-prompt "$(echo '${b64System}' | base64 -d)"${thinkingFlag}${outputFormatFlag} "$(echo '${b64User}' | base64 -d)"\n`
       await writeFile(tempScriptWinPath, scriptContent, { encoding: 'utf8' })
       const scriptWslPath = toWslPath(tempScriptWinPath)
 

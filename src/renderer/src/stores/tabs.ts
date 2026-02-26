@@ -30,6 +30,8 @@ export interface Tab {
   convId?: string | null
   /** Task ID displayed in tab title (task #400). null = no associated task. */
   taskId?: number | null
+  /** View mode: terminal (xterm.js) or stream (StreamView POC). Default: terminal. */
+  viewMode?: 'terminal' | 'stream'
   filePath?: string
   dirty?: boolean
   logsAgentId?: number | null
@@ -128,7 +130,7 @@ export const useTabsStore = defineStore('tabs', () => {
     activeTabId.value = 'logs'
   }
 
-  function addTerminal(agentName?: string, wslDistro?: string, autoSend?: string, systemPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string, activate = true, taskId?: number): void {
+  function addTerminal(agentName?: string, wslDistro?: string, autoSend?: string, systemPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string, activate = true, taskId?: number, viewMode?: 'terminal' | 'stream'): void {
     const id = `term-${Date.now()}`
     let title: string
     if (agentName) {
@@ -159,6 +161,7 @@ export const useTabsStore = defineStore('tabs', () => {
       claudeCommand: claudeCommand ?? null,
       convId: convId ?? null,
       taskId: taskId ?? null,
+      viewMode: viewMode ?? 'terminal',
     })
     if (activate) activeTabId.value = id
   }

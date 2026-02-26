@@ -2549,6 +2549,9 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
       'auto',              // thinkingMode
       undefined,           // profile (default 'claude' → undefined)
       'conv-abc-123',      // convId for --resume
+      true,                // activate
+      undefined,           // taskId
+      'terminal',          // viewMode (default — checkbox unchecked)
     )
   })
 })
@@ -3782,18 +3785,43 @@ describe('TaskDetailModal — multi-agents', () => {
 // ── StreamView (T578 — POC affichage structuré stream-json) ──────────────────
 
 describe('StreamView', () => {
-  // Helper to mount StreamView and inject stream events via the IPC callback
-  function mountStream(events: StreamEvent[] = []) {
+  // Helper to mount StreamView with a fake tab and inject stream events via the IPC callback.
+  // T597: StreamView now creates a PTY async (terminalCreate) then subscribes — mountStream is async.
+  async function mountStream(events: StreamEvent[] = []) {
+    vi.mocked(mockElectronAPI.terminalCreate).mockResolvedValue('stream-pty-1')
     vi.mocked(mockElectronAPI.onTerminalStreamMessage).mockReset()
     vi.mocked(mockElectronAPI.onTerminalStreamMessage).mockReturnValue(() => {})
-    vi.mocked(mockElectronAPI.agentSendMessage).mockReset()
-    vi.mocked(mockElectronAPI.agentSendMessage).mockResolvedValue(undefined)
+    vi.mocked(mockElectronAPI.terminalWrite).mockResolvedValue(undefined)
+
+    // Provide pinia with a tab matching terminalId so StreamView can find it
+    const pinia = createTestingPinia({
+      initialState: {
+        tabs: {
+          tabs: [{
+            id: 'test-terminal-1',
+            type: 'terminal',
+            title: 'test',
+            ptyId: null,
+            agentName: 'test-agent',
+            wslDistro: null,
+            autoSend: null,
+            systemPrompt: null,
+            thinkingMode: null,
+            viewMode: 'stream' as const,
+          }],
+        },
+      },
+    })
 
     const wrapper = mount(StreamView, {
       props: { terminalId: 'test-terminal-1' },
+      global: { plugins: [pinia] },
     })
 
-    // Inject events via the IPC callback captured at mount
+    // Wait for async terminalCreate + onTerminalStreamMessage subscription
+    await flushPromises()
+
+    // Inject events via the IPC callback (called with ptyId='stream-pty-1')
     const [, callback] = vi.mocked(mockElectronAPI.onTerminalStreamMessage).mock.calls[0] ?? []
     if (callback) {
       events.forEach((e) => (callback as (e: StreamEvent) => void)(e))
@@ -3802,8 +3830,8 @@ describe('StreamView', () => {
     return { wrapper }
   }
 
-  it('shows empty state when no events', () => {
-    const { wrapper } = mountStream()
+  it('shows empty state when no events', async () => {
+    const { wrapper } = await mountStream()
     expect(wrapper.find('[data-testid="empty-state"]').exists()).toBe(true)
   })
 
@@ -3815,7 +3843,7 @@ describe('StreamView', () => {
         content: [{ type: 'text', text: 'Bonjour depuis Claude !' }],
       },
     }
-    const { wrapper } = mountStream([event])
+    const { wrapper } = await mountStream([event])
     await nextTick()
     const block = wrapper.find('[data-testid="block-text"]')
     expect(block.exists()).toBe(true)
@@ -3830,7 +3858,7 @@ describe('StreamView', () => {
         content: [{ type: 'thinking', text: 'Je réfléchis…' }],
       },
     }
-    const { wrapper } = mountStream([event])
+    const { wrapper } = await mountStream([event])
     await nextTick()
     const block = wrapper.find('[data-testid="block-thinking"]')
     expect(block.exists()).toBe(true)
@@ -3845,7 +3873,7 @@ describe('StreamView', () => {
         content: [{ type: 'tool_use', name: 'Bash', input: { command: 'ls -la' } }],
       },
     }
-    const { wrapper } = mountStream([event])
+    const { wrapper } = await mountStream([event])
     await nextTick()
     const block = wrapper.find('[data-testid="block-tool-use"]')
     expect(block.exists()).toBe(true)
@@ -3860,7 +3888,7 @@ describe('StreamView', () => {
         content: [{ type: 'tool_result', content: 'drwxr-xr-x 5 user user 4096 Feb 27 00:00 .' }],
       },
     }
-    const { wrapper } = mountStream([event])
+    const { wrapper } = await mountStream([event])
     await nextTick()
     const block = wrapper.find('[data-testid="block-tool-result"]')
     expect(block.exists()).toBe(true)
@@ -3874,7 +3902,7 @@ describe('StreamView', () => {
       num_turns: 3,
       duration_ms: 5200,
     }
-    const { wrapper } = mountStream([event])
+    const { wrapper } = await mountStream([event])
     await nextTick()
     const block = wrapper.find('[data-testid="block-result"]')
     expect(block.exists()).toBe(true)
@@ -3887,7 +3915,7 @@ describe('StreamView', () => {
       type: 'assistant',
       message: { role: 'assistant', content: [{ type: 'text', text: 'En cours…' }] },
     }
-    const { wrapper } = mountStream([event])
+    const { wrapper } = await mountStream([event])
     await nextTick()
     expect(wrapper.find('[data-testid="streaming-indicator"]').exists()).toBe(true)
   })
@@ -3898,28 +3926,29 @@ describe('StreamView', () => {
       message: { role: 'assistant', content: [{ type: 'text', text: 'Réponse' }] },
     }
     const result: StreamEvent = { type: 'result', cost_usd: 0.001, num_turns: 1 }
-    const { wrapper } = mountStream([assistant, result])
+    const { wrapper } = await mountStream([assistant, result])
     await nextTick()
     expect(wrapper.find('[data-testid="streaming-indicator"]').exists()).toBe(false)
   })
 
-  it('send button is disabled when input is empty', () => {
-    const { wrapper } = mountStream()
+  it('send button is disabled when input is empty', async () => {
+    const { wrapper } = await mountStream()
     const btn = wrapper.find('[data-testid="send-button"]')
     expect((btn.element as HTMLButtonElement).disabled).toBe(true)
   })
 
-  it('calls agentSendMessage IPC when send button is clicked with text', async () => {
-    const { wrapper } = mountStream()
+  it('calls terminalWrite IPC when send button is clicked with text', async () => {
+    const { wrapper } = await mountStream()
     const textarea = wrapper.find('textarea')
     await textarea.setValue('Hello agent')
     const btn = wrapper.find('[data-testid="send-button"]')
     await btn.trigger('click')
-    expect(mockElectronAPI.agentSendMessage).toHaveBeenCalledWith('test-terminal-1', 'Hello agent')
+    // T597: StreamView uses terminalWrite(ptyId, text+'\n') instead of agentSendMessage
+    expect(mockElectronAPI.terminalWrite).toHaveBeenCalledWith('stream-pty-1', 'Hello agent\n')
   })
 
   it('clears input after send', async () => {
-    const { wrapper } = mountStream()
+    const { wrapper } = await mountStream()
     const textarea = wrapper.find('textarea')
     await textarea.setValue('Mon message')
     const btn = wrapper.find('[data-testid="send-button"]')
@@ -3934,7 +3963,7 @@ describe('StreamView', () => {
       subtype: 'init',
       session_id: 'abc123-session-id',
     }
-    const { wrapper } = mountStream([initEvent])
+    const { wrapper } = await mountStream([initEvent])
     await nextTick()
     const systemBlock = wrapper.find('[data-testid="block-system-init"]')
     expect(systemBlock.exists()).toBe(true)

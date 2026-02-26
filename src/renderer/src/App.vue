@@ -13,6 +13,7 @@ import ConfirmDialog from '@renderer/components/ConfirmDialog.vue'
 
 // Lazy-loaded heavy components (xterm.js, CodeMirror, etc.)
 const TerminalView = defineAsyncComponent(() => import('@renderer/components/TerminalView.vue'))
+const StreamView = defineAsyncComponent(() => import('@renderer/components/StreamView.vue'))
 const FileView = defineAsyncComponent(() => import('@renderer/components/FileView.vue'))
 const AgentLogsView = defineAsyncComponent(() => import('@renderer/components/AgentLogsView.vue'))
 const ExplorerView = defineAsyncComponent(() => import('@renderer/components/ExplorerView.vue'))
@@ -90,7 +91,8 @@ defineExpose({
               class="flex-1 overflow-hidden"
               :style="{ display: tabsStore.activeTabId === tab.id ? 'flex' : 'none' }"
             >
-              <TerminalView :tab-id="tab.id" :is-active="tabsStore.activeTabId === tab.id" class="flex-1" />
+              <StreamView v-if="tab.viewMode === 'stream'" :terminal-id="tab.id" class="flex-1" />
+              <TerminalView v-else :tab-id="tab.id" :is-active="tabsStore.activeTabId === tab.id" class="flex-1" />
             </div>
           </template>
         </template>

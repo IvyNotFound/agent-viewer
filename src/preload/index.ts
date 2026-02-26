@@ -116,8 +116,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getClaudeInstances: (): Promise<unknown[]> =>
     ipcRenderer.invoke('terminal:getClaudeInstances'),
 
-  terminalCreate: (cols: number, rows: number, projectPath?: string, wslDistro?: string, systemPrompt?: string, userPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string, permissionMode?: string): Promise<string> =>
-    ipcRenderer.invoke('terminal:create', cols, rows, projectPath, wslDistro, systemPrompt, userPrompt, thinkingMode, claudeCommand, convId, permissionMode),
+  terminalCreate: (cols: number, rows: number, projectPath?: string, wslDistro?: string, systemPrompt?: string, userPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string, permissionMode?: string, outputFormat?: string): Promise<string> =>
+    ipcRenderer.invoke('terminal:create', cols, rows, projectPath, wslDistro, systemPrompt, userPrompt, thinkingMode, claudeCommand, convId, permissionMode, outputFormat),
 
   terminalWrite: (id: string, data: string): Promise<void> =>
     ipcRenderer.invoke('terminal:write', id, data),
@@ -156,6 +156,32 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onTerminalConvId: (id: string, cb: (convId: string) => void): (() => void) => {
     const channel = `terminal:convId:${id}`
     const handler = (_: unknown, convId: string) => cb(convId)
+    ipcRenderer.on(channel, handler)
+    return () => ipcRenderer.off(channel, handler)
+  },
+
+  // T597 POC: Subscribe to JSONL stream events from a stream-json session.
+  // Wraps terminal:data:<id> and parses each newline-delimited JSON object.
+  // Lines that are not valid JSON (e.g. ANSI banner noise before Claude starts)
+  // are silently skipped. Returns an unsubscribe function.
+  onTerminalStreamMessage: (id: string, cb: (event: Record<string, unknown>) => void): (() => void) => {
+    const channel = `terminal:data:${id}`
+    let buffer = ''
+    const handler = (_: unknown, data: string) => {
+      buffer += data
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (!trimmed) continue
+        try {
+          const parsed: Record<string, unknown> = JSON.parse(trimmed)
+          cb(parsed)
+        } catch {
+          // not valid JSON — skip (ANSI noise / shell output before claude starts)
+        }
+      }
+    }
     ipcRenderer.on(channel, handler)
     return () => ipcRenderer.off(channel, handler)
   },

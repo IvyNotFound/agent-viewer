@@ -40,13 +40,14 @@ declare global {
       windowMaximize(): Promise<void>
       windowClose(): Promise<void>
       // Terminal
-      terminalCreate(cols: number, rows: number, projectPath?: string): Promise<string>
+      terminalCreate(cols: number, rows: number, projectPath?: string, wslDistro?: string, systemPrompt?: string, userPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string, permissionMode?: string, outputFormat?: string): Promise<string>
       terminalWrite(id: string, data: string): Promise<void>
       terminalResize(id: string, cols: number, rows: number): Promise<void>
       terminalKill(id: string): Promise<void>
       terminalIsAlive(id: string): Promise<boolean>
       onTerminalData(id: string, cb: (data: string) => void): () => void
       onTerminalExit(id: string, cb: () => void): () => void
+      onTerminalStreamMessage(id: string, cb: (event: Record<string, unknown>) => void): () => void
       closeAgentSessions(dbPath: string, agentName: string): Promise<{ success: boolean; error?: string }>
       renameAgent(dbPath: string, agentId: number, newName: string): Promise<{ success: boolean; error?: string }>
       updatePerimetre(dbPath: string, id: number, oldName: string, newName: string, description: string): Promise<{ success: boolean; error?: string }>

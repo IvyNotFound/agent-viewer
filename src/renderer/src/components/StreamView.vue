@@ -5,11 +5,13 @@
  * Remplace xterm.js pour les sessions agents Claude en affichant les blocs
  * de messages de façon structurée (texte, tool_use, tool_result, thinking, result).
  *
- * NON câblé dans App.vue / TabBar — accessible via route dédiée ou flag feature.
+ * Câblé dans App.vue pour les tabs dont viewMode === 'stream' (T597).
  *
  * @module components/StreamView
  */
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { useTabsStore } from '@renderer/stores/tabs'
+import { useTasksStore } from '@renderer/stores/tasks'
 
 // ── Types stream-json (ADR-009 §Types de messages JSONL) ─────────────────────
 
@@ -46,12 +48,19 @@ const props = defineProps<{
   terminalId: string
 }>()
 
+// ── Stores ───────────────────────────────────────────────────────────────────
+
+const tabsStore = useTabsStore()
+const tasksStore = useTasksStore()
+
 // ── State ────────────────────────────────────────────────────────────────────
 
 const events = ref<StreamEvent[]>([])
 const inputText = ref('')
 const scrollContainer = ref<HTMLElement | null>(null)
 const sessionId = ref<string | null>(null)
+/** PTY ID returned by terminalCreate — used for IPC data subscription and write. */
+const ptyId = ref<string | null>(null)
 
 /** Collapsible state keyed by "eventIndex-blockIndex". */
 const collapsed = ref<Record<string, boolean>>({})
@@ -68,23 +77,16 @@ const isStreaming = computed(() => {
   return last.type === 'assistant'
 })
 
-const resultEvent = computed<StreamEvent | null>(() => {
-  return events.value.findLast(e => e.type === 'result') ?? null
-})
-
 // ── IPC ──────────────────────────────────────────────────────────────────────
 
 let unsubStreamMessage: (() => void) | null = null
 
 async function sendMessage(): Promise<void> {
   const text = inputText.value.trim()
-  if (!text) return
+  if (!text || !ptyId.value) return
   inputText.value = ''
-  // POC: IPC channel agent:sendMessage (will be implemented in back-electron T578+)
-  const api = window.electronAPI as Record<string, unknown>
-  if (typeof api.agentSendMessage === 'function') {
-    await (api.agentSendMessage as (id: string, text: string) => Promise<void>)(props.terminalId, text)
-  }
+  // POC: write to PTY — Claude processes the input in stream-json mode
+  await window.electronAPI.terminalWrite(ptyId.value, text + '\n')
 }
 
 function handleKeydown(e: KeyboardEvent): void {
@@ -118,20 +120,42 @@ function scrollToBottom(): void {
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
-onMounted(() => {
-  const api = window.electronAPI as Record<string, unknown>
-  // POC: subscribe to stream events if the IPC channel exists
-  if (typeof api.onTerminalStreamMessage === 'function') {
-    unsubStreamMessage = (api.onTerminalStreamMessage as (
-      id: string,
-      cb: (event: StreamEvent) => void
-    ) => () => void)(props.terminalId, (event: StreamEvent) => {
-      if (event.type === 'system' && event.session_id) {
-        sessionId.value = event.session_id
-      }
-      events.value.push(event)
-      scrollToBottom()
-    })
+onMounted(async () => {
+  // ── PTY creation (T597): start the Claude process with --output-format stream-json
+  const tab = tabsStore.tabs.find(t => t.id === props.terminalId)
+  if (tab) {
+    try {
+      const id = await window.electronAPI.terminalCreate(
+        80, 24,
+        tasksStore.projectPath ?? undefined,
+        tab.wslDistro ?? undefined,
+        tab.systemPrompt ?? undefined,
+        tab.autoSend ?? undefined,
+        tab.thinkingMode ?? undefined,
+        tab.claudeCommand ?? undefined,
+        tab.convId ?? undefined,
+        undefined,
+        'stream-json'
+      )
+      ptyId.value = id
+      tabsStore.setPtyId(props.terminalId, id)
+
+      // Subscribe to JSONL stream events using the ptyId (data channel is terminal:data:<ptyId>)
+      unsubStreamMessage = window.electronAPI.onTerminalStreamMessage(
+        id,
+        (raw: Record<string, unknown>) => {
+          const event = raw as StreamEvent
+          if (event.type === 'system' && event.session_id) {
+            sessionId.value = event.session_id
+          }
+          events.value.push(event)
+          scrollToBottom()
+        }
+      )
+    } catch (err) {
+      // PTY spawn error — show inline error
+      events.value.push({ type: 'system', subtype: 'init', session_id: `Erreur PTY: ${String(err)}` })
+    }
   }
 })
 
