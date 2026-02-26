@@ -461,7 +461,7 @@ export function registerTerminalHandlers(): void {
     const sendPendingPrompt = (): void => {
       if (!pendingUserPrompt) return
       const p = ptys.get(pendingUserPrompt.id)
-      if (p) p.write(pendingUserPrompt.text + '\n')
+      if (p) p.write(pendingUserPrompt.text + '\r')
       pendingUserPrompt = null
       if (quietTimer) { clearTimeout(quietTimer); quietTimer = null }
       if (maxTimer) { clearTimeout(maxTimer); maxTimer = null }

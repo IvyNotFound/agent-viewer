@@ -359,20 +359,20 @@ describe('terminal utilities', () => {
       const onDataCallback = mockPty.onData.mock.calls[0][0] as (data: string) => void
 
       // userPrompt should NOT be sent yet (no output received)
-      expect(mockPty.write).not.toHaveBeenCalledWith('Bonjour agent\n')
+      expect(mockPty.write).not.toHaveBeenCalledWith('Bonjour agent\r')
 
       // Simulate PTY output burst (Claude startup)
       onDataCallback('Loading...')
       onDataCallback('Claude Code v2.1')
 
       // Still not sent — quiet period hasn't elapsed
-      expect(mockPty.write).not.toHaveBeenCalledWith('Bonjour agent\n')
+      expect(mockPty.write).not.toHaveBeenCalledWith('Bonjour agent\r')
 
       // Advance past quiet period (800ms)
       vi.advanceTimersByTime(900)
 
       // Now userPrompt should have been sent
-      expect(mockPty.write).toHaveBeenCalledWith('Bonjour agent\n')
+      expect(mockPty.write).toHaveBeenCalledWith('Bonjour agent\r')
 
       vi.useRealTimers()
     })
@@ -390,7 +390,7 @@ describe('terminal utilities', () => {
       // No PTY output at all — max timeout should fire
       vi.advanceTimersByTime(15100)
 
-      expect(mockPty.write).toHaveBeenCalledWith('Hello\n')
+      expect(mockPty.write).toHaveBeenCalledWith('Hello\r')
 
       vi.useRealTimers()
     })
@@ -518,6 +518,238 @@ describe('terminal utilities', () => {
 
       // Second PTY for same webContents should NOT re-register 'destroyed'
       expect(mockOnce).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── T248: terminal:getClaudeProfiles handler ────────────────────────────────
+
+  describe('terminal:getClaudeProfiles handler', () => {
+    it('should return [claude] when ~/bin/ is empty (no wslUser)', async () => {
+      const { execFile } = await import('child_process')
+      const mockExecFile = vi.mocked(execFile)
+
+      // execPromise calls promisify(execFile) — mock the callback version
+      mockExecFile.mockImplementation((_cmd, _args, callback) => {
+        ;(callback as (err: null, stdout: string) => void)(null, '')
+        return {} as ReturnType<typeof execFile>
+      })
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:getClaudeProfiles')
+
+      const result = await handler({}) as string[]
+      expect(result).toContain('claude')
+      expect(result[0]).toBe('claude')
+    })
+
+    it('should use -u <user> args when wslUser is provided', async () => {
+      const { execFile } = await import('child_process')
+      const mockExecFile = vi.mocked(execFile)
+
+      let capturedArgs: string[] = []
+      mockExecFile.mockImplementation((_cmd, args, callback) => {
+        capturedArgs = args as string[]
+        ;(callback as (err: null, stdout: string) => void)(null, '')
+        return {} as ReturnType<typeof execFile>
+      })
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:getClaudeProfiles')
+
+      await handler({}, 'myuser') as string[]
+      expect(capturedArgs).toContain('-u')
+      expect(capturedArgs).toContain('myuser')
+    })
+
+    it('should parse claude/claude-pro/claude-dev from stdout, sorted with claude first', async () => {
+      const { execFile } = await import('child_process')
+      const mockExecFile = vi.mocked(execFile)
+
+      mockExecFile.mockImplementation((_cmd, _args, callback) => {
+        ;(callback as (err: null, stdout: string) => void)(null, 'claude-pro\nclaude-dev\nclaude\n')
+        return {} as ReturnType<typeof execFile>
+      })
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:getClaudeProfiles')
+
+      const result = await handler({}) as string[]
+      expect(result[0]).toBe('claude')
+      expect(result).toContain('claude-dev')
+      expect(result).toContain('claude-pro')
+    })
+
+    it('should filter out invalid scripts (not matching claude pattern)', async () => {
+      const { execFile } = await import('child_process')
+      const mockExecFile = vi.mocked(execFile)
+
+      mockExecFile.mockImplementation((_cmd, _args, callback) => {
+        ;(callback as (err: null, stdout: string) => void)(null, 'claude\nrm-rf\nnotclaude\nclaude-dev\n')
+        return {} as ReturnType<typeof execFile>
+      })
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:getClaudeProfiles')
+
+      const result = await handler({}) as string[]
+      expect(result).toContain('claude')
+      expect(result).toContain('claude-dev')
+      expect(result).not.toContain('rm-rf')
+      expect(result).not.toContain('notclaude')
+    })
+
+    it('should return [claude] as fallback when execPromise throws', async () => {
+      const { execFile } = await import('child_process')
+      const mockExecFile = vi.mocked(execFile)
+
+      mockExecFile.mockImplementation((_cmd, _args, callback) => {
+        ;(callback as (err: Error) => void)(new Error('ls: cannot access'))
+        return {} as ReturnType<typeof execFile>
+      })
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:getClaudeProfiles')
+
+      const result = await handler({}) as string[]
+      expect(result).toEqual(['claude'])
+    })
+  })
+
+  // ── T248: terminal:create — claudeCommand + convId validation ──────────────
+
+  describe('terminal:create — claudeCommand validation', () => {
+    it('should accept valid claudeCommand (claude)', async () => {
+      const nodePty = await import('node-pty')
+      vi.mocked(nodePty.spawn).mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+
+      // terminal:create(event, cols, rows, projectPath, wslDistro, systemPrompt, userPrompt, thinkingMode, claudeCommand, convId)
+      await expect(handler(makeEvent(60), 80, 24, undefined, undefined, undefined, undefined, undefined, 'claude', undefined)).resolves.not.toThrow()
+    })
+
+    it('should throw on invalid claudeCommand (rm -rf)', async () => {
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+
+      await expect(
+        handler(makeEvent(61), 80, 24, undefined, undefined, undefined, undefined, undefined, 'rm -rf', undefined)
+      ).rejects.toThrow('Invalid claudeCommand')
+    })
+
+    it('should accept claude-pro as valid claudeCommand', async () => {
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+
+      await expect(
+        handler(makeEvent(62), 80, 24, undefined, undefined, undefined, undefined, undefined, 'claude-pro', undefined)
+      ).resolves.not.toThrow()
+    })
+  })
+
+  describe('terminal:create — convId validation', () => {
+    it('should use --resume with valid UUID convId', async () => {
+      const nodePty = await import('node-pty')
+      const mockSpawn = vi.mocked(nodePty.spawn)
+      mockSpawn.mockClear()
+      mockWriteFile.mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+
+      const validUuid = '550e8400-e29b-41d4-a716-446655440000'
+      await handler(makeEvent(63), 80, 24, undefined, undefined, undefined, undefined, undefined, undefined, validUuid)
+
+      const spawnArgs = mockSpawn.mock.calls[0][1] as string[]
+      expect(spawnArgs.join(' ')).toContain('--resume')
+      expect(spawnArgs.join(' ')).toContain(validUuid)
+    })
+
+    it('should ignore invalid convId (not UUID)', async () => {
+      const nodePty = await import('node-pty')
+      const mockSpawn = vi.mocked(nodePty.spawn)
+      mockSpawn.mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+
+      await handler(makeEvent(64), 80, 24, undefined, undefined, undefined, undefined, undefined, undefined, 'not-a-uuid')
+
+      const spawnArgs = mockSpawn.mock.calls[0][1] as string[]
+      expect(spawnArgs.join(' ')).not.toContain('--resume')
+    })
+
+    it('should use claudeCommand in --resume mode when both provided', async () => {
+      const nodePty = await import('node-pty')
+      const mockSpawn = vi.mocked(nodePty.spawn)
+      mockSpawn.mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+
+      const validUuid = '550e8400-e29b-41d4-a716-446655440000'
+      await handler(makeEvent(65), 80, 24, undefined, undefined, undefined, undefined, undefined, 'claude-dev', validUuid)
+
+      const spawnArgs = mockSpawn.mock.calls[0][1] as string[]
+      const fullCmd = spawnArgs.join(' ')
+      expect(fullCmd).toContain('claude-dev')
+      expect(fullCmd).toContain('--resume')
+      expect(fullCmd).toContain(validUuid)
+    })
+
+    it('should default to claude when claudeCommand is null/undefined', async () => {
+      const nodePty = await import('node-pty')
+      const mockSpawn = vi.mocked(nodePty.spawn)
+      mockSpawn.mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+
+      const validUuid = '550e8400-e29b-41d4-a716-446655440000'
+      await handler(makeEvent(66), 80, 24, undefined, undefined, undefined, undefined, undefined, undefined, validUuid)
+
+      const spawnArgs = mockSpawn.mock.calls[0][1] as string[]
+      const fullCmd = spawnArgs.join(' ')
+      expect(fullCmd).toContain('exec claude --resume')
+    })
+  })
+
+  // ── T299: quiet-period timer reset test ────────────────────────────────────
+
+  describe('terminal:create — quiet-period timer reset (T299)', () => {
+    it('should reset quiet timer on new data, delaying userPrompt send', async () => {
+      vi.useFakeTimers()
+      mockPty.write.mockClear()
+      mockPty.onData.mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+
+      await handler(makeEvent(70), 80, 24, undefined, undefined, 'prompt', 'Reset test', undefined)
+
+      expect(mockPty.onData).toHaveBeenCalled()
+      const onDataCallback = mockPty.onData.mock.calls[0][0] as (data: string) => void
+
+      // 1) First data event
+      onDataCallback('Loading...')
+
+      // 2) Advance 600ms (not yet at 800ms quiet threshold)
+      vi.advanceTimersByTime(600)
+      expect(mockPty.write).not.toHaveBeenCalledWith('Reset test\n')
+
+      // 3) New data event — resets quiet timer
+      onDataCallback('More output')
+
+      // 4) Advance another 600ms (total 1200ms since start, but only 600ms since last data)
+      vi.advanceTimersByTime(600)
+      expect(mockPty.write).not.toHaveBeenCalledWith('Reset test\r')
+
+      // 5) Advance remaining 200ms (now 800ms since last data) — quiet period elapsed
+      vi.advanceTimersByTime(200)
+      expect(mockPty.write).toHaveBeenCalledWith('Reset test\r')
+
+      vi.useRealTimers()
     })
   })
 
