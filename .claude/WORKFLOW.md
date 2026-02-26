@@ -104,10 +104,17 @@ UPDATE tasks SET statut = 'in_progress', started_at = CURRENT_TIMESTAMP, updated
 
 ### 4. L'agent termine le ticket
 
-```sql
+> **⚠ Ordre obligatoire : commentaire EN PREMIER, puis `done`.**
+> Si la session expire entre les deux appels, le commentaire est déjà persisté. Inverser l'ordre = risque de `done` sans commentaire (cf. T430, T437, T438).
+
+```bash
+# Recommandé : un seul heredoc pour réduire les turns nécessaires
+node scripts/dbw.js <<'SQL'
+INSERT INTO task_comments (task_id, agent_id, contenu)
+  VALUES (:task_id, :agent_id, 'fichiers:lignes · fait · choix · reste · à valider');
 UPDATE tasks SET statut = 'done', completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :task_id;
--- + commentaire de sortie OBLIGATOIRE : fichiers:lignes · fait · choix · reste · à valider
--- + libérer locks via primitive
+SQL
+# + libérer locks via primitive
 ```
 
 > Après `done` → consulter backlog. Tâches restantes → **enchaîner sans fermer la session** (`/clear` + reset PTY, puis prendre la suivante). Ne fermer la session (étape 5) **que si** : aucune tâche restante, ou tâche bloquée (dépendance, lock, attente review).

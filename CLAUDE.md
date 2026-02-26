@@ -39,7 +39,7 @@ Thinking mode (DB `thinking_mode`, NULL=auto): `test/doc/devops` → disabled ·
 1. **review** crée ticket (titre + description + commentaire risques)
 2. Agent lit input session + tâches → **démarre immédiatement**
 3. Agent prend ticket (`in_progress`), lit description + **tous les task_comments**, pose locks
-4. Agent termine (`done`) + commentaire: `fichiers:lignes · fait · pourquoi · reste`
+4. Agent écrit commentaire de sortie **EN PREMIER** · puis `done`: `fichiers:lignes · fait · pourquoi · reste`
    → **Clear inter-tâches** : `/clear` contexte + reset terminal PTY si ouvert
 5. Agent clôt session (summary ≤200 chars), vérifie backlog → continue ou termine
 6. **review** archive ou rejette (`todo` + motif précis)
@@ -53,7 +53,7 @@ SQL détaillé → `.claude/WORKFLOW.md`
 - **Startup**: lire `sessions.summary` + tâches `todo/in_progress` → travailler immédiatement; ne demander clarification que si aucune tâche et type non inférable
 - **Accès DB**: `node scripts/dbq.js "<SQL>"` (lecture) · `node scripts/dbw.js "<SQL>"` (écriture) — voir `.claude/WORKFLOW.md`
 - **Avant modification**: vérifier locks → `INSERT OR REPLACE INTO locks (fichier, agent_id, session_id) VALUES (…)`
-- **Tâche**: `UPDATE tasks SET statut='in_progress'` au début · `statut='done'` + commentaire de sortie à la fin
+- **Tâche**: `UPDATE tasks SET statut='in_progress'` au début · commentaire de sortie **EN PREMIER** puis `statut='done'` à la fin (ordre strict — évite perte si session expire)
 - **Sessions parallèles** : max **3 sessions actives** par même agent (enforcé par `dbstart.js`, exit code 2 si limite atteinte).
 - **Inter-tâche** : après `done`, enchaîner la tâche suivante **sans fermer la session** → `/clear` contexte + reset terminal PTY si ouvert, puis prendre le prochain ticket `todo`. Ne fermer la session **que si** : aucune tâche restante, ou tâche bloquée (dépendance, lock, attente review).
 - **Fin de session**: libérer locks + `UPDATE sessions SET statut='terminé', summary='Done:T<id>[action]. Pending:T<id>[raison]. Next:T<id> <titre>'` **(max 200 chars)**
