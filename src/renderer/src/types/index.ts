@@ -160,6 +160,15 @@ export interface Session {
   tokens_cache_write: number
 }
 
+/** Agent group record from the `agent_groups` table, with members. */
+export interface AgentGroup {
+  id: number
+  name: string
+  sort_order: number
+  created_at: string
+  members: Array<{ agent_id: number; sort_order: number }>
+}
+
 /** Agent log entry from the `agent_logs` table. */
 export interface AgentLog {
   id: number
