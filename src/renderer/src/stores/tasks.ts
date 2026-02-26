@@ -75,6 +75,7 @@ declare global {
       tasksGetArchived(dbPath: string, params: { page: number; pageSize: number; agentId?: number | null; perimetre?: string | null }): Promise<{ rows: unknown[]; total: number }>
       deleteAgent(dbPath: string, agentId: number): Promise<{ success: boolean; hasHistory?: boolean; error?: string }>
       addPerimetre(dbPath: string, name: string): Promise<{ success: boolean; id?: number; error?: string }>
+      tasksUpdateStatus(dbPath: string, taskId: number, statut: string): Promise<{ success: boolean; error?: string }>
     }
   }
 }
@@ -412,6 +413,11 @@ export const useTasksStore = defineStore('tasks', () => {
     setupWizardTarget.value = null
   }
 
+  async function setTaskStatut(taskId: number, statut: 'in_progress'): Promise<void> {
+    if (!dbPath.value) return
+    await window.electronAPI.tasksUpdateStatus(dbPath.value, taskId, statut)
+  }
+
   function startWatching(path: string): void {
     if (unsubDbChange) { unsubDbChange(); unsubDbChange = null }
     window.electronAPI.watchDb(path)
@@ -472,7 +478,7 @@ export const useTasksStore = defineStore('tasks', () => {
     selectedPerimetre, togglePerimetreFilter, perimetres, perimetresData,
     filteredTasks, tasksByStatus,
     setProject, selectProject, closeProject, setProjectPathOnly, watchForDb,
-    refresh, agentRefresh, startPolling, stopPolling, query,
+    refresh, agentRefresh, startPolling, stopPolling, query, setTaskStatut,
     selectedTask, taskComments, openTask, closeTask,
     setupWizardTarget, closeWizard
   }

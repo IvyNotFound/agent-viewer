@@ -53,6 +53,7 @@ const mockElectronAPI = {
   getTaskAssignees: vi.fn().mockResolvedValue({ success: true, assignees: [] }),
   setTaskAssignees: vi.fn().mockResolvedValue({ success: true }),
   tasksGetArchived: vi.fn().mockResolvedValue({ rows: [], total: 0 }),
+  tasksUpdateStatus: vi.fn().mockResolvedValue({ success: true }),
   deleteAgent: vi.fn().mockResolvedValue({ success: true, hasHistory: false }),
   addPerimetre: vi.fn().mockResolvedValue({ success: true, id: 1 }),
 }

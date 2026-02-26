@@ -59,27 +59,31 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(dateLocale, { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-async function onTaskDropped(taskId: number): Promise<void> {
+async function onTaskDropped(taskId: number, targetStatut: string): Promise<void> {
   const task = store.tasks.find(t => t.id === taskId)
   if (!task) return
   if (task.statut === 'in_progress') return
 
-  if (!task.agent_assigne_id) {
-    toast.push(t('board.noAgentAssigned'), 'warn')
-    return
-  }
+  if (targetStatut === 'in_progress') {
+    await store.setTaskStatut(taskId, 'in_progress')
 
-  const agent = store.agents.find(a => a.id === task.agent_assigne_id)
-  if (!agent) {
-    toast.push(t('board.agentNotFound'), 'error')
-    return
-  }
+    if (!task.agent_assigne_id) {
+      toast.push(t('board.noAgentAssigned'), 'warn')
+      return
+    }
 
-  const result = await launchAgentTerminal(agent, task)
-  if (result === 'session-limit') {
-    toast.push(t('board.sessionLimitReached', { agent: agent.name, max: 3 }), 'warn')
-  } else if (result === 'error') {
-    toast.push(t('board.launchFailed', { agent: agent.name }), 'error')
+    const agent = store.agents.find(a => a.id === task.agent_assigne_id)
+    if (!agent) {
+      toast.push(t('board.agentNotFound'), 'error')
+      return
+    }
+
+    const result = await launchAgentTerminal(agent, task)
+    if (result === 'session-limit') {
+      toast.push(t('board.sessionLimitReached', { agent: agent.name, max: 3 }), 'warn')
+    } else if (result === 'error') {
+      toast.push(t('board.launchFailed', { agent: agent.name }), 'error')
+    }
   }
 }
 
@@ -151,7 +155,7 @@ const archivedByAgent = computed(() => {
           :statut="col.key"
           :tasks="tasks?.[col.key] || []"
           :accent-class="col.accentClass"
-          @task-dropped="onTaskDropped"
+          @task-dropped="(taskId) => onTaskDropped(taskId, col.key)"
         />
       </div>
     </div>

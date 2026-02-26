@@ -20,6 +20,7 @@ import {
   assertProjectPathAllowed,
   getSqlJs,
   queryLive,
+  writeDb,
   migrateDb,
   FORBIDDEN_WRITE_PATTERN,
   clearDbCacheEntry
@@ -428,6 +429,32 @@ export function registerIpcHandlers(): void {
     ])
     const total = (countRows[0] as Record<string, unknown>)?.total ?? 0
     return { rows, total: Number(total) }
+  })
+
+  /**
+   * Update a task's status in the DB (used by drag & drop, etc.)
+   * @param dbPath - Registered DB path
+   * @param taskId - Task ID to update
+   * @param statut - New status: 'todo' | 'in_progress' | 'done' | 'archived'
+   */
+  const ALLOWED_TASK_STATUTS = ['todo', 'in_progress', 'done', 'archived'] as const
+  ipcMain.handle('tasks:updateStatus', async (_event, dbPath: string, taskId: number, statut: string) => {
+    assertDbPathAllowed(dbPath)
+    if (!ALLOWED_TASK_STATUTS.includes(statut as typeof ALLOWED_TASK_STATUTS[number])) {
+      return { success: false, error: `Invalid statut: ${statut}` }
+    }
+    try {
+      await writeDb(dbPath, (db) => {
+        db.run(
+          `UPDATE tasks SET statut=?, updated_at=datetime('now') WHERE id=?`,
+          [statut, taskId]
+        )
+      })
+      return { success: true }
+    } catch (err) {
+      console.error('[IPC tasks:updateStatus]', err)
+      return { success: false, error: String(err) }
+    }
   })
 
   // ── Domain-specific handlers ─────────────────────────────────────────────

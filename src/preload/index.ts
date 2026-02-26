@@ -296,4 +296,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     perimetre?: string | null
   }): Promise<{ rows: unknown[]; total: number }> =>
     ipcRenderer.invoke('tasks:getArchived', dbPath, params),
+
+  // Update task status (drag & drop, etc.)
+  tasksUpdateStatus: (dbPath: string, taskId: number, statut: string): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('tasks:updateStatus', dbPath, taskId, statut),
 })
