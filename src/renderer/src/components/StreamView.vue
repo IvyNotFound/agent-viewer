@@ -101,8 +101,10 @@ async function sendMessage(): Promise<void> {
     // Unsubscribe from previous PTY before creating a new one
     unsubStreamMessage?.()
 
+    // T645: cols=10000 prevents PTY line-wrapping on JSON lines (2000+ chars).
+    // cols=80 would insert \r\n every 80 chars, splitting JSON tokens → JSON.parse fails.
     const newId = await window.electronAPI.terminalCreate(
-      80, 24,
+      10000, 24,
       tasksStore.projectPath ?? undefined,
       tab?.wslDistro ?? undefined,
       undefined,            // no system prompt — --resume restores session context
@@ -167,9 +169,20 @@ onMounted(async () => {
   // ── PTY creation (T597): start the Claude process with --output-format stream-json
   const tab = tabsStore.tabs.find(t => t.id === props.terminalId)
   if (tab) {
+    // T645 H2: If resuming a previous stream-json session with no initial message,
+    // skip PTY spawn entirely — Claude would start in interactive mode (no positional arg),
+    // and sessionId.value would stay null, disabling the "Envoyer" button forever.
+    // Set sessionId from the known convId directly so the user can type the first message.
+    if (tab.convId && !tab.autoSend) {
+      sessionId.value = tab.convId
+      return
+    }
+
     try {
+      // T645: cols=10000 prevents PTY line-wrapping on JSON lines (2000+ chars).
+      // cols=80 would insert \r\n every 80 chars, splitting JSON tokens → JSON.parse fails.
       const id = await window.electronAPI.terminalCreate(
-        80, 24,
+        10000, 24,
         tasksStore.projectPath ?? undefined,
         tab.wslDistro ?? undefined,
         tab.systemPrompt ?? undefined,
