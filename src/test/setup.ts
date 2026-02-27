@@ -57,9 +57,15 @@ const mockElectronAPI = {
   tasksUpdateStatus: vi.fn().mockResolvedValue({ success: true }),
   deleteAgent: vi.fn().mockResolvedValue({ success: true, hasHistory: false }),
   addPerimetre: vi.fn().mockResolvedValue({ success: true, id: 1 }),
-  // stream-json IPC (ADR-009 — T578 POC)
+  // stream-json IPC (ADR-009 — T578 POC — PTY legacy, kept for TerminalView tests)
   onTerminalStreamMessage: vi.fn(() => () => {}),
-  agentSendMessage: vi.fn().mockResolvedValue(undefined),
+  // Agent stream IPC (ADR-009 — T647/T648: child_process.spawn + stdio:pipe)
+  agentCreate: vi.fn().mockResolvedValue('agent-1'),
+  agentSend: vi.fn().mockResolvedValue(undefined),
+  agentKill: vi.fn().mockResolvedValue(undefined),
+  onAgentStream: vi.fn(() => () => {}),
+  onAgentConvId: vi.fn(() => () => {}),
+  onAgentExit: vi.fn(() => () => {}),
 }
 
 // Make it available globally (jsdom only — node environment has no window)

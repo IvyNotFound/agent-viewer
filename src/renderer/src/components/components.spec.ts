@@ -3787,12 +3787,16 @@ describe('TaskDetailModal — multi-agents', () => {
 
 describe('StreamView', () => {
   // Helper to mount StreamView with a fake tab and inject stream events via the IPC callback.
-  // T597: StreamView now creates a PTY async (terminalCreate) then subscribes — mountStream is async.
+  // T648: StreamView now uses agentCreate + onAgentStream (ADR-009 child_process.spawn).
   async function mountStream(events: StreamEvent[] = [], options: { autoSend?: string | null; convId?: string | null } = {}) {
-    vi.mocked(mockElectronAPI.terminalCreate).mockResolvedValue('stream-pty-1')
-    vi.mocked(mockElectronAPI.onTerminalStreamMessage).mockReset()
-    vi.mocked(mockElectronAPI.onTerminalStreamMessage).mockReturnValue(() => {})
-    vi.mocked(mockElectronAPI.terminalWrite).mockResolvedValue(undefined)
+    vi.mocked(mockElectronAPI.agentCreate).mockResolvedValue('agent-stream-1')
+    vi.mocked(mockElectronAPI.onAgentStream).mockReset()
+    vi.mocked(mockElectronAPI.onAgentStream).mockReturnValue(() => {})
+    vi.mocked(mockElectronAPI.onAgentConvId).mockReset()
+    vi.mocked(mockElectronAPI.onAgentConvId).mockReturnValue(() => {})
+    vi.mocked(mockElectronAPI.onAgentExit).mockReset()
+    vi.mocked(mockElectronAPI.onAgentExit).mockReturnValue(() => {})
+    vi.mocked(mockElectronAPI.agentSend).mockResolvedValue(undefined)
 
     // Provide pinia with a tab matching terminalId so StreamView can find it
     const pinia = createTestingPinia({
@@ -3820,11 +3824,11 @@ describe('StreamView', () => {
       global: { plugins: [pinia] },
     })
 
-    // Wait for async terminalCreate + onTerminalStreamMessage subscription
+    // Wait for async agentCreate + onAgentStream subscription
     await flushPromises()
 
-    // Inject events via the IPC callback (called with ptyId='stream-pty-1')
-    const [, callback] = vi.mocked(mockElectronAPI.onTerminalStreamMessage).mock.calls[0] ?? []
+    // Inject events via the IPC callback (called with agentId='agent-stream-1')
+    const [, callback] = vi.mocked(mockElectronAPI.onAgentStream).mock.calls[0] ?? []
     if (callback) {
       events.forEach((e) => (callback as (e: StreamEvent) => void)(e))
     }
@@ -3939,29 +3943,21 @@ describe('StreamView', () => {
     expect((btn.element as HTMLButtonElement).disabled).toBe(true)
   })
 
-  it('calls terminalCreate with message on send (T606)', async () => {
-    // T606: sendMessage spawns a new PTY with --resume instead of terminalWrite
-    // T645: cols=10000 to prevent PTY line-wrapping on long JSON lines
-    const initEvent: StreamEvent = { type: 'system', subtype: 'init', session_id: 'test-session-id' }
-    const { wrapper } = await mountStream([initEvent])
-    vi.mocked(mockElectronAPI.terminalCreate).mockResolvedValue('stream-pty-2')
+  it('calls agentSend with message on send (T648)', async () => {
+    // T648: sendMessage uses agentSend via stdin JSONL — no PTY respawn needed (ADR-009)
+    const { wrapper } = await mountStream([], { convId: 'test-session-id' })
+    vi.mocked(mockElectronAPI.agentSend).mockResolvedValue(undefined)
     const textarea = wrapper.find('textarea')
     await textarea.setValue('Hello agent')
     const btn = wrapper.find('[data-testid="send-button"]')
     await btn.trigger('click')
     await flushPromises()
-    expect(mockElectronAPI.terminalCreate).toHaveBeenLastCalledWith(
-      10000, 24, undefined, undefined,
-      undefined, 'Hello agent', undefined, undefined,
-      'test-session-id', undefined, 'stream-json'
-    )
+    expect(mockElectronAPI.agentSend).toHaveBeenLastCalledWith('agent-stream-1', 'Hello agent')
   })
 
   it('clears input after send', async () => {
-    // T606: send requires sessionId — inject system:init first to enable the button
-    const initEvent: StreamEvent = { type: 'system', subtype: 'init', session_id: 'test-session-id' }
-    const { wrapper } = await mountStream([initEvent])
-    vi.mocked(mockElectronAPI.terminalCreate).mockResolvedValue('stream-pty-2')
+    // T648: send requires sessionId — use convId shortcut to enable the button
+    const { wrapper } = await mountStream([], { convId: 'test-session-id' })
     const textarea = wrapper.find('textarea')
     await textarea.setValue('Mon message')
     const btn = wrapper.find('[data-testid="send-button"]')
@@ -3999,8 +3995,8 @@ describe('StreamView', () => {
     expect(block.classes()).toContain('justify-end')
   })
 
-  it('displays autoSend as user bubble immediately after PTY creation (T607)', async () => {
-    // T607: bubble is pushed right after terminalCreate — no need to receive system:init
+  it('displays autoSend as user bubble immediately after agentCreate (T607)', async () => {
+    // T648: bubble is pushed right after agentCreate + agentSend — no system:init needed
     const { wrapper } = await mountStream([], { autoSend: 'Mon prompt initial' })
     await nextTick()
     const userBlocks = wrapper.findAll('[data-testid="block-user"]')
@@ -4016,36 +4012,39 @@ describe('StreamView', () => {
     expect(wrapper.find('[data-testid="block-user"]').exists()).toBe(false)
   })
 
-  it('uses cols=10000 on mount to prevent PTY line-wrapping of JSON (T645)', async () => {
-    // T645: cols=80 would wrap long JSON lines (2000+ chars) → JSON.parse failures
+  it('calls agentCreate on mount with tab config (T648)', async () => {
+    // T648: agentCreate replaces terminalCreate — no cols/rows/outputFormat needed (ADR-009)
     await mountStream([], { autoSend: 'Mon prompt' })
-    expect(mockElectronAPI.terminalCreate).toHaveBeenCalledWith(
-      10000, 24, undefined, undefined,
-      undefined, 'Mon prompt', undefined, undefined,
-      undefined, undefined, 'stream-json'
-    )
+    expect(mockElectronAPI.agentCreate).toHaveBeenCalledWith({
+      projectPath: undefined,
+      wslDistro: undefined,
+      systemPrompt: undefined,
+      thinkingMode: undefined,
+      claudeCommand: undefined,
+      convId: undefined,
+    })
   })
 
-  it('skips PTY spawn on mount when resuming without autoSend, enables send button (T645)', async () => {
-    // T645 H2: resume mode with convId but no autoSend → Claude would start interactive
-    // (no positional arg) → sessionId never received → Envoyer button disabled forever.
-    // Fix: skip PTY spawn, set sessionId from convId directly.
+  it('sets sessionId from convId shortcut on resume, enables send button (T648)', async () => {
+    // T648: resume with convId but no autoSend → set sessionId from tab.convId immediately
+    // so the Envoyer button is enabled right away (system:init may not fire until first send).
+    // agentCreate IS still called (unlike old PTY shortcut which skipped spawn entirely).
     const { wrapper } = await mountStream([], { convId: 'abc123-session-id', autoSend: null })
     await nextTick()
-    // No PTY was spawned (terminalCreate not called in this scenario, only the mock from setup)
-    // The send button should be enabled (sessionId set from convId)
+    // agentCreate was called with the convId
+    expect(mockElectronAPI.agentCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ convId: 'abc123-session-id' })
+    )
+    // Send button should be enabled (sessionId set from convId shortcut)
     const btn = wrapper.find('[data-testid="send-button"]')
-    // Button is disabled when input is empty — fill it to verify sessionId is set
     const textarea = wrapper.find('textarea')
     await textarea.setValue('Premier message')
     expect((btn.element as HTMLButtonElement).disabled).toBe(false)
   })
 
   it('displays sent message as user bubble immediately (T605)', async () => {
-    // T606: send requires sessionId — inject system:init first so the guard passes
-    const initEvent: StreamEvent = { type: 'system', subtype: 'init', session_id: 'test-session-id' }
-    const { wrapper } = await mountStream([initEvent])
-    vi.mocked(mockElectronAPI.terminalCreate).mockResolvedValue('stream-pty-2')
+    // T648: send requires sessionId — use convId shortcut to enable the button
+    const { wrapper } = await mountStream([], { convId: 'test-session-id' })
     const textarea = wrapper.find('textarea')
     await textarea.setValue('Bonjour Claude')
     const btn = wrapper.find('[data-testid="send-button"]')

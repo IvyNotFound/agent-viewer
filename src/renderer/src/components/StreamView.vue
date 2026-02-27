@@ -44,7 +44,7 @@ export interface StreamEvent {
 // ── Props ────────────────────────────────────────────────────────────────────
 
 const props = defineProps<{
-  /** Terminal / stream identifier passed to IPC. */
+  /** Tab identifier — used to look up tab config in tabsStore. */
   terminalId: string
 }>()
 
@@ -59,7 +59,7 @@ const events = ref<StreamEvent[]>([])
 const inputText = ref('')
 const scrollContainer = ref<HTMLElement | null>(null)
 const sessionId = ref<string | null>(null)
-/** PTY ID returned by terminalCreate — used for IPC data subscription and write. */
+/** Agent process ID returned by agentCreate — used for IPC send and kill. */
 const ptyId = ref<string | null>(null)
 
 /** Collapsible state keyed by "eventIndex-blockIndex". */
@@ -80,57 +80,28 @@ const isStreaming = computed(() => {
 // ── IPC ──────────────────────────────────────────────────────────────────────
 
 let unsubStreamMessage: (() => void) | null = null
+let unsubConvId: (() => void) | null = null
+let unsubExit: (() => void) | null = null
 
 async function sendMessage(): Promise<void> {
   const text = inputText.value.trim()
   if (!text || !sessionId.value) return
   const msgText = text
   inputText.value = ''
-  // Optimistic UI: display user bubble immediately before spawning new PTY
+  // Optimistic UI: display user bubble immediately
   events.value.push({
     type: 'user',
     message: { role: 'user', content: [{ type: 'text', text: msgText }] }
   })
   scrollToBottom()
 
-  // T606: respawn-per-message — spawn a new PTY with --resume <sessionId> so Claude
-  // runs in print mode (single-turn JSONL) and exits cleanly after responding.
-  // This avoids PTY buffer overflow and special-char corruption from pty.write().
-  const tab = tabsStore.tabs.find(t => t.id === props.terminalId)
+  // ADR-009: agentSend writes a JSONL message to the agent's stdin — no respawn needed.
   try {
-    // Unsubscribe from previous PTY before creating a new one
-    unsubStreamMessage?.()
-
-    // T645: cols=10000 prevents PTY line-wrapping on JSON lines (2000+ chars).
-    // cols=80 would insert \r\n every 80 chars, splitting JSON tokens → JSON.parse fails.
-    const newId = await window.electronAPI.terminalCreate(
-      10000, 24,
-      tasksStore.projectPath ?? undefined,
-      tab?.wslDistro ?? undefined,
-      undefined,            // no system prompt — --resume restores session context
-      msgText,              // user message as positional arg (b64-encoded in main process)
-      tab?.thinkingMode ?? undefined,
-      tab?.claudeCommand ?? undefined,
-      sessionId.value,      // --resume <convId> for conversation continuity
-      undefined,
-      'stream-json'
-    )
-    ptyId.value = newId
-    tabsStore.setPtyId(props.terminalId, newId)
-
-    unsubStreamMessage = window.electronAPI.onTerminalStreamMessage(
-      newId,
-      (raw: Record<string, unknown>) => {
-        const evt = raw as StreamEvent
-        if (evt.type === 'system' && evt.subtype === 'init' && evt.session_id) {
-          sessionId.value = evt.session_id
-        }
-        events.value.push(evt)
-        scrollToBottom()
-      }
-    )
+    if (ptyId.value) {
+      await window.electronAPI.agentSend(ptyId.value, msgText)
+    }
   } catch (err) {
-    events.value.push({ type: 'system', subtype: 'error', session_id: `Erreur PTY: ${String(err)}` })
+    events.value.push({ type: 'system', subtype: 'error', session_id: `Erreur agent: ${String(err)}` })
   }
 }
 
@@ -166,67 +137,70 @@ function scrollToBottom(): void {
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 onMounted(async () => {
-  // ── PTY creation (T597): start the Claude process with --output-format stream-json
   const tab = tabsStore.tabs.find(t => t.id === props.terminalId)
-  if (tab) {
-    // T645 H2: If resuming a previous stream-json session with no initial message,
-    // skip PTY spawn entirely — Claude would start in interactive mode (no positional arg),
-    // and sessionId.value would stay null, disabling the "Envoyer" button forever.
-    // Set sessionId from the known convId directly so the user can type the first message.
-    if (tab.convId && !tab.autoSend) {
-      sessionId.value = tab.convId
-      return
+  if (!tab) return
+
+  // Resume shortcut: set sessionId immediately from known convId so the "Envoyer" button
+  // is enabled right away. agentCreate still spawns the process — this avoids the button
+  // being disabled while waiting for system:init from a resumed session (ADR-009).
+  if (tab.convId && !tab.autoSend) {
+    sessionId.value = tab.convId
+  }
+
+  try {
+    // ADR-009: spawn agent via child_process.spawn + stdio:pipe (no PTY, no ANSI).
+    const id = await window.electronAPI.agentCreate({
+      projectPath: tasksStore.projectPath ?? undefined,
+      wslDistro: tab.wslDistro ?? undefined,
+      systemPrompt: tab.systemPrompt ?? undefined,
+      thinkingMode: tab.thinkingMode ?? undefined,
+      claudeCommand: tab.claudeCommand ?? undefined,
+      convId: tab.convId ?? undefined,
+    })
+    ptyId.value = id
+    tabsStore.setPtyId(props.terminalId, id)
+
+    // Push user bubble immediately, then send via stdin JSONL (no respawn needed).
+    if (tab.autoSend) {
+      events.value.push({
+        type: 'user',
+        message: { role: 'user', content: [{ type: 'text', text: tab.autoSend }] }
+      })
+      scrollToBottom()
+      await window.electronAPI.agentSend(id, tab.autoSend)
     }
 
-    try {
-      // T645: cols=10000 prevents PTY line-wrapping on JSON lines (2000+ chars).
-      // cols=80 would insert \r\n every 80 chars, splitting JSON tokens → JSON.parse fails.
-      const id = await window.electronAPI.terminalCreate(
-        10000, 24,
-        tasksStore.projectPath ?? undefined,
-        tab.wslDistro ?? undefined,
-        tab.systemPrompt ?? undefined,
-        tab.autoSend ?? undefined,
-        tab.thinkingMode ?? undefined,
-        tab.claudeCommand ?? undefined,
-        tab.convId ?? undefined,
-        undefined,
-        'stream-json'
-      )
-      ptyId.value = id
-      tabsStore.setPtyId(props.terminalId, id)
-
-      // Push user bubble immediately — do not wait for system:init (race condition risk)
-      if (tab.autoSend) {
-        events.value.push({
-          type: 'user',
-          message: { role: 'user', content: [{ type: 'text', text: tab.autoSend }] }
-        })
+    // Subscribe to JSONL stream events (agent:stream:<id>)
+    unsubStreamMessage = window.electronAPI.onAgentStream(
+      id,
+      (raw: Record<string, unknown>) => {
+        const event = raw as StreamEvent
+        events.value.push(event)
         scrollToBottom()
       }
+    )
 
-      // Subscribe to JSONL stream events using the ptyId (data channel is terminal:data:<ptyId>)
-      unsubStreamMessage = window.electronAPI.onTerminalStreamMessage(
-        id,
-        (raw: Record<string, unknown>) => {
-          const event = raw as StreamEvent
-          if (event.type === 'system' && event.subtype === 'init') {
-            sessionId.value = event.session_id ?? null
-            // NOTE: user bubble already pushed above — do NOT push again here
-          }
-          events.value.push(event)
-          scrollToBottom()
-        }
-      )
-    } catch (err) {
-      // PTY spawn error — show inline error
-      events.value.push({ type: 'system', subtype: 'init', session_id: `Erreur PTY: ${String(err)}` })
-    }
+    // Subscribe to convId channel — fired by main process on system:init
+    unsubConvId = window.electronAPI.onAgentConvId(id, (convId: string) => {
+      sessionId.value = convId
+    })
+
+    // Subscribe to exit
+    unsubExit = window.electronAPI.onAgentExit(id, (_exitCode: number | null) => {
+      // agent process exited — stream events contain the result
+    })
+  } catch (err) {
+    events.value.push({ type: 'system', subtype: 'init', session_id: `Erreur agent: ${String(err)}` })
   }
 })
 
 onUnmounted(() => {
   unsubStreamMessage?.()
+  unsubConvId?.()
+  unsubExit?.()
+  if (ptyId.value) {
+    window.electronAPI.agentKill(ptyId.value)
+  }
 })
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

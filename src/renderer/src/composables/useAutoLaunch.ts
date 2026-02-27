@@ -173,12 +173,14 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     }
   }
 
-  async function pollSessionStatus(agentName: string, agentId: number, path: string): Promise<void> {
+  async function pollSessionStatus(agentName: string, agentId: number, path: string, notBefore: string): Promise<void> {
     try {
+      // Only detect sessions that completed AFTER the close was scheduled, preventing
+      // false positives from previous sessions completed within the last few minutes.
       const rows = await window.electronAPI.queryDb(
         path,
-        `SELECT id FROM sessions WHERE agent_id = ? AND statut = 'completed' AND ended_at >= datetime('now', '-10 minutes') ORDER BY id DESC LIMIT 1`,
-        [agentId]
+        `SELECT id FROM sessions WHERE agent_id = ? AND statut = 'completed' AND ended_at >= ? ORDER BY id DESC LIMIT 1`,
+        [agentId, notBefore]
       ) as { id: number }[]
       if (rows.length > 0) {
         doClose(agentName)
@@ -198,17 +200,22 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     const path = dbPath.value
     if (!path) return
 
+    // Capture current time: only sessions completing AFTER this point trigger a close.
+    // This prevents the poller from finding a previously-completed session and closing
+    // a freshly-launched terminal (regression introduced in T646).
+    const notBefore = new Date().toISOString()
+
     // Immediate poll — guarded to prevent N parallel polls when watch fires rapidly
     if (!pendingImmediatePolls.has(agentName)) {
       pendingImmediatePolls.add(agentName)
       setTimeout(() => {
         pendingImmediatePolls.delete(agentName)
-        pollSessionStatus(agentName, agentId, path)
+        pollSessionStatus(agentName, agentId, path, notBefore)
       }, 0)
     }
 
     const intervalId = setInterval(
-      () => pollSessionStatus(agentName, agentId, path),
+      () => pollSessionStatus(agentName, agentId, path, notBefore),
       POLL_INTERVAL_MS
     )
 

@@ -379,6 +379,102 @@ describe('composables/useAutoLaunch', () => {
     })
   })
 
+  describe('T646 regression: no-task agent auto-close', () => {
+    it('should NOT close terminal immediately when queryDb returns no post-schedule session', async () => {
+      // Regression: T646 fix caused no-task agents (task-creator, review…) to close
+      // immediately after launch if a previous session completed within 10 minutes.
+      // Fix: use notBefore = scheduleClose time so only sessions completing AFTER
+      // the scheduling window are considered.
+      api.queryDb.mockResolvedValue([]) // no session completed after notBefore
+
+      const noTaskAgent = makeAgent({ id: 20, name: 'task-creator' })
+      agents.value = [noTaskAgent]
+      useAutoLaunch({ tasks, agents, dbPath })
+
+      // Seed: no tasks
+      tasks.value = []
+      await nextTick()
+
+      const tabsStore = useTabsStore()
+      tabsStore.addTerminal('task-creator', 'Ubuntu-24.04')
+      const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
+      termTab.ptyId = 'pty-task-creator-notask'
+
+      // Trigger tasks watch (task for a different agent)
+      tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 999 })]
+      await nextTick()
+
+      // Past debounce + immediate poll
+      await vi.advanceTimersByTimeAsync(200)
+
+      // Terminal must still be open — old session must not trigger close
+      expect(api.terminalWrite).not.toHaveBeenCalled()
+      expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(1)
+    })
+
+    it('should close no-task agent terminal after its own session completes post-scheduling', async () => {
+      api.queryDb.mockResolvedValue([]) // initially no completed session
+
+      const noTaskAgent = makeAgent({ id: 20, name: 'task-creator' })
+      agents.value = [noTaskAgent]
+      useAutoLaunch({ tasks, agents, dbPath })
+
+      tasks.value = []
+      await nextTick()
+
+      const tabsStore = useTabsStore()
+      tabsStore.addTerminal('task-creator', 'Ubuntu-24.04')
+      const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
+      termTab.ptyId = 'pty-task-creator-close'
+
+      // Trigger no-task check
+      tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 999 })]
+      await nextTick()
+      await vi.advanceTimersByTimeAsync(200) // debounce + immediate poll → no close
+
+      expect(api.terminalWrite).not.toHaveBeenCalled()
+
+      // Session completes → next poll detects it
+      api.queryDb.mockResolvedValue([{ id: 99 }])
+      await vi.advanceTimersByTimeAsync(5_000 + 100) // POLL_INTERVAL_MS = 5_000
+
+      expect(api.terminalWrite).toHaveBeenCalledWith('pty-task-creator-close', '\x03')
+    })
+
+    it('should pass a notBefore ISO timestamp as 2nd queryDb param', async () => {
+      const capturedParams: unknown[][] = []
+      api.queryDb.mockImplementation((_path, _query, params) => {
+        capturedParams.push(params as unknown[])
+        return Promise.resolve([])
+      })
+
+      const noTaskAgent = makeAgent({ id: 20, name: 'task-creator' })
+      agents.value = [noTaskAgent]
+      useAutoLaunch({ tasks, agents, dbPath })
+
+      tasks.value = []
+      await nextTick()
+
+      const tabsStore = useTabsStore()
+      tabsStore.addTerminal('task-creator', 'Ubuntu-24.04')
+
+      const beforeSchedule = new Date().toISOString()
+      tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 999 })]
+      await nextTick()
+      await vi.advanceTimersByTimeAsync(200)
+
+      expect(capturedParams.length).toBeGreaterThan(0)
+      const [agentIdParam, notBeforeParam] = capturedParams[0] as [number, string]
+      expect(agentIdParam).toBe(20)
+      // notBefore must be a valid ISO string >= the time before scheduling
+      expect(typeof notBeforeParam).toBe('string')
+      expect(new Date(notBeforeParam).toISOString()).toBe(notBeforeParam)
+      expect(new Date(notBeforeParam).getTime()).toBeGreaterThanOrEqual(
+        new Date(beforeSchedule).getTime() - 100
+      )
+    })
+  })
+
   // NOTE: launchAgentTerminal failure tests moved to useLaunchSession.spec.ts
   // (T345 removed auto-launch from useAutoLaunch — those were false-greens)
 

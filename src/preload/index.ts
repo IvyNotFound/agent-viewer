@@ -375,4 +375,56 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   agentGroupsReorder: (dbPath: string, groupIds: number[]): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('agent-groups:reorder', dbPath, groupIds),
+
+  // ── Agent stream (ADR-009: child_process.spawn + stdio:pipe) ──────────────
+
+  /**
+   * Spawn a Claude agent process using child_process.spawn + stdio:pipe.
+   * Returns an id to use with agentSend/agentKill/onAgentStream.
+   * First user message must be sent via agentSend after creation.
+   */
+  agentCreate: (opts?: {
+    cols?: number
+    rows?: number
+    projectPath?: string
+    wslDistro?: string
+    systemPrompt?: string
+    thinkingMode?: string
+    claudeCommand?: string
+    convId?: string
+    permissionMode?: string
+  }): Promise<string> =>
+    ipcRenderer.invoke('agent:create', opts ?? {}),
+
+  /** Send a multi-turn user message to the agent process via stdin JSONL. */
+  agentSend: (id: string, text: string): Promise<void> =>
+    ipcRenderer.invoke('agent:send', id, text),
+
+  /** Kill the agent process. */
+  agentKill: (id: string): Promise<void> =>
+    ipcRenderer.invoke('agent:kill', id),
+
+  /** Subscribe to JSONL stream events from the agent process. Returns unsubscribe fn. */
+  onAgentStream: (id: string, cb: (event: Record<string, unknown>) => void): (() => void) => {
+    const channel = `agent:stream:${id}`
+    const handler = (_: unknown, event: Record<string, unknown>) => cb(event)
+    ipcRenderer.on(channel, handler)
+    return () => ipcRenderer.off(channel, handler)
+  },
+
+  /** Subscribe to the convId extracted from the system:init event. Returns unsubscribe fn. */
+  onAgentConvId: (id: string, cb: (convId: string) => void): (() => void) => {
+    const channel = `agent:convId:${id}`
+    const handler = (_: unknown, convId: string) => cb(convId)
+    ipcRenderer.on(channel, handler)
+    return () => ipcRenderer.off(channel, handler)
+  },
+
+  /** Subscribe to the exit event when the agent process closes. Returns unsubscribe fn. */
+  onAgentExit: (id: string, cb: (exitCode: number | null) => void): (() => void) => {
+    const channel = `agent:exit:${id}`
+    const handler = (_: unknown, exitCode: number | null) => cb(exitCode)
+    ipcRenderer.on(channel, handler)
+    return () => ipcRenderer.off(channel, handler)
+  },
 })
