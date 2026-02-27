@@ -1664,4 +1664,94 @@ describe('terminal utilities', () => {
       expect(syncCall).toBeUndefined()
     })
   })
+
+  // ── T645: stream-json PTY — cols passthrough + output-format flag ──────────
+
+  describe('terminal:create — stream-json output format (T645)', () => {
+    it('should spawn PTY with provided cols when outputFormat=stream-json', async () => {
+      const nodePty = await import('node-pty')
+      const mockSpawn = vi.mocked(nodePty.spawn)
+      mockSpawn.mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+      const validUuid = '550e8400-e29b-41d4-a716-446655440000'
+
+      // Caller (StreamView) passes cols=10000 to prevent JSON line-wrapping
+      await handler(makeEvent(800), 10000, 24, undefined, undefined, undefined, 'hello', undefined, undefined, validUuid, undefined, 'stream-json')
+
+      expect(mockSpawn).toHaveBeenCalledWith('wsl.exe', expect.any(Array), expect.objectContaining({
+        cols: 10000,
+        rows: 24,
+      }))
+    })
+
+    it('should include --output-format stream-json in resume command when outputFormat=stream-json', async () => {
+      const nodePty = await import('node-pty')
+      const mockSpawn = vi.mocked(nodePty.spawn)
+      mockSpawn.mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+      const validUuid = '550e8400-e29b-41d4-a716-446655440000'
+
+      await handler(makeEvent(801), 10000, 24, undefined, undefined, undefined, 'hello', undefined, undefined, validUuid, undefined, 'stream-json')
+
+      const spawnArgs = mockSpawn.mock.calls[0][1] as string[]
+      expect(spawnArgs.join(' ')).toContain('--output-format stream-json')
+    })
+
+    it('should append user message as positional arg in stream-json resume mode', async () => {
+      mockWriteFile.mockClear()
+      const nodePty = await import('node-pty')
+      const mockSpawn = vi.mocked(nodePty.spawn)
+      mockSpawn.mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+      const validUuid = '550e8400-e29b-41d4-a716-446655440000'
+      const userMessage = 'fix the bug'
+
+      await handler(makeEvent(802), 10000, 24, undefined, undefined, undefined, userMessage, undefined, undefined, validUuid, undefined, 'stream-json')
+
+      const spawnArgs = mockSpawn.mock.calls[0][1] as string[]
+      const fullCmd = spawnArgs.join(' ')
+      // User message must be injected as base64 positional arg so Claude runs in print mode
+      const b64User = Buffer.from(userMessage).toString('base64')
+      expect(fullCmd).toContain(b64User)
+      expect(fullCmd).toContain('base64 -d')
+    })
+
+    it('should use dumb TERM and set NO_COLOR=1 for stream-json sessions', async () => {
+      const nodePty = await import('node-pty')
+      const mockSpawn = vi.mocked(nodePty.spawn)
+      mockSpawn.mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+      const validUuid = '550e8400-e29b-41d4-a716-446655440000'
+
+      await handler(makeEvent(803), 10000, 24, undefined, undefined, undefined, 'msg', undefined, undefined, validUuid, undefined, 'stream-json')
+
+      const spawnOptions = mockSpawn.mock.calls[0][2] as { name: string; env: Record<string, string> }
+      expect(spawnOptions.name).toBe('dumb')
+      expect(spawnOptions.env['NO_COLOR']).toBe('1')
+      expect(spawnOptions.env['TERM']).toBe('dumb')
+    })
+
+    it('should NOT include --output-format stream-json when outputFormat is undefined', async () => {
+      const nodePty = await import('node-pty')
+      const mockSpawn = vi.mocked(nodePty.spawn)
+      mockSpawn.mockClear()
+
+      const { find } = await getHandlers()
+      const handler = find('terminal:create')
+      const validUuid = '550e8400-e29b-41d4-a716-446655440000'
+
+      await handler(makeEvent(804), 80, 24, undefined, undefined, undefined, 'msg', undefined, undefined, validUuid, undefined, undefined)
+
+      const spawnArgs = mockSpawn.mock.calls[0][1] as string[]
+      expect(spawnArgs.join(' ')).not.toContain('--output-format stream-json')
+    })
+  })
 })
