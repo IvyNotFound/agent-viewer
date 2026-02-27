@@ -31,6 +31,10 @@ function run(sql) {
   // Normalize MySQL/PostgreSQL datetime functions to SQLite equivalents.
   // Note: regex may replace NOW() inside string literals — acceptable trade-off.
   sql = sql.replace(/\bNOW\s*\(\s*\)/gi, 'CURRENT_TIMESTAMP')
+  // Normalize typographic quotes to ASCII equivalents.
+  // Note: regex may replace curly quotes inside string literals — acceptable trade-off.
+  sql = sql.replace(/[\u201C\u201D]/g, '"') // curly double quotes -> straight
+  sql = sql.replace(/[\u2018\u2019]/g, "'") // curly single quotes -> straight
 
   initSqlJs().then((SQL) => {
     cleanupOrphanTmp(dbPath)

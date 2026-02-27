@@ -31,6 +31,10 @@ const dbPath = path.resolve(process.cwd(), '.claude/project.db')
  * @param {string} sql
  */
 function run(sql) {
+  // Normalize typographic quotes to ASCII equivalents.
+  // Note: regex may replace curly quotes inside string literals — acceptable trade-off.
+  sql = sql.replace(/[\u201C\u201D]/g, '"') // curly double quotes -> straight
+  sql = sql.replace(/[\u2018\u2019]/g, "'") // curly single quotes -> straight
   initSqlJs().then((SQL) => {
     const db = new SQL.Database(fs.readFileSync(dbPath))
     const result = db.exec(sql)
