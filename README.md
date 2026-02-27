@@ -1,6 +1,6 @@
 # agent-viewer
 
-![Version](https://img.shields.io/badge/version-0.12.0-blue)
+![Version](https://img.shields.io/badge/version-0.13.0-blue)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 
 Desktop interface in Trello/Jira style for real-time visualization of Claude agent tasks from a local SQLite database. The application manages agents, launches sessions, and includes an embedded WSL terminal.
@@ -20,7 +20,7 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 - **Auto-launch Terminals**: Automatic agent session launch on task creation with assignment
 - **Auto-trigger Review**: Automatic review session launch when ≥10 tasks reach `done` status (configurable threshold, cooldown)
 - **Archive Pagination**: Paginated archive view (50 tasks per page), archives excluded from main refresh for better performance
-- **Token Stats**: Global/daily/hourly token statistics, per-agent bars, per-session table
+- **Token Stats**: Period selector (1h / 24h / 7d / 30d / ∞), estimated cost (Sonnet 4.6 pricing), cache hit rate with colour indicator, 7-day activity sparkline, per-agent bars and per-session table
 - **Terminal Watchdog**: Automatic crash detection and recovery with stored launch parameters
 - **Multi-instance**: Launch multiple instances of the same agent with git worktree isolation
 - **Session Resume**: Claude Code sessions resumed via `--resume <conv_id>` to save tokens
@@ -142,6 +142,7 @@ Les scripts dans `scripts/` permettent aux agents d'interagir avec la base de do
 | `node scripts/dbq.js "<SQL>"` | Lecture en mémoire (sql.js, bypass lock SQLite) |
 | `node scripts/dbw.js "<SQL>"` | Écriture atomique avec advisory lock (`.wlock`) |
 | `node scripts/dbstart.js <agent>` | Démarre une session agent, affiche tâches et locks |
+| `bash scripts/release.sh [patch\|minor\|major]` | Build + bump de version + tag Git + GitHub Release (draft) |
 
 **Mode JSON (dbw.js)** — pour les valeurs contenant des apostrophes ou caractères spéciaux, utilisez le mode JSON via stdin :
 

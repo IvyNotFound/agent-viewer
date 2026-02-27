@@ -58,6 +58,11 @@ const PERIODS = [
 
 type PeriodKey = (typeof PERIODS)[number]['key']
 
+/**
+ * Loads the last-used period key from localStorage.
+ * Falls back to '24h' when no stored value is found or the value is invalid.
+ * @returns The persisted period key, or '24h' as default.
+ */
 function loadSavedPeriod(): PeriodKey {
   try {
     const v = localStorage.getItem('tokenStats.period') as PeriodKey | null
@@ -70,10 +75,21 @@ const selectedPeriod = ref<PeriodKey>(loadSavedPeriod())
 
 const activePeriod = computed(() => PERIODS.find(p => p.key === selectedPeriod.value) ?? PERIODS[1])
 
+/**
+ * Builds a SQL WHERE clause filtering sessions by period.
+ * @param periodSql - SQLite datetime expression (e.g. `datetime('now', '-24 hours')`), or null for no filter.
+ * @returns A complete `WHERE …` clause, or an empty string for the "all" period.
+ */
 function whereClause(periodSql: string | null): string {
   return periodSql ? `WHERE started_at >= ${periodSql}` : ''
 }
 
+/**
+ * Builds a SQL WHERE clause combining a period filter with an extra condition.
+ * @param periodSql - SQLite datetime expression, or null for no period filter.
+ * @param extraCondition - Additional SQL predicate to AND into the clause.
+ * @returns A combined `WHERE …` clause.
+ */
 function andOrWhere(periodSql: string | null, extraCondition: string): string {
   return periodSql
     ? `WHERE started_at >= ${periodSql} AND ${extraCondition}`
@@ -100,6 +116,14 @@ const agentRows = ref<AgentTokenRow[]>([])
 const sessionRows = ref<SessionTokenRow[]>([])
 const sparkDays = ref<SparkDay[]>([])
 
+/**
+ * Fetches all token stats for the currently selected period.
+ * Fires 4 parallel SQL queries: period totals, per-agent aggregates,
+ * per-session list (latest 50), and 7-day sparkline data.
+ * Results are written directly to the reactive refs used by the template.
+ * @returns Resolves when all queries complete. Silently ignores errors
+ *   (usePolledData handles the loading state and retry logic).
+ */
 async function fetchStats(): Promise<void> {
   if (!store.dbPath) return
   const where = whereClause(activePeriod.value.sql)
@@ -184,18 +208,34 @@ const { loading, refresh } = usePolledData(
 
 // ── Formatting ────────────────────────────────────────────────────────────────
 
+/**
+ * Formats a raw token count into a compact human-readable string.
+ * @param n - Token count (non-negative integer).
+ * @returns Compact string: `1.2M`, `45.3k`, or locale-formatted integer.
+ */
 function formatNumber(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
   if (n >= 1_000) return (n / 1_000).toFixed(1) + 'k'
   return n.toLocaleString()
 }
 
+/**
+ * Formats a UTC datetime string as a short localised date+time.
+ * @param dateStr - SQLite UTC timestamp (e.g. `'2026-02-27 10:30:00'`).
+ * @returns Localised string (dd/mm hh:mm in fr-FR, mm/dd hh:mm in en-US).
+ */
 function formatDate(dateStr: string): string {
   const d = parseUtcDate(dateStr)
   const dateLocale = locale.value === 'fr' ? 'fr-FR' : 'en-US'
   return d.toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
+/**
+ * Formats a USD cost amount with two decimal places.
+ * Amounts below $0.01 are rendered as `< $0.01` to avoid misleading zeros.
+ * @param usd - Cost in US dollars.
+ * @returns Human-readable cost string, e.g. `'$1.23'` or `'< $0.01'`.
+ */
 function formatCost(usd: number): string {
   if (usd < 0.01) return '< $0.01'
   return '$' + usd.toFixed(2)
@@ -204,6 +244,13 @@ function formatCost(usd: number): string {
 // Bar width for agent chart (percentage of max)
 const maxAgentTotal = computed(() => Math.max(...agentRows.value.map(r => r.total), 1))
 
+/**
+ * Computes the CSS width percentage for an agent's token bar.
+ * The widest agent always reaches 100%; others are proportional.
+ * Minimum width is 2% so bars are always visible.
+ * @param total - Token total for this agent.
+ * @returns CSS percentage string, e.g. `'73%'`.
+ */
 function barWidth(total: number): string {
   return Math.max((total / maxAgentTotal.value) * 100, 2) + '%'
 }
@@ -265,7 +312,13 @@ const sparkBars = computed(() => {
 
 const sparkMax = computed(() => Math.max(...sparkBars.value.map(b => b.total), 1))
 
-// SVG bar height in pixels (out of 44px usable height), min 2px when value > 0
+/**
+ * Computes the SVG bar height in pixels for a sparkline column.
+ * Usable height is 44 px; the peak day fills the full height.
+ * Days with zero tokens render as 0 px (a 2 px placeholder div is shown instead).
+ * @param total - Token total for that day.
+ * @returns Height in pixels (0, or 2–44).
+ */
 function sparkBarHeight(total: number): number {
   if (total === 0) return 0
   return Math.max(Math.round((total / sparkMax.value) * 44), 2)
