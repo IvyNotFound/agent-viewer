@@ -43,8 +43,9 @@ echo "=== Pre-release Checks ==="
 echo "Running npm install..."
 npm install --silent 2>/dev/null
 
-echo "Running build (vite only, no packaging)..."
-npm run build:vite
+echo "Running build (vite + electron-builder packaging)..."
+# TODO(v1.0): move artifact production to GitHub Actions
+npm run build
 
 echo "Running lint..."
 if ! npm run lint 2>&1 | grep -q "error\|warning\|0 warnings"; then
@@ -121,11 +122,21 @@ echo "=== Creating GitHub Release ==="
 RELEASE_NOTES=$(sed -n '/## \[v'"$NEW_VERSION"'\]/,/## \[/p' CHANGELOG.md | head -20)
 RELEASE_NOTES=$(echo "$RELEASE_NOTES" | sed 's/## \[v'"$NEW_VERSION"'\] - .*/## '"$NEW_VERSION"'/')
 
+# Resolve Windows installer artifact path
+EXE_PATH="dist/agent-viewer-Setup-${NEW_VERSION}.exe"
+
+if [ ! -f "$EXE_PATH" ]; then
+    echo "ERROR: Installer not found: $EXE_PATH"
+    echo "Check electron-builder output above."
+    exit 1
+fi
+
 gh release create "v$NEW_VERSION" \
     --title "Release v$NEW_VERSION" \
     --notes "$RELEASE_NOTES" \
     --target main \
-    --draft
+    --draft \
+    "$EXE_PATH"
 
 echo ""
 echo "=== Release v$NEW_VERSION Complete ==="
