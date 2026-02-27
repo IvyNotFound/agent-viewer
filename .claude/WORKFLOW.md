@@ -11,7 +11,7 @@
 
 ```
 agents          (id PK, name, type, perimetre, system_prompt, system_prompt_suffix, thinking_mode, allowed_tools, created_at)
-sessions        (id PK, agent_id→agents, started_at, ended_at, updated_at, statut, summary, claude_conv_id)
+sessions        (id PK, agent_id→agents, started_at, ended_at, updated_at, statut CHECK(statut IN ('started','completed','blocked')), summary, claude_conv_id, tokens_in, tokens_out, tokens_cache_read, tokens_cache_write)
 tasks           (id PK, titre, description, statut, agent_createur_id→agents, agent_assigne_id→agents, agent_valideur_id→agents, parent_task_id→tasks, session_id→sessions, perimetre, effort, priority, created_at, updated_at, started_at, completed_at, validated_at)
 task_comments   (id PK, task_id→tasks, agent_id→agents, contenu, created_at)
 task_links      (id PK, from_task→tasks, to_task→tasks, type CHECK(type IN ('bloque','dépend_de','lié_à','duplique')), created_at)
@@ -129,7 +129,7 @@ UPDATE sessions SET tokens_in=X, tokens_out=Y, tokens_cache_read=Z, tokens_cache
 
 -- 2. Libérer locks via primitive
 -- 3. Clore la session
-UPDATE sessions SET statut = 'terminé', ended_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
+UPDATE sessions SET statut = 'completed', ended_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
   summary = 'Done:<accompli>. Pending:<tickets>. Next:<action>.' WHERE id = :session_id;
 ```
 

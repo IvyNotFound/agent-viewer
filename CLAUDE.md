@@ -52,6 +52,7 @@ SQL détaillé → `.claude/WORKFLOW.md`
 
 - **Startup**: lire `sessions.summary` + tâches `todo/in_progress` → travailler immédiatement; ne demander clarification que si aucune tâche et type non inférable
 - **Accès DB**: `node scripts/dbq.js "<SQL>"` (lecture) · `node scripts/dbw.js "<SQL>"` (écriture) — voir `.claude/WORKFLOW.md`
+- **Démarrage session** : `node scripts/dbstart.js <agent-name>` — crée session `statut='started'`, affiche tâches, vérifie locks en 1 commande. Si INSERT manuel : `statut='started'` (jamais `'active'`)
 - **Avant modification**: vérifier locks → `INSERT OR REPLACE INTO locks (fichier, agent_id, session_id) VALUES (…)`
 - **Tâche**: `UPDATE tasks SET statut='in_progress'` au début · commentaire de sortie **EN PREMIER** puis `statut='done'` à la fin (ordre strict — évite perte si session expire)
 - **Sessions parallèles** : max **3 sessions actives** par même agent (enforcé par `dbstart.js`, exit code 2 si limite atteinte).
@@ -65,7 +66,8 @@ SQL détaillé → `.claude/WORKFLOW.md`
 
 - `effort` : `1` (small) · `2` (medium) · `3` (large) — `CHECK(effort IN (1,2,3))`, valeur hors plage rejetée silencieusement par SQLite
 - `priority` : `low` · `normal` · `high` · `critical`
-- `statut` : `todo` → `in_progress` → `done` → `archived`
+- `statut` (tasks) : `todo` → `in_progress` → `done` → `archived`
+- `statut` (sessions) : `started` → `completed` | `blocked` — `CHECK(statut IN ('started','completed','blocked'))`, jamais `'active'`
 
 ---
 
