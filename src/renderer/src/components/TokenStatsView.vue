@@ -248,14 +248,17 @@ const sparkBars = computed(() => {
   const map = new Map<string, number>()
   for (const d of sparkDays.value) map.set(d.day, d.total)
 
+  const fmt = new Intl.DateTimeFormat(locale.value === 'fr' ? 'fr-FR' : 'en-US', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })
   const bars: Array<{ day: string; total: number; label: string }> = []
   for (let i = 6; i >= 0; i--) {
     const date = new Date()
     date.setUTCDate(date.getUTCDate() - i)
     const key = date.toISOString().slice(0, 10)
-    const dateLocale = locale.value === 'fr' ? 'fr-FR' : 'en-US'
-    const label = date.toLocaleDateString(dateLocale, { weekday: 'short', day: 'numeric', month: 'short' })
-    bars.push({ day: key, total: map.get(key) ?? 0, label })
+    bars.push({ day: key, total: map.get(key) ?? 0, label: fmt.format(date) })
   }
   return bars
 })
@@ -269,6 +272,24 @@ function sparkBarHeight(total: number): number {
 }
 
 const hoveredSparkBar = ref<number | null>(null)
+
+// ── T642 — Agent color cache (avoids 3× hash recalculation per row) ───────────
+
+interface AgentStyle { color: string; backgroundColor: string; boxShadow: string }
+
+const agentStyles = computed<Map<string, AgentStyle>>(() => {
+  const m = new Map<string, AgentStyle>()
+  for (const row of [...agentRows.value, ...sessionRows.value]) {
+    if (row.agent_name && !m.has(row.agent_name)) {
+      m.set(row.agent_name, {
+        color: agentFg(row.agent_name),
+        backgroundColor: agentBg(row.agent_name),
+        boxShadow: `0 0 0 1px ${agentBorder(row.agent_name)}`,
+      })
+    }
+  }
+  return m
+})
 </script>
 
 <template>
@@ -412,11 +433,7 @@ const hoveredSparkBar = ref<number | null>(null)
             <span
               v-if="row.agent_name"
               class="shrink-0 w-32 text-[11px] font-mono px-1.5 py-0.5 rounded font-medium truncate text-right"
-              :style="{
-                color: agentFg(row.agent_name),
-                backgroundColor: agentBg(row.agent_name),
-                boxShadow: `0 0 0 1px ${agentBorder(row.agent_name)}`
-              }"
+              :style="agentStyles.get(row.agent_name)"
               :title="row.agent_name"
             >{{ row.agent_name }}</span>
             <span v-else class="shrink-0 w-32 text-[11px] font-mono text-content-dim text-right">—</span>
@@ -472,11 +489,7 @@ const hoveredSparkBar = ref<number | null>(null)
                 <span
                   v-if="s.agent_name"
                   class="px-1.5 py-0.5 rounded font-medium"
-                  :style="{
-                    color: agentFg(s.agent_name),
-                    backgroundColor: agentBg(s.agent_name),
-                    boxShadow: `0 0 0 1px ${agentBorder(s.agent_name)}`
-                  }"
+                  :style="agentStyles.get(s.agent_name)"
                 >{{ s.agent_name }}</span>
                 <span v-else class="text-content-dim">—</span>
               </td>

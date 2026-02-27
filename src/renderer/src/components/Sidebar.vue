@@ -187,8 +187,15 @@ const activeAgents = computed(() =>
 
 // ── Agent groups (T557) ──────────────────────────────────────────────────────
 
+const groupedAgentIds = computed(() => {
+  const s = new Set<number>()
+  for (const g of store.agentGroups)
+    for (const m of g.members) s.add(m.agent_id)
+  return s
+})
+
 const ungroupedAgents = computed(() =>
-  store.agents.filter(a => !store.agentGroups.some(g => g.members.some(m => m.agent_id === a.id)))
+  store.agents.filter(a => !groupedAgentIds.value.has(a.id))
 )
 
 const groupedAgents = computed(() => {
