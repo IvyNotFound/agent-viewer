@@ -282,6 +282,51 @@ describe('stores/tabs', () => {
 
       expect(store.activeTabId).toBe(firstTabId)
     })
+
+    it('should stay in same agent group when closing active tab (T619)', () => {
+      const store = useTabsStore()
+      store.addTerminal('agent-a')
+      store.addTerminal('agent-a')
+      store.addTerminal('agent-b')
+      // tabs: [backlog, logs, agent-a tab1, agent-a tab2, agent-b tab]
+      const [, , tabA1, tabA2] = store.tabs
+      store.setActive(tabA1.id)
+
+      store.closeTab(tabA1.id)
+
+      // Should land on agent-a tab2, not agent-b
+      expect(store.activeTabId).toBe(tabA2.id)
+    })
+
+    it('should fall back to another group when last tab of group is closed (T619)', () => {
+      const store = useTabsStore()
+      store.addTerminal('agent-a')
+      store.addTerminal('agent-b')
+      // tabs: [backlog, logs, agent-a tab, agent-b tab]
+      const [, , tabA, tabB] = store.tabs
+      store.setActive(tabA.id)
+
+      store.closeTab(tabA.id)
+
+      // agent-a has no more tabs → should land on agent-b
+      expect(store.activeTabId).toBe(tabB.id)
+    })
+
+    it('should not cause inter-group switch when non-active tab is closed (T619)', () => {
+      const store = useTabsStore()
+      store.addTerminal('agent-a')
+      store.addTerminal('agent-a')
+      store.addTerminal('agent-b')
+      // tabs: [backlog, logs, agent-a tab1, agent-a tab2, agent-b tab]
+      const [, , tabA1, tabA2, tabB] = store.tabs
+      store.setActive(tabB.id)
+
+      store.closeTab(tabA1.id)
+
+      // Closing non-active tab should not change active tab
+      expect(store.activeTabId).toBe(tabB.id)
+      expect(store.tabs.find(t => t.id === tabA2.id)).toBeDefined()
+    })
   })
 
   describe('setActive', () => {
