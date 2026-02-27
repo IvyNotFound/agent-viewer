@@ -5,6 +5,8 @@ import { useTabsStore } from '@renderer/stores/tabs'
 import type { Tab } from '@renderer/stores/tabs'
 import { agentFg, agentBg, agentHue, isDark, colorVersion } from '@renderer/utils/agentColor'
 import { useConfirmDialog } from '@renderer/composables/useConfirmDialog'
+import ContextMenu from './ContextMenu.vue'
+import type { ContextMenuItem } from './ContextMenu.vue'
 
 const { t } = useI18n()
 const store = useTabsStore()
@@ -242,6 +244,24 @@ const indicatorStyleMap = computed<Map<string, Record<string, string>>>(() => {
 function subTabLabel(tab: Tab): string {
   return tab.taskId ? `#${tab.taskId}` : tab.title
 }
+
+// ── Context menu (clic droit sur en-tête de groupe) ──────────────────────────
+const contextMenu = ref<{ x: number; y: number; items: ContextMenuItem[] } | null>(null)
+
+function openGroupMenu(event: MouseEvent, group: TabGroup): void {
+  // Onglets système (null agentName) ne sont pas fermables via ce menu
+  if (group.agentName === null) return
+  contextMenu.value = {
+    x: event.clientX,
+    y: event.clientY,
+    items: [
+      {
+        label: t('tabBar.closeGroupTabs', { count: group.tabs.length }),
+        action: () => store.closeTabGroup(group.agentName),
+      },
+    ],
+  }
+}
 </script>
 
 <template>
@@ -322,6 +342,7 @@ function subTabLabel(tab: Tab): string {
           class="relative flex items-center gap-1.5 px-3 text-sm font-semibold transition-all select-none rounded-t shrink-0 cursor-pointer"
           :style="agentTabStyleMap.get(group.agentName)"
           @click="activateAgentGroup(group)"
+          @contextmenu.prevent="openGroupMenu($event, group)"
         >
           <!-- Icône terminal -->
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3 shrink-0 text-violet-500 dark:text-zinc-300">
@@ -423,4 +444,13 @@ function subTabLabel(tab: Tab): string {
     <div class="w-3 shrink-0"></div>
 
   </div>
+
+  <!-- Menu contextuel groupe d'onglets -->
+  <ContextMenu
+    v-if="contextMenu"
+    :x="contextMenu.x"
+    :y="contextMenu.y"
+    :items="contextMenu.items"
+    @close="contextMenu = null"
+  />
 </template>

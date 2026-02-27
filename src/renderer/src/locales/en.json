@@ -191,7 +191,8 @@
     "closeTerminalTitle": "Active session",
     "closeTerminalMessage": "This session is still active. Close anyway?",
     "closeFileConfirm": "Close anyway",
-    "closeTerminalConfirm": "Close"
+    "closeTerminalConfirm": "Close",
+    "closeGroupTabs": "Close all tabs ({count})"
   },
   "agent": {
     "editTitle": "Edit agent",

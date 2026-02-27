@@ -191,7 +191,8 @@
     "closeTerminalTitle": "Session active",
     "closeTerminalMessage": "Cette session est encore active. Fermer quand même ?",
     "closeFileConfirm": "Fermer quand même",
-    "closeTerminalConfirm": "Fermer"
+    "closeTerminalConfirm": "Fermer",
+    "closeGroupTabs": "Fermer tous les onglets ({count})"
   },
   "agent": {
     "editTitle": "Éditer l'agent",

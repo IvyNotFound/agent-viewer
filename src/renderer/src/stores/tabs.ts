@@ -192,6 +192,13 @@ export const useTabsStore = defineStore('tabs', () => {
     if (tab && title.trim()) tab.title = title.trim()
   }
 
+  function closeTabGroup(agentName: string | null): void {
+    const groupTabs = [...tabs.value.filter(t => t.agentName === agentName && !t.permanent)]
+    for (const tab of groupTabs) {
+      closeTab(tab.id)
+    }
+  }
+
   function closeAllTerminals(): void {
     const terminals = tabs.value.filter(t => t.type === 'terminal')
     for (const tab of terminals) {
@@ -209,5 +216,5 @@ export const useTabsStore = defineStore('tabs', () => {
     }
   }
 
-  return { tabs, activeTabId, activeTab, tabActivity, setActive, addTerminal, addLogs, addExplorer, openFile, setTabDirty, setPtyId, closeTab, renameTab, closeAllTerminals, markTabActive, isAgentActive, hasAgentTerminal }
+  return { tabs, activeTabId, activeTab, tabActivity, setActive, addTerminal, addLogs, addExplorer, openFile, setTabDirty, setPtyId, closeTab, renameTab, closeTabGroup, closeAllTerminals, markTabActive, isAgentActive, hasAgentTerminal }
 })
