@@ -81,8 +81,7 @@ onMounted(async () => {
     }
     if (sessionRows.length > 0 && sessionRows[0].claude_conv_id) {
       lastConvId.value = sessionRows[0].claude_conv_id
-      // Default to resume mode if a previous conversation exists
-      useResume.value = true
+      useResume.value = false
     }
   }
 
