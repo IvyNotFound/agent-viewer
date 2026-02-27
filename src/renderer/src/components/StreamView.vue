@@ -119,7 +119,6 @@ async function sendMessage(): Promise<void> {
     unsubStreamMessage = window.electronAPI.onTerminalStreamMessage(
       newId,
       (raw: Record<string, unknown>) => {
-        console.log('[StreamView] sendMessage event:', raw.type)
         const evt = raw as StreamEvent
         if (evt.type === 'system' && evt.subtype === 'init' && evt.session_id) {
           sessionId.value = evt.session_id
@@ -197,7 +196,6 @@ onMounted(async () => {
       unsubStreamMessage = window.electronAPI.onTerminalStreamMessage(
         id,
         (raw: Record<string, unknown>) => {
-          console.log('[StreamView] event received:', raw.type)
           const event = raw as StreamEvent
           if (event.type === 'system' && event.subtype === 'init') {
             sessionId.value = event.session_id ?? null
