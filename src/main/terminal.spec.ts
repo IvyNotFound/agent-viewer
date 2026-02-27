@@ -19,6 +19,7 @@ const mockPty = {
   write: vi.fn(),
   resize: vi.fn(),
   kill: vi.fn(),
+  pid: 12345,
 }
 vi.mock('node-pty', () => {
   const spawn = vi.fn(() => mockPty)
@@ -1497,6 +1498,153 @@ describe('terminal utilities', () => {
 
       expect(await testing.checkDropCachesCapability()).toBe(false)
       expect(testing.dropCachesAvailable).toBe(false)
+    })
+  })
+
+  // ── T630: kill chain — taskkill on Windows ──────────────────────────────────
+
+  describe('killPty — taskkill process tree (T630)', () => {
+    let mockExecFile: ReturnType<typeof vi.fn>
+    let testing: typeof import('./terminal')._testing
+    let platformSpy: ReturnType<typeof vi.spyOn>
+
+    beforeEach(async () => {
+      const mod = await import('./terminal')
+      testing = mod._testing
+      const cp = await import('child_process')
+      mockExecFile = vi.mocked(cp.execFile)
+      // Default: succeeds for all wsl.exe calls (needed by releaseWslMemory)
+      mockExecFile.mockImplementation((...args: unknown[]) => {
+        const cb = args[args.length - 1]
+        if (typeof cb === 'function') (cb as (err: null, stdout: string, stderr: string) => void)(null, '', '')
+        return {} as ReturnType<typeof import('child_process').execFile>
+      })
+    })
+
+    afterEach(() => {
+      platformSpy?.mockRestore()
+    })
+
+    it('should call taskkill /F /PID /T on Windows when pty has pid', async () => {
+      platformSpy = vi.spyOn(process, 'platform', 'get').mockReturnValue('win32' as NodeJS.Platform)
+
+      mockExecFile.mockClear()
+
+      const { find } = await getHandlers()
+      const evt = makeEvent(700)
+      const id = await find('terminal:create')(evt, 80, 24) as string
+      await find('terminal:kill')(evt, id)
+
+      // Find the taskkill call among all execFile calls
+      const taskkillCall = mockExecFile.mock.calls.find(
+        (c: unknown[]) => c[0] === 'taskkill'
+      )
+      expect(taskkillCall).toBeTruthy()
+      expect(taskkillCall![1]).toEqual(expect.arrayContaining(['/F', '/PID', String(mockPty.pid), '/T']))
+    })
+
+    it('should NOT call taskkill on non-Windows platform', async () => {
+      // platform is already linux in test env — ensure taskkill is not called
+      mockExecFile.mockClear()
+
+      const { find } = await getHandlers()
+      const evt = makeEvent(701)
+      const id = await find('terminal:create')(evt, 80, 24) as string
+      await find('terminal:kill')(evt, id)
+
+      const taskkillCall = mockExecFile.mock.calls.find(
+        (c: unknown[]) => c[0] === 'taskkill'
+      )
+      expect(taskkillCall).toBeUndefined()
+    })
+
+    it('should cancel pending killTimeouts when killPty is called directly via terminal:kill', async () => {
+      const { find } = await getHandlers()
+      const evt = makeEvent(702)
+      const id = await find('terminal:create')(evt, 80, 24) as string
+
+      // Inject a fake pending timer for this id (simulates an in-flight gracefulKillPty)
+      const fakeTimer = setTimeout(() => { /* should be cancelled */ }, 5000)
+      testing.killTimeouts.set(id, [fakeTimer])
+
+      // Kill the PTY — killPty should cancel the pending timer
+      await find('terminal:kill')(evt, id)
+
+      // The killTimeouts entry should be gone
+      expect(testing.killTimeouts.has(id)).toBe(false)
+    })
+  })
+
+  // ── T631: auto-release WSL RAM when last PTY closes ────────────────────────
+
+  describe('killPty — auto-release WSL memory on last PTY close (T631)', () => {
+    let mockExecFile: ReturnType<typeof vi.fn>
+    let testing: typeof import('./terminal')._testing
+
+    beforeEach(async () => {
+      const mod = await import('./terminal')
+      testing = mod._testing
+      testing.dropCachesAvailable = false  // disable drop_caches to simplify assertions
+      // Clear module-level state that persists across tests
+      testing.ptys.clear()
+      testing.agentPtys.clear()
+      testing.killTimeouts.clear()
+      const cp = await import('child_process')
+      mockExecFile = vi.mocked(cp.execFile)
+    })
+
+    it('should call wsl sync when last PTY closes', async () => {
+      mockExecFile.mockClear()
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], _opts: unknown, callback?: unknown) => {
+        if (callback && typeof callback === 'function') {
+          (callback as (err: null, stdout: string, stderr: string) => void)(null, '', '')
+        }
+        return {} as ReturnType<typeof import('child_process').execFile>
+      })
+
+      const { find } = await getHandlers()
+      const evt = makeEvent(710)
+      const id = await find('terminal:create')(evt, 80, 24) as string
+      await find('terminal:kill')(evt, id)
+
+      // Flush microtasks — releaseWslMemory is fire-and-forget (.catch)
+      await Promise.resolve()
+      await Promise.resolve()
+
+      const syncCall = mockExecFile.mock.calls.find(
+        (c: unknown[]) => c[0] === 'wsl.exe' && Array.isArray(c[1]) && (c[1] as string[]).includes('sync')
+      )
+      expect(syncCall).toBeTruthy()
+    })
+
+    it('should NOT call wsl sync when other PTYs are still active', async () => {
+      mockExecFile.mockClear()
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], _opts: unknown, callback?: unknown) => {
+        if (callback && typeof callback === 'function') {
+          (callback as (err: null, stdout: string, stderr: string) => void)(null, '', '')
+        }
+        return {} as ReturnType<typeof import('child_process').execFile>
+      })
+
+      const { find } = await getHandlers()
+      const evt1 = makeEvent(720)
+      const evt2 = makeEvent(721)
+      const id1 = await find('terminal:create')(evt1, 80, 24) as string
+      await find('terminal:create')(evt2, 80, 24)
+
+      // Clear calls from PTY creation (memory monitoring, etc.)
+      mockExecFile.mockClear()
+
+      // Kill only the first PTY — second is still active
+      await find('terminal:kill')(evt1, id1)
+      await Promise.resolve()
+      await Promise.resolve()
+
+      // ptys.size === 1, so releaseWslMemory should NOT have been called
+      const syncCall = mockExecFile.mock.calls.find(
+        (c: unknown[]) => c[0] === 'wsl.exe' && Array.isArray(c[1]) && (c[1] as string[]).includes('sync')
+      )
+      expect(syncCall).toBeUndefined()
     })
   })
 })

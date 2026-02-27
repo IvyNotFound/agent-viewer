@@ -130,15 +130,40 @@ async function releaseWslMemory(): Promise<{ synced: boolean; dropped: boolean; 
 
 /**
  * Force-kills a PTY by ID and cleans up tracking maps.
+ * On Windows, also runs `taskkill /F /T` on the spawned PID to ensure
+ * the wsl.exe process tree (bash, claude children) is fully terminated.
  * @param id - PTY session identifier.
  */
 function killPty(id: string): void {
   const pty = ptys.get(id)
   if (!pty) return
+  const pid = pty.pid
   try { pty.kill() } catch { /* already dead */ }
   ptys.delete(id)
+  // Cancel any pending graceful-kill timers (guards against double-kill if killPty
+  // is called directly while a gracefulKillPty timeout is in flight).
+  const pending = killTimeouts.get(id)
+  if (pending) {
+    for (const t of pending) clearTimeout(t)
+    killTimeouts.delete(id)
+  }
   agentPtys.delete(id)
   // Keep ptyLaunchParams for potential relaunch — cleaned up by terminal:dismissCrash
+
+  // T631: Auto-release WSL memory when the last PTY closes.
+  // releaseWslMemory() calls `wsl.exe -- sync` (+ optional drop_caches) — async, non-blocking.
+  // .catch() silences errors if WSL is unavailable or already stopped.
+  if (ptys.size === 0) {
+    releaseWslMemory().catch(() => { /* ignore — WSL may not be running */ })
+  }
+
+  // T630: On Windows, pty.kill() terminates the ConPTY host but wsl.exe children
+  // (bash, claude) may survive as orphans. Force-kill the full process tree via taskkill.
+  // /T kills all child processes, /F forces immediate termination.
+  // Non-blocking — errors ignored (process may already be dead or WSL not available).
+  if (process.platform === 'win32' && pid) {
+    execFile('taskkill', ['/F', '/PID', String(pid), '/T'], (_err) => { /* ignore */ })
+  }
 }
 
 /**
@@ -844,6 +869,8 @@ export const _testing = {
   doMemoryCheck,
   toWslPath,
   ptys,
+  killTimeouts,
+  agentPtys,
   get dropCachesAvailable() { return dropCachesAvailable },
   set dropCachesAvailable(v: boolean | null) { dropCachesAvailable = v },
   get lastAutoReleaseAt() { return lastAutoReleaseAt },
