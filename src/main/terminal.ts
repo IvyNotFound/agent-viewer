@@ -581,9 +581,14 @@ export function registerTerminalHandlers(): void {
     // Missing system env vars (SystemRoot, LOCALAPPDATA, etc.) breaks the RPC
     // handshake → Wsl/Service/0x8007072c ("handle type mismatch").
     // These Windows-specific vars must be forwarded even in minimal-env mode.
+    // T617: stream-json sessions use TERM=dumb + NO_COLOR=1 to suppress ANSI codes
+    // that would break JSONL parsing in the preload. Regular terminal sessions keep
+    // xterm-256color for correct colour rendering.
+    const isStreamJson = outputFormat === 'stream-json'
     const ptyEnv: Record<string, string> = {
-      TERM: 'xterm-256color',
+      TERM: isStreamJson ? 'dumb' : 'xterm-256color',
       LANG: process.env.LANG || 'en_US.UTF-8',
+      ...(isStreamJson ? { NO_COLOR: '1' } : {}),
     }
     // Windows system vars required by wsl.exe RPC (WSLService communication)
     const wslRequiredVars = [
@@ -606,7 +611,7 @@ export function registerTerminalHandlers(): void {
     let pty: IPty
     try {
       pty = spawn('wsl.exe', args, {
-        name: 'xterm-256color',
+        name: isStreamJson ? 'dumb' : 'xterm-256color',
         cols,
         rows,
         cwd: projectPath ?? (process.env.HOME ?? 'C:\\'),

@@ -167,18 +167,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onTerminalStreamMessage: (id: string, cb: (event: Record<string, unknown>) => void): (() => void) => {
     const channel = `terminal:data:${id}`
     let buffer = ''
+    // Strip ANSI escape sequences (SGR, cursor movements, erase, etc.) emitted by the PTY.
+    // Even with NO_COLOR=1 and TERM=dumb in the PTY env, the terminal layer can inject codes.
+    const ansiRe = /\x1b\[[0-9;?]*[a-zA-Z]/g
     const handler = (_: unknown, data: string) => {
       buffer += data
       const lines = buffer.split('\n')
       buffer = lines.pop() ?? ''
       for (const line of lines) {
-        const trimmed = line.trim()
-        if (!trimmed) continue
+        const clean = line.replace(ansiRe, '').trim()
+        if (!clean) continue
         try {
-          const parsed: Record<string, unknown> = JSON.parse(trimmed)
+          const parsed: Record<string, unknown> = JSON.parse(clean)
           cb(parsed)
         } catch {
-          // not valid JSON — skip (ANSI noise / shell output before claude starts)
+          // not valid JSON — skip (shell output before claude starts, banner lines, etc.)
         }
       }
     }
