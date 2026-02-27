@@ -734,7 +734,6 @@ export function registerTerminalHandlers(): void {
         }
       }
 
-      console.log(`[terminal] onData ptyId=${id} wcId=${wcId} len=${data.length}`)
       wc.send(`terminal:data:${id}`, data)
     })
 
