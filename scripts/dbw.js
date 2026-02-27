@@ -5,6 +5,7 @@
  * Usage:
  *   node scripts/dbw.js "UPDATE tasks SET statut='en_cours' WHERE id=250"
  *   echo "UPDATE ..." | node scripts/dbw.js   # stdin (safe for complex queries)
+ *   echo '{"sql":"INSERT INTO t (col) VALUES (?)","params":["val with apostrophe O'\''Brien"]}' | node scripts/dbw.js
  *
  * Load → modify in memory → export. Uses an OS-level advisory lock (.wlock file)
  * to serialize concurrent writes and prevent lost-update races between agents.
@@ -26,8 +27,9 @@ const dbPath = path.resolve(process.cwd(), '.claude/project.db')
  * Executes a write SQL statement and persists the result.
  * Serialized via advisory lock to prevent concurrent lost-update races.
  * @param {string} sql
+ * @param {any[]} [params=[]] — Bound parameters for prepared statement (T620)
  */
-function run(sql) {
+function run(sql, params = []) {
   // Normalize MySQL/PostgreSQL datetime functions to SQLite equivalents.
   // Note: regex may replace NOW() inside string literals — acceptable trade-off.
   sql = sql.replace(/\bNOW\s*\(\s*\)/gi, 'CURRENT_TIMESTAMP')
@@ -42,7 +44,9 @@ function run(sql) {
     try {
       const buf = fs.readFileSync(dbPath)
       const db = new SQL.Database(buf)
-      db.run(sql)
+      const stmt = db.prepare(sql)
+      stmt.run(params)
+      stmt.free()
       // T313: Atomic write — unique temp file + rename prevents partial reads
       const tmpPath = `${dbPath}.tmp.${process.pid}.${Date.now()}`
       fs.writeFileSync(tmpPath, Buffer.from(db.export()))
@@ -59,16 +63,33 @@ if (sqlArg) {
   run(sqlArg)
 } else if (!process.stdin.isTTY) {
   // Stdin mode — safe for multi-line SQL with backticks, quotes, $vars, newlines
+  // Also accepts JSON mode: { "sql": "...", "params": [...] } for parameterized queries (T620)
   const chunks = []
   process.stdin.setEncoding('utf8')
   process.stdin.on('data', (chunk) => chunks.push(chunk))
   process.stdin.on('end', () => {
-    const sql = chunks.join('').trim()
-    if (!sql) {
+    const raw = chunks.join('').trim()
+    if (!raw) {
       console.error('Error: no SQL provided via stdin')
       process.exit(1)
     }
-    run(sql)
+    // JSON mode: detect by leading { and presence of "sql" key
+    if (raw.startsWith('{')) {
+      let parsed
+      try {
+        parsed = JSON.parse(raw)
+      } catch (e) {
+        console.error('Error: stdin starts with { but is not valid JSON:', e.message)
+        process.exit(1)
+      }
+      if (typeof parsed.sql !== 'string') {
+        console.error('Error: JSON mode requires a "sql" string field')
+        process.exit(1)
+      }
+      run(parsed.sql, Array.isArray(parsed.params) ? parsed.params : [])
+    } else {
+      run(raw)
+    }
   })
 } else {
   console.error('Usage: node scripts/dbw.js "<SQL>"')
