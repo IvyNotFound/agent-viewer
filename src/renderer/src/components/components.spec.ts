@@ -3937,23 +3937,33 @@ describe('StreamView', () => {
     expect((btn.element as HTMLButtonElement).disabled).toBe(true)
   })
 
-  it('calls terminalWrite IPC when send button is clicked with text', async () => {
-    const { wrapper } = await mountStream()
+  it('calls terminalCreate with message on send (T606)', async () => {
+    // T606: sendMessage spawns a new PTY with --resume instead of terminalWrite
+    const initEvent: StreamEvent = { type: 'system', subtype: 'init', session_id: 'test-session-id' }
+    const { wrapper } = await mountStream([initEvent])
+    vi.mocked(mockElectronAPI.terminalCreate).mockResolvedValue('stream-pty-2')
     const textarea = wrapper.find('textarea')
     await textarea.setValue('Hello agent')
     const btn = wrapper.find('[data-testid="send-button"]')
     await btn.trigger('click')
-    // T597: StreamView uses terminalWrite(ptyId, text+'\n') instead of agentSendMessage
-    expect(mockElectronAPI.terminalWrite).toHaveBeenCalledWith('stream-pty-1', 'Hello agent\n')
+    await flushPromises()
+    expect(mockElectronAPI.terminalCreate).toHaveBeenLastCalledWith(
+      80, 24, undefined, undefined,
+      undefined, 'Hello agent', undefined, undefined,
+      'test-session-id', undefined, 'stream-json'
+    )
   })
 
   it('clears input after send', async () => {
-    const { wrapper } = await mountStream()
+    // T606: send requires sessionId — inject system:init first to enable the button
+    const initEvent: StreamEvent = { type: 'system', subtype: 'init', session_id: 'test-session-id' }
+    const { wrapper } = await mountStream([initEvent])
+    vi.mocked(mockElectronAPI.terminalCreate).mockResolvedValue('stream-pty-2')
     const textarea = wrapper.find('textarea')
     await textarea.setValue('Mon message')
     const btn = wrapper.find('[data-testid="send-button"]')
     await btn.trigger('click')
-    await nextTick()
+    await flushPromises()
     expect((textarea.element as HTMLTextAreaElement).value).toBe('')
   })
 
@@ -3986,13 +3996,9 @@ describe('StreamView', () => {
     expect(block.classes()).toContain('justify-end')
   })
 
-  it('displays autoSend as user bubble when system:init is received (T605)', async () => {
-    const initEvent: StreamEvent = {
-      type: 'system',
-      subtype: 'init',
-      session_id: 'abc123-session-id',
-    }
-    const { wrapper } = await mountStream([initEvent], { autoSend: 'Mon prompt initial' })
+  it('displays autoSend as user bubble immediately after PTY creation (T607)', async () => {
+    // T607: bubble is pushed right after terminalCreate — no need to receive system:init
+    const { wrapper } = await mountStream([], { autoSend: 'Mon prompt initial' })
     await nextTick()
     const userBlocks = wrapper.findAll('[data-testid="block-user"]')
     expect(userBlocks.length).toBe(1)
@@ -4000,19 +4006,18 @@ describe('StreamView', () => {
     expect(userBlocks[0].classes()).toContain('justify-end')
   })
 
-  it('does not display user bubble on system:init when autoSend is null (T605)', async () => {
-    const initEvent: StreamEvent = {
-      type: 'system',
-      subtype: 'init',
-      session_id: 'abc123-session-id',
-    }
-    const { wrapper } = await mountStream([initEvent])
+  it('does not display user bubble when autoSend is null (T607)', async () => {
+    // T607: no bubble pushed when autoSend is null
+    const { wrapper } = await mountStream([])
     await nextTick()
     expect(wrapper.find('[data-testid="block-user"]').exists()).toBe(false)
   })
 
   it('displays sent message as user bubble immediately (T605)', async () => {
-    const { wrapper } = await mountStream()
+    // T606: send requires sessionId — inject system:init first so the guard passes
+    const initEvent: StreamEvent = { type: 'system', subtype: 'init', session_id: 'test-session-id' }
+    const { wrapper } = await mountStream([initEvent])
+    vi.mocked(mockElectronAPI.terminalCreate).mockResolvedValue('stream-pty-2')
     const textarea = wrapper.find('textarea')
     await textarea.setValue('Bonjour Claude')
     const btn = wrapper.find('[data-testid="send-button"]')

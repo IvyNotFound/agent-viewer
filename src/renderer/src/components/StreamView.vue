@@ -83,16 +83,53 @@ let unsubStreamMessage: (() => void) | null = null
 
 async function sendMessage(): Promise<void> {
   const text = inputText.value.trim()
-  if (!text || !ptyId.value) return
+  if (!text || !sessionId.value) return
   const msgText = text
   inputText.value = ''
-  // Optimistic UI: display user bubble immediately before PTY write
+  // Optimistic UI: display user bubble immediately before spawning new PTY
   events.value.push({
     type: 'user',
     message: { role: 'user', content: [{ type: 'text', text: msgText }] }
   })
-  await window.electronAPI.terminalWrite(ptyId.value, msgText + '\n')
   scrollToBottom()
+
+  // T606: respawn-per-message — spawn a new PTY with --resume <sessionId> so Claude
+  // runs in print mode (single-turn JSONL) and exits cleanly after responding.
+  // This avoids PTY buffer overflow and special-char corruption from pty.write().
+  const tab = tabsStore.tabs.find(t => t.id === props.terminalId)
+  try {
+    // Unsubscribe from previous PTY before creating a new one
+    unsubStreamMessage?.()
+
+    const newId = await window.electronAPI.terminalCreate(
+      80, 24,
+      tasksStore.projectPath ?? undefined,
+      tab?.wslDistro ?? undefined,
+      undefined,            // no system prompt — --resume restores session context
+      msgText,              // user message as positional arg (b64-encoded in main process)
+      tab?.thinkingMode ?? undefined,
+      tab?.claudeCommand ?? undefined,
+      sessionId.value,      // --resume <convId> for conversation continuity
+      undefined,
+      'stream-json'
+    )
+    ptyId.value = newId
+    tabsStore.setPtyId(props.terminalId, newId)
+
+    unsubStreamMessage = window.electronAPI.onTerminalStreamMessage(
+      newId,
+      (raw: Record<string, unknown>) => {
+        const evt = raw as StreamEvent
+        if (evt.type === 'system' && evt.subtype === 'init' && evt.session_id) {
+          sessionId.value = evt.session_id
+        }
+        events.value.push(evt)
+        scrollToBottom()
+      }
+    )
+  } catch (err) {
+    events.value.push({ type: 'system', subtype: 'error', session_id: `Erreur PTY: ${String(err)}` })
+  }
 }
 
 function handleKeydown(e: KeyboardEvent): void {
@@ -146,6 +183,15 @@ onMounted(async () => {
       ptyId.value = id
       tabsStore.setPtyId(props.terminalId, id)
 
+      // Push user bubble immediately — do not wait for system:init (race condition risk)
+      if (tab.autoSend) {
+        events.value.push({
+          type: 'user',
+          message: { role: 'user', content: [{ type: 'text', text: tab.autoSend }] }
+        })
+        scrollToBottom()
+      }
+
       // Subscribe to JSONL stream events using the ptyId (data channel is terminal:data:<ptyId>)
       unsubStreamMessage = window.electronAPI.onTerminalStreamMessage(
         id,
@@ -153,13 +199,7 @@ onMounted(async () => {
           const event = raw as StreamEvent
           if (event.type === 'system' && event.subtype === 'init') {
             sessionId.value = event.session_id ?? null
-            // Synthetic user bubble for the initial autoSend prompt
-            if (tab?.autoSend) {
-              events.value.push({
-                type: 'user',
-                message: { role: 'user', content: [{ type: 'text', text: tab.autoSend }] }
-              })
-            }
+            // NOTE: user bubble already pushed above — do NOT push again here
           }
           events.value.push(event)
           scrollToBottom()
@@ -369,7 +409,7 @@ function toolResultText(content: StreamContentBlock['content']): string {
         @keydown="handleKeydown"
       />
       <button
-        :disabled="!inputText.trim()"
+        :disabled="!inputText.trim() || !sessionId"
         class="px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-lg text-sm font-medium transition-colors self-end"
         data-testid="send-button"
         @click="sendMessage"
