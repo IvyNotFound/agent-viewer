@@ -28,6 +28,10 @@ const dbPath = path.resolve(process.cwd(), '.claude/project.db')
  * @param {string} sql
  */
 function run(sql) {
+  // Normalize MySQL/PostgreSQL datetime functions to SQLite equivalents.
+  // Note: regex may replace NOW() inside string literals — acceptable trade-off.
+  sql = sql.replace(/\bNOW\s*\(\s*\)/gi, 'CURRENT_TIMESTAMP')
+
   initSqlJs().then((SQL) => {
     cleanupOrphanTmp(dbPath)
     const lockPath = acquireLock(dbPath)
