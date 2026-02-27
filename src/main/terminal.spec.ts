@@ -1,6 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import util from 'util'
 
+// T633: hoisted sender registry — allows webContents.fromId to resolve mock senders
+// registered by makeEvent(). vi.hoisted ensures the value is available inside vi.mock factory.
+const senderRegistry = vi.hoisted(() => new Map<number, {
+  id: number
+  once: ReturnType<typeof vi.fn>
+  isDestroyed: ReturnType<typeof vi.fn>
+  send: ReturnType<typeof vi.fn>
+}>())
+
 // Mock electron BEFORE importing terminal module
 vi.mock('electron', () => ({
   ipcMain: {
@@ -8,6 +17,13 @@ vi.mock('electron', () => ({
   },
   app: {
     on: vi.fn(),
+  },
+  BrowserWindow: {
+    getAllWindows: vi.fn().mockReturnValue([]),
+  },
+  // T633: webContents.fromId used in terminal.ts onData/onExit closures (stale event.sender fix)
+  webContents: {
+    fromId: vi.fn((id: number) => senderRegistry.get(id) ?? null),
   },
 }))
 
@@ -163,14 +179,15 @@ describe('terminal utilities', () => {
   }
 
   function makeEvent(id: number) {
-    return {
-      sender: {
-        id,
-        once: vi.fn(),
-        isDestroyed: vi.fn().mockReturnValue(false),
-        send: vi.fn(),
-      }
+    const sender = {
+      id,
+      once: vi.fn(),
+      isDestroyed: vi.fn().mockReturnValue(false),
+      send: vi.fn(),
     }
+    // T633: register sender so webContents.fromId(id) resolves to this mock sender
+    senderRegistry.set(id, sender)
+    return { sender }
   }
 
   describe('terminal:create handler (PTY spawning)', () => {

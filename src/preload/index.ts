@@ -185,6 +185,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     //  - C1 control codes \x80-\x9f range (8-bit equivalents)
     const ansiRe = /\x1b\[[0-9;?]*[a-zA-Z]|\x9b[0-9;?]*[a-zA-Z]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b[<-Z\\-_]|[\x80-\x9a\x9c-\x9f]/g
     const handler = (_: unknown, data: string) => {
+      console.log(`[preload] ${channel} fired len=${data.length}`)
       buffer += data
       const lines = buffer.split('\n')
       buffer = lines.pop() ?? ''
@@ -193,9 +194,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
         if (!clean) continue
         try {
           const parsed: Record<string, unknown> = JSON.parse(clean)
+          console.log(`[preload] parsed event type=${parsed.type}`)
           cb(parsed)
         } catch {
           // not valid JSON — skip (shell output before claude starts, banner lines, etc.)
+          console.warn(`[preload] non-JSON line skipped: ${clean.slice(0, 120)}`)
         }
       }
     }

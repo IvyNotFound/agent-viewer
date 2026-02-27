@@ -11,7 +11,7 @@
  *
  * @module terminal
  */
-import { ipcMain, app, BrowserWindow } from 'electron'
+import { ipcMain, app, BrowserWindow, webContents } from 'electron'
 import { spawn, type IPty } from 'node-pty'
 import { execFile } from 'child_process'
 import { writeFile, unlink } from 'fs/promises'
@@ -626,6 +626,9 @@ export function registerTerminalHandlers(): void {
       'WSL_DISTRO_NAME',            // Default distro override (if set)
       'PATH',                       // Shell PATH
       'HOME',                       // Unix home (if set in Windows env)
+      // T633: Forward API key if set in Windows env — bash -l may not source it
+      // in all WSL configurations (missing .bash_profile → .bashrc chain).
+      'ANTHROPIC_API_KEY',
     ]
     for (const v of wslRequiredVars) {
       if (process.env[v]) ptyEnv[v] = process.env[v]!
@@ -672,8 +675,9 @@ export function registerTerminalHandlers(): void {
       params.detectedConvId = newSessionId
       params.systemPrompt = undefined
       params.userPrompt = undefined
-      if (!event.sender.isDestroyed()) {
-        event.sender.send(`terminal:convId:${id}`, newSessionId)
+      const wc0 = webContents.fromId(wcId)
+      if (wc0 && !wc0.isDestroyed()) {
+        wc0.send(`terminal:convId:${id}`, newSessionId)
       }
     }
 
@@ -688,7 +692,12 @@ export function registerTerminalHandlers(): void {
     const CONV_ID_SCAN_LIMIT = 8192
 
     const onDataDisposable = pty.onData(data => {
-      if (event.sender.isDestroyed()) {
+      // T633: Use webContents.fromId(wcId) instead of event.sender (stale closure fix).
+      // event.sender is captured at IPC call time — if Electron recycles the WebContents
+      // (e.g. HMR full-reload in dev), event.sender.isDestroyed() would return true and
+      // kill the PTY immediately. webContents.fromId always resolves the live instance.
+      const wc = webContents.fromId(wcId)
+      if (!wc || wc.isDestroyed()) {
         // Renderer is gone but PTY is still running → kill it gracefully.
         gracefulKillPty(id)
         webContentsPtys.get(wcId)?.delete(id)
@@ -717,15 +726,16 @@ export function registerTerminalHandlers(): void {
             params.systemPrompt = undefined
             params.userPrompt = undefined
           }
-          if (!event.sender.isDestroyed()) {
-            event.sender.send(`terminal:convId:${id}`, match[1])
+          if (!wc.isDestroyed()) {
+            wc.send(`terminal:convId:${id}`, match[1])
           }
         } else if (convIdBytesRead >= CONV_ID_SCAN_LIMIT) {
           convIdBuffer = ''
         }
       }
 
-      event.sender.send(`terminal:data:${id}`, data)
+      console.log(`[terminal] onData ptyId=${id} wcId=${wcId} len=${data.length}`)
+      wc.send(`terminal:data:${id}`, data)
     })
 
     pty.onExit(({ exitCode }) => {
@@ -739,14 +749,15 @@ export function registerTerminalHandlers(): void {
       // Stop memory monitoring if no PTYs left
       if (ptys.size === 0) stopMemoryMonitoring()
 
-      if (!event.sender.isDestroyed()) {
+      const wcOnExit = webContents.fromId(wcId)
+      if (wcOnExit && !wcOnExit.isDestroyed()) {
         // ── T279: Enhanced exit with crash recovery info ──────────────────
         const params = ptyLaunchParams.get(id)
         const isAgent = agentPtys.has(id)
         const canResume = !!(params?.detectedConvId || params?.convId)
         // exitCode !== 0 or signal kill suggests crash (OOM, etc.)
         const isCrash = exitCode !== 0 && exitCode !== null
-        event.sender.send(`terminal:exit:${id}`, {
+        wcOnExit.send(`terminal:exit:${id}`, {
           exitCode,
           isCrash,
           isAgent,
