@@ -338,23 +338,32 @@ export function registerAgentHandlers(): void {
       let updated = 0
       const errors: string[] = []
 
+      // Collect all valid updates first (parseConvTokens is async/CPU-bound — keep per-session error handling)
+      const updates: Array<{ id: number; counts: Awaited<ReturnType<typeof parseConvTokens>> }> = []
       for (const row of rows) {
         try {
           const counts = await parseConvTokens(resolvedProjectPath, row.claude_conv_id)
           if (counts.tokensIn > 0 || counts.tokensOut > 0) {
-            await writeDb(dbPath, (db) => {
-              db.run(
-                `UPDATE sessions
-                 SET tokens_in = ?, tokens_out = ?, tokens_cache_read = ?, tokens_cache_write = ?
-                 WHERE id = ?`,
-                [counts.tokensIn, counts.tokensOut, counts.cacheRead, counts.cacheWrite, row.id]
-              )
-            })
-            updated++
+            updates.push({ id: row.id, counts })
           }
         } catch (err) {
           errors.push(`session ${row.id}: ${String(err)}`)
         }
+      }
+
+      // Single writeDb call for all updates — O(1) instead of O(N) full-file rewrites
+      if (updates.length > 0) {
+        await writeDb(dbPath, (db) => {
+          for (const { id, counts } of updates) {
+            db.run(
+              `UPDATE sessions
+               SET tokens_in = ?, tokens_out = ?, tokens_cache_read = ?, tokens_cache_write = ?
+               WHERE id = ?`,
+              [counts.tokensIn, counts.tokensOut, counts.cacheRead, counts.cacheWrite, id]
+            )
+          }
+        })
+        updated = updates.length
       }
 
       console.log(`[IPC session:syncAllTokens] updated=${updated}/${rows.length}`)
