@@ -14,7 +14,7 @@ agents          (id PK, name, type, perimetre, system_prompt, system_prompt_suff
 sessions        (id PK, agent_id→agents, started_at, ended_at, updated_at, statut, summary, claude_conv_id)
 tasks           (id PK, titre, description, statut, agent_createur_id→agents, agent_assigne_id→agents, agent_valideur_id→agents, parent_task_id→tasks, session_id→sessions, perimetre, effort, priority, created_at, updated_at, started_at, completed_at, validated_at)
 task_comments   (id PK, task_id→tasks, agent_id→agents, contenu, created_at)
-task_links      (id PK, from_task→tasks, to_task→tasks, type, created_at)
+task_links      (id PK, from_task→tasks, to_task→tasks, type CHECK(type IN ('bloque','dépend_de','lié_à','duplique')), created_at)
 locks           (id PK, fichier, agent_id→agents, session_id→sessions, created_at, released_at)
 agent_logs      (id PK, session_id→sessions, agent_id→agents, niveau, action, detail, fichiers, created_at)
 perimetres      (id PK, name, dossier, techno, description, actif, created_at)
