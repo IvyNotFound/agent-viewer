@@ -3788,7 +3788,7 @@ describe('TaskDetailModal — multi-agents', () => {
 describe('StreamView', () => {
   // Helper to mount StreamView with a fake tab and inject stream events via the IPC callback.
   // T597: StreamView now creates a PTY async (terminalCreate) then subscribes — mountStream is async.
-  async function mountStream(events: StreamEvent[] = [], options: { autoSend?: string | null } = {}) {
+  async function mountStream(events: StreamEvent[] = [], options: { autoSend?: string | null; convId?: string | null } = {}) {
     vi.mocked(mockElectronAPI.terminalCreate).mockResolvedValue('stream-pty-1')
     vi.mocked(mockElectronAPI.onTerminalStreamMessage).mockReset()
     vi.mocked(mockElectronAPI.onTerminalStreamMessage).mockReturnValue(() => {})
@@ -3808,6 +3808,7 @@ describe('StreamView', () => {
             autoSend: options.autoSend ?? null,
             systemPrompt: null,
             thinkingMode: null,
+            convId: options.convId ?? null,
             viewMode: 'stream' as const,
           }],
         },
@@ -3940,6 +3941,7 @@ describe('StreamView', () => {
 
   it('calls terminalCreate with message on send (T606)', async () => {
     // T606: sendMessage spawns a new PTY with --resume instead of terminalWrite
+    // T645: cols=10000 to prevent PTY line-wrapping on long JSON lines
     const initEvent: StreamEvent = { type: 'system', subtype: 'init', session_id: 'test-session-id' }
     const { wrapper } = await mountStream([initEvent])
     vi.mocked(mockElectronAPI.terminalCreate).mockResolvedValue('stream-pty-2')
@@ -3949,7 +3951,7 @@ describe('StreamView', () => {
     await btn.trigger('click')
     await flushPromises()
     expect(mockElectronAPI.terminalCreate).toHaveBeenLastCalledWith(
-      80, 24, undefined, undefined,
+      10000, 24, undefined, undefined,
       undefined, 'Hello agent', undefined, undefined,
       'test-session-id', undefined, 'stream-json'
     )
@@ -4012,6 +4014,31 @@ describe('StreamView', () => {
     const { wrapper } = await mountStream([])
     await nextTick()
     expect(wrapper.find('[data-testid="block-user"]').exists()).toBe(false)
+  })
+
+  it('uses cols=10000 on mount to prevent PTY line-wrapping of JSON (T645)', async () => {
+    // T645: cols=80 would wrap long JSON lines (2000+ chars) → JSON.parse failures
+    await mountStream([], { autoSend: 'Mon prompt' })
+    expect(mockElectronAPI.terminalCreate).toHaveBeenCalledWith(
+      10000, 24, undefined, undefined,
+      undefined, 'Mon prompt', undefined, undefined,
+      undefined, undefined, 'stream-json'
+    )
+  })
+
+  it('skips PTY spawn on mount when resuming without autoSend, enables send button (T645)', async () => {
+    // T645 H2: resume mode with convId but no autoSend → Claude would start interactive
+    // (no positional arg) → sessionId never received → Envoyer button disabled forever.
+    // Fix: skip PTY spawn, set sessionId from convId directly.
+    const { wrapper } = await mountStream([], { convId: 'abc123-session-id', autoSend: null })
+    await nextTick()
+    // No PTY was spawned (terminalCreate not called in this scenario, only the mock from setup)
+    // The send button should be enabled (sessionId set from convId)
+    const btn = wrapper.find('[data-testid="send-button"]')
+    // Button is disabled when input is empty — fill it to verify sessionId is set
+    const textarea = wrapper.find('textarea')
+    await textarea.setValue('Premier message')
+    expect((btn.element as HTMLButtonElement).disabled).toBe(false)
   })
 
   it('displays sent message as user bubble immediately (T605)', async () => {

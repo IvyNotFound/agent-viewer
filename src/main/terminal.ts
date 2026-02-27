@@ -610,6 +610,10 @@ export function registerTerminalHandlers(): void {
     // that would break JSONL parsing in the preload. Regular terminal sessions keep
     // xterm-256color for correct colour rendering.
     const isStreamJson = outputFormat === 'stream-json'
+    // T645: Cold-path diagnostic for stream-json launches (once per PTY, not per data chunk).
+    if (isStreamJson) {
+      console.log(`[terminal] stream-json ptyId=${id} cols=${cols} resume=${validConvId ?? 'none'} hasUser=${!!userPrompt}`)
+    }
     const ptyEnv: Record<string, string> = {
       TERM: isStreamJson ? 'dumb' : 'xterm-256color',
       LANG: process.env.LANG || 'en_US.UTF-8',
