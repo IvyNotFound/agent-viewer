@@ -41,6 +41,11 @@ interface PeriodStats {
   session_count: number
 }
 
+interface SparkDay {
+  day: string
+  total: number
+}
+
 // ── Period selector ───────────────────────────────────────────────────────────
 
 const PERIODS = [
@@ -75,6 +80,15 @@ function andOrWhere(periodSql: string | null, extraCondition: string): string {
     : `WHERE ${extraCondition}`
 }
 
+// ── Pricing constants (Anthropic Sonnet 4.6 — last checked 2026-02-27)
+// See: https://www.anthropic.com/pricing
+const PRICING = {
+  input:       3.00,   // $ per 1M tokens
+  output:      15.00,  // $ per 1M tokens
+  cache_read:  0.30,   // $ per 1M tokens
+  cache_write: 3.75,   // $ per 1M tokens
+} as const
+
 // ── Data ─────────────────────────────────────────────────────────────────────
 
 const { t, locale } = useI18n()
@@ -84,12 +98,13 @@ const tabsStore = useTabsStore()
 const globalStats = ref<PeriodStats>({ tokens_in: 0, tokens_out: 0, tokens_cache_read: 0, tokens_cache_write: 0, total: 0, session_count: 0 })
 const agentRows = ref<AgentTokenRow[]>([])
 const sessionRows = ref<SessionTokenRow[]>([])
+const sparkDays = ref<SparkDay[]>([])
 
 async function fetchStats(): Promise<void> {
   if (!store.dbPath) return
   const where = whereClause(activePeriod.value.sql)
   try {
-    const [globalRes, agentRes, sessionRes] = await Promise.all([
+    const [globalRes, agentRes, sessionRes, sparkRes] = await Promise.all([
       // Period totals
       window.electronAPI.queryDb(
         store.dbPath,
@@ -136,10 +151,21 @@ async function fetchStats(): Promise<void> {
          ORDER BY s.started_at DESC
          LIMIT 50`,
       ) as Promise<SessionTokenRow[]>,
+      // Sparkline: daily totals for last 7 days (always global, not filtered by period)
+      window.electronAPI.queryDb(
+        store.dbPath,
+        `SELECT date(started_at) as day,
+                SUM(COALESCE(tokens_in,0) + COALESCE(tokens_out,0)) as total
+         FROM sessions
+         WHERE started_at >= datetime('now', '-7 days')
+         GROUP BY date(started_at)
+         ORDER BY day ASC`,
+      ) as Promise<SparkDay[]>,
     ])
     globalStats.value = globalRes[0] ?? { tokens_in: 0, tokens_out: 0, tokens_cache_read: 0, tokens_cache_write: 0, total: 0, session_count: 0 }
     agentRows.value = agentRes
     sessionRows.value = sessionRes
+    sparkDays.value = sparkRes
   } catch { /* silent — usePolledData handles loading state */ }
 }
 
@@ -170,6 +196,11 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
+function formatCost(usd: number): string {
+  if (usd < 0.01) return '< $0.01'
+  return '$' + usd.toFixed(2)
+}
+
 // Bar width for agent chart (percentage of max)
 const maxAgentTotal = computed(() => Math.max(...agentRows.value.map(r => r.total), 1))
 
@@ -182,6 +213,62 @@ const avgPerSession = computed(() => {
   if (globalStats.value.session_count === 0) return 0
   return Math.round(globalStats.value.total / globalStats.value.session_count)
 })
+
+// ── T635 — Estimated cost ─────────────────────────────────────────────────────
+
+const estimatedCost = computed(() => {
+  const s = globalStats.value
+  return (
+    s.tokens_in        * PRICING.input       +
+    s.tokens_out       * PRICING.output      +
+    s.tokens_cache_read  * PRICING.cache_read  +
+    s.tokens_cache_write * PRICING.cache_write
+  ) / 1_000_000
+})
+
+// ── T635 — Cache hit rate ─────────────────────────────────────────────────────
+
+const cacheHitRate = computed(() => {
+  const total = globalStats.value.tokens_in + globalStats.value.tokens_cache_read
+  if (total === 0) return 0
+  return Math.round((globalStats.value.tokens_cache_read / total) * 100)
+})
+
+// 'green' if >50%, 'amber' if 20-50%, 'gray' if <20%
+const cacheHitColor = computed(() => {
+  if (cacheHitRate.value > 50) return 'text-emerald-600 dark:text-emerald-400'
+  if (cacheHitRate.value >= 20) return 'text-amber-600 dark:text-amber-400'
+  return 'text-content-faint'
+})
+
+// ── T635 — Sparkline 7 days ───────────────────────────────────────────────────
+
+// Build a complete 7-day array filling missing days with 0
+const sparkBars = computed(() => {
+  const map = new Map<string, number>()
+  for (const d of sparkDays.value) map.set(d.day, d.total)
+
+  const bars: Array<{ day: string; total: number; label: string }> = []
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date()
+    date.setUTCDate(date.getUTCDate() - i)
+    const key = date.toISOString().slice(0, 10)
+    const dateLocale = locale.value === 'fr' ? 'fr-FR' : 'en-US'
+    const label = date.toLocaleDateString(dateLocale, { weekday: 'short', day: 'numeric', month: 'short' })
+    bars.push({ day: key, total: map.get(key) ?? 0, label })
+  }
+  return bars
+})
+
+const sparkMax = computed(() => Math.max(...sparkBars.value.map(b => b.total), 1))
+
+// SVG bar height in pixels (out of 44px usable height), min 2px when value > 0
+function sparkBarHeight(total: number): number {
+  if (total === 0) return 0
+  return Math.max(Math.round((total / sparkMax.value) * 44), 2)
+}
+
+const hoveredSparkBar = ref<number | null>(null)
 </script>
 
 <template>
@@ -206,13 +293,13 @@ const avgPerSession = computed(() => {
     </div>
 
     <!-- ── Summary cards ──────────────────────────────────────────────── -->
-    <div class="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3 px-4 py-2 border-b border-edge-subtle bg-surface-base">
+    <div class="shrink-0 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 px-4 py-2 border-b border-edge-subtle bg-surface-base">
 
       <!-- Period total tokens -->
       <div class="flex flex-col gap-1 p-3 rounded-lg bg-surface-secondary border border-edge-default">
-        <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint">{{ t('tokenStats.total') }}</span>
-        <span class="text-lg font-bold text-content-primary tabular-nums">{{ formatNumber(globalStats.total) }}</span>
-        <div class="flex gap-2 text-[10px] font-mono text-content-subtle">
+        <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint truncate">{{ t('tokenStats.total') }}</span>
+        <span class="text-base font-bold text-content-primary tabular-nums">{{ formatNumber(globalStats.total) }}</span>
+        <div class="flex gap-1.5 text-[10px] font-mono text-content-subtle">
           <span class="text-emerald-600 dark:text-emerald-400">↓ {{ formatNumber(globalStats.tokens_in) }}</span>
           <span class="text-sky-600 dark:text-sky-400">↑ {{ formatNumber(globalStats.tokens_out) }}</span>
         </div>
@@ -220,31 +307,86 @@ const avgPerSession = computed(() => {
 
       <!-- Sessions count -->
       <div class="flex flex-col gap-1 p-3 rounded-lg bg-surface-secondary border border-edge-default">
-        <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint">{{ t('tokenStats.sessions') }}</span>
-        <span class="text-lg font-bold text-content-primary tabular-nums">{{ globalStats.session_count }}</span>
-        <div class="text-[10px] font-mono text-content-subtle">
-          <span>{{ t('tokenStats.avgPerSession') }} {{ formatNumber(avgPerSession) }}</span>
+        <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint truncate">{{ t('tokenStats.sessions') }}</span>
+        <span class="text-base font-bold text-content-primary tabular-nums">{{ globalStats.session_count }}</span>
+        <div class="text-[10px] font-mono text-content-subtle truncate">
+          {{ t('tokenStats.avgPerSession') }} {{ formatNumber(avgPerSession) }}
         </div>
       </div>
 
-      <!-- Cache -->
+      <!-- Cache tokens -->
       <div class="flex flex-col gap-1 p-3 rounded-lg bg-surface-secondary border border-edge-default">
-        <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint">{{ t('tokenStats.cache') }}</span>
-        <span class="text-lg font-bold text-content-primary tabular-nums">{{ formatNumber(globalStats.tokens_cache_read + globalStats.tokens_cache_write) }}</span>
-        <div class="flex gap-2 text-[10px] font-mono text-content-subtle">
+        <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint truncate">{{ t('tokenStats.cache') }}</span>
+        <span class="text-base font-bold text-content-primary tabular-nums">{{ formatNumber(globalStats.tokens_cache_read + globalStats.tokens_cache_write) }}</span>
+        <div class="flex gap-1.5 text-[10px] font-mono text-content-subtle">
           <span class="text-amber-600 dark:text-amber-400">R {{ formatNumber(globalStats.tokens_cache_read) }}</span>
           <span class="text-violet-600 dark:text-violet-400">W {{ formatNumber(globalStats.tokens_cache_write) }}</span>
         </div>
       </div>
 
-      <!-- Tokens In/Out ratio -->
+      <!-- Cache hit rate (T635) -->
       <div class="flex flex-col gap-1 p-3 rounded-lg bg-surface-secondary border border-edge-default">
-        <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint">{{ t('tokenStats.ratio') }}</span>
-        <span class="text-lg font-bold text-content-primary tabular-nums">
+        <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint truncate">{{ t('tokenStats.cacheHit') }}</span>
+        <span class="text-base font-bold tabular-nums" :class="cacheHitColor">{{ cacheHitRate }}%</span>
+        <div class="text-[10px] font-mono text-content-subtle truncate">
+          {{ t('tokenStats.cacheHitLabel') }}
+        </div>
+      </div>
+
+      <!-- Estimated cost (T635) -->
+      <div class="flex flex-col gap-1 p-3 rounded-lg bg-surface-secondary border border-edge-default">
+        <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint truncate">{{ t('tokenStats.cost') }}</span>
+        <span class="text-base font-bold text-content-primary tabular-nums">{{ formatCost(estimatedCost) }}</span>
+        <div class="text-[10px] font-mono text-content-faint truncate">
+          {{ t('tokenStats.costNote') }}
+        </div>
+      </div>
+
+      <!-- Output ratio -->
+      <div class="flex flex-col gap-1 p-3 rounded-lg bg-surface-secondary border border-edge-default">
+        <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint truncate">{{ t('tokenStats.ratio') }}</span>
+        <span class="text-base font-bold text-content-primary tabular-nums">
           {{ globalStats.total > 0 ? Math.round((globalStats.tokens_out / Math.max(globalStats.total, 1)) * 100) : 0 }}%
         </span>
-        <div class="text-[10px] font-mono text-content-subtle">
+        <div class="text-[10px] font-mono text-content-subtle truncate">
           <span class="text-sky-600 dark:text-sky-400">{{ t('tokenStats.outputRatio') }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Sparkline 7 days (T635) ────────────────────────────────────── -->
+    <div class="shrink-0 px-4 py-2 border-b border-edge-subtle bg-surface-base">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-[10px] font-mono uppercase tracking-wider text-content-faint">{{ t('tokenStats.evolution') }}</span>
+      </div>
+      <div class="flex items-end gap-1 h-[60px]">
+        <div
+          v-for="(bar, i) in sparkBars"
+          :key="bar.day"
+          class="relative flex-1 flex flex-col justify-end cursor-default group"
+          @mouseenter="hoveredSparkBar = i"
+          @mouseleave="hoveredSparkBar = null"
+        >
+          <!-- Bar -->
+          <div
+            class="w-full rounded-t transition-colors"
+            :class="hoveredSparkBar === i
+              ? 'bg-accent-primary'
+              : 'bg-emerald-600/50 dark:bg-emerald-500/40'"
+            :style="{ height: sparkBarHeight(bar.total) + 'px' }"
+          />
+          <!-- Empty placeholder when total is 0 -->
+          <div
+            v-if="bar.total === 0"
+            class="w-full h-[2px] rounded bg-edge-subtle"
+          />
+          <!-- Tooltip -->
+          <div
+            v-if="hoveredSparkBar === i"
+            class="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-10 px-2 py-1 rounded text-[10px] font-mono whitespace-nowrap bg-surface-tooltip text-content-primary border border-edge-default shadow-lg pointer-events-none"
+          >
+            {{ bar.label }} : {{ formatNumber(bar.total) }}
+          </div>
         </div>
       </div>
     </div>

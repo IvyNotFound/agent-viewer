@@ -2854,7 +2854,7 @@ describe('TokenStatsView (T353)', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
-    // Mock 3 queryDb calls: period-stats, per-agent, per-session (T634: period selector)
+    // Mock 4 queryDb calls: period-stats, per-agent, per-session, sparkline-7d (T634+T635)
     api.queryDb
       .mockResolvedValueOnce([{ tokens_in: 1000, tokens_out: 500, tokens_cache_read: 200, tokens_cache_write: 100, total: 1500, session_count: 5 }])
       .mockResolvedValueOnce([
@@ -2862,6 +2862,10 @@ describe('TokenStatsView (T353)', () => {
       ])
       .mockResolvedValueOnce([
         { id: 1, agent_id: 1, agent_name: 'dev-front', started_at: '2026-01-01T10:00:00Z', ended_at: null, statut: 'en_cours', tokens_in: 200, tokens_out: 100, tokens_cache_read: 50, tokens_cache_write: 20, total: 300 },
+      ])
+      .mockResolvedValueOnce([
+        { day: '2026-01-25', total: 500 },
+        { day: '2026-01-26', total: 1200 },
       ])
   })
 
@@ -2920,10 +2924,11 @@ describe('TokenStatsView (T353)', () => {
 
   it('shows empty state when no data', async () => {
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
-    // Reset all mocks to return empty (T634: 3 calls — period-stats, per-agent, per-session)
+    // Reset all mocks to return empty (T634+T635: 4 calls — period-stats, per-agent, per-session, sparkline)
     api.queryDb.mockReset()
     api.queryDb
       .mockResolvedValueOnce([{ tokens_in: 0, tokens_out: 0, tokens_cache_read: 0, tokens_cache_write: 0, total: 0, session_count: 0 }])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
 
