@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { runTaskStatusMigration, runAddPriorityMigration, runTaskStatutI18nMigration, runAddConvIdToSessionsMigration, runAddTokensToSessionsMigration, runRemoveThinkingModeBudgetTokensMigration, runDropCommentaireColumnMigration, runSessionStatutI18nMigration, runMakeAgentAssigneNotNullMigration, runMakeCommentAgentNotNullMigration } from './migration'
+import { runTaskStatusMigration, runAddPriorityMigration, runTaskStatutI18nMigration, runAddConvIdToSessionsMigration, runAddTokensToSessionsMigration, runRemoveThinkingModeBudgetTokensMigration, runDropCommentaireColumnMigration, runSessionStatutI18nMigration, runMakeAgentAssigneNotNullMigration, runMakeCommentAgentNotNullMigration, runAddAgentGroupsMigration } from './migration'
 
 // Mock Database for sql.js
 interface MockDatabase {
@@ -1173,5 +1173,105 @@ describe('runMakeCommentAgentNotNullMigration', () => {
     const calls = (mockDb.run as ReturnType<typeof vi.fn>).mock.calls.map((c: unknown[]) => c[0] as string)
     expect(calls.some(s => s.includes('ROLLBACK TO SAVEPOINT make_comment_agent_notnull'))).toBe(true)
     expect(calls.some(s => s.includes('RELEASE SAVEPOINT make_comment_agent_notnull'))).toBe(true)
+  })
+})
+
+// ── runAddAgentGroupsMigration ─────────────────────────────────────────────────
+
+interface AgentGroupsMockDb {
+  exec: ReturnType<typeof vi.fn>
+  run: ReturnType<typeof vi.fn>
+}
+
+function createAgentGroupsMockDb(agentGroupsExists: boolean): AgentGroupsMockDb {
+  return {
+    exec: vi.fn().mockImplementation((query: string) => {
+      if (query.includes("name='agent_groups'")) {
+        return agentGroupsExists
+          ? [{ columns: ['name'], values: [['agent_groups']] }]
+          : []
+      }
+      return []
+    }),
+    run: vi.fn(),
+  }
+}
+
+describe('runAddAgentGroupsMigration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns false when agent_groups already exists (idempotent)', () => {
+    const mockDb = createAgentGroupsMockDb(true)
+    const result = runAddAgentGroupsMigration(mockDb as unknown as import('sql.js').Database)
+    expect(result).toBe(false)
+    expect(mockDb.run).not.toHaveBeenCalled()
+  })
+
+  it('returns true when agent_groups does not exist (creates tables)', () => {
+    const mockDb = createAgentGroupsMockDb(false)
+    const result = runAddAgentGroupsMigration(mockDb as unknown as import('sql.js').Database)
+    expect(result).toBe(true)
+  })
+
+  it('creates agent_groups table with correct schema', () => {
+    const mockDb = createAgentGroupsMockDb(false)
+    runAddAgentGroupsMigration(mockDb as unknown as import('sql.js').Database)
+
+    const calls = (mockDb.run as ReturnType<typeof vi.fn>).mock.calls.map((c: unknown[]) => c[0] as string)
+    const createAgentGroups = calls.find(s => s.includes('CREATE TABLE agent_groups'))
+    expect(createAgentGroups).toBeDefined()
+    expect(createAgentGroups).toContain('id')
+    expect(createAgentGroups).toContain('name')
+    expect(createAgentGroups).toContain('sort_order')
+    expect(createAgentGroups).toContain('created_at')
+  })
+
+  it('creates agent_group_members table with correct schema', () => {
+    const mockDb = createAgentGroupsMockDb(false)
+    runAddAgentGroupsMigration(mockDb as unknown as import('sql.js').Database)
+
+    const calls = (mockDb.run as ReturnType<typeof vi.fn>).mock.calls.map((c: unknown[]) => c[0] as string)
+    const createMembers = calls.find(s => s.includes('CREATE TABLE agent_group_members'))
+    expect(createMembers).toBeDefined()
+    expect(createMembers).toContain('agent_id')
+    expect(createMembers).toContain('group_id')
+    expect(createMembers).toContain('sort_order')
+    expect(createMembers).toContain('UNIQUE(agent_id)')
+  })
+
+  it('creates index on agent_group_members(group_id)', () => {
+    const mockDb = createAgentGroupsMockDb(false)
+    runAddAgentGroupsMigration(mockDb as unknown as import('sql.js').Database)
+
+    const calls = (mockDb.run as ReturnType<typeof vi.fn>).mock.calls.map((c: unknown[]) => c[0] as string)
+    expect(calls.some(s => s.includes('idx_agm_group') && s.includes('agent_group_members(group_id)'))).toBe(true)
+  })
+
+  it('uses SAVEPOINT add_agent_groups for atomicity', () => {
+    const mockDb = createAgentGroupsMockDb(false)
+    runAddAgentGroupsMigration(mockDb as unknown as import('sql.js').Database)
+
+    const calls = (mockDb.run as ReturnType<typeof vi.fn>).mock.calls.map((c: unknown[]) => c[0] as string)
+    expect(calls.some(s => s.includes('SAVEPOINT add_agent_groups'))).toBe(true)
+    expect(calls.some(s => s.includes('RELEASE SAVEPOINT add_agent_groups'))).toBe(true)
+  })
+
+  it('rolls back and rethrows on error', () => {
+    const mockDb = createAgentGroupsMockDb(false)
+    mockDb.run.mockImplementation((sql: string) => {
+      if (sql.includes('CREATE TABLE agent_groups')) {
+        throw new Error('disk I/O error')
+      }
+    })
+
+    expect(() => {
+      runAddAgentGroupsMigration(mockDb as unknown as import('sql.js').Database)
+    }).toThrow('disk I/O error')
+
+    const calls = (mockDb.run as ReturnType<typeof vi.fn>).mock.calls.map((c: unknown[]) => c[0] as string)
+    expect(calls.some(s => s.includes('ROLLBACK TO SAVEPOINT add_agent_groups'))).toBe(true)
+    expect(calls.some(s => s.includes('RELEASE SAVEPOINT add_agent_groups'))).toBe(true)
   })
 })

@@ -1467,3 +1467,105 @@ describe('session:collectTokens (T581)', () => {
     expect(result.tokens!.tokensOut).toBe(130)
   })
 })
+
+// ── task:getLinks (T673) ──────────────────────────────────────────────────────
+
+describe('task:getLinks (T673)', () => {
+  it('returns Invalid taskId for float taskId', async () => {
+    const result = await handlers['task:getLinks'](null, TEST_DB_PATH, 1.5) as {
+      success: boolean; links: unknown[]; error?: string
+    }
+    expect(result.success).toBe(false)
+    expect(result.links).toEqual([])
+    expect(result.error).toBe('Invalid taskId')
+  })
+
+  it('returns Invalid taskId for string taskId', async () => {
+    const result = await handlers['task:getLinks'](null, TEST_DB_PATH, 'abc') as {
+      success: boolean; links: unknown[]; error?: string
+    }
+    expect(result.success).toBe(false)
+    expect(result.links).toEqual([])
+    expect(result.error).toBe('Invalid taskId')
+  })
+
+  it('throws DB_PATH_NOT_ALLOWED for unregistered dbPath', async () => {
+    await expect(handlers['task:getLinks'](null, '/evil/db.db', 1)).rejects.toThrow('DB_PATH_NOT_ALLOWED')
+  })
+
+  it('returns empty links array for task with no links', async () => {
+    const taskId = await insertTask('isolated-task')
+    const result = await handlers['task:getLinks'](null, TEST_DB_PATH, taskId) as {
+      success: boolean; links: unknown[]
+    }
+    expect(result.success).toBe(true)
+    expect(result.links).toEqual([])
+  })
+
+  it('returns link with from_titre/from_statut/to_titre/to_statut when task is from_task', async () => {
+    const fromId = await insertTask('task-from')
+    const toId = await insertTask('task-to')
+    await writeDb<void>(TEST_DB_PATH, (db) => {
+      db.run(
+        "INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'bloque')",
+        [fromId, toId]
+      )
+    })
+
+    const result = await handlers['task:getLinks'](null, TEST_DB_PATH, fromId) as {
+      success: boolean; links: Array<{
+        from_task: number; to_task: number; type: string;
+        from_titre: string; from_statut: string;
+        to_titre: string; to_statut: string
+      }>
+    }
+    expect(result.success).toBe(true)
+    expect(result.links).toHaveLength(1)
+    const link = result.links[0]
+    expect(link.from_task).toBe(fromId)
+    expect(link.to_task).toBe(toId)
+    expect(link.type).toBe('bloque')
+    expect(link.from_titre).toBe('task-from')
+    expect(link.to_titre).toBe('task-to')
+    expect(link.from_statut).toBe('todo')
+    expect(link.to_statut).toBe('todo')
+  })
+
+  it('returns symmetric link when task is to_task', async () => {
+    const fromId = await insertTask('task-source')
+    const toId = await insertTask('task-target')
+    await writeDb<void>(TEST_DB_PATH, (db) => {
+      db.run(
+        "INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'dépend_de')",
+        [fromId, toId]
+      )
+    })
+
+    const result = await handlers['task:getLinks'](null, TEST_DB_PATH, toId) as {
+      success: boolean; links: Array<{ from_task: number; to_task: number; type: string }>
+    }
+    expect(result.success).toBe(true)
+    expect(result.links).toHaveLength(1)
+    expect(result.links[0].from_task).toBe(fromId)
+    expect(result.links[0].to_task).toBe(toId)
+  })
+
+  it('returns all links when task has multiple links', async () => {
+    const mainId = await insertTask('task-main')
+    const dep1 = await insertTask('dep-1')
+    const dep2 = await insertTask('dep-2')
+    const dep3 = await insertTask('dep-3')
+
+    await writeDb<void>(TEST_DB_PATH, (db) => {
+      db.run("INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'bloque')", [mainId, dep1])
+      db.run("INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'bloque')", [mainId, dep2])
+      db.run("INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'lié_à')", [dep3, mainId])
+    })
+
+    const result = await handlers['task:getLinks'](null, TEST_DB_PATH, mainId) as {
+      success: boolean; links: unknown[]
+    }
+    expect(result.success).toBe(true)
+    expect(result.links).toHaveLength(3)
+  })
+})
