@@ -3832,6 +3832,8 @@ describe('StreamView', () => {
     if (callback) {
       events.forEach((e) => (callback as (e: StreamEvent) => void)(e))
     }
+    // T676: micro-batching — drain pendingEvents buffer (nextTick) + Vue DOM update
+    if (events.length > 0) await flushPromises()
 
     return { wrapper }
   }

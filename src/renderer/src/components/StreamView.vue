@@ -126,6 +126,21 @@ function isCollapsed(eventIdx: number, blockIdx: number): boolean {
   return collapsed.value[key] ?? false
 }
 
+// ── Micro-batching (T676) ──────────────────────────────────────────────────
+// Accumulate incoming IPC events in a non-reactive buffer, then flush once per
+// nextTick — avoids 1 re-render per JSONL line at high-frequency streaming.
+
+let pendingEvents: StreamEvent[] = []
+let flushPending = false
+
+function flushEvents(): void {
+  if (pendingEvents.length === 0) { flushPending = false; return }
+  for (const e of pendingEvents) events.value.push(e)
+  pendingEvents = []
+  flushPending = false
+  scrollToBottom()
+}
+
 function scrollToBottom(): void {
   nextTick(() => {
     if (scrollContainer.value) {
@@ -171,12 +186,15 @@ onMounted(async () => {
     }
 
     // Subscribe to JSONL stream events (agent:stream:<id>)
+    // Events are micro-batched: buffered in pendingEvents[], flushed once per nextTick (T676).
     unsubStreamMessage = window.electronAPI.onAgentStream(
       id,
       (raw: Record<string, unknown>) => {
-        const event = raw as StreamEvent
-        events.value.push(event)
-        scrollToBottom()
+        pendingEvents.push(raw as StreamEvent)
+        if (!flushPending) {
+          flushPending = true
+          nextTick(flushEvents)
+        }
       }
     )
 
