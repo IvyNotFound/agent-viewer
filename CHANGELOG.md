@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.15.0] - 2026-03-03
+
+### Changes
+- docs: update README and JSDoc for v0.15.0 (T690) (b9a07a9)
+- feat(devops): export agent scripts to project on create-project-db (T688) (c975d13)
+- chore(docs): bump version to 0.14.0 in CLAUDE.md (c00a0f6)
 ## [0.14.0] - 2026-03-03
 
 ### Changes
