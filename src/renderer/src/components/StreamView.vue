@@ -168,6 +168,8 @@ async function sendMessage(): Promise<void> {
   if (!text || !sessionId.value) return
   const msgText = text
   inputText.value = ''
+  // Reset so the Stop button re-appears on the new agent response (T683).
+  agentStopped.value = false
   // Optimistic UI: display user bubble immediately
   events.value.push({
     type: 'user',
@@ -243,6 +245,18 @@ function scrollToBottom(): void {
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
+/**
+ * Lifecycle: spawns the agent process, registers all IPC subscriptions,
+ * then sends the initial message if autoSend is set (T689 race condition fix).
+ *
+ * Subscription order is critical: onAgentStream, onAgentConvId, and onAgentExit
+ * are registered BEFORE agentSend is called so that no JSONL events are lost
+ * if Claude responds faster than the subscription round-trip (T689).
+ *
+ * For resumed sessions (convId present, no autoSend), sessionId is set
+ * immediately from the known convId so the Send button is enabled without
+ * waiting for the system:init IPC event (ADR-009).
+ */
 onMounted(async () => {
   const tab = tabsStore.tabs.find(t => t.id === props.terminalId)
   if (!tab) return
@@ -267,17 +281,8 @@ onMounted(async () => {
     ptyId.value = id
     tabsStore.setPtyId(props.terminalId, id)
 
-    // Push user bubble immediately, then send via stdin JSONL (no respawn needed).
-    if (tab.autoSend) {
-      events.value.push({
-        type: 'user',
-        message: { role: 'user', content: [{ type: 'text', text: tab.autoSend }] }
-      })
-      scrollToBottom()
-      await window.electronAPI.agentSend(id, tab.autoSend)
-    }
-
-    // Subscribe to JSONL stream events (agent:stream:<id>)
+    // Subscribe to JSONL stream events BEFORE sending — avoids race condition where
+    // Claude responds before onAgentStream is registered and events are lost (T689).
     // Events are micro-batched: buffered in pendingEvents[], flushed once per nextTick (T676).
     unsubStreamMessage = window.electronAPI.onAgentStream(
       id,
@@ -302,6 +307,17 @@ onMounted(async () => {
         events.value.push({ type: 'result' })
       }
     })
+
+    // Push user bubble immediately, then send via stdin JSONL (no respawn needed).
+    // agentSend is called AFTER all subscriptions are registered (T689 race condition fix).
+    if (tab.autoSend) {
+      events.value.push({
+        type: 'user',
+        message: { role: 'user', content: [{ type: 'text', text: tab.autoSend }] }
+      })
+      scrollToBottom()
+      await window.electronAPI.agentSend(id, tab.autoSend)
+    }
   } catch (err) {
     events.value.push({ type: 'system', subtype: 'init', session_id: `Erreur agent: ${String(err)}` })
   }

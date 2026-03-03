@@ -1,6 +1,6 @@
 # agent-viewer
 
-![Version](https://img.shields.io/badge/version-0.13.0-blue)
+![Version](https://img.shields.io/badge/version-0.14.0-blue)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 
 Desktop interface in Trello/Jira style for real-time visualization of Claude agent tasks from a local SQLite database. The application manages agents, launches sessions, and includes an embedded WSL terminal.
@@ -110,7 +110,7 @@ agent-viewer/
 │   │   ├── claude-md.ts        # CLAUDE.md manipulation (agent insertion)
 │   │   ├── migration.ts        # Incremental SQLite migrations (schema v2+)
 │   │   ├── seed.ts             # Demo data for project.db
-│   │   └── default-agents.ts   # Default agents inserted on project creation
+│   │   └── default-agents.ts   # Agent definitions: GENERIC_AGENTS (new projects) + DEFAULT_AGENTS (agent-viewer)
 │   ├── preload/
 │   │   └── index.ts            # contextBridge — exposes electronAPI to renderer
 │   └── renderer/               # Vue 3 application
@@ -132,6 +132,17 @@ agent-viewer/
 ├── electron-builder.yml
 └── package.json
 ```
+
+### Agents par défaut (`default-agents.ts`)
+
+Le fichier `src/main/default-agents.ts` exporte deux collections d'agents :
+
+| Export | Usage |
+|--------|-------|
+| `GENERIC_AGENTS` | Agents génériques insérés dans **tout nouveau projet** créé via `create-project-db`. Aucune référence spécifique à agent-viewer — ils sont conçus pour fonctionner sur n'importe quel projet utilisant le workflow agent. |
+| `DEFAULT_AGENTS` | Agents propres au projet **agent-viewer** (dev-front-vuejs, dev-back-electron, arch, secu, perf, etc.). Insérés uniquement lors de l'initialisation de ce projet. |
+
+Lors de la création d'un nouveau projet via le script `create-project-db`, seuls les `GENERIC_AGENTS` sont seedés : `dev`, `review`, `test`, `doc`, `task-creator`. Cela donne un projet fonctionnel immédiatement, sans agents liés au périmètre d'agent-viewer.
 
 ### Scripts CLI
 
