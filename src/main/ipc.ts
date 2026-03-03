@@ -8,11 +8,19 @@
  * @module ipc
  */
 
-import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { ipcMain, dialog, BrowserWindow, app } from 'electron'
 import { watch, type FSWatcher } from 'fs'
-import { access, mkdir, readdir, writeFile } from 'fs/promises'
+import { access, copyFile, mkdir, readdir, writeFile } from 'fs/promises'
 import { join } from 'path'
-import { DEFAULT_AGENTS } from './default-agents'
+import { GENERIC_AGENTS } from './default-agents'
+
+export const AGENT_SCRIPTS = [
+  'dbq.js',
+  'dbw.js',
+  'dbstart.js',
+  'dblock.js',
+  'capture-tokens-hook.js',
+]
 import {
   registerDbPath,
   registerProjectPath,
@@ -185,9 +193,7 @@ export function registerIpcHandlers(): void {
         );
         INSERT OR IGNORE INTO config (key, value) VALUES ('claude_md_commit',''),('schema_version','3');
         INSERT OR IGNORE INTO perimetres (name, dossier, techno, description) VALUES
-          ('front-vuejs','renderer/','Vue 3 + TypeScript + Tailwind CSS','Interface utilisateur Electron'),
-          ('back-electron','main/','Electron + Node.js + SQLite','Process principal, IPC, accès DB'),
-          ('global','','—','Transversal, aucun périmètre spécifique');
+          ('global','','—','Transversal — aucun périmètre spécifique');
         CREATE INDEX IF NOT EXISTS idx_sessions_agent_id ON sessions(agent_id);
         CREATE INDEX IF NOT EXISTS idx_sessions_started_at ON sessions(started_at DESC);
         CREATE INDEX IF NOT EXISTS idx_agent_logs_agent_id ON agent_logs(agent_id);
@@ -198,7 +204,7 @@ export function registerIpcHandlers(): void {
         CREATE INDEX IF NOT EXISTS idx_sessions_agent_started ON sessions(agent_id, started_at DESC);
         CREATE INDEX IF NOT EXISTS idx_task_comments_task_id ON task_comments(task_id);
       `)
-      for (const agent of DEFAULT_AGENTS) {
+      for (const agent of GENERIC_AGENTS) {
         db.run(
           `INSERT OR IGNORE INTO agents (name, type, perimetre, system_prompt, system_prompt_suffix)
            VALUES (?, ?, ?, ?, ?)`,
@@ -210,7 +216,27 @@ export function registerIpcHandlers(): void {
       await writeFile(dbPath, Buffer.from(exported))
       registerDbPath(dbPath)
       console.log('[create-project-db] created:', dbPath)
-      return { success: true, dbPath }
+
+      // Copy agent scripts to <projectPath>/scripts/
+      const scriptsSource = app.isPackaged
+        ? join(process.resourcesPath, 'scripts')
+        : join(app.getAppPath(), 'scripts')
+      const scriptsTarget = join(projectPath, 'scripts')
+      let scriptsCopied = 0
+      let scriptsError: string | undefined
+      try {
+        await mkdir(scriptsTarget, { recursive: true })
+        for (const script of AGENT_SCRIPTS) {
+          await copyFile(join(scriptsSource, script), join(scriptsTarget, script))
+          scriptsCopied++
+        }
+        console.log(`[create-project-db] copied ${scriptsCopied} scripts to ${scriptsTarget}`)
+      } catch (copyErr) {
+        scriptsError = String(copyErr)
+        console.error('[create-project-db] scripts copy failed:', scriptsError)
+      }
+
+      return { success: true, dbPath, scriptsCopied, ...(scriptsError ? { scriptsError } : {}) }
     } catch (err) {
       console.error('[IPC create-project-db]', err)
       return { success: false, error: String(err), dbPath: '' }

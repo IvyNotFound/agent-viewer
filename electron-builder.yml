@@ -32,6 +32,14 @@ extraResources:
     to: bin/
     filter:
       - '**/*'
+  - from: scripts/
+    to: scripts/
+    filter:
+      - dbq.js
+      - dbw.js
+      - dbstart.js
+      - dblock.js
+      - capture-tokens-hook.js
 
 directories:
   output: dist

@@ -41,6 +41,8 @@ vi.mock('electron', () => ({
   },
   app: {
     getVersion: vi.fn(() => '0.3.0'),
+    isPackaged: false,
+    getAppPath: vi.fn(() => '/fake/app'),
   },
 }))
 
@@ -98,8 +100,9 @@ vi.mock('fs/promises', () => {
   const stat = vi.fn().mockResolvedValue({ mtimeMs: 1000 })
   const access = vi.fn().mockResolvedValue(undefined)
   const readdir = vi.fn().mockResolvedValue([] as string[])
+  const copyFile = vi.fn().mockResolvedValue(undefined)
   return {
-    default: { readFile, writeFile, mkdir, rename, stat, access, readdir },
+    default: { readFile, writeFile, mkdir, rename, stat, access, readdir, copyFile },
     readFile,
     writeFile,
     mkdir,
@@ -107,6 +110,7 @@ vi.mock('fs/promises', () => {
     stat,
     access,
     readdir,
+    copyFile,
   }
 })
 
@@ -925,6 +929,80 @@ describe('IPC handlers — src/main/ipc.ts', () => {
 
     it('T528: should throw when projectPath is not in allowed list', async () => {
       await expect(callHandler('create-project-db', '/unregistered/path')).rejects.toThrow('PROJECT_PATH_NOT_ALLOWED')
+    })
+
+    it('T687: GENERIC_AGENTS contains expected generic agents and no av-specific agents', async () => {
+      const { GENERIC_AGENTS } = await import('./default-agents')
+      const names = GENERIC_AGENTS.map((a) => a.name)
+      expect(names).toContain('dev')
+      expect(names).toContain('review')
+      expect(names).toContain('test')
+      expect(names).toContain('doc')
+      expect(names).toContain('task-creator')
+      expect(names).not.toContain('dev-front-vuejs')
+      expect(names).not.toContain('dev-back-electron')
+      expect(names).not.toContain('ux-front-vuejs')
+    })
+
+    // ── T688: scripts export ────────────────────────────────────────────────
+
+    it('T688: should copy agent scripts to <projectPath>/scripts/ on success', async () => {
+      const { mkdir, writeFile, copyFile } = await import('fs/promises')
+      vi.mocked(mkdir).mockResolvedValue(undefined)
+      vi.mocked(writeFile).mockResolvedValue(undefined)
+      vi.mocked(copyFile).mockResolvedValue(undefined)
+      const result = await callHandler('create-project-db', '/fake/project') as {
+        success: boolean; dbPath: string; scriptsCopied: number
+      }
+      expect(result.success).toBe(true)
+      expect(result.scriptsCopied).toBe(5)
+      expect(copyFile).toHaveBeenCalledTimes(5)
+    })
+
+    it('T688: should include scriptsCopied=5 in success response', async () => {
+      const { mkdir, writeFile, copyFile } = await import('fs/promises')
+      vi.mocked(mkdir).mockResolvedValue(undefined)
+      vi.mocked(writeFile).mockResolvedValue(undefined)
+      vi.mocked(copyFile).mockResolvedValue(undefined)
+      const result = await callHandler('create-project-db', '/fake/project') as Record<string, unknown>
+      expect(result).toHaveProperty('scriptsCopied', 5)
+      expect(result).not.toHaveProperty('scriptsError')
+    })
+
+    it('T688: should return scriptsError (not fail) when script copy fails (permission denied)', async () => {
+      const { mkdir, writeFile, copyFile } = await import('fs/promises')
+      vi.mocked(mkdir).mockResolvedValue(undefined)
+      vi.mocked(writeFile).mockResolvedValue(undefined)
+      vi.mocked(copyFile).mockRejectedValueOnce(new Error('EACCES: permission denied'))
+      const result = await callHandler('create-project-db', '/fake/project') as {
+        success: boolean; dbPath: string; scriptsError?: string; scriptsCopied: number
+      }
+      // DB creation succeeds even if scripts copy fails
+      expect(result.success).toBe(true)
+      expect(result.dbPath).toContain('project.db')
+      expect(result.scriptsError).toBeDefined()
+      expect(result.scriptsError).toContain('EACCES')
+    })
+
+    it('T688: should use dev scripts path (app.isPackaged=false)', async () => {
+      const { mkdir, writeFile, copyFile } = await import('fs/promises')
+      const { app } = await import('electron')
+      vi.mocked(mkdir).mockResolvedValue(undefined)
+      vi.mocked(writeFile).mockResolvedValue(undefined)
+      vi.mocked(copyFile).mockResolvedValue(undefined)
+      vi.mocked(app.getAppPath).mockReturnValue('/fake/app')
+      await callHandler('create-project-db', '/fake/project')
+      // In dev mode (isPackaged=false), scripts come from app.getAppPath()/scripts/
+      const calls = vi.mocked(copyFile).mock.calls
+      expect(calls.length).toBeGreaterThan(0)
+      expect(String(calls[0][0])).toContain('scripts')
+    })
+
+    it('T688: AGENT_SCRIPTS exports exactly the 5 expected scripts', async () => {
+      const { AGENT_SCRIPTS } = await import('./ipc')
+      expect(AGENT_SCRIPTS).toEqual([
+        'dbq.js', 'dbw.js', 'dbstart.js', 'dblock.js', 'capture-tokens-hook.js'
+      ])
     })
   })
 
