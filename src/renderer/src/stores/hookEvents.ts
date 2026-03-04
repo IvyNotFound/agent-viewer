@@ -10,6 +10,8 @@ export interface HookEvent {
   ts: number
   /** Claude session UUID extracted from payload.session_id */
   sessionId: string | null
+  /** tool_use_id linking Pre↔Post pairs for duration analytics (T764). undefined if not present. */
+  toolUseId?: string
 }
 
 let _seq = 0
@@ -33,8 +35,10 @@ export const useHookEventsStore = defineStore('hookEvents', () => {
   const activeTools = ref<Record<string, string>>({})
 
   function push(raw: { event: string; payload: unknown; ts: number }): void {
-    const sessionId = (raw.payload as Record<string, unknown> | null)?.session_id as string ?? null
-    const e: HookEvent = { id: ++_seq, event: raw.event, payload: raw.payload, ts: raw.ts, sessionId }
+    const p = raw.payload as Record<string, unknown> | null
+    const sessionId = p?.session_id as string ?? null
+    const toolUseId = p?.tool_use_id as string | undefined
+    const e: HookEvent = { id: ++_seq, event: raw.event, payload: raw.payload, ts: raw.ts, sessionId, toolUseId }
 
     events.value.push(e)
     if (events.value.length > MAX_EVENTS) events.value.shift()
