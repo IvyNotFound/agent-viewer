@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.16.0] - 2026-03-04
+
+### Changes
+- chore(gitignore): ignore img/ screenshots directory (2727b46)
+- docs: update README, JSDoc and CLAUDE.md for v0.16.0 (T695) (9df6179)
+- fix(agent-stream): buffer stderr, flush only on abnormal exit (T697) (b41e0d5)
+- fix(stream-view): display agent errors in StreamView (T694) (ad09b5a)
+- feat(back-electron): capture proc.stderr + emit error:exit on abnormal exit (T693) (9f7416b)
+- fix(back-electron): resolve wsl.exe absolute path in packaged app (T692) (f669ed4)
 ## [0.15.0] - 2026-03-03
 
 ### Changes
