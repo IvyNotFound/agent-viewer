@@ -130,7 +130,7 @@ export interface FileNode {
 }
 
 /**
- * A Claude Code installation detected in a WSL distro.
+ * A Claude Code installation detected in a WSL distro or natively on the host.
  * Used by LaunchSessionModal to let the user pick which environment to launch Claude in.
  */
 export interface ClaudeInstance {

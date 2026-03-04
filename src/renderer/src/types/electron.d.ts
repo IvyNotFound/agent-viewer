@@ -62,8 +62,8 @@ declare global {
       agentGroupsDelete(dbPath: string, groupId: number): Promise<{ success: boolean; error?: string }>
       agentGroupsSetMember(dbPath: string, agentId: number, groupId: number | null, sortOrder?: number): Promise<{ success: boolean; error?: string }>
       agentGroupsReorder(dbPath: string, groupIds: number[]): Promise<{ success: boolean; error?: string }>
-      // WSL — detect distros with Claude Code installed (T721)
-      getClaudeInstances(): Promise<Array<{ distro: string; version: string; isDefault: boolean; profiles: string[] }>>
+      // Detect Claude Code instances (WSL distros and/or native installs) (T721/T775)
+      getClaudeInstances(): Promise<Array<{ distro: string; version: string; isDefault: boolean; profiles: string[]; type?: 'wsl' | 'local' }>>
       // Agent stream (ADR-009: child_process.spawn + stdio:pipe — T647/T648)
       agentCreate(opts?: { projectPath?: string; wslDistro?: string; systemPrompt?: string; thinkingMode?: string; claudeCommand?: string; convId?: string; permissionMode?: string }): Promise<string>
       agentSend(id: string, text: string): Promise<void>
