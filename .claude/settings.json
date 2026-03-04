@@ -5,8 +5,8 @@
         "matcher": "",
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/capture-tokens-hook.js",
+            "type": "http",
+            "url": "http://127.0.0.1:27182/hooks/stop",
             "timeout": 15
           }
         ]

@@ -11,8 +11,10 @@
 
 import { app, BrowserWindow, session, Menu, MenuItem, globalShortcut } from 'electron'
 import { join } from 'path'
+import type { Server } from 'http'
 import { registerIpcHandlers } from './ipc'
 import { registerAgentStreamHandlers } from './agent-stream'
+import { startHookServer } from './hookServer'
 
 // ── GPU flags for improved rendering performance ─────────────────────────────────
 // These MUST be set BEFORE app.whenReady() to take effect
@@ -151,13 +153,17 @@ function createWindow(): void {
   }
 }
 
+let hookServer: Server | null = null
+
 app.whenReady().then(() => {
   setupCSP()
   registerIpcHandlers()
   registerAgentStreamHandlers()
+  hookServer = startHookServer()
   createWindow()
 })
 app.on('window-all-closed', () => {
+  hookServer?.close()
   if (process.platform !== 'darwin') app.quit()
 })
 app.on('activate', () => {
