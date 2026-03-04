@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.18.0] - 2026-03-04
+
+### Changes
+- docs(readme): update badge + features + JSDoc for v0.18.0 (T732) (01e91cf)
+- feat(stream-view): display live thinking text in status bar when thinkingMode active (T731) (d780aee)
+- feat(tab-store): add streamId tracking + explicit agentKill on closeTab (T730) (424b366)
+- feat(stream-view): collapse tool_use/tool_result/thinking by default + ANSI strip + markdown (T727/T729) (eb55b74)
+- fix(tab-bar): remove terminalIsAlive call — PTY removed in v0.17 (T728) (ff711d3)
+- chore(claude-md): bump version to 0.17.1 (e26336f)
 ## [0.17.1] - 2026-03-04
 
 ### Changes
