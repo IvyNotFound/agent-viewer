@@ -259,6 +259,7 @@ export const useTasksStore = defineStore('tasks', () => {
 
   function closeProject(): void {
     stopPolling()
+    if (dbChangeDebounce) { clearTimeout(dbChangeDebounce); dbChangeDebounce = null }
     if (dbWatchInterval) { clearInterval(dbWatchInterval); dbWatchInterval = null }
     if (unsubDbChange) { unsubDbChange(); unsubDbChange = null }
     window.electronAPI.unwatchDb(dbPath.value ?? undefined)
@@ -277,6 +278,8 @@ export const useTasksStore = defineStore('tasks', () => {
     selectedAgentId.value = null
     selectedPerimetre.value = null
     error.value = null
+    // Clear debounce to prevent stale refresh after close (T796)
+    if (dbChangeDebounce) { clearTimeout(dbChangeDebounce); dbChangeDebounce = null }
   }
 
   // Delegate to projectStore

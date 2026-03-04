@@ -125,8 +125,6 @@ const archivedGroupsSorted = computed(() => {
   return [...groups.entries()].sort((a, b) => b[1].length - a[1].length)
 })
 
-// Expose grouped data for the template — pagination slicing is handled at DB level by loadPage()
-const archivedByAgent = computed(() => archivedGroupsSorted.value)
 </script>
 
 <template>
@@ -250,7 +248,7 @@ const archivedByAgent = computed(() => archivedGroupsSorted.value)
         <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3">
           <div class="flex flex-col gap-4">
             <!-- Group by agent -->
-            <div v-for="[agentName, agentTasks] in archivedByAgent" :key="agentName">
+            <div v-for="[agentName, agentTasks] in archivedGroupsSorted" :key="agentName">
               <!-- Group header -->
               <div class="flex items-center gap-2 mb-2">
                 <span
