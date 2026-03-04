@@ -1100,3 +1100,12 @@ export interface Tab {
 - La migration positional → object est l'occasion de simplifier les signatures et d'éviter l'accumulation de paramètres optionnels
 - `ClaudeInstance` devient polymorphique (`env: 'wsl' | 'windows'`) — le renderer n'a pas besoin de connaître les détails d'implémentation
 - Tickets d'implémentation à créer par `review` : un back-electron (terminal.ts + preload), un front-vuejs (LaunchSessionModal + TerminalView + tabs store), un test-back-electron (terminal.spec.ts)
+
+---
+
+## Problèmes connus & fixes
+
+| Problème | Périmètre | Cause | Solution |
+|---|---|---|---|
+| Auth conflict OAuth + API key | WSL / Claude Code | `ANTHROPIC_API_KEY` + OAuth présents simultanément | Utiliser `ANTHROPIC_AUTH_TOKEN` (pas `API_KEY`) + `ANTHROPIC_BASE_URL=https://api.minimax.io/anthropic`. Compte Pro 2 : `CLAUDE_CONFIG_DIR=~/.claude-pro2`. Voir ADR-003. |
+| node-pty build Windows VS2019 | back-electron | `SpectreMitigation: 'Spectre'` sans libs Spectre | Patcher les 3 `.gyp` → `false`, puis `electron-rebuild` |
