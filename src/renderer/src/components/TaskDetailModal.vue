@@ -5,6 +5,7 @@ import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { useTasksStore } from '@renderer/stores/tasks'
 import AgentBadge from './AgentBadge.vue'
+import TaskDependencyGraph from './TaskDependencyGraph.vue'
 import { agentFg, agentBg, agentBorder, perimeterFg, perimeterBg, perimeterBorder } from '@renderer/utils/agentColor'
 import { parseUtcDate } from '@renderer/utils/parseDate'
 import type { TaskAssignee, TaskLink } from '@renderer/types'
@@ -99,41 +100,17 @@ const sortedAssignees = computed(() =>
   })
 )
 
-// ── Dependencies (task_links) ─────────────────────────────────────────────────
-
-const blocksLinks = computed<TaskLink[]>(() => {
-  if (!task.value) return []
-  const id = task.value.id
-  return store.taskLinks.filter(l =>
-    (l.type === 'bloque' && l.from_task === id) ||
-    (l.type === 'depend_de' && l.to_task === id)
-  )
-})
-
+// ── Blocked status (T553) ─────────────────────────────────────────────────────
+// A task is blocked if it is 'todo' and has unresolved blockers (not done/archived)
 const blockedByLinks = computed<TaskLink[]>(() => {
   if (!task.value) return []
   const id = task.value.id
   return store.taskLinks.filter(l =>
     (l.type === 'bloque' && l.to_task === id) ||
-    (l.type === 'depend_de' && l.from_task === id)
+    (l.type === 'dépend_de' && l.from_task === id)
   )
 })
 
-const relatedLinks = computed<TaskLink[]>(() => {
-  if (!task.value) return []
-  const id = task.value.id
-  return store.taskLinks.filter(l =>
-    (l.type === 'lie_a' || l.type === 'duplique') &&
-    (l.from_task === id || l.to_task === id)
-  )
-})
-
-const hasLinks = computed(() =>
-  blocksLinks.value.length > 0 || blockedByLinks.value.length > 0 || relatedLinks.value.length > 0
-)
-
-// ── Blocked status (T553) ─────────────────────────────────────────────────────
-// A task is blocked if it is 'todo' and has unresolved blockers (not done/archived)
 const unresolvedBlockers = computed(() => {
   if (!task.value || task.value.statut !== 'todo') return []
   return blockedByLinks.value.filter(link => {
@@ -143,27 +120,6 @@ const unresolvedBlockers = computed(() => {
 })
 
 const isBlocked = computed(() => unresolvedBlockers.value.length > 0)
-
-function linkedTaskTitle(link: TaskLink): string {
-  if (!task.value) return ''
-  return link.from_task === task.value.id ? link.to_titre : link.from_titre
-}
-
-function linkedTaskStatut(link: TaskLink): string {
-  if (!task.value) return ''
-  return link.from_task === task.value.id ? link.to_statut : link.from_statut
-}
-
-function linkedTaskId(link: TaskLink): number {
-  if (!task.value) return 0
-  return link.from_task === task.value.id ? link.to_task : link.from_task
-}
-
-function openLinkedTask(link: TaskLink): void {
-  const targetId = linkedTaskId(link)
-  const target = store.tasks.find(t => t.id === targetId)
-  if (target) store.openTask(target)
-}
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') store.closeTask()
@@ -292,62 +248,14 @@ onUnmounted(() => {
             </div>
 
             <!-- Section Dependencies -->
-            <div v-if="hasLinks" class="px-4 py-3 border-b border-edge-subtle shrink-0">
+            <div class="px-4 py-3 border-b border-edge-subtle shrink-0">
               <p class="text-[10px] font-semibold text-content-subtle uppercase tracking-wider mb-2">{{ t('taskDetail.dependencies') }}</p>
-
-              <!-- Bloque -->
-              <div v-if="blocksLinks.length > 0" class="mb-2">
-                <p class="text-[10px] text-content-faint mb-1">{{ t('taskDetail.blocks') }}</p>
-                <div class="space-y-1">
-                  <button
-                    v-for="link in blocksLinks"
-                    :key="link.id"
-                    class="w-full flex items-center gap-1.5 text-left hover:bg-surface-secondary rounded px-1 py-0.5 transition-colors group"
-                    @click="openLinkedTask(link)"
-                  >
-                    <span :class="['text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0', STATUS_COLORS[linkedTaskStatut(link)] ?? 'bg-zinc-700/40 text-zinc-400 border-zinc-600/40']">
-                      {{ statusLabel(linkedTaskStatut(link)) }}
-                    </span>
-                    <span class="text-xs text-content-secondary truncate group-hover:text-content-primary transition-colors">#{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Bloqué par -->
-              <div v-if="blockedByLinks.length > 0" class="mb-2">
-                <p class="text-[10px] text-content-faint mb-1">{{ t('taskDetail.blockedBy') }}</p>
-                <div class="space-y-1">
-                  <button
-                    v-for="link in blockedByLinks"
-                    :key="link.id"
-                    class="w-full flex items-center gap-1.5 text-left hover:bg-surface-secondary rounded px-1 py-0.5 transition-colors group"
-                    @click="openLinkedTask(link)"
-                  >
-                    <span :class="['text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0', STATUS_COLORS[linkedTaskStatut(link)] ?? 'bg-zinc-700/40 text-zinc-400 border-zinc-600/40']">
-                      {{ statusLabel(linkedTaskStatut(link)) }}
-                    </span>
-                    <span class="text-xs text-content-secondary truncate group-hover:text-content-primary transition-colors">#{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Lié à -->
-              <div v-if="relatedLinks.length > 0">
-                <p class="text-[10px] text-content-faint mb-1">{{ t('taskDetail.relatedTo') }}</p>
-                <div class="space-y-1">
-                  <button
-                    v-for="link in relatedLinks"
-                    :key="link.id"
-                    class="w-full flex items-center gap-1.5 text-left hover:bg-surface-secondary rounded px-1 py-0.5 transition-colors group"
-                    @click="openLinkedTask(link)"
-                  >
-                    <span :class="['text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0', STATUS_COLORS[linkedTaskStatut(link)] ?? 'bg-zinc-700/40 text-zinc-400 border-zinc-600/40']">
-                      {{ statusLabel(linkedTaskStatut(link)) }}
-                    </span>
-                    <span class="text-xs text-content-secondary truncate group-hover:text-content-primary transition-colors">#{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}</span>
-                  </button>
-                </div>
-              </div>
+              <TaskDependencyGraph
+                v-if="task"
+                :task-id="task.id"
+                :links="store.taskLinks"
+                @navigate="(id) => { const t = store.tasks.find(x => x.id === id); if (t) store.openTask(t) }"
+              />
             </div>
 
             <!-- Section Assignés (read-only — T571) -->
