@@ -1,5 +1,5 @@
 /**
- * Tests for wsl:getClaudeInstances IPC handler (T721)
+ * Tests for wsl:getClaudeInstances IPC handler (T721, T774)
  *
  * Strategy: mock child_process.execFile via promisify hoisting,
  * capture the handler registered with ipcMain.handle, then call it directly.
@@ -7,7 +7,7 @@
  * Framework: Vitest (node environment)
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // ── Hoist mocks so they're available when vi.mock is hoisted ─────────────────
 const { execFileMock, spawnMock } = vi.hoisted(() => ({
@@ -39,7 +39,7 @@ vi.mock('electron', () => ({
 }))
 
 // ── Import after mocks ────────────────────────────────────────────────────────
-import { registerWslHandlers } from './ipc-wsl'
+import { registerWslHandlers, detectLocalInstance } from './ipc-wsl'
 
 // ── Helper: call the handler ──────────────────────────────────────────────────
 function callHandler(): Promise<unknown> {
@@ -65,55 +65,70 @@ function claudeVersionOutput(version = '2.1.58'): string {
   return `${version} (Claude Code)\n`
 }
 
-describe('wsl:getClaudeInstances', () => {
+// ── WSL handler tests (Windows platform) ─────────────────────────────────────
+describe('wsl:getClaudeInstances — Windows/WSL', () => {
+  let platformSpy: ReturnType<typeof vi.spyOn>
+
   beforeEach(() => {
     vi.resetAllMocks()
     // Restore spawn mock impl since resetAllMocks clears implementations
     spawnMock.mockReturnValue({ unref: vi.fn() })
     for (const key of Object.keys(handlers)) delete handlers[key]
+    // Force Windows platform so WSL detection runs
+    platformSpy = vi.spyOn(process, 'platform', 'get').mockReturnValue('win32')
     registerWslHandlers()
   })
 
-  it('returns empty array when wsl.exe fails', async () => {
-    execFileMock.mockRejectedValue(new Error('wsl.exe not found'))
+  afterEach(() => {
+    platformSpy.mockRestore()
+  })
+
+  it('returns empty array when wsl.exe fails and no local instance', async () => {
+    execFileMock.mockRejectedValue(new Error('not found')) // where claude fails
     const result = await callHandler()
     expect(result).toEqual([])
   })
 
   it('returns empty array when no distros found', async () => {
-    execFileMock.mockResolvedValueOnce({ stdout: 'NAME            STATE           VERSION\n', stderr: '' })
+    execFileMock
+      .mockRejectedValueOnce(new Error('not found')) // where claude (local)
+      .mockResolvedValueOnce({ stdout: 'NAME            STATE           VERSION\n', stderr: '' }) // wsl -l
     const result = await callHandler()
     expect(result).toEqual([])
   })
 
   it('skips docker-desktop distros', async () => {
-    execFileMock.mockResolvedValueOnce({
-      stdout: wslListOutput([
-        { name: 'docker-desktop', isDefault: false },
-        { name: 'docker-desktop-data', isDefault: false },
-      ]),
-      stderr: ''
-    })
+    execFileMock
+      .mockRejectedValueOnce(new Error('not found')) // where claude (local)
+      .mockResolvedValueOnce({
+        stdout: wslListOutput([
+          { name: 'docker-desktop', isDefault: false },
+          { name: 'docker-desktop-data', isDefault: false },
+        ]),
+        stderr: ''
+      })
     const result = await callHandler()
     expect(result).toEqual([])
   })
 
   it('returns empty array when distro has no claude', async () => {
     execFileMock
+      .mockRejectedValueOnce(new Error('not found')) // where claude (local)
       .mockResolvedValueOnce({ stdout: wslListOutput([{ name: 'Ubuntu', isDefault: true }]), stderr: '' })
       .mockResolvedValueOnce({ stdout: '', stderr: '' })
     const result = await callHandler()
     expect(result).toEqual([])
   })
 
-  it('detects a single distro with claude', async () => {
+  it('detects a single WSL distro with claude (type: wsl)', async () => {
     execFileMock
+      .mockRejectedValueOnce(new Error('not found')) // where claude (local)
       .mockResolvedValueOnce({ stdout: wslListOutput([{ name: 'Ubuntu', isDefault: true }]), stderr: '' })
       .mockResolvedValueOnce({ stdout: claudeVersionOutput('2.1.58'), stderr: '' })
       .mockResolvedValueOnce({ stdout: '', stderr: '' })
     const result = await callHandler()
     expect(result).toEqual([
-      { distro: 'Ubuntu', version: '2.1.58', isDefault: true, profiles: ['claude'] }
+      { distro: 'Ubuntu', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'wsl' }
     ])
   })
 
@@ -121,6 +136,7 @@ describe('wsl:getClaudeInstances', () => {
     const rawWithNulls = wslListOutput([{ name: 'Ubuntu', isDefault: false }])
       .split('').join('\0')
     execFileMock
+      .mockRejectedValueOnce(new Error('not found')) // where claude (local)
       .mockResolvedValueOnce({ stdout: rawWithNulls, stderr: '' })
       .mockResolvedValueOnce({ stdout: claudeVersionOutput(), stderr: '' })
       .mockResolvedValueOnce({ stdout: '', stderr: '' })
@@ -132,6 +148,7 @@ describe('wsl:getClaudeInstances', () => {
     // With CONCURRENCY=2, both distros are processed in the same batch via Promise.all.
     // Execution order: [Debian-version, Ubuntu-version] (parallel), then [Debian-bin, Ubuntu-bin].
     execFileMock
+      .mockRejectedValueOnce(new Error('not found')) // where claude (local)
       .mockResolvedValueOnce({
         stdout: wslListOutput([
           { name: 'Debian', isDefault: false },
@@ -151,6 +168,7 @@ describe('wsl:getClaudeInstances', () => {
 
   it('includes ~/bin/ profiles when present', async () => {
     execFileMock
+      .mockRejectedValueOnce(new Error('not found')) // where claude (local)
       .mockResolvedValueOnce({ stdout: wslListOutput([{ name: 'Ubuntu', isDefault: true }]), stderr: '' })
       .mockResolvedValueOnce({ stdout: claudeVersionOutput(), stderr: '' })
       .mockResolvedValueOnce({ stdout: 'claude\nclaude-dev\nclaude-review\nsome-other-tool\n', stderr: '' })
@@ -160,6 +178,7 @@ describe('wsl:getClaudeInstances', () => {
 
   it('falls back to default profile when ~/bin/ scan fails', async () => {
     execFileMock
+      .mockRejectedValueOnce(new Error('not found')) // where claude (local)
       .mockResolvedValueOnce({ stdout: wslListOutput([{ name: 'Ubuntu', isDefault: true }]), stderr: '' })
       .mockResolvedValueOnce({ stdout: claudeVersionOutput(), stderr: '' })
       .mockRejectedValueOnce(new Error('ls failed'))
@@ -169,9 +188,130 @@ describe('wsl:getClaudeInstances', () => {
 
   it('returns empty array when claude version call times out', async () => {
     execFileMock
+      .mockRejectedValueOnce(new Error('not found')) // where claude (local)
       .mockResolvedValueOnce({ stdout: wslListOutput([{ name: 'Ubuntu', isDefault: true }]), stderr: '' })
       .mockRejectedValueOnce(Object.assign(new Error('ETIMEDOUT'), { code: 'ETIMEDOUT' }))
     const result = await callHandler()
     expect(result).toEqual([])
+  })
+
+  it('prepends local instance before WSL distros on Windows', async () => {
+    // On win32, detectLocalInstance skips ~/bin scan — no bash call
+    execFileMock
+      .mockResolvedValueOnce({ stdout: 'C:\\Users\\User\\claude.cmd\n', stderr: '' }) // where claude
+      .mockResolvedValueOnce({ stdout: claudeVersionOutput('3.0.0'), stderr: '' }) // claude --version (local, shell:true)
+      .mockResolvedValueOnce({ stdout: wslListOutput([{ name: 'Ubuntu', isDefault: true }]), stderr: '' })
+      .mockResolvedValueOnce({ stdout: claudeVersionOutput('2.1.58'), stderr: '' }) // Ubuntu version
+      .mockResolvedValueOnce({ stdout: '', stderr: '' }) // Ubuntu bin
+    const result = await callHandler() as Array<{ type: string; distro: string }>
+    expect(result[0]).toMatchObject({ type: 'local', distro: 'local' })
+    expect(result[1]).toMatchObject({ type: 'wsl', distro: 'Ubuntu' })
+  })
+})
+
+// ── Linux/macOS handler tests ─────────────────────────────────────────────────
+describe('wsl:getClaudeInstances — Linux/macOS', () => {
+  let platformSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    spawnMock.mockReturnValue({ unref: vi.fn() })
+    for (const key of Object.keys(handlers)) delete handlers[key]
+    platformSpy = vi.spyOn(process, 'platform', 'get').mockReturnValue('linux')
+    registerWslHandlers()
+  })
+
+  afterEach(() => {
+    platformSpy.mockRestore()
+  })
+
+  it('returns local instance when claude is in PATH', async () => {
+    execFileMock
+      .mockResolvedValueOnce({ stdout: '/usr/bin/claude\n', stderr: '' }) // which claude
+      .mockResolvedValueOnce({ stdout: claudeVersionOutput('2.1.58'), stderr: '' }) // claude --version
+      .mockResolvedValueOnce({ stdout: '', stderr: '' }) // bash -lc ls ~/bin
+    const result = await callHandler()
+    expect(result).toEqual([
+      { distro: 'local', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'local' }
+    ])
+  })
+
+  it('returns [] when claude is not in PATH', async () => {
+    execFileMock.mockRejectedValueOnce(new Error('which: claude: not found'))
+    const result = await callHandler()
+    expect(result).toEqual([])
+  })
+
+  it('never calls wsl.exe on linux', async () => {
+    execFileMock.mockRejectedValueOnce(new Error('not found'))
+    await callHandler()
+    // All calls should use 'which', never 'wsl.exe'
+    const calls = execFileMock.mock.calls as Array<[string, ...unknown[]]>
+    const wslCall = calls.find(c => c[0] === 'wsl.exe')
+    expect(wslCall).toBeUndefined()
+  })
+})
+
+// ── detectLocalInstance unit tests ────────────────────────────────────────────
+describe('detectLocalInstance', () => {
+  let platformSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    spawnMock.mockReturnValue({ unref: vi.fn() })
+    platformSpy = vi.spyOn(process, 'platform', 'get').mockReturnValue('linux')
+  })
+
+  afterEach(() => {
+    platformSpy.mockRestore()
+  })
+
+  it('returns ClaudeInstance with type local on unix', async () => {
+    execFileMock
+      .mockResolvedValueOnce({ stdout: '/usr/bin/claude\n', stderr: '' }) // which claude
+      .mockResolvedValueOnce({ stdout: '2.1.58 (Claude Code)\n', stderr: '' }) // claude --version
+      .mockResolvedValueOnce({ stdout: 'claude\nclaude-dev\n', stderr: '' }) // ls ~/bin
+    const result = await detectLocalInstance()
+    expect(result).toEqual({
+      distro: 'local',
+      version: '2.1.58',
+      isDefault: true,
+      profiles: ['claude', 'claude-dev'],
+      type: 'local',
+    })
+  })
+
+  it('returns null when which/where fails', async () => {
+    execFileMock.mockRejectedValueOnce(new Error('not found'))
+    const result = await detectLocalInstance()
+    expect(result).toBeNull()
+  })
+
+  it('returns null when claude --version returns empty string', async () => {
+    execFileMock
+      .mockResolvedValueOnce({ stdout: '/usr/bin/claude\n', stderr: '' })
+      .mockResolvedValueOnce({ stdout: '', stderr: '' }) // empty version
+    const result = await detectLocalInstance()
+    expect(result).toBeNull()
+  })
+
+  it('falls back to ["claude"] when ~/bin/ scan fails', async () => {
+    execFileMock
+      .mockResolvedValueOnce({ stdout: '/usr/bin/claude\n', stderr: '' })
+      .mockResolvedValueOnce({ stdout: '2.0.0\n', stderr: '' })
+      .mockRejectedValueOnce(new Error('ls failed'))
+    const result = await detectLocalInstance()
+    expect(result?.profiles).toEqual(['claude'])
+  })
+
+  it('uses where on win32 (not which)', async () => {
+    platformSpy.mockReturnValue('win32')
+    execFileMock
+      .mockResolvedValueOnce({ stdout: 'C:\\Users\\User\\claude.cmd\n', stderr: '' })
+      .mockResolvedValueOnce({ stdout: '2.1.58\n', stderr: '' })
+    await detectLocalInstance()
+    const firstCall = execFileMock.mock.calls[0] as [string, string[]]
+    expect(firstCall[0]).toBe('where')
+    expect(firstCall[1]).toContain('claude')
   })
 })
