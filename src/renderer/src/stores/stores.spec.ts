@@ -295,7 +295,7 @@ describe('stores/tabs', () => {
       store.addTerminal('agent-a')
       store.addTerminal('agent-a')
       store.addTerminal('agent-b')
-      // tabs: [backlog, logs, metrics, agent-a tab1, agent-a tab2, agent-b tab]
+      // tabs: [backlog, stat, agent-a tab1, agent-a tab2, agent-b tab]
       const terminals = store.tabs.filter(t => t.type === 'terminal')
       const [tabA1, tabA2] = terminals
       store.setActive(tabA1.id)
@@ -310,7 +310,7 @@ describe('stores/tabs', () => {
       const store = useTabsStore()
       store.addTerminal('agent-a')
       store.addTerminal('agent-b')
-      // tabs: [backlog, logs, metrics, agent-a tab, agent-b tab]
+      // tabs: [backlog, stat, agent-a tab, agent-b tab]
       const terminals = store.tabs.filter(t => t.type === 'terminal')
       const [tabA, tabB] = terminals
       store.setActive(tabA.id)
@@ -326,7 +326,7 @@ describe('stores/tabs', () => {
       store.addTerminal('agent-a')
       store.addTerminal('agent-a')
       store.addTerminal('agent-b')
-      // tabs: [backlog, logs, metrics, agent-a tab1, agent-a tab2, agent-b tab]
+      // tabs: [backlog, stat, agent-a tab1, agent-a tab2, agent-b tab]
       const terminals = store.tabs.filter(t => t.type === 'terminal')
       const [tabA1, tabA2, tabB] = terminals
       store.setActive(tabB.id)
@@ -916,7 +916,7 @@ describe('stores/tabs — missing actions', () => {
       store.closeTabGroup(null)
       // Only the terminal without agentName would be affected; permanent tabs must survive
       expect(store.tabs.find(t => t.id === 'backlog')).toBeDefined()
-      expect(store.tabs.find(t => t.id === 'logs')).toBeDefined()
+      expect(store.tabs.find(t => t.id === 'stat')).toBeDefined()
     })
 
     it('should reset activeTabId to backlog when active tab is in closed group', () => {
@@ -958,13 +958,13 @@ describe('stores/tabs — missing actions', () => {
   })
 
   describe('addLogs', () => {
-    it('should activate the logs tab', () => {
+    it('should activate the stat tab', () => {
       const store = useTabsStore()
-      // logs tab is permanent (id='logs' exists by default)
+      // stat tab is permanent (id='stat' exists by default)
 
       store.addLogs()
 
-      expect(store.activeTabId).toBe('logs')
+      expect(store.activeTabId).toBe('stat')
     })
 
     it('should set logsAgentId when agentId is provided', () => {
@@ -972,8 +972,8 @@ describe('stores/tabs — missing actions', () => {
 
       store.addLogs(42)
 
-      const logsTab = store.tabs.find(t => t.type === 'logs')
-      expect(logsTab?.logsAgentId).toBe(42)
+      const statTab = store.tabs.find(t => t.type === 'stat')
+      expect(statTab?.logsAgentId).toBe(42)
     })
   })
 })

@@ -705,15 +705,15 @@ describe('TabBar', () => {
     expect(wrapper.text()).toContain('Backlog')
   })
 
-  it('renders logs button', () => {
+  it('renders stat button', () => {
     const wrapper = shallowMount(TabBar, {
       global: {
         plugins: [createTestingPinia({
-          initialState: { tabs: { tabs: [{ id: 'backlog', type: 'board', title: 'Backlog', permanent: true }, { id: 'logs', type: 'logs', title: 'Logs', permanent: true }], activeTabId: 'backlog' } },
+          initialState: { tabs: { tabs: [{ id: 'backlog', type: 'backlog', title: 'Backlog', permanent: true }, { id: 'stat', type: 'stat', title: 'Stat', permanent: true }], activeTabId: 'backlog' } },
         }), i18n],
       },
     })
-    expect(wrapper.text()).toContain('Log')
+    expect(wrapper.text()).toContain('Stat')
   })
 
   it('renders terminal tab titles', () => {
@@ -722,8 +722,8 @@ describe('TabBar', () => {
         plugins: [createTestingPinia({
           initialState: { tabs: {
             tabs: [
-              { id: 'backlog', type: 'board', title: 'Backlog', permanent: true },
-              { id: 'logs', type: 'logs', title: 'Logs', permanent: true },
+              { id: 'backlog', type: 'backlog', title: 'Backlog', permanent: true },
+              { id: 'stat', type: 'stat', title: 'Stat', permanent: true },
               { id: 'term-1', type: 'terminal', title: 'review-master', permanent: false, agentName: 'review-master' },
             ],
             activeTabId: 'term-1',
@@ -754,10 +754,10 @@ describe('TabBar', () => {
     const pinia = createTestingPinia({
       initialState: { tabs: {
         tabs: [
-          { id: 'backlog', type: 'board', title: 'Backlog', permanent: true },
-          { id: 'logs', type: 'logs', title: 'Logs', permanent: true },
+          { id: 'backlog', type: 'backlog', title: 'Backlog', permanent: true },
+          { id: 'stat', type: 'stat', title: 'Stat', permanent: true },
         ],
-        activeTabId: 'logs',
+        activeTabId: 'stat',
       } },
     })
     const wrapper = shallowMount(TabBar, {
@@ -997,7 +997,7 @@ describe('AgentLogsView', () => {
         plugins: [createTestingPinia({
           initialState: {
             tasks: { dbPath: '/p/.claude/db', agents: [] },
-            tabs: { activeTabId: 'logs' },
+            tabs: { activeTabId: 'stat' },
           },
         }), i18n],
         stubs: { TokenStatsView: true },
@@ -1017,7 +1017,7 @@ describe('AgentLogsView', () => {
         plugins: [createTestingPinia({
           initialState: {
             tasks: { dbPath: '/p/.claude/db', agents: [] },
-            tabs: { activeTabId: 'logs' },
+            tabs: { activeTabId: 'stat' },
           },
         }), i18n],
         stubs: { TokenStatsView: true },
@@ -1039,7 +1039,7 @@ describe('AgentLogsView', () => {
         plugins: [createTestingPinia({
           initialState: {
             tasks: { dbPath: '/p/.claude/db', agents: [] },
-            tabs: { activeTabId: 'logs' },
+            tabs: { activeTabId: 'stat' },
           },
         }), i18n],
         stubs: { TokenStatsView: true },
@@ -2499,7 +2499,7 @@ describe('TokenStatsView (T353)', () => {
         plugins: [createTestingPinia({
           initialState: {
             tasks: { dbPath: '/p/.claude/db' },
-            tabs: { activeTabId: 'logs' },
+            tabs: { activeTabId: 'stat' },
           },
           stubActions: false,
         }), i18n],
@@ -2518,7 +2518,7 @@ describe('TokenStatsView (T353)', () => {
         plugins: [createTestingPinia({
           initialState: {
             tasks: { dbPath: '/p/.claude/db' },
-            tabs: { activeTabId: 'logs' },
+            tabs: { activeTabId: 'stat' },
           },
           stubActions: false,
         }), i18n],
@@ -2535,7 +2535,7 @@ describe('TokenStatsView (T353)', () => {
         plugins: [createTestingPinia({
           initialState: {
             tasks: { dbPath: '/p/.claude/db' },
-            tabs: { activeTabId: 'logs' },
+            tabs: { activeTabId: 'stat' },
           },
           stubActions: false,
         }), i18n],
@@ -2561,7 +2561,7 @@ describe('TokenStatsView (T353)', () => {
         plugins: [createTestingPinia({
           initialState: {
             tasks: { dbPath: '/p/.claude/db' },
-            tabs: { activeTabId: 'logs' },
+            tabs: { activeTabId: 'stat' },
           },
           stubActions: false,
         }), i18n],

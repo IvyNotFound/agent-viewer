@@ -281,43 +281,22 @@ function openGroupMenu(event: MouseEvent, group: TabGroup): void {
       ></span>
     </button>
 
-    <!-- Onglet Log (fixe, non fermable) -->
+    <!-- Onglet Stat (fixe, non fermable) -->
     <button
       :class="[
         'flex items-center gap-2 px-5 text-sm font-semibold transition-all relative select-none border-r border-edge-subtle shrink-0',
-        store.activeTabId === 'logs'
+        store.activeTabId === 'stat'
           ? 'text-content-primary bg-surface-secondary'
           : 'text-content-muted hover:text-content-secondary hover:bg-surface-secondary/50'
       ]"
-      @click="store.setActive('logs')"
-    >
-      <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5 shrink-0">
-        <path d="M5 3a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 3a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 3a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H5z"/>
-        <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3z"/>
-      </svg>
-      <span>{{ t('sidebar.logs') }}</span>
-      <span
-        v-if="store.activeTabId === 'logs'"
-        class="absolute bottom-0 left-0 right-0 h-[2px] bg-content-faint"
-      ></span>
-    </button>
-
-    <!-- Onglet Métriques (fixe, non fermable) -->
-    <button
-      :class="[
-        'flex items-center gap-2 px-5 text-sm font-semibold transition-all relative select-none border-r border-edge-subtle shrink-0',
-        store.activeTabId === 'metrics'
-          ? 'text-content-primary bg-surface-secondary'
-          : 'text-content-muted hover:text-content-secondary hover:bg-surface-secondary/50'
-      ]"
-      @click="store.setActive('metrics')"
+      @click="store.setActive('stat')"
     >
       <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5 shrink-0">
         <path d="M0 11l4-5 3 3 4-6 5 3v5H0z"/>
       </svg>
-      <span>{{ t('sidebar.metrics') }}</span>
+      <span>{{ t('sidebar.stat') }}</span>
       <span
-        v-if="store.activeTabId === 'metrics'"
+        v-if="store.activeTabId === 'stat'"
         class="absolute bottom-0 left-0 right-0 h-[2px] bg-content-faint"
       ></span>
     </button>

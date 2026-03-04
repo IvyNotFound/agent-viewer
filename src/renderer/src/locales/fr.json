@@ -271,6 +271,7 @@
     "backlog": "Backlog",
     "logs": "Log",
     "metrics": "Métriques",
+    "stat": "Stat",
     "project": "Projet",
     "agents": "Agents",
     "perimeters": "Périmètres",

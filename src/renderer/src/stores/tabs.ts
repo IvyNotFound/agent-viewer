@@ -13,7 +13,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-export type TabType = 'backlog' | 'terminal' | 'explorer' | 'file' | 'logs' | 'metrics'
+export type TabType = 'backlog' | 'terminal' | 'explorer' | 'file' | 'stat'
 
 export interface Tab {
   id: string
@@ -59,8 +59,7 @@ export interface Tab {
 export const useTabsStore = defineStore('tabs', () => {
   const tabs = ref<Tab[]>([
     { id: 'backlog', type: 'backlog', title: 'Backlog', ptyId: null, agentName: null, wslDistro: null, autoSend: null, systemPrompt: null, thinkingMode: null, permanent: true },
-    { id: 'logs',    type: 'logs',    title: 'Log',     ptyId: null, agentName: null, wslDistro: null, autoSend: null, systemPrompt: null, thinkingMode: null, permanent: true, logsAgentId: null },
-    { id: 'metrics', type: 'metrics', title: 'Metrics', ptyId: null, agentName: null, wslDistro: null, autoSend: null, systemPrompt: null, thinkingMode: null, permanent: true },
+    { id: 'stat',    type: 'stat',    title: 'Stat',    ptyId: null, agentName: null, wslDistro: null, autoSend: null, systemPrompt: null, thinkingMode: null, permanent: true, logsAgentId: null },
   ])
   const activeTabId = ref<string>('backlog')
 
@@ -129,9 +128,9 @@ export const useTabsStore = defineStore('tabs', () => {
   }
 
   function addLogs(agentId?: number | null): void {
-    const logTab = tabs.value.find(t => t.type === 'logs')
-    if (logTab && agentId != null) logTab.logsAgentId = agentId
-    activeTabId.value = 'logs'
+    const statTab = tabs.value.find(t => t.type === 'stat')
+    if (statTab && agentId != null) statTab.logsAgentId = agentId
+    activeTabId.value = 'stat'
   }
 
   function addTerminal(agentName?: string, wslDistro?: string, autoSend?: string, systemPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string, activate = true, taskId?: number, viewMode?: 'stream'): void {
