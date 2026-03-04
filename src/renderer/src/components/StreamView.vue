@@ -346,12 +346,28 @@ onMounted(async () => {
   } catch (err) {
     events.value.push({ type: 'system', subtype: 'init', session_id: `Erreur agent: ${String(err)}` })
   }
+
+  // Attach link-click interceptor after DOM is ready (T753).
+  await nextTick()
+  scrollContainer.value?.addEventListener('click', handleLinkClick, true)
 })
+
+// Intercept link clicks in markdown blocks — redirect to system browser (T753).
+function handleLinkClick(e: MouseEvent): void {
+  const target = (e.target as HTMLElement).closest('a')
+  if (!target) return
+  const href = target.getAttribute('href')
+  if (!href || !/^https?:\/\//i.test(href)) return
+  e.preventDefault()
+  e.stopPropagation()
+  window.electronAPI.openExternal(href)
+}
 
 onUnmounted(() => {
   unsubStreamMessage?.()
   unsubConvId?.()
   unsubExit?.()
+  scrollContainer.value?.removeEventListener('click', handleLinkClick, true)
   // Clear streamId so closeTab won't double-kill after unmount (T730).
   tabsStore.setStreamId(props.terminalId, null)
   // Fallback kill — idempotent; primary kill is in closeTab (T730).
