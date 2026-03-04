@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { useHookEventsStore, type HookEvent } from '@renderer/stores/hookEvents'
+import { EVENT_ICON, eventIcon, toolColor, eventColor, toolName } from '@renderer/composables/useHookEventDisplay'
 import HookEventPayloadModal from './HookEventPayloadModal.vue'
 
 const store = useHookEventsStore()
@@ -10,36 +11,7 @@ const stickyScroll = ref(true)
 const selectedEvent = ref<HookEvent | null>(null)
 const listRef = ref<HTMLElement | null>(null)
 
-const ALL_TYPES = ['PreToolUse', 'PostToolUse', 'SessionStart', 'SubagentStart', 'SubagentStop']
-
-const EVENT_ICON: Record<string, string> = {
-  PreToolUse:    '⚙',
-  PostToolUse:   '✓',
-  SessionStart:  '▶',
-  SubagentStart: '→',
-  SubagentStop:  '✕',
-}
-
-const TOOL_COLOR: Record<string, string> = {
-  Bash:         'text-amber-400',
-  Read:         'text-sky-400',
-  Write:        'text-emerald-400',
-  Edit:         'text-emerald-400',
-  Glob:         'text-violet-400',
-  Grep:         'text-violet-400',
-  Agent:        'text-pink-400',
-  WebFetch:     'text-blue-400',
-  WebSearch:    'text-blue-400',
-  TodoWrite:    'text-orange-400',
-}
-
-function toolColor(name: string): string {
-  return TOOL_COLOR[name] ?? 'text-content-tertiary'
-}
-
-function toolName(payload: unknown): string {
-  return (payload as Record<string, unknown>)?.tool_name as string ?? '?'
-}
+const ALL_TYPES = Object.keys(EVENT_ICON)
 
 function toggleType(t: string): void {
   const idx = filterTypes.value.indexOf(t)
@@ -124,16 +96,16 @@ watch(() => store.events.length, () => {
       >
         <!-- Event icon -->
         <span class="text-[11px] text-content-faint font-mono shrink-0 w-4 text-center">
-          {{ EVENT_ICON[e.event] ?? '·' }}
+          {{ eventIcon(e.event) }}
         </span>
         <!-- Event type / tool name -->
         <span
           class="text-[11px] font-mono shrink-0"
-          :class="e.event === 'PreToolUse' || e.event === 'PostToolUse'
+          :class="['PreToolUse','PostToolUse','PostToolUseFailure'].includes(e.event)
             ? toolColor(toolName(e.payload))
-            : 'text-content-subtle'"
+            : eventColor(e.event)"
         >
-          {{ e.event === 'PreToolUse' || e.event === 'PostToolUse' ? toolName(e.payload) : e.event }}
+          {{ ['PreToolUse','PostToolUse','PostToolUseFailure'].includes(e.event) ? toolName(e.payload) : e.event }}
         </span>
         <!-- Session ID short -->
         <span class="text-[10px] text-content-faint font-mono truncate flex-1">
