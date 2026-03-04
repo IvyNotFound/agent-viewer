@@ -525,6 +525,38 @@ export function registerIpcHandlers(): void {
     await shell.openExternal(url)
   })
 
+  // ── Session result ────────────────────────────────────────────────────────
+
+  /**
+   * Persist cost_usd, duration_ms, num_turns from the Claude `result` event into a session row.
+   * @param dbPath - Registered DB path
+   * @param sessionId - Session ID to update
+   * @param data - Partial result data (null fields are stored as NULL)
+   * @returns {{ success: boolean, error?: string }}
+   */
+  ipcMain.handle('session:updateResult', async (_event, dbPath: string, sessionId: number, data: {
+    cost_usd?: number | null
+    duration_ms?: number | null
+    num_turns?: number | null
+  }) => {
+    assertDbPathAllowed(dbPath)
+    if (!Number.isInteger(sessionId) || sessionId <= 0) {
+      return { success: false, error: 'INVALID_SESSION_ID' }
+    }
+    try {
+      await writeDb(dbPath, (db) => {
+        db.run(
+          `UPDATE sessions SET cost_usd=?, duration_ms=?, num_turns=?, updated_at=datetime('now') WHERE id=?`,
+          [data.cost_usd ?? null, data.duration_ms ?? null, data.num_turns ?? null, sessionId]
+        )
+      })
+      return { success: true }
+    } catch (err) {
+      console.error('[IPC session:updateResult]', err)
+      return { success: false, error: String(err) }
+    }
+  })
+
   // ── Git log ───────────────────────────────────────────────────────────────
 
   /**

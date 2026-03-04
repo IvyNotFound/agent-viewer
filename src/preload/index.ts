@@ -306,4 +306,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   gitLog: (projectPath: string, options?: { limit?: number; since?: string }): Promise<Array<{ hash: string; date: string; subject: string; author: string; taskIds: number[] }>> =>
     ipcRenderer.invoke('git:log', projectPath, options),
 
+  /** Persist cost_usd, duration_ms, num_turns from the Claude result event into the session row. */
+  sessionUpdateResult: (dbPath: string, sessionId: number, data: { cost_usd?: number | null; duration_ms?: number | null; num_turns?: number | null }): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('session:updateResult', dbPath, sessionId, data),
+
 })

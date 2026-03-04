@@ -976,6 +976,16 @@ const migrations: Migration[] = [
     const cols = new Set(colResult[0].values.map((r: unknown[]) => r[1] as string))
     if (!cols.has('max_sessions')) db.run('ALTER TABLE agents ADD COLUMN max_sessions INTEGER NOT NULL DEFAULT 3')
   } },
+
+  // v20: add sessions.cost_usd, sessions.duration_ms, sessions.num_turns (T766)
+  { version: 20, up: (db) => {
+    const colResult = db.exec('PRAGMA table_info(sessions)')
+    if (colResult.length === 0) return
+    const cols = new Set(colResult[0].values.map((r: unknown[]) => r[1] as string))
+    if (!cols.has('cost_usd')) db.run('ALTER TABLE sessions ADD COLUMN cost_usd REAL')
+    if (!cols.has('duration_ms')) db.run('ALTER TABLE sessions ADD COLUMN duration_ms INTEGER')
+    if (!cols.has('num_turns')) db.run('ALTER TABLE sessions ADD COLUMN num_turns INTEGER')
+  } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */
