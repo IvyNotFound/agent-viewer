@@ -19,6 +19,7 @@ import { createInterface } from 'readline'
 import { appendFileSync, writeFileSync, unlinkSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
+import { toWslPath } from './utils/wsl'
 
 // ── Debug logging ─────────────────────────────────────────────────────────────
 
@@ -49,17 +50,6 @@ const CLAUDE_CMD_REGEX = /^claude(-[a-z0-9-]+)?$/
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-/**
- * Converts a Windows path to its WSL mount path.
- * @param winPath - Windows-style path (e.g. `C:\Users\foo`).
- * @returns WSL path (e.g. `/mnt/c/Users/foo`).
- */
-function toWslPath(winPath: string): string {
-  return winPath
-    .replace(/\\/g, '/')
-    .replace(/^([A-Za-z]):/, (_, d) => `/mnt/${d.toLowerCase()}`)
-}
 
 /**
  * Build minimal env for the spawned process.

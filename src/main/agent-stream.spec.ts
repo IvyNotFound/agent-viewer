@@ -79,6 +79,7 @@ vi.mock('child_process', () => {
 // ── Test setup ────────────────────────────────────────────────────────────────
 
 import * as agentStream from './agent-stream'
+import { toWslPath } from './utils/wsl'
 
 describe('agent-stream', () => {
   let handlers: Map<string, (...args: unknown[]) => unknown>
@@ -457,8 +458,8 @@ describe('agent-stream', () => {
   // ── toWslPath ─────────────────────────────────────────────────────────────
 
   it('toWslPath converts Windows paths to WSL mount paths', () => {
-    expect(agentStream._testing.toWslPath('C:\\Users\\foo')).toBe('/mnt/c/Users/foo')
-    expect(agentStream._testing.toWslPath('D:\\projects\\bar')).toBe('/mnt/d/projects/bar')
-    expect(agentStream._testing.toWslPath('/already/unix')).toBe('/already/unix')
+    expect(toWslPath('C:\\Users\\foo')).toBe('/mnt/c/Users/foo')
+    expect(toWslPath('D:\\projects\\bar')).toBe('/mnt/d/projects/bar')
+    expect(toWslPath('/already/unix')).toBe('/already/unix')
   })
 })
