@@ -200,7 +200,7 @@
     "maximize": "Maximize"
   },
   "tabBar": {
-    "newTerminal": "New WSL terminal",
+    "openWslTerminal": "Open WSL terminal",
     "closeTab": "Close",
     "unsaved": "Unsaved changes",
     "closeFileTitle": "Close file",

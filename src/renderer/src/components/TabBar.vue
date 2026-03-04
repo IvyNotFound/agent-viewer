@@ -12,6 +12,10 @@ const { t } = useI18n()
 const store = useTabsStore()
 const { confirm } = useConfirmDialog()
 
+async function openWslTerminal(): Promise<void> {
+  await window.electronAPI.openWslTerminal()
+}
+
 const terminalTabs = computed(() => store.tabs.filter(t => !t.permanent))
 
 // ── Groupement par agent ──────────────────────────────────────────────────────
@@ -435,8 +439,8 @@ function openGroupMenu(event: MouseEvent, group: TabGroup): void {
     <button
       class="flex items-center gap-1.5 px-3 self-center text-sm font-semibold text-violet-700 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/40 hover:border-violet-500/60 dark:text-violet-300 dark:border-violet-500/30 dark:hover:border-violet-500/50 rounded transition-all ml-1 mr-2 shrink-0 cursor-pointer"
       style="height: 28px"
-      :title="t('tabBar.newTerminal')"
-      @click="store.addTerminal()"
+      :title="t('tabBar.openWslTerminal')"
+      @click="openWslTerminal()"
     >
       <span class="text-base leading-none">+</span>
       <span>WSL</span>
