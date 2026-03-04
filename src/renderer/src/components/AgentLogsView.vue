@@ -10,8 +10,9 @@ import type { AgentLog } from '@renderer/types'
 import TokenStatsView from './TokenStatsView.vue'
 import ActivityHeatmap from './ActivityHeatmap.vue'
 import GitCommitList from './GitCommitList.vue'
+import ToolStatsPanel from './ToolStatsPanel.vue'
 
-type SubTab = 'logs' | 'tokenStats' | 'heatmap' | 'git'
+type SubTab = 'logs' | 'tokenStats' | 'heatmap' | 'git' | 'tools'
 
 const props = defineProps<{
   initialAgentId?: number | null
@@ -254,7 +255,19 @@ watch(activeSubTab, (tab) => {
         ]"
         @click="activeSubTab = 'git'"
       >Git</button>
+      <button
+        :class="[
+          'px-3 py-1 rounded-t text-[11px] font-mono font-medium transition-colors border border-b-0',
+          activeSubTab === 'tools'
+            ? 'text-content-secondary bg-surface-primary border-edge-subtle'
+            : 'text-content-faint bg-transparent border-transparent hover:text-content-tertiary hover:bg-surface-secondary/40'
+        ]"
+        @click="activeSubTab = 'tools'"
+      >{{ t('toolStats.title') }}</button>
     </div>
+
+    <!-- ── Tool Stats sub-tab ────────────────────────────────────────────── -->
+    <ToolStatsPanel v-if="activeSubTab === 'tools'" class="flex-1 min-h-0" />
 
     <!-- ── Token Stats sub-tab ───────────────────────────────────────────── -->
     <!-- v-show instead of v-if: keeps component mounted, avoids 5 IPC calls on every sub-tab switch -->
@@ -284,7 +297,7 @@ watch(activeSubTab, (tab) => {
     </template>
 
     <!-- ── Logs sub-tab ──────────────────────────────────────────────────── -->
-    <template v-if="activeSubTab !== 'tokenStats' && activeSubTab !== 'heatmap' && activeSubTab !== 'git'">
+    <template v-if="activeSubTab !== 'tokenStats' && activeSubTab !== 'heatmap' && activeSubTab !== 'git' && activeSubTab !== 'tools'">
 
     <!-- ── Barre de filtres ──────────────────────────────────────────────── -->
     <div class="shrink-0 flex items-center gap-2 px-4 py-2.5 border-b border-edge-subtle bg-surface-base">

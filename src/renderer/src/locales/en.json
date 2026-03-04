@@ -83,6 +83,15 @@
     "nextPage": "Next page",
     "refresh": "Refresh"
   },
+  "toolStats": {
+    "title": "Tools",
+    "tool": "Tool",
+    "calls": "Calls",
+    "errors": "Errors",
+    "errorRate": "Error rate",
+    "avgDuration": "Avg duration",
+    "empty": "No data — launch an agent to see tool stats"
+  },
   "tokenStats": {
     "logsTab": "Logs",
     "title": "Token Stats",
