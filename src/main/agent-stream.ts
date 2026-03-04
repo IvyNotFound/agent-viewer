@@ -82,6 +82,9 @@ function buildEnv(): Record<string, string> {
  *
  * Using $'...' avoids any shell re-evaluation of the content — parentheses,
  * backticks, dollar signs, and double quotes inside the value are treated as literals.
+ *
+ * @param s - The raw string to escape (e.g. a system prompt).
+ * @returns The escaped string, safe for embedding inside `$'...'`.
  */
 function escapeAnsiC(s: string): string {
   let out = ''
@@ -102,6 +105,14 @@ function escapeAnsiC(s: string): string {
  * Build the bash -lc command string for launching Claude in stream-json mode.
  * System prompt is passed via ANSI-C $'...' quoting to avoid shell injection —
  * parentheses, backticks, dollar signs and double quotes in the prompt are all literals.
+ *
+ * @param opts - Launch options.
+ * @param opts.claudeCommand - Claude binary name (validated against `CLAUDE_CMD_REGEX`; defaults to `'claude'`).
+ * @param opts.convId - Existing conversation UUID to resume via `--resume`.
+ * @param opts.systemPrompt - System prompt appended via `--append-system-prompt`; ANSI-C escaped.
+ * @param opts.thinkingMode - Set to `'disabled'` to inject `--settings '{"alwaysThinkingEnabled":false}'`.
+ * @param opts.permissionMode - Set to `'auto'` to add `--dangerously-skip-permissions`.
+ * @returns The full bash command string, ready for `spawn('wsl.exe', ['--', 'bash', '-lc', cmd])`.
  */
 function buildClaudeCmd(opts: {
   claudeCommand?: string
