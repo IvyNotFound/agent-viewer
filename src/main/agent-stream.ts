@@ -76,9 +76,32 @@ function buildEnv(): Record<string, string> {
 }
 
 /**
+ * Escape a string for safe embedding inside bash $'...' ANSI-C quoting.
+ * Handles backslash, single quote, and ASCII control characters.
+ * All other characters (printable ASCII + UTF-8 multibyte) pass through unchanged.
+ *
+ * Using $'...' avoids any shell re-evaluation of the content — parentheses,
+ * backticks, dollar signs, and double quotes inside the value are treated as literals.
+ */
+function escapeAnsiC(s: string): string {
+  let out = ''
+  for (const ch of s) {
+    const cp = ch.codePointAt(0)!
+    if (ch === '\\') out += '\\\\'
+    else if (ch === "'") out += "\\'"
+    else if (ch === '\n') out += '\\n'
+    else if (ch === '\r') out += '\\r'
+    else if (ch === '\t') out += '\\t'
+    else if (cp < 0x20 || cp === 0x7f) out += `\\x${cp.toString(16).padStart(2, '0')}`
+    else out += ch
+  }
+  return out
+}
+
+/**
  * Build the bash -lc command string for launching Claude in stream-json mode.
- * All prompts are base64-encoded to avoid shell injection.
- * Only [A-Za-z0-9+/=] chars in base64 — safe for single-quoted shell embedding.
+ * System prompt is passed via ANSI-C $'...' quoting to avoid shell injection —
+ * parentheses, backticks, dollar signs and double quotes in the prompt are all literals.
  */
 function buildClaudeCmd(opts: {
   claudeCommand?: string
@@ -104,9 +127,9 @@ function buildClaudeCmd(opts: {
   }
 
   if (opts.systemPrompt) {
-    // Base64-encode to avoid shell injection — only safe chars in output
-    const b64 = Buffer.from(opts.systemPrompt).toString('base64')
-    parts.push(`--append-system-prompt "$(echo '${b64}' | base64 -d)"`)
+    // ANSI-C $'...' quoting: content is never re-evaluated by bash — no shell injection
+    // regardless of parens, backticks, dollar signs, or double quotes in the prompt.
+    parts.push(`--append-system-prompt $'${escapeAnsiC(opts.systemPrompt)}'`)
   }
 
   if (opts.thinkingMode === 'disabled') {
@@ -336,6 +359,7 @@ export function registerAgentStreamHandlers(): void {
 
 export const _testing = {
   toWslPath,
+  escapeAnsiC,
   buildClaudeCmd,
   buildEnv,
   killAgent,

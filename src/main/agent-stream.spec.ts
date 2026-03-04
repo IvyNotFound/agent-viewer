@@ -392,12 +392,26 @@ describe('agent-stream', () => {
     expect(cmd).toContain('false')
   })
 
-  it('buildClaudeCmd base64-encodes systemPrompt', () => {
+  it('buildClaudeCmd passes systemPrompt using ANSI-C quoting', () => {
     const cmd = agentStream._testing.buildClaudeCmd({ systemPrompt: 'You are a helpful assistant.' })
-    // Should contain base64 of 'You are a helpful assistant.'
-    const b64 = Buffer.from('You are a helpful assistant.').toString('base64')
-    expect(cmd).toContain(b64)
     expect(cmd).toContain('--append-system-prompt')
+    // Must use $'...' quoting, not base64 command substitution
+    expect(cmd).toContain("$'You are a helpful assistant.'")
+    expect(cmd).not.toContain('base64')
+  })
+
+  it('buildClaudeCmd safely quotes systemPrompt with special shell chars', () => {
+    const systemPrompt = 'Ticket(s) créé(s)\n"quoted"\n`backtick`\n$HOME\n$(echo hi)\n[brackets]'
+    const cmd = agentStream._testing.buildClaudeCmd({ systemPrompt })
+    expect(cmd).toContain('--append-system-prompt')
+    // Must use $'...' quoting
+    expect(cmd).toContain("$'")
+    // Literal newlines must be escaped as \n sequences (not raw newlines in the command)
+    expect(cmd).not.toContain('\n')
+    expect(cmd).toContain('\\n')
+    // Parens, backticks, dollar signs pass through literally inside $'...' — they are safe
+    expect(cmd).toContain('Ticket(s)')
+    expect(cmd).toContain('$HOME')
   })
 
   it('buildClaudeCmd uses custom claudeCommand', () => {
