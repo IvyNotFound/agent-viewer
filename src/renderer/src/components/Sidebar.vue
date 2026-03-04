@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
-import { parseUtcDate } from '@renderer/utils/parseDate'
 import { useToast } from '@renderer/composables/useToast'
 import LaunchSessionModal from './LaunchSessionModal.vue'
 import SettingsModal from './SettingsModal.vue'
@@ -178,12 +177,6 @@ async function duplicateAgent(agent: Agent): Promise<void> {
     pushToast(result.error ?? 'Erreur lors de la duplication', 'error')
   }
 }
-
-// ── Agents actifs ─────────────────────────────────────────────────────────
-// Agent actif = onglet terminal ouvert dans tabsStore pour cet agent
-const activeAgents = computed(() =>
-  store.agents.filter(a => hasOpenTerminal(a.name))
-)
 
 // ── Agent groups (T557) ──────────────────────────────────────────────────────
 
@@ -363,9 +356,6 @@ async function addPerimetre() {
   )
 }
 
-function isLockOld(createdAt: string): boolean {
-  return Date.now() - parseUtcDate(createdAt).getTime() > 30 * 60 * 1000
-}
 
 </script>
 
@@ -845,94 +835,6 @@ function isLockOld(createdAt: string): boolean {
 
         <!-- ── Paramètres (removed - now in modal) ── -->
 
-        <!-- ── Stats tâches (permanent bas) ── -->
-        <div v-if="store.projectPath" class="shrink-0 border-t border-edge-subtle px-3 py-2">
-          <p class="text-[10px] font-semibold text-content-subtle uppercase tracking-wider mb-1.5">{{ t('sidebar.tasks') }}</p>
-          <div class="grid grid-cols-4 gap-1 text-center">
-            <div>
-              <p class="text-[13px] font-mono font-semibold text-amber-400 leading-none">{{ store.stats.todo }}</p>
-              <p class="text-[9px] text-content-faint mt-0.5 leading-tight">{{ t('sidebar.todo') }}</p>
-            </div>
-            <div>
-              <p class="text-[13px] font-mono font-semibold text-emerald-400 leading-none">{{ store.stats.in_progress }}</p>
-              <p class="text-[9px] text-content-faint mt-0.5 leading-tight">{{ t('sidebar.inProgress') }}</p>
-            </div>
-            <div>
-              <p class="text-[13px] font-mono font-semibold text-content-muted leading-none">{{ store.stats.done }}</p>
-              <p class="text-[9px] text-content-faint mt-0.5 leading-tight">{{ t('sidebar.done') }}</p>
-            </div>
-            <div>
-              <p class="text-[13px] font-mono font-semibold text-violet-400 leading-none">{{ store.stats.archived }}</p>
-              <p class="text-[9px] text-content-faint mt-0.5 leading-tight">{{ t('sidebar.archived') }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── Agents actifs (permanent bas) ── -->
-        <div v-if="activeAgents.length > 0" class="shrink-0 border-t border-edge-subtle px-3 py-2">
-          <p class="text-[10px] font-semibold text-content-subtle uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-            {{ t('sidebar.openSessions') }}
-            <span class="text-content-dim font-mono">({{ activeAgents.length }})</span>
-          </p>
-          <div class="space-y-1.5 max-h-40 overflow-y-auto">
-            <div
-              v-for="agent in activeAgents"
-              :key="agent.id"
-              class="flex items-center gap-2 min-w-0 cursor-pointer group/active"
-              @click="() => { const tab = tabsStore.tabs.find(tab => tab.type === 'terminal' && tab.agentName === agent.name); if (tab) tabsStore.setActive(tab.id) }"
-            >
-              <!-- Indicateur : spinning si activité PTY, pulsing sinon -->
-              <span class="relative shrink-0 w-2 h-2 flex items-center justify-center">
-                <svg
-                  v-if="tabsStore.isAgentActive(agent.name)"
-                  class="w-2 h-2 animate-spin"
-                  viewBox="0 0 10 10" fill="none"
-                  :style="{ color: agentFg(agent.name) }"
-                >
-                  <circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.25"/>
-                  <path d="M5 1a4 4 0 0 1 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <span
-                  v-else
-                  class="w-1.5 h-1.5 rounded-full animate-pulse"
-                  :style="{ backgroundColor: agentFg(agent.name) }"
-                />
-              </span>
-              <div class="flex-1 min-w-0">
-                <p class="text-[11px] font-mono truncate font-medium group-hover/active:underline" :style="{ color: agentFg(agent.name) }">{{ agent.name }}</p>
-                <p class="text-[10px] truncate" :class="tabsStore.isAgentActive(agent.name) ? 'text-emerald-600' : 'text-content-faint'">
-                  {{ tabsStore.isAgentActive(agent.name) ? t('sidebar.active') : t('sidebar.waiting') }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── Locks actifs (permanent bas) ── -->
-        <div v-if="store.locks.length > 0" class="shrink-0 border-t border-edge-subtle px-3 py-2">
-          <p class="text-[10px] font-semibold text-content-subtle uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-            <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 shrink-0 text-content-faint">
-              <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
-            </svg>
-            {{ t('sidebar.activeLocks') }}
-            <span class="text-content-dim font-mono">({{ store.locks.length }})</span>
-          </p>
-          <div class="space-y-1 max-h-40 overflow-y-auto">
-            <div
-              v-for="lock in store.locks"
-              :key="lock.id"
-              class="min-w-0"
-              :title="`${lock.fichier} — ${lock.agent_name}`"
-            >
-              <p
-                class="text-[11px] font-mono truncate"
-                :class="isLockOld(lock.created_at) ? 'text-red-400' : 'text-content-muted'"
-              >{{ lock.fichier.split('/').pop() }}</p>
-              <p class="text-[10px] text-content-faint truncate">{{ lock.agent_name }}</p>
-            </div>
-          </div>
-        </div>
 
       </div>
     </div>

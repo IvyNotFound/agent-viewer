@@ -455,35 +455,6 @@ describe('Sidebar', () => {
   })
 
 
-  it('renders stats section with task counts', () => {
-    const wrapper = shallowMount(Sidebar, {
-      global: {
-        plugins: [createTestingPinia({
-          initialState: {
-            tasks: {
-              agents: [],
-              projectPath: '/my/cool/project',
-              dbPath: '/my/cool/project/.claude/db',
-              perimetresData: [],
-              stats: { todo: 3, in_progress: 1, done: 5, archived: 2 },
-            },
-          },
-        }), i18n],
-        stubs: {
-          LaunchSessionModal: true,
-          SettingsModal: true,
-          ContextMenu: true,
-          CreateAgentModal: true,
-          AgentEditModal: true,
-          Teleport: true,
-        },
-      },
-    })
-    // The sidebar renders task count stats
-    const text = wrapper.text()
-    expect(text).toContain('3')
-    expect(text).toContain('5')
-  })
 })
 
 // ── LaunchSessionModal (T230) ────────────────────────────────────────────────
