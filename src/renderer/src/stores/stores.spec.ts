@@ -854,7 +854,7 @@ describe('stores/tabs — missing actions', () => {
       expect(store.tabs.find(t => t.type === 'explorer')).toBeDefined()
     })
 
-    it('should call terminalKill for each terminal with a ptyId', () => {
+    it('should call agentKill for each terminal with a ptyId', () => {
       const store = useTabsStore()
       store.addTerminal('agent-1')
       // Set a ptyId on the terminal tab
@@ -863,38 +863,23 @@ describe('stores/tabs — missing actions', () => {
 
       store.closeAllTerminals()
 
-      expect(mockElectronAPI.terminalKill).toHaveBeenCalledWith('pty-123')
-      expect(mockElectronAPI.agentKill).not.toHaveBeenCalled()
+      expect(mockElectronAPI.agentKill).toHaveBeenCalledWith('pty-123')
+      expect(mockElectronAPI.terminalKill).not.toHaveBeenCalled()
     })
 
-    it('should call agentKill (not terminalKill) for stream tabs', () => {
+    it('should call agentKill for all stream tabs', () => {
       const store = useTabsStore()
-      store.addTerminal('agent-stream', undefined, undefined, undefined, undefined, undefined, undefined, true, undefined, 'stream')
-      const streamTab = store.tabs.find(t => t.viewMode === 'stream')
-      if (streamTab) store.setPtyId(streamTab.id, 'pty-stream-1')
+      store.addTerminal('agent-1')
+      store.addTerminal('agent-2')
+      const [tab1, tab2] = store.tabs.filter(t => t.type === 'terminal')
+      if (tab1) store.setPtyId(tab1.id, 'pty-1')
+      if (tab2) store.setPtyId(tab2.id, 'pty-2')
 
       store.closeAllTerminals()
 
-      expect(mockElectronAPI.agentKill).toHaveBeenCalledWith('pty-stream-1')
-      expect(mockElectronAPI.terminalKill).not.toHaveBeenCalledWith('pty-stream-1')
-    })
-
-    it('should call terminalKill for xterm tabs and agentKill for stream tabs when mixed', () => {
-      const store = useTabsStore()
-      store.addTerminal('agent-xterm')
-      store.addTerminal('agent-stream', undefined, undefined, undefined, undefined, undefined, undefined, true, undefined, 'stream')
-      const xtermTab = store.tabs.find(t => t.agentName === 'agent-xterm')
-      const streamTab = store.tabs.find(t => t.agentName === 'agent-stream')
-      expect(xtermTab?.viewMode).toBe('terminal')
-      expect(streamTab?.viewMode).toBe('stream')
-      if (xtermTab) store.setPtyId(xtermTab.id, 'pty-xterm-1')
-      if (streamTab) store.setPtyId(streamTab.id, 'pty-stream-2')
-
-      store.closeAllTerminals()
-
-      expect(mockElectronAPI.terminalKill).toHaveBeenCalledWith('pty-xterm-1')
-      expect(mockElectronAPI.agentKill).toHaveBeenCalledWith('pty-stream-2')
-      expect(mockElectronAPI.terminalKill).not.toHaveBeenCalledWith('pty-stream-2')
+      expect(mockElectronAPI.agentKill).toHaveBeenCalledWith('pty-1')
+      expect(mockElectronAPI.agentKill).toHaveBeenCalledWith('pty-2')
+      expect(mockElectronAPI.terminalKill).not.toHaveBeenCalled()
     })
 
     it('should reset activeTabId to backlog after closing active terminal', () => {

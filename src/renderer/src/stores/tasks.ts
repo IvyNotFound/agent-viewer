@@ -2,175 +2,38 @@
  * Pinia store for tasks, agents, and project management.
  *
  * Manages:
- * - Project connection (dbPath, projectPath)
+ * - Project connection (dbPath, projectPath) — delegated to useProjectStore
+ * - Agents list, locks, groups — delegated to useAgentsStore
  * - Tasks CRUD and filtering
- * - Agents list with session status
- * - Locks management
  * - Real-time polling and file watching
+ *
+ * Acts as a facade: exposes all symbols from sub-stores for backward compatibility.
  *
  * @module stores/tasks
  */
 
-import { defineStore } from 'pinia'
+import { defineStore, storeToRefs } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { Task, Agent, Lock, Stats, TaskComment, TaskLink, FileNode, Perimetre, AgentGroup, TaskAssignee } from '@renderer/types'
+import type { Task, Agent, Lock, Stats, TaskComment, TaskLink, Perimetre, TaskAssignee } from '@renderer/types'
+import { useProjectStore } from '@renderer/stores/project'
+import { useAgentsStore, AGENT_CTE_SQL, LOCKS_SQL } from '@renderer/stores/agents'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useToast } from '@renderer/composables/useToast'
-
-declare global {
-  interface Window {
-    electronAPI: {
-      selectProjectDir(): Promise<{ projectPath: string; dbPath: string | null; error: string | null; hasCLAUDEmd: boolean } | null>
-      createProjectDb(projectPath: string): Promise<{ success: boolean; dbPath: string; error?: string }>
-      queryDb(dbPath: string, query: string, params?: unknown[]): Promise<unknown[]>
-      watchDb(dbPath: string): Promise<void>
-      unwatchDb(): Promise<void>
-      onDbChanged(callback: () => void): () => void
-      showConfirmDialog(opts: { title: string; message: string; detail?: string }): Promise<boolean>
-      selectNewProjectDir(): Promise<string | null>
-      initNewProject(projectPath: string): Promise<{ success: boolean; error?: string }>
-      findProjectDb(projectPath: string): Promise<string | null>
-      migrateDb(dbPath: string): Promise<{ success: boolean; error?: string }>
-      getLocks(dbPath: string): Promise<unknown[]>
-      // File system
-      fsListDir(dirPath: string): Promise<FileNode[]>
-      fsReadFile(filePath: string): Promise<{ success: boolean; content?: string; error?: string }>
-      fsWriteFile(filePath: string, content: string): Promise<{ success: boolean; error?: string }>
-      windowMinimize(): Promise<void>
-      windowMaximize(): Promise<void>
-      windowClose(): Promise<void>
-      // Terminal
-      terminalCreate(cols: number, rows: number, projectPath?: string, wslDistro?: string, systemPrompt?: string, userPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string, permissionMode?: string, outputFormat?: string): Promise<string>
-      terminalWrite(id: string, data: string): Promise<void>
-      terminalResize(id: string, cols: number, rows: number): Promise<void>
-      terminalKill(id: string): Promise<void>
-      terminalIsAlive(id: string): Promise<boolean>
-      onTerminalData(id: string, cb: (data: string) => void): () => void
-      onTerminalExit(id: string, cb: () => void): () => void
-      onTerminalStreamMessage(id: string, cb: (event: Record<string, unknown>) => void): () => void
-      closeAgentSessions(dbPath: string, agentName: string): Promise<{ success: boolean; error?: string }>
-      renameAgent(dbPath: string, agentId: number, newName: string): Promise<{ success: boolean; error?: string }>
-      updatePerimetre(dbPath: string, id: number, oldName: string, newName: string, description: string): Promise<{ success: boolean; error?: string }>
-      updateAgentSystemPrompt(dbPath: string, agentId: number, systemPrompt: string): Promise<{ success: boolean; error?: string }>
-      buildAgentPrompt(agentName: string, userPrompt: string): Promise<string>
-      searchTasks(
-        dbPath: string,
-        query: string,
-        filters?: { statut?: string; agent_id?: number; perimetre?: string }
-      ): Promise<{ success: boolean; results: unknown[]; error?: string }>
-      // Config DB
-      getConfigValue(dbPath: string, key: string): Promise<{ success: boolean; value: string | null; error?: string }>
-      setConfigValue(dbPath: string, key: string, value: string): Promise<{ success: boolean; error?: string }>
-      // CLAUDE.md sync
-      checkMasterClaudeMd(dbPath: string): Promise<{ success: boolean; sha?: string; content?: string; upToDate?: boolean; localSha?: string; error?: string }>
-      applyMasterClaudeMd(dbPath: string, projectPath: string, content: string, sha: string): Promise<{ success: boolean; error?: string }>
-      // Agents
-      updateAgent(dbPath: string, agentId: number, updates: { name?: string; type?: string; perimetre?: string | null; thinkingMode?: string | null; allowedTools?: string | null; systemPrompt?: string | null; systemPromptSuffix?: string | null; autoLaunch?: boolean; permissionMode?: 'default' | 'auto' | null; maxSessions?: number }): Promise<{ success: boolean; error?: string }>
-      createAgent(dbPath: string, projectPath: string, data: { name: string; type: string; perimetre: string | null; thinkingMode: string | null; systemPrompt: string | null; description: string }): Promise<{ success: boolean; agentId?: number; claudeMdUpdated?: boolean; error?: string }>
-      // GitHub (secure — token stays in main process)
-      testGithubConnection(dbPath: string, repoUrl: string): Promise<{ connected: boolean; error?: string }>
-      checkForUpdates(dbPath: string, repoUrl: string, currentVersion: string): Promise<{ hasUpdate: boolean; latestVersion: string; error?: string }>
-      // Task assignees (multi-agent — ADR-008)
-      getTaskAssignees(dbPath: string, taskId: number): Promise<{ success: boolean; assignees: Array<{ agent_id: number; agent_name: string; role: string | null; assigned_at: string }>; error?: string }>
-      setTaskAssignees(dbPath: string, taskId: number, assignees: Array<{ agentId: number; role?: string | null }>): Promise<{ success: boolean; error?: string }>
-      tasksGetArchived(dbPath: string, params: { page: number; pageSize: number; agentId?: number | null; perimetre?: string | null }): Promise<{ rows: unknown[]; total: number }>
-      deleteAgent(dbPath: string, agentId: number): Promise<{ success: boolean; hasHistory?: boolean; error?: string }>
-      addPerimetre(dbPath: string, name: string): Promise<{ success: boolean; id?: number; error?: string }>
-      tasksUpdateStatus(dbPath: string, taskId: number, statut: string): Promise<{ success: boolean; error?: string }>
-      duplicateAgent(dbPath: string, agentId: number): Promise<{ success: boolean; agentId?: number; name?: string; error?: string }>
-      getTaskLinks(dbPath: string, taskId: number): Promise<{ success: boolean; links: Array<{ id: number; type: string; from_task: number; to_task: number; from_titre: string; from_statut: string; to_titre: string; to_statut: string }>; error?: string }>
-      // Agent groups (T556/T557)
-      agentGroupsList(dbPath: string): Promise<{ success: boolean; groups: AgentGroup[]; error?: string }>
-      agentGroupsCreate(dbPath: string, name: string): Promise<{ success: boolean; group?: { id: number; name: string; sort_order: number; created_at: string }; error?: string }>
-      agentGroupsRename(dbPath: string, groupId: number, name: string): Promise<{ success: boolean; error?: string }>
-      agentGroupsDelete(dbPath: string, groupId: number): Promise<{ success: boolean; error?: string }>
-      agentGroupsSetMember(dbPath: string, agentId: number, groupId: number | null, sortOrder?: number): Promise<{ success: boolean; error?: string }>
-      agentGroupsReorder(dbPath: string, groupIds: number[]): Promise<{ success: boolean; error?: string }>
-      // Agent stream (ADR-009: child_process.spawn + stdio:pipe — T647/T648)
-      agentCreate(opts?: { projectPath?: string; wslDistro?: string; systemPrompt?: string; thinkingMode?: string; claudeCommand?: string; convId?: string; permissionMode?: string }): Promise<string>
-      agentSend(id: string, text: string): Promise<void>
-      agentKill(id: string): Promise<void>
-      onAgentStream(id: string, cb: (event: Record<string, unknown>) => void): () => void
-      onAgentConvId(id: string, cb: (convId: string) => void): () => void
-      onAgentExit(id: string, cb: (exitCode: number | null) => void): () => void
-    }
-  }
-}
-
-// sql.js returns Uint8Array for TEXT columns in some cases — convert to string
-function toStr(v: unknown): unknown {
-  if (v instanceof Uint8Array) return new TextDecoder().decode(v)
-  return v
-}
-
-function normalizeRow<T extends Record<string, unknown>>(row: T): T {
-  const out = {} as T
-  for (const k in row) out[k] = toStr(row[k]) as T[typeof k]
-  return out
-}
-
-/**
- * Main tasks store using Pinia composition API.
- *
- * State:
- * - projectPath, dbPath: Current project connection
- * - tasks, agents, locks: Data from SQLite
- * - stats: Task counts by status
- * - selectedTask, taskComments: Current task details
- *
- * Actions:
- * - setProject, selectProject, closeProject: Project lifecycle
- * - refresh: Fetch latest data from DB
- * - openTask, closeTask: Task drill-down
- *
- * Computed:
- * - filteredTasks: Tasks filtered by agent/perimetre
- * - tasksByStatus: Tasks grouped by status
- *
- * @returns {object} Store instance with state and methods
- */
-// Shared SQL: agent list with latest session + last log timestamp + has_history flag
-const AGENT_CTE_SQL = `
-  WITH latest_sessions AS (
-    SELECT agent_id, statut, started_at,
-           ROW_NUMBER() OVER (PARTITION BY agent_id ORDER BY started_at DESC) as rn
-    FROM sessions
-  ),
-  max_logs AS (
-    SELECT agent_id, MAX(created_at) as last_log_at
-    FROM agent_logs GROUP BY agent_id
-  ),
-  agent_history AS (
-    SELECT a.id,
-      CASE WHEN (
-        EXISTS (SELECT 1 FROM sessions WHERE agent_id = a.id) OR
-        EXISTS (SELECT 1 FROM tasks WHERE agent_assigne_id = a.id) OR
-        EXISTS (SELECT 1 FROM task_comments WHERE agent_id = a.id) OR
-        EXISTS (SELECT 1 FROM agent_logs WHERE agent_id = a.id)
-      ) THEN 1 ELSE 0 END as has_history
-    FROM agents a
-  )
-  SELECT a.*, ls.statut as session_statut, ls.started_at as session_started_at, ml.last_log_at, ah.has_history
-  FROM agents a
-  LEFT JOIN latest_sessions ls ON ls.agent_id = a.id AND ls.rn = 1
-  LEFT JOIN max_logs ml ON ml.agent_id = a.id
-  LEFT JOIN agent_history ah ON ah.id = a.id
-  WHERE a.type != 'setup' ORDER BY a.name
-`
-
-const LOCKS_SQL = `
-  SELECT l.*, a.name as agent_name FROM locks l
-  JOIN agents a ON a.id = l.agent_id
-  WHERE l.released_at IS NULL
-`
+import { normalizeRow } from '@renderer/utils/db'
 
 export const useTasksStore = defineStore('tasks', () => {
   const { push: pushToast } = useToast()
-  const projectPath = ref<string | null>(localStorage.getItem('projectPath'))
-  const dbPath = ref<string | null>(localStorage.getItem('dbPath'))
+
+  // Sub-stores
+  const projectStore = useProjectStore()
+  const agentsStore = useAgentsStore()
+
+  // Reactive refs delegated from sub-stores (storeToRefs gives back the original refs — mutations propagate)
+  const { projectPath, dbPath, setupWizardTarget } = storeToRefs(projectStore)
+  const { agents, locks, agentGroups } = storeToRefs(agentsStore)
+
+  // Local tasks state
   const tasks = ref<Task[]>([])
-  const agents = ref<Agent[]>([])
-  const locks = ref<Lock[]>([])
   const perimetresData = ref<Perimetre[]>([])
   const stats = ref<Stats>({ todo: 0, in_progress: 0, done: 0, archived: 0 })
   const lastRefresh = ref<Date | null>(null)
@@ -182,12 +45,12 @@ export const useTasksStore = defineStore('tasks', () => {
   const taskComments = ref<TaskComment[]>([])
   const taskLinks = ref<TaskLink[]>([])
   const taskAssignees = ref<TaskAssignee[]>([])
-  const setupWizardTarget = ref<{ projectPath: string; hasCLAUDEmd: boolean } | null>(null)
-  const agentGroups = ref<AgentGroup[]>([])
 
   let pollInterval: ReturnType<typeof setInterval> | null = null
   let agentPollInterval: ReturnType<typeof setInterval> | null = null
   let unsubDbChange: (() => void) | null = null
+  let dbWatchInterval: ReturnType<typeof setInterval> | null = null
+  let dbChangeDebounce: ReturnType<typeof setTimeout> | null = null
 
   function toggleAgentFilter(id: number | string): void {
     const numId = Number(id)
@@ -223,6 +86,72 @@ export const useTasksStore = defineStore('tasks', () => {
     }
     return groups
   })
+
+  async function query<T = unknown>(sql: string, params?: unknown[]): Promise<T[]> {
+    if (!dbPath.value) return []
+    const result = await window.electronAPI.queryDb(dbPath.value, sql, params)
+    // Handle error responses from IPC (e.g., blocked write attempts)
+    if (!Array.isArray(result)) {
+      console.warn('[tasks query] Unexpected result type:', result)
+      return []
+    }
+    return result as T[]
+  }
+
+  async function refresh(): Promise<void> {
+    if (!dbPath.value) return
+    loading.value = true
+    error.value = null
+    try {
+      const [rawTasks, rawAgents, rawLocks, rawStats, rawPerimetres] = await Promise.all([
+        query<Task>(`
+          SELECT t.*, a.name as agent_name, a.perimetre as agent_perimetre,
+            c.name as agent_createur_name
+          FROM tasks t
+          LEFT JOIN agents a ON a.id = t.agent_assigne_id
+          LEFT JOIN agents c ON c.id = t.agent_createur_id
+          WHERE t.statut != 'archived'
+          ORDER BY t.updated_at DESC
+        `),
+        query<Agent>(AGENT_CTE_SQL),
+        query<Lock>(LOCKS_SQL),
+        query<{ statut: string; count: number }>(`
+          SELECT statut, COUNT(*) as count FROM tasks GROUP BY statut
+        `),
+        query<Perimetre>(`
+          SELECT id, name, dossier, techno, description, actif
+          FROM perimetres WHERE actif = 1 ORDER BY name
+        `)
+      ])
+
+      tasks.value = rawTasks.map(normalizeRow)
+      // Update agentsStore state via storeToRefs refs — mutations propagate to the sub-store
+      agents.value = rawAgents.map(normalizeRow)
+      locks.value = rawLocks.map(normalizeRow)
+      perimetresData.value = rawPerimetres.map(normalizeRow)
+
+      const s: Stats = { todo: 0, in_progress: 0, done: 0, archived: 0 }
+      for (const row of rawStats) {
+        if (row.statut in s) {
+          s[row.statut as keyof Stats] = row.count
+        }
+      }
+      stats.value = s
+      lastRefresh.value = new Date()
+      // Reload agent groups alongside main refresh
+      agentsStore.fetchAgentGroups()
+    } catch (e) {
+      error.value = String(e)
+      pushToast(String(e))
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Delegate to agentsStore — updates agents/locks state in sub-store
+  async function agentRefresh(): Promise<void> {
+    await agentsStore.agentRefresh()
+  }
 
   async function setProject(pPath: string, dPath: string): Promise<void> {
     projectPath.value = pPath
@@ -285,6 +214,7 @@ export const useTasksStore = defineStore('tasks', () => {
     tasks.value = []
     agents.value = []
     locks.value = []
+    agentGroups.value = []
     perimetresData.value = []
     stats.value = { todo: 0, in_progress: 0, done: 0, archived: 0 }
     selectedTask.value = null
@@ -294,14 +224,10 @@ export const useTasksStore = defineStore('tasks', () => {
     error.value = null
   }
 
+  // Delegate to projectStore
   function setProjectPathOnly(path: string): void {
-    projectPath.value = path
-    localStorage.setItem('projectPath', path)
-    // dbPath reste null jusqu'à ce que la db soit créée
+    projectStore.setProjectPathOnly(path)
   }
-
-  let dbWatchInterval: ReturnType<typeof setInterval> | null = null
-  let dbChangeDebounce: ReturnType<typeof setTimeout> | null = null
 
   function watchForDb(path: string): void {
     if (dbWatchInterval) clearInterval(dbWatchInterval)
@@ -313,82 +239,6 @@ export const useTasksStore = defineStore('tasks', () => {
         await setProject(path, db)
       }
     }, 2000)
-  }
-
-  async function query<T = unknown>(sql: string, params?: unknown[]): Promise<T[]> {
-    if (!dbPath.value) return []
-    const result = await window.electronAPI.queryDb(dbPath.value, sql, params)
-    // Handle error responses from IPC (e.g., blocked write attempts)
-    if (!Array.isArray(result)) {
-      console.warn('[tasks query] Unexpected result type:', result)
-      return []
-    }
-    return result as T[]
-  }
-
-  async function refresh(): Promise<void> {
-    if (!dbPath.value) return
-    loading.value = true
-    error.value = null
-    try {
-      const [rawTasks, rawAgents, rawLocks, rawStats, rawPerimetres] = await Promise.all([
-        query<Task>(`
-          SELECT t.*, a.name as agent_name, a.perimetre as agent_perimetre,
-            c.name as agent_createur_name
-          FROM tasks t
-          LEFT JOIN agents a ON a.id = t.agent_assigne_id
-          LEFT JOIN agents c ON c.id = t.agent_createur_id
-          WHERE t.statut != 'archived'
-          ORDER BY t.updated_at DESC
-        `),
-        query<Agent>(AGENT_CTE_SQL),
-        query<Lock>(LOCKS_SQL),
-        query<{ statut: string; count: number }>(`
-          SELECT statut, COUNT(*) as count FROM tasks GROUP BY statut
-        `),
-        query<Perimetre>(`
-          SELECT id, name, dossier, techno, description, actif
-          FROM perimetres WHERE actif = 1 ORDER BY name
-        `)
-      ])
-
-      tasks.value = rawTasks.map(normalizeRow)
-      agents.value = rawAgents.map(normalizeRow)
-      locks.value = rawLocks.map(normalizeRow)
-      perimetresData.value = rawPerimetres.map(normalizeRow)
-
-      const s: Stats = { todo: 0, in_progress: 0, done: 0, archived: 0 }
-      for (const row of rawStats) {
-        if (row.statut in s) {
-          s[row.statut as keyof Stats] = row.count
-        }
-      }
-      stats.value = s
-      lastRefresh.value = new Date()
-      // Reload agent groups alongside main refresh
-      fetchAgentGroups()
-    } catch (e) {
-      error.value = String(e)
-      pushToast(String(e))
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function agentRefresh(): Promise<void> {
-    if (!dbPath.value) return
-    // Skip refresh when window is not visible to save resources
-    if (document.visibilityState === 'hidden') return
-    try {
-      const [rawAgents, rawLocks] = await Promise.all([
-        query<Agent>(AGENT_CTE_SQL),
-        query<Lock>(LOCKS_SQL),
-      ])
-      agents.value = rawAgents.map(normalizeRow)
-      locks.value = rawLocks.map(normalizeRow)
-    } catch {
-      // silent: main refresh handles error display
-    }
   }
 
   function startPolling(): void {
@@ -441,52 +291,30 @@ export const useTasksStore = defineStore('tasks', () => {
     taskAssignees.value = []
   }
 
+  // Delegate to projectStore
   function closeWizard(): void {
-    setupWizardTarget.value = null
+    projectStore.closeWizard()
   }
 
+  // Agent group operations — delegate to agentsStore
   async function fetchAgentGroups(): Promise<void> {
-    if (!dbPath.value) return
-    try {
-      const res = await window.electronAPI.agentGroupsList(dbPath.value)
-      if (res.success) agentGroups.value = res.groups
-    } catch {
-      // silent — groups are optional
-    }
+    await agentsStore.fetchAgentGroups()
   }
 
-  async function createAgentGroup(name: string): Promise<AgentGroup | null> {
-    if (!dbPath.value) return null
-    const res = await window.electronAPI.agentGroupsCreate(dbPath.value, name)
-    if (!res.success || !res.group) return null
-    const newGroup: AgentGroup = { ...res.group, members: [] }
-    agentGroups.value = [...agentGroups.value, newGroup]
-    return newGroup
+  async function createAgentGroup(name: string) {
+    return agentsStore.createAgentGroup(name)
   }
 
   async function renameAgentGroup(groupId: number, name: string): Promise<void> {
-    if (!dbPath.value) return
-    await window.electronAPI.agentGroupsRename(dbPath.value, groupId, name)
-    agentGroups.value = agentGroups.value.map(g => g.id === groupId ? { ...g, name } : g)
+    return agentsStore.renameAgentGroup(groupId, name)
   }
 
   async function deleteAgentGroup(groupId: number): Promise<void> {
-    if (!dbPath.value) return
-    await window.electronAPI.agentGroupsDelete(dbPath.value, groupId)
-    agentGroups.value = agentGroups.value.filter(g => g.id !== groupId)
+    return agentsStore.deleteAgentGroup(groupId)
   }
 
   async function setAgentGroup(agentId: number, groupId: number | null, sortOrder?: number): Promise<void> {
-    if (!dbPath.value) return
-    await window.electronAPI.agentGroupsSetMember(dbPath.value, agentId, groupId, sortOrder)
-    // Optimistic update: move agent in groups
-    agentGroups.value = agentGroups.value.map(g => {
-      const filtered = g.members.filter(m => m.agent_id !== agentId)
-      if (g.id === groupId) {
-        return { ...g, members: [...filtered, { agent_id: agentId, sort_order: sortOrder ?? g.members.length }] }
-      }
-      return filtered.length !== g.members.length ? { ...g, members: filtered } : g
-    })
+    return agentsStore.setAgentGroup(agentId, groupId, sortOrder)
   }
 
   async function setTaskStatut(taskId: number, statut: 'in_progress'): Promise<void> {
@@ -563,14 +391,20 @@ export const useTasksStore = defineStore('tasks', () => {
   }
 
   return {
-    projectPath, dbPath, tasks, agents, locks, stats, lastRefresh, loading, error,
+    // Project state (via projectStore)
+    projectPath, dbPath, setupWizardTarget,
+    setProjectPathOnly, closeWizard,
+    // Agents state (via agentsStore)
+    agents, locks, agentGroups,
+    agentRefresh, fetchAgentGroups,
+    createAgentGroup, renameAgentGroup, deleteAgentGroup, setAgentGroup,
+    // Tasks state
+    tasks, stats, lastRefresh, loading, error,
     selectedAgentId, toggleAgentFilter,
     selectedPerimetre, togglePerimetreFilter, perimetres, perimetresData,
     filteredTasks, tasksByStatus,
-    setProject, selectProject, closeProject, setProjectPathOnly, watchForDb,
-    refresh, agentRefresh, startPolling, stopPolling, query, setTaskStatut,
+    setProject, selectProject, closeProject, watchForDb,
+    refresh, startPolling, stopPolling, query, setTaskStatut,
     selectedTask, taskComments, taskLinks, taskAssignees, openTask, closeTask,
-    setupWizardTarget, closeWizard,
-    agentGroups, fetchAgentGroups, createAgentGroup, renameAgentGroup, deleteAgentGroup, setAgentGroup
   }
 })
