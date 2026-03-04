@@ -48,6 +48,8 @@ async function fetchWorkload(): Promise<void> {
 
 onMounted(fetchWorkload)
 watch(() => store.dbPath, fetchWorkload)
+// Refresh when tasks change (polling or DB watch) — ensures real-time updates (T748)
+watch(() => store.lastRefresh, fetchWorkload)
 </script>
 
 <template>
