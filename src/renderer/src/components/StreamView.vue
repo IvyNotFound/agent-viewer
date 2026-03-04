@@ -210,18 +210,17 @@ function stopAgent(): void {
   window.electronAPI.agentKill(ptyId.value)
 }
 
-function toggleCollapsed(key: string): void {
-  collapsed.value[key] = !collapsed.value[key]
+function toggleCollapsed(key: string, defaultCollapsed = false): void {
+  collapsed.value[key] = !(collapsed.value[key] ?? defaultCollapsed)
 }
 
 function collapseKey(eventIdx: number, blockIdx: number): string {
   return `${eventIdx}-${blockIdx}`
 }
 
-function isCollapsed(eventIdx: number, blockIdx: number): boolean {
+function isCollapsed(eventIdx: number, blockIdx: number, defaultCollapsed = false): boolean {
   const key = collapseKey(eventIdx, blockIdx)
-  // thinking blocks are collapsed by default
-  return collapsed.value[key] ?? false
+  return collapsed.value[key] ?? defaultCollapsed
 }
 
 // ── Micro-batching (T676) ──────────────────────────────────────────────────
@@ -284,6 +283,7 @@ onMounted(async () => {
     })
     ptyId.value = id
     tabsStore.setPtyId(props.terminalId, id)
+    tabsStore.setStreamId(props.terminalId, id)
 
     // Subscribe to JSONL stream events BEFORE sending — avoids race condition where
     // Claude responds before onAgentStream is registered and events are lost (T689).
@@ -331,7 +331,9 @@ onUnmounted(() => {
   unsubStreamMessage?.()
   unsubConvId?.()
   unsubExit?.()
-  // Skip kill if already stopped via the Stop button (agentKill is idempotent but avoids noise).
+  // Clear streamId so closeTab won't double-kill after unmount (T730).
+  tabsStore.setStreamId(props.terminalId, null)
+  // Fallback kill — idempotent; primary kill is in closeTab (T730).
   if (ptyId.value && !agentStopped.value) {
     window.electronAPI.agentKill(ptyId.value)
   }
@@ -348,13 +350,18 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
   }
 }
 
+/** Strip ANSI escape codes from tool output (T727). */
+function stripAnsi(text: string): string {
+  return text.replace(/\x1B\[[0-9;]*[mGKHF]/g, '')
+}
+
 function toolResultText(content: StreamContentBlock['content']): string {
   if (!content) return ''
-  if (typeof content === 'string') return content
+  if (typeof content === 'string') return stripAnsi(content)
   if (Array.isArray(content)) {
-    return content.map(c => c.text ?? '').join('\n')
+    return stripAnsi(content.map(c => c.text ?? '').join('\n'))
   }
-  return String(content)
+  return stripAnsi(String(content))
 }
 </script>
 
@@ -451,13 +458,13 @@ function toolResultText(content: StreamContentBlock['content']): string {
             >
               <button
                 class="w-full flex items-center gap-2 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 transition-colors text-zinc-400 text-xs"
-                @click="toggleCollapsed(collapseKey(eIdx, bIdx))"
+                @click="toggleCollapsed(collapseKey(eIdx, bIdx), true)"
               >
-                <span class="transition-transform duration-200" :class="isCollapsed(eIdx, bIdx) ? '' : 'rotate-90'">▶</span>
+                <span class="transition-transform duration-200" :class="isCollapsed(eIdx, bIdx, true) ? '' : 'rotate-90'">▶</span>
                 <span>Thinking…</span>
               </button>
               <div
-                v-show="!isCollapsed(eIdx, bIdx)"
+                v-show="!isCollapsed(eIdx, bIdx, true)"
                 class="px-4 py-3 bg-zinc-900 text-zinc-400 text-xs whitespace-pre-wrap"
               >
                 {{ block.text }}
@@ -474,35 +481,47 @@ function toolResultText(content: StreamContentBlock['content']): string {
               <button
                 class="w-full flex items-center gap-2 px-3 py-2 transition-colors text-xs"
                 :style="{ backgroundColor: accentBg, color: accentFg }"
-                @click="toggleCollapsed(collapseKey(eIdx, bIdx))"
+                @click="toggleCollapsed(collapseKey(eIdx, bIdx), true)"
               >
-                <span class="transition-transform duration-200" :class="isCollapsed(eIdx, bIdx) ? '' : 'rotate-90'">▶</span>
+                <span class="transition-transform duration-200" :class="isCollapsed(eIdx, bIdx, true) ? '' : 'rotate-90'">▶</span>
                 <span class="font-semibold">{{ block.name }}</span>
                 <span class="ml-auto opacity-60">outil</span>
               </button>
               <div
-                v-show="!isCollapsed(eIdx, bIdx)"
+                v-show="!isCollapsed(eIdx, bIdx, true)"
                 class="px-4 py-3 bg-zinc-900 text-xs text-zinc-300 overflow-x-auto"
               >
                 <pre class="whitespace-pre-wrap">{{ toolInputPreview(block.input) }}</pre>
               </div>
             </div>
 
-            <!-- tool_result block — sortie code -->
+            <!-- tool_result block — sortie collapsible + markdown + strip ANSI (T727/T729) -->
             <div
               v-else-if="block.type === 'tool_result'"
               class="border rounded-lg overflow-hidden"
               :class="block.is_error ? 'border-red-800 bg-red-950' : 'border-zinc-700 bg-zinc-900'"
               data-testid="block-tool-result"
             >
-              <div class="px-3 py-1.5 text-xs flex items-center gap-2"
-                :class="block.is_error ? 'text-red-400' : 'text-zinc-400'"
+              <button
+                class="w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors"
+                :class="block.is_error ? 'text-red-400 hover:bg-red-900' : 'text-zinc-400 hover:bg-zinc-800'"
+                @click="toggleCollapsed(collapseKey(eIdx, bIdx), !block.is_error)"
               >
+                <span
+                  class="transition-transform duration-200"
+                  :class="isCollapsed(eIdx, bIdx, !block.is_error) ? '' : 'rotate-90'"
+                >▶</span>
                 <span>{{ block.is_error ? '✗ Erreur' : '✓ Résultat' }}</span>
-              </div>
-              <pre
-                class="px-4 py-2 text-xs text-zinc-300 overflow-x-auto whitespace-pre-wrap"
-              >{{ toolResultText(block.content) }}</pre>
+                <span
+                  v-if="isCollapsed(eIdx, bIdx, !block.is_error)"
+                  class="ml-1 opacity-60"
+                >({{ toolResultText(block.content).split('\n').length }} lignes)</span>
+              </button>
+              <div
+                v-show="!isCollapsed(eIdx, bIdx, !block.is_error)"
+                class="stream-markdown px-4 py-2 text-xs text-zinc-300 overflow-x-auto"
+                v-html="renderMarkdown(toolResultText(block.content))"
+              />
             </div>
           </template>
         </template>
