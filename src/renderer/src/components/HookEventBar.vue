@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useHookEventsStore } from '@renderer/stores/hookEvents'
+import { useHookEventsStore, type HookEvent } from '@renderer/stores/hookEvents'
+import HookEventPayloadModal from './HookEventPayloadModal.vue'
 
 const props = defineProps<{
   /** Claude session UUID — used to filter hook events for this stream. */
@@ -10,6 +11,7 @@ const props = defineProps<{
 const store = useHookEventsStore()
 
 const expanded = ref(false)
+const selectedEvent = ref<HookEvent | null>(null)
 
 // Access state directly (not actions) so createTestingPinia doesn't stub these
 const events = computed(() => store.events.filter(e => e.sessionId === props.sessionId))
@@ -88,7 +90,8 @@ function toolColor(name: string): string {
       <div
         v-for="e in [...events].reverse()"
         :key="e.id"
-        class="flex items-center gap-1.5 py-0.5"
+        class="flex items-center gap-1.5 py-0.5 cursor-pointer hover:bg-surface-secondary/40 rounded px-1 -mx-1 transition-colors"
+        @click.stop="selectedEvent = e"
       >
         <span class="text-[10px] text-content-faint font-mono shrink-0">{{ eventLabel(e.event) }}</span>
         <span class="text-[10px] font-mono shrink-0"
@@ -103,4 +106,13 @@ function toolColor(name: string): string {
       <div v-if="events.length === 0" class="text-[10px] text-content-faint italic py-1">Aucun événement</div>
     </div>
   </div>
+
+  <!-- Payload modal -->
+  <Teleport to="body">
+    <HookEventPayloadModal
+      v-if="selectedEvent"
+      :event="selectedEvent"
+      @close="selectedEvent = null"
+    />
+  </Teleport>
 </template>
