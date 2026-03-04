@@ -10,8 +10,9 @@
 
 import { ipcMain, dialog, BrowserWindow, app, shell } from 'electron'
 import { watch, type FSWatcher } from 'fs'
-import { access, copyFile, mkdir, readdir, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { access, copyFile, mkdir, readdir, readFile, writeFile } from 'fs/promises'
+import { join, basename } from 'path'
+import { deflateRawSync } from 'zlib'
 import { GENERIC_AGENTS } from './default-agents'
 
 export const AGENT_SCRIPTS = [
@@ -42,6 +43,84 @@ import { registerWslHandlers } from './ipc-wsl'
 export { registerDbPath, registerProjectPath } from './db'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Compute CRC-32 of a buffer (standard ZIP CRC polynomial).
+ * @internal
+ */
+function computeCrc32(data: Buffer): number {
+  const table = new Uint32Array(256)
+  for (let i = 0; i < 256; i++) {
+    let c = i
+    for (let j = 0; j < 8; j++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
+    table[i] = c
+  }
+  let crc = 0xffffffff
+  for (let i = 0; i < data.length; i++) crc = table[(crc ^ data[i]) & 0xff] ^ (crc >>> 8)
+  return (crc ^ 0xffffffff) >>> 0
+}
+
+/**
+ * Build a minimal ZIP archive containing a single file.
+ * Uses DEFLATE compression via Node.js built-in `zlib`.
+ * @internal
+ */
+function buildSingleFileZip(filename: string, data: Buffer): Buffer {
+  const filenameBytes = Buffer.from(filename, 'utf8')
+  const compressed = deflateRawSync(data)
+  const crc = computeCrc32(data)
+  const now = new Date()
+  const dosTime = (now.getSeconds() >> 1) | (now.getMinutes() << 5) | (now.getHours() << 11)
+  const dosDate = now.getDate() | ((now.getMonth() + 1) << 5) | ((now.getFullYear() - 1980) << 9)
+
+  const localHeader = Buffer.alloc(30 + filenameBytes.length)
+  localHeader.writeUInt32LE(0x04034b50, 0)       // local file header signature
+  localHeader.writeUInt16LE(20, 4)               // version needed
+  localHeader.writeUInt16LE(0, 6)                // general purpose flags
+  localHeader.writeUInt16LE(8, 8)                // compression method: deflate
+  localHeader.writeUInt16LE(dosTime, 10)
+  localHeader.writeUInt16LE(dosDate, 12)
+  localHeader.writeUInt32LE(crc, 14)
+  localHeader.writeUInt32LE(compressed.length, 18)
+  localHeader.writeUInt32LE(data.length, 22)
+  localHeader.writeUInt16LE(filenameBytes.length, 26)
+  localHeader.writeUInt16LE(0, 28)               // extra field length
+  filenameBytes.copy(localHeader, 30)
+
+  const centralDirOffset = localHeader.length + compressed.length
+
+  const centralHeader = Buffer.alloc(46 + filenameBytes.length)
+  centralHeader.writeUInt32LE(0x02014b50, 0)     // central dir signature
+  centralHeader.writeUInt16LE(20, 4)             // version made by
+  centralHeader.writeUInt16LE(20, 6)             // version needed
+  centralHeader.writeUInt16LE(0, 8)              // general purpose flags
+  centralHeader.writeUInt16LE(8, 10)             // compression method
+  centralHeader.writeUInt16LE(dosTime, 12)
+  centralHeader.writeUInt16LE(dosDate, 14)
+  centralHeader.writeUInt32LE(crc, 16)
+  centralHeader.writeUInt32LE(compressed.length, 20)
+  centralHeader.writeUInt32LE(data.length, 24)
+  centralHeader.writeUInt16LE(filenameBytes.length, 28)
+  centralHeader.writeUInt16LE(0, 30)             // extra field length
+  centralHeader.writeUInt16LE(0, 32)             // file comment length
+  centralHeader.writeUInt16LE(0, 34)             // disk number start
+  centralHeader.writeUInt16LE(0, 36)             // internal file attributes
+  centralHeader.writeUInt32LE(0, 38)             // external file attributes
+  centralHeader.writeUInt32LE(0, 42)             // relative offset of local header
+  filenameBytes.copy(centralHeader, 46)
+
+  const eocd = Buffer.alloc(22)
+  eocd.writeUInt32LE(0x06054b50, 0)              // end of central dir signature
+  eocd.writeUInt16LE(0, 4)                       // disk number
+  eocd.writeUInt16LE(0, 6)                       // disk with central dir
+  eocd.writeUInt16LE(1, 8)                       // entries on this disk
+  eocd.writeUInt16LE(1, 10)                      // total entries
+  eocd.writeUInt32LE(centralHeader.length, 12)   // size of central dir
+  eocd.writeUInt32LE(centralDirOffset, 16)       // offset of central dir
+  eocd.writeUInt16LE(0, 20)                      // comment length
+
+  return Buffer.concat([localHeader, compressed, centralHeader, eocd])
+}
 
 let watcher: FSWatcher | null = null
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -553,6 +632,92 @@ export function registerIpcHandlers(): void {
       return { success: true }
     } catch (err) {
       console.error('[IPC session:updateResult]', err)
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // ── Sessions cost stats ───────────────────────────────────────────────────
+
+  /**
+   * Aggregate cost/duration/token stats per agent and period.
+   * @param dbPath - Registered DB path
+   * @param params - { period: 'day'|'week'|'month', agentId?: number, limit?: number (default 30) }
+   * @returns {{ success: boolean, rows: unknown[], error?: string }}
+   */
+  ipcMain.handle('sessions:statsCost', async (_event, dbPath: string, params: {
+    period: 'day' | 'week' | 'month'
+    agentId?: number
+    limit?: number
+  }) => {
+    assertDbPathAllowed(dbPath)
+    const PERIOD_FORMATS: Record<string, string> = {
+      day: '%Y-%m-%d',
+      week: '%Y-%W',
+      month: '%Y-%m'
+    }
+    const periodFmt = PERIOD_FORMATS[params?.period]
+    if (!periodFmt) return { success: false, error: 'INVALID_PERIOD' }
+    const limit = Math.min(Math.max(1, Math.floor(Number(params.limit ?? 30))), 365)
+    const conditions: string[] = ['s.cost_usd IS NOT NULL']
+    const binds: unknown[] = []
+    if (params.agentId != null && Number.isInteger(params.agentId)) {
+      conditions.push('s.agent_id = ?')
+      binds.push(params.agentId)
+    }
+    const where = conditions.join(' AND ')
+    try {
+      const rows = await queryLive(dbPath, `
+        SELECT
+          a.name as agent_name,
+          s.agent_id,
+          strftime('${periodFmt}', s.started_at) as period,
+          COUNT(*) as session_count,
+          ROUND(SUM(s.cost_usd), 4) as total_cost,
+          ROUND(AVG(s.duration_ms) / 1000.0, 1) as avg_duration_s,
+          SUM(s.num_turns) as total_turns,
+          SUM(s.tokens_in + s.tokens_out) as total_tokens,
+          SUM(s.tokens_cache_read) as cache_read,
+          SUM(s.tokens_cache_write) as cache_write
+        FROM sessions s
+        JOIN agents a ON a.id = s.agent_id
+        WHERE ${where}
+        GROUP BY s.agent_id, strftime('${periodFmt}', s.started_at)
+        ORDER BY period DESC
+        LIMIT ?
+      `, [...binds, limit])
+      return { success: true, rows }
+    } catch (err) {
+      console.error('[IPC sessions:statsCost]', err)
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // ── Project export ZIP ────────────────────────────────────────────────────
+
+  /**
+   * Export project.db as a ZIP archive into the system Downloads folder.
+   * Uses a pure-Node ZIP implementation (zlib deflate + manual ZIP format)
+   * to avoid external dependencies. DB is read via fs.readFile to bypass
+   * any in-process SQLite lock.
+   *
+   * @param dbPath - Registered DB path to export
+   * @returns {{ success: boolean, path?: string, error?: string }}
+   */
+  ipcMain.handle('project:exportZip', async (_event, dbPath: string) => {
+    assertDbPathAllowed(dbPath)
+    try {
+      const fileData = await readFile(dbPath)
+      const filename = basename(dbPath)
+      const zipBuffer = buildSingleFileZip(filename, fileData)
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+      const zipName = `agent-viewer-export-${ts}.zip`
+      const downloadsDir = app.getPath('downloads')
+      const zipPath = join(downloadsDir, zipName)
+      await writeFile(zipPath, zipBuffer)
+      shell.showItemInFolder(zipPath)
+      return { success: true, path: zipPath }
+    } catch (err) {
+      console.error('[IPC project:exportZip]', err)
       return { success: false, error: String(err) }
     }
   })

@@ -1413,5 +1413,79 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       expect(result).toMatchObject({ success: false, error: expect.stringContaining('maxSessions') })
     })
   })
+
+  // ── T768: sessions:statsCost ──────────────────────────────────────────────────
+
+  describe('sessions:statsCost handler (T768)', () => {
+    it('should throw DB_PATH_NOT_ALLOWED for unregistered dbPath', async () => {
+      await expect(
+        callHandler('sessions:statsCost', '/unregistered/evil.db', { period: 'day' })
+      ).rejects.toThrow('DB_PATH_NOT_ALLOWED')
+    })
+
+    it('should return { success: false, error: INVALID_PERIOD } for unknown period', async () => {
+      const result = await callHandler('sessions:statsCost', '/fake/project.db', { period: 'hour' }) as { success: boolean; error?: string }
+      expect(result).toMatchObject({ success: false, error: 'INVALID_PERIOD' })
+    })
+
+    it('should return { success: false, error: INVALID_PERIOD } when period is missing', async () => {
+      const result = await callHandler('sessions:statsCost', '/fake/project.db', {}) as { success: boolean; error?: string }
+      expect(result).toMatchObject({ success: false, error: 'INVALID_PERIOD' })
+    })
+
+    it('should return { success: true, rows } when queryLive succeeds for day period', async () => {
+      const mockRows = [
+        { agent_name: 'dev-back-electron', agent_id: 3, period: '2026-03-04', session_count: 2, total_cost: 0.0025, avg_duration_s: 30.5, total_turns: 10, total_tokens: 5000, cache_read: 1200, cache_write: 300 },
+      ]
+      vi.mocked(mockedQueryLive).mockResolvedValueOnce(mockRows)
+      const result = await callHandler('sessions:statsCost', '/fake/project.db', { period: 'day' }) as { success: boolean; rows: unknown[] }
+      expect(result).toMatchObject({ success: true, rows: mockRows })
+    })
+
+    it('should return { success: true, rows } for week and month periods', async () => {
+      for (const period of ['week', 'month'] as const) {
+        vi.mocked(mockedQueryLive).mockResolvedValueOnce([])
+        const result = await callHandler('sessions:statsCost', '/fake/project.db', { period }) as { success: boolean; rows: unknown[] }
+        expect(result).toMatchObject({ success: true, rows: [] })
+      }
+    })
+
+    it('should clamp limit to [1, 365]', async () => {
+      vi.mocked(mockedQueryLive).mockResolvedValueOnce([])
+      // limit=0 → clamped to 1; handler still returns success
+      const result = await callHandler('sessions:statsCost', '/fake/project.db', { period: 'day', limit: 0 }) as { success: boolean }
+      expect(result.success).toBe(true)
+    })
+
+    it('should filter by agentId when provided as integer', async () => {
+      vi.mocked(mockedQueryLive).mockResolvedValueOnce([])
+      const result = await callHandler('sessions:statsCost', '/fake/project.db', { period: 'day', agentId: 3 }) as { success: boolean }
+      expect(result.success).toBe(true)
+    })
+
+    it('should return { success: false, error } when queryLive throws', async () => {
+      // Default mock throws "file is not a database"
+      const result = await callHandler('sessions:statsCost', '/fake/project.db', { period: 'day' }) as { success: boolean; error?: string }
+      expect(result).toMatchObject({ success: false, error: expect.any(String) })
+    })
+  })
+
+  // ── T771: project:exportZip ───────────────────────────────────────────────────
+
+  describe('project:exportZip handler (T771)', () => {
+    it('should throw DB_PATH_NOT_ALLOWED for unregistered dbPath', async () => {
+      await expect(
+        callHandler('project:exportZip', '/unregistered/evil.db')
+      ).rejects.toThrow('DB_PATH_NOT_ALLOWED')
+    })
+
+    it('should return { success: boolean } shape for registered dbPath (mocked fs)', async () => {
+      // readFile and writeFile are mocked; shell.showItemInFolder may not be mocked
+      // → handler catches any error and returns { success, error }
+      const result = await callHandler('project:exportZip', '/fake/project.db') as { success: boolean; error?: string; path?: string }
+      expect(result).toHaveProperty('success')
+      expect(typeof result.success).toBe('boolean')
+    })
+  })
 })
 

@@ -310,4 +310,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   sessionUpdateResult: (dbPath: string, sessionId: number, data: { cost_usd?: number | null; duration_ms?: number | null; num_turns?: number | null }): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('session:updateResult', dbPath, sessionId, data),
 
+  /** Aggregate cost/duration/token stats per agent and period. */
+  sessionsStatsCost: (dbPath: string, params: { period: 'day' | 'week' | 'month'; agentId?: number; limit?: number }): Promise<{ success: boolean; rows: unknown[]; error?: string }> =>
+    ipcRenderer.invoke('sessions:statsCost', dbPath, params),
+
+  /** Export project.db as a ZIP archive to the Downloads folder. */
+  projectExportZip: (dbPath: string): Promise<{ success: boolean; path?: string; error?: string }> =>
+    ipcRenderer.invoke('project:exportZip', dbPath),
+
 })
