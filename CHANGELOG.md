@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.16.2] - 2026-03-04
+
+### Changes
+- docs(readme): bump version badge to 0.16.2 (T702) (fe68998)
+- fix(devtools): add Ctrl+Shift+I shortcut conditioned on !isPackaged (T704) (7f9d140)
+- fix(agent-stream): pass system prompt via temp file to fix Windows quoting (T705) (11f8a4d)
+- fix(release): bump version before build so artifact name matches new version (T701) (b6b4ece)
 ## [0.16.1] - 2026-03-04
 
 ### Changes
