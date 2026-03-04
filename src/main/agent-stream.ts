@@ -16,7 +16,23 @@
 import { ipcMain, webContents, app } from 'electron'
 import { spawn, type ChildProcess, execFile } from 'child_process'
 import { createInterface } from 'readline'
+import { appendFileSync, writeFileSync, unlinkSync } from 'fs'
 import { join } from 'path'
+import { tmpdir } from 'os'
+
+// ── Debug logging ─────────────────────────────────────────────────────────────
+
+/**
+ * Append a debug message to the agent-stream log file.
+ * Writes to app.getPath('logs')/agent-stream-debug.log — visible in packaged app
+ * without DevTools. Errors are silently swallowed so logging never crashes the app.
+ */
+function logDebug(msg: string): void {
+  try {
+    const logPath = join(app.getPath('logs'), 'agent-stream-debug.log')
+    appendFileSync(logPath, `[${new Date().toISOString()}] ${msg}\n`)
+  } catch { /* logging must never crash the app */ }
+}
 
 // ── Process registry ──────────────────────────────────────────────────────────
 
@@ -59,10 +75,13 @@ function buildEnv(): Record<string, string> {
   }
   const forwardVars = [
     'SystemRoot', 'SYSTEMROOT',
-    'LOCALAPPDATA',
+    'SYSTEMDRIVE',
+    'LOCALAPPDATA', 'APPDATA',
     'USERPROFILE',
     'USERNAME',
     'COMPUTERNAME',
+    'TEMP', 'TMP',
+    'WINDIR',
     'WSLENV',
     'WSL_DISTRO_NAME',
     'PATH',
@@ -76,40 +95,17 @@ function buildEnv(): Record<string, string> {
 }
 
 /**
- * Escape a string for safe embedding inside bash $'...' ANSI-C quoting.
- * Handles backslash, single quote, and ASCII control characters.
- * All other characters (printable ASCII + UTF-8 multibyte) pass through unchanged.
- *
- * Using $'...' avoids any shell re-evaluation of the content — parentheses,
- * backticks, dollar signs, and double quotes inside the value are treated as literals.
- *
- * @param s - The raw string to escape (e.g. a system prompt).
- * @returns The escaped string, safe for embedding inside `$'...'`.
- */
-function escapeAnsiC(s: string): string {
-  let out = ''
-  for (const ch of s) {
-    const cp = ch.codePointAt(0)!
-    if (ch === '\\') out += '\\\\'
-    else if (ch === "'") out += "\\'"
-    else if (ch === '\n') out += '\\n'
-    else if (ch === '\r') out += '\\r'
-    else if (ch === '\t') out += '\\t'
-    else if (cp < 0x20 || cp === 0x7f) out += `\\x${cp.toString(16).padStart(2, '0')}`
-    else out += ch
-  }
-  return out
-}
-
-/**
  * Build the bash -lc command string for launching Claude in stream-json mode.
- * System prompt is passed via ANSI-C $'...' quoting to avoid shell injection —
- * parentheses, backticks, dollar signs and double quotes in the prompt are all literals.
+ * System prompt is passed via `"$(cat 'WSL_PATH')"` — the content is read from a temp
+ * file inside bash, bypassing Node.js Windows command-line serialization entirely.
+ * This avoids the Windows CreateProcess quoting issue where $'...' ANSI-C sequences
+ * were corrupted in the Node.js spawn → wsl.exe → bash pipeline (T705).
  *
  * @param opts - Launch options.
  * @param opts.claudeCommand - Claude binary name (validated against `CLAUDE_CMD_REGEX`; defaults to `'claude'`).
  * @param opts.convId - Existing conversation UUID to resume via `--resume`.
- * @param opts.systemPrompt - System prompt appended via `--append-system-prompt`; ANSI-C escaped.
+ * @param opts.systemPromptFile - WSL path to a temp file containing the raw system prompt.
+ *   Path must not contain single quotes (e.g. `/mnt/c/Users/Cover/AppData/Local/Temp/claude-sp-1.txt`).
  * @param opts.thinkingMode - Set to `'disabled'` to inject `--settings '{"alwaysThinkingEnabled":false}'`.
  * @param opts.permissionMode - Set to `'auto'` to add `--dangerously-skip-permissions`.
  * @returns The full bash command string, ready for `spawn('wsl.exe', ['--', 'bash', '-lc', cmd])`.
@@ -117,7 +113,7 @@ function escapeAnsiC(s: string): string {
 function buildClaudeCmd(opts: {
   claudeCommand?: string
   convId?: string
-  systemPrompt?: string
+  systemPromptFile?: string
   thinkingMode?: string
   permissionMode?: string
 }): string {
@@ -137,10 +133,11 @@ function buildClaudeCmd(opts: {
     parts.push('--resume', opts.convId)
   }
 
-  if (opts.systemPrompt) {
-    // ANSI-C $'...' quoting: content is never re-evaluated by bash — no shell injection
-    // regardless of parens, backticks, dollar signs, or double quotes in the prompt.
-    parts.push(`--append-system-prompt $'${escapeAnsiC(opts.systemPrompt)}'`)
+  if (opts.systemPromptFile) {
+    // Read system prompt from temp file inside bash — bypasses Windows command-line
+    // serialization entirely. The WSL path contains no apostrophes so single-quote
+    // wrapping of the path is safe. Content is passed verbatim to Claude.
+    parts.push(`--append-system-prompt "$(cat '${opts.systemPromptFile}')"`)
   }
 
   if (opts.thinkingMode === 'disabled') {
@@ -243,10 +240,18 @@ export function registerAgentStreamHandlers(): void {
     if (opts.wslDistro) wslArgs.push('-d', opts.wslDistro)
     if (opts.projectPath) wslArgs.push('--cd', toWslPath(opts.projectPath))
 
+    // Write system prompt to a Windows temp file so bash reads it directly — avoids the
+    // Windows CreateProcess command-line serialization issue with $'...' ANSI-C quoting (T705).
+    let spTempFile: string | undefined
+    if (opts.systemPrompt) {
+      spTempFile = join(tmpdir(), `claude-sp-${id}.txt`)
+      writeFileSync(spTempFile, opts.systemPrompt, 'utf-8')
+    }
+
     const claudeCmd = buildClaudeCmd({
       claudeCommand: opts.claudeCommand,
       convId: validConvId,
-      systemPrompt: opts.systemPrompt,
+      systemPromptFile: spTempFile ? toWslPath(spTempFile) : undefined,
       thinkingMode: opts.thinkingMode,
       permissionMode: opts.permissionMode,
     })
@@ -257,6 +262,7 @@ export function registerAgentStreamHandlers(): void {
       ? join(process.env.SystemRoot, 'System32', 'wsl.exe')
       : 'C:\\Windows\\System32\\wsl.exe'
 
+    logDebug(`spawn attempt: exe=${wslExe} args=${JSON.stringify([...wslArgs, '--', 'bash', '-lc', claudeCmd])}`)
     console.log('[agent-stream] spawn', wslExe, wslArgs)
     const proc = spawn(wslExe, [...wslArgs, '--', 'bash', '-lc', claudeCmd], {
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -279,6 +285,7 @@ export function registerAgentStreamHandlers(): void {
     rl.on('line', (line) => {
       const clean = line.trim()
       if (!clean) return
+      if (eventsReceived === 0) logDebug(`first stdout line (raw): ${line.slice(0, 200)}`)
       try {
         const parsed: Record<string, unknown> = JSON.parse(clean)
         eventsReceived++
@@ -308,6 +315,7 @@ export function registerAgentStreamHandlers(): void {
     })
 
     proc.on('error', (err) => {
+      logDebug(`spawn error id=${id}: ${err.message} (code=${(err as NodeJS.ErrnoException).code})`)
       console.error(`[agent-stream] spawn error id=${id}:`, err)
       rl.close()
       agents.delete(id)
@@ -323,15 +331,22 @@ export function registerAgentStreamHandlers(): void {
       rl.close()
       agents.delete(id)
       webContentsAgents.get(wcId)?.delete(id)
+      if (spTempFile) try { unlinkSync(spTempFile) } catch { /* cleanup best-effort */ }
 
-      // Signal abnormal exit if process died before emitting any stream event (T693).
-      // Include buffered stderr as context — discarded silently on exit 0 (T697).
-      if (exitCode !== 0 && eventsReceived === 0) {
+      logDebug(`close id=${id}: exitCode=${exitCode} eventsReceived=${eventsReceived} stderr=${stderrBuffer.slice(0, 200)}`)
+
+      // Signal exit without output — covers exitCode=0 (silent claude failure) and exitCode≠0.
+      // Replaces the previous exitCode!==0 check: if claude exits 0 but emits no JSONL,
+      // the renderer would see nothing (T704). Include buffered stderr as diagnostic context (T697).
+      if (eventsReceived === 0) {
         const wc = webContents.fromId(wcId)
         if (wc && !wc.isDestroyed()) {
+          const msg = exitCode !== 0
+            ? `Process exited with code ${exitCode}`
+            : `Process exited without producing any output (code ${exitCode})`
           wc.send(`agent:stream:${id}`, {
             type: 'error:exit',
-            error: `Process exited with code ${exitCode}`,
+            error: msg,
             stderr: stderrBuffer.trim() || undefined,
           })
         }
@@ -370,7 +385,6 @@ export function registerAgentStreamHandlers(): void {
 
 export const _testing = {
   toWslPath,
-  escapeAnsiC,
   buildClaudeCmd,
   buildEnv,
   killAgent,

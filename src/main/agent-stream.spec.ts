@@ -327,6 +327,22 @@ describe('agent-stream', () => {
     })
   })
 
+  it('emits error:exit when process exits with code 0 without any stream event', async () => {
+    const handler = handlers.get('agent:create')!
+    const event = { sender: mockSender }
+    const id = (await handler(event, {})) as string
+
+    // No stdout events — process exits cleanly (code 0) but without producing any JSONL (T704)
+    mockProc.emit('close', 0)
+    await new Promise(resolve => setImmediate(resolve))
+
+    expect(mockSender.send).toHaveBeenCalledWith(`agent:stream:${id}`, {
+      type: 'error:exit',
+      error: 'Process exited without producing any output (code 0)',
+      stderr: undefined,
+    })
+  })
+
   it('does not emit error:exit when process exits non-zero after receiving events', async () => {
     const handler = handlers.get('agent:create')!
     const event = { sender: mockSender }
@@ -392,26 +408,18 @@ describe('agent-stream', () => {
     expect(cmd).toContain('false')
   })
 
-  it('buildClaudeCmd passes systemPrompt using ANSI-C quoting', () => {
-    const cmd = agentStream._testing.buildClaudeCmd({ systemPrompt: 'You are a helpful assistant.' })
+  it('buildClaudeCmd passes systemPromptFile using $(cat ...) substitution', () => {
+    const cmd = agentStream._testing.buildClaudeCmd({ systemPromptFile: '/tmp/claude-sp-1.txt' })
     expect(cmd).toContain('--append-system-prompt')
-    // Must use $'...' quoting, not base64 command substitution
-    expect(cmd).toContain("$'You are a helpful assistant.'")
+    // Must use $(cat '...') — no ANSI-C $'...' quoting, no base64
+    expect(cmd).toContain("$(cat '/tmp/claude-sp-1.txt')")
+    expect(cmd).not.toContain("$'")
     expect(cmd).not.toContain('base64')
   })
 
-  it('buildClaudeCmd safely quotes systemPrompt with special shell chars', () => {
-    const systemPrompt = 'Ticket(s) créé(s)\n"quoted"\n`backtick`\n$HOME\n$(echo hi)\n[brackets]'
-    const cmd = agentStream._testing.buildClaudeCmd({ systemPrompt })
-    expect(cmd).toContain('--append-system-prompt')
-    // Must use $'...' quoting
-    expect(cmd).toContain("$'")
-    // Literal newlines must be escaped as \n sequences (not raw newlines in the command)
-    expect(cmd).not.toContain('\n')
-    expect(cmd).toContain('\\n')
-    // Parens, backticks, dollar signs pass through literally inside $'...' — they are safe
-    expect(cmd).toContain('Ticket(s)')
-    expect(cmd).toContain('$HOME')
+  it('buildClaudeCmd does not include --append-system-prompt when no systemPromptFile', () => {
+    const cmd = agentStream._testing.buildClaudeCmd({})
+    expect(cmd).not.toContain('--append-system-prompt')
   })
 
   it('buildClaudeCmd uses custom claudeCommand', () => {
