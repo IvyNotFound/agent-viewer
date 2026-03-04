@@ -41,16 +41,16 @@ export const useHookEventsStore = defineStore('hookEvents', () => {
     const e: HookEvent = { id: ++_seq, event: raw.event, payload: raw.payload, ts: raw.ts, sessionId, toolUseId }
 
     events.value.push(e)
-    if (events.value.length > MAX_EVENTS) events.value.shift()
+    // slice(-N) amortized: only triggers when limit exceeded, avoids O(N) shift() (T794)
+    if (events.value.length > MAX_EVENTS) events.value = events.value.slice(-MAX_EVENTS)
 
     const key = sessionId ?? '__global__'
     if (raw.event === 'PreToolUse') {
       const toolName = (raw.payload as Record<string, unknown> | null)?.tool_name as string ?? '?'
-      activeTools.value = { ...activeTools.value, [key]: toolName }
+      // Direct mutation on reactive proxy — no spread allocation (T794)
+      activeTools.value[key] = toolName
     } else if (raw.event === 'PostToolUse') {
-      const copy = { ...activeTools.value }
-      delete copy[key]
-      activeTools.value = copy
+      delete activeTools.value[key]
     }
   }
 
