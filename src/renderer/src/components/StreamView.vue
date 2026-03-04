@@ -69,8 +69,10 @@ export interface StreamEvent {
   cost_usd?: number
   num_turns?: number
   duration_ms?: number
-  /** Error message for error:spawn / error:stderr / error:exit events */
+  /** Error message for error:spawn / error:exit events */
   error?: string
+  /** Full stderr buffer captured on abnormal exit (error:exit only, T697) */
+  stderr?: string
 }
 
 // ── Props ────────────────────────────────────────────────────────────────────
@@ -396,9 +398,9 @@ function toolResultText(content: StreamContentBlock['content']): string {
           >· {{ event.session_id.slice(0, 8) }}…</span>
         </div>
 
-        <!-- error events (error:spawn / error:stderr / error:exit) -->
+        <!-- error events (error:spawn / error:exit) -->
         <div
-          v-if="event.type === 'error:spawn' || event.type === 'error:stderr' || event.type === 'error:exit'"
+          v-if="event.type === 'error:spawn' || event.type === 'error:exit'"
           class="flex items-start gap-2 bg-red-950 border border-red-800 rounded-lg px-4 py-3 text-red-300 text-xs font-mono"
           data-testid="block-error"
         >
@@ -406,6 +408,7 @@ function toolResultText(content: StreamContentBlock['content']): string {
           <div>
             <span class="font-semibold text-red-400">{{ event.type }}</span>
             <span class="ml-2 whitespace-pre-wrap">{{ event.error }}</span>
+            <pre v-if="event.stderr" class="mt-2 text-red-200 text-xs whitespace-pre-wrap">{{ event.stderr }}</pre>
           </div>
         </div>
 

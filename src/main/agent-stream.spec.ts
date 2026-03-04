@@ -293,7 +293,7 @@ describe('agent-stream', () => {
     })
   })
 
-  it('forwards stderr lines as error:stderr events to renderer', async () => {
+  it('does not emit error:stderr events — stderr is buffered silently (T697)', async () => {
     const handler = handlers.get('agent:create')!
     const event = { sender: mockSender }
     const id = (await handler(event, {})) as string
@@ -301,16 +301,20 @@ describe('agent-stream', () => {
     mockProc.stderr.write('bash: command not found: claude\n')
     await new Promise(resolve => setImmediate(resolve))
 
-    expect(mockSender.send).toHaveBeenCalledWith(`agent:stream:${id}`, {
-      type: 'error:stderr',
-      error: 'bash: command not found: claude',
-    })
+    const stderrCalls = vi.mocked(mockSender.send).mock.calls.filter(
+      ([, payload]) => (payload as { type?: string })?.type === 'error:stderr'
+    )
+    expect(stderrCalls).toHaveLength(0)
   })
 
-  it('emits error:exit when process exits non-zero without any stream event', async () => {
+  it('emits error:exit with stderr buffer when process exits non-zero without any stream event', async () => {
     const handler = handlers.get('agent:create')!
     const event = { sender: mockSender }
     const id = (await handler(event, {})) as string
+
+    // Write stderr before closing — should appear in error:exit payload (T697)
+    mockProc.stderr.write('bash: command not found: claude\n')
+    await new Promise(resolve => setImmediate(resolve))
 
     // No stdout events emitted — process exits with code 1
     mockProc.emit('close', 1)
@@ -319,6 +323,7 @@ describe('agent-stream', () => {
     expect(mockSender.send).toHaveBeenCalledWith(`agent:stream:${id}`, {
       type: 'error:exit',
       error: 'Process exited with code 1',
+      stderr: 'bash: command not found: claude',
     })
   })
 

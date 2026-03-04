@@ -4134,14 +4134,12 @@ describe('StreamView', () => {
     expect(block.text()).toContain('spawn ENOENT')
   })
 
-  it('renders error:stderr event as red error block (T694)', async () => {
+  it('does not render error:stderr events — type deprecated, never emitted (T697)', async () => {
     const event: StreamEvent = { type: 'error:stderr', error: 'bash: claude: command not found' }
     const { wrapper } = await mountStream([event])
     await nextTick()
-    const block = wrapper.find('[data-testid="block-error"]')
-    expect(block.exists()).toBe(true)
-    expect(block.text()).toContain('error:stderr')
-    expect(block.text()).toContain('bash: claude: command not found')
+    // error:stderr is no longer rendered — stderr is buffered and included in error:exit instead
+    expect(wrapper.find('[data-testid="block-error"]').exists()).toBe(false)
   })
 
   it('renders error:exit event as red error block (T694)', async () => {
@@ -4152,6 +4150,19 @@ describe('StreamView', () => {
     expect(block.exists()).toBe(true)
     expect(block.text()).toContain('error:exit')
     expect(block.text()).toContain('Process exited with code 127')
+  })
+
+  it('renders error:exit with stderr buffer content (T697)', async () => {
+    const event: StreamEvent = {
+      type: 'error:exit',
+      error: 'Process exited with code 1',
+      stderr: 'bash: command not found: claude\nsome other error',
+    }
+    const { wrapper } = await mountStream([event])
+    await nextTick()
+    const block = wrapper.find('[data-testid="block-error"]')
+    expect(block.exists()).toBe(true)
+    expect(block.text()).toContain('bash: command not found: claude')
   })
 
   it('normal assistant/user/result blocks unaffected by error types (T694)', async () => {
