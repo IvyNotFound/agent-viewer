@@ -45,6 +45,9 @@ const webContentsAgents = new Map<number, Set<string>>()
 
 let nextAgentId = 1
 
+// Cap stderr accumulation to avoid unbounded memory growth (T818)
+const MAX_STDERR_BUFFER_SIZE = 10_000
+
 // ── Validation ────────────────────────────────────────────────────────────────
 
 const CLAUDE_CMD_REGEX = /^claude(-[a-z0-9-]+)?$/
@@ -325,7 +328,7 @@ export function registerAgentStreamHandlers(): void {
     // Buffer stderr — do NOT emit line-by-line to avoid spamming the renderer (T697).
     // Flushed only on abnormal exit (exitCode !== 0) as context for error:exit.
     proc.stderr!.on('data', (chunk: Buffer) => {
-      stderrBuffer += chunk.toString()
+      stderrBuffer = (stderrBuffer + chunk.toString()).slice(-MAX_STDERR_BUFFER_SIZE)
     })
 
     // readline on stdout → clean JSONL lines, 0 ANSI corruption
