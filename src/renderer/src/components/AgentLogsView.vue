@@ -9,8 +9,9 @@ import { agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
 import type { AgentLog } from '@renderer/types'
 import TokenStatsView from './TokenStatsView.vue'
 import ActivityHeatmap from './ActivityHeatmap.vue'
+import GitCommitList from './GitCommitList.vue'
 
-type SubTab = 'logs' | 'tokenStats' | 'heatmap'
+type SubTab = 'logs' | 'tokenStats' | 'heatmap' | 'git'
 
 const props = defineProps<{
   initialAgentId?: number | null
@@ -191,6 +192,25 @@ const enrichedLogs = computed<EnrichedLog[]>(() =>
 watch(() => props.initialAgentId, (v) => {
   if (v != null) filterAgentId.value = v
 })
+
+// ── Git commits (T761) ────────────────────────────────────────────────────
+interface GitCommit { hash: string; date: string; subject: string; author: string; taskIds: number[] }
+const gitCommits = ref<GitCommit[]>([])
+const gitLoading = ref(false)
+
+async function fetchGitCommits(): Promise<void> {
+  if (!store.projectPath) return
+  gitLoading.value = true
+  try {
+    const result = await window.electronAPI.gitLog(store.projectPath, { limit: 100 })
+    gitCommits.value = result as GitCommit[]
+  } catch { gitCommits.value = [] }
+  finally { gitLoading.value = false }
+}
+
+watch(activeSubTab, (tab) => {
+  if (tab === 'git' && gitCommits.value.length === 0) fetchGitCommits()
+})
 </script>
 
 <template>
@@ -225,6 +245,15 @@ watch(() => props.initialAgentId, (v) => {
         ]"
         @click="activeSubTab = 'heatmap'"
       >Heatmap</button>
+      <button
+        :class="[
+          'px-3 py-1 rounded-t text-[11px] font-mono font-medium transition-colors border border-b-0',
+          activeSubTab === 'git'
+            ? 'text-content-secondary bg-surface-primary border-edge-subtle'
+            : 'text-content-faint bg-transparent border-transparent hover:text-content-tertiary hover:bg-surface-secondary/40'
+        ]"
+        @click="activeSubTab = 'git'"
+      >Git</button>
     </div>
 
     <!-- ── Token Stats sub-tab ───────────────────────────────────────────── -->
@@ -238,8 +267,24 @@ watch(() => props.initialAgentId, (v) => {
       class="flex-1"
     />
 
+    <!-- ── Git sub-tab ───────────────────────────────────────────────────── -->
+    <template v-if="activeSubTab === 'git'">
+      <div v-if="gitLoading" class="flex items-center justify-center flex-1 py-8">
+        <p class="text-xs text-content-faint animate-pulse">{{ t('common.loading') }}</p>
+      </div>
+      <div v-else-if="gitCommits.length === 0" class="flex items-center justify-center flex-1 py-8">
+        <p class="text-xs text-content-faint italic">{{ t('git.noCommits') }}</p>
+      </div>
+      <GitCommitList
+        v-else
+        :commits="gitCommits"
+        class="flex-1 min-h-0"
+        @open-task="(id) => { const task = store.tasks.find(x => x.id === id); if (task) store.openTask(task) }"
+      />
+    </template>
+
     <!-- ── Logs sub-tab ──────────────────────────────────────────────────── -->
-    <template v-if="activeSubTab !== 'tokenStats' && activeSubTab !== 'heatmap'">
+    <template v-if="activeSubTab !== 'tokenStats' && activeSubTab !== 'heatmap' && activeSubTab !== 'git'">
 
     <!-- ── Barre de filtres ──────────────────────────────────────────────── -->
     <div class="shrink-0 flex items-center gap-2 px-4 py-2.5 border-b border-edge-subtle bg-surface-base">

@@ -61,7 +61,11 @@
     "blocks": "Blocks",
     "blockedBy": "Blocked by",
     "relatedTo": "Related to",
-    "blockedTitle": "Task blocked"
+    "blockedTitle": "Task blocked",
+    "commits": "Linked commits"
+  },
+  "git": {
+    "noCommits": "No commits — git repo not found or empty"
   },
   "logs": {
     "allAgents": "All agents",

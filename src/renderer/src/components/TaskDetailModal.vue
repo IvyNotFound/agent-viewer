@@ -6,6 +6,7 @@ import DOMPurify from 'dompurify'
 import { useTasksStore } from '@renderer/stores/tasks'
 import AgentBadge from './AgentBadge.vue'
 import TaskDependencyGraph from './TaskDependencyGraph.vue'
+import GitCommitList from './GitCommitList.vue'
 import { agentFg, agentBg, agentBorder, perimeterFg, perimeterBg, perimeterBorder } from '@renderer/utils/agentColor'
 import { parseUtcDate } from '@renderer/utils/parseDate'
 import type { TaskAssignee, TaskLink } from '@renderer/types'
@@ -121,6 +122,19 @@ const unresolvedBlockers = computed(() => {
 
 const isBlocked = computed(() => unresolvedBlockers.value.length > 0)
 
+// ── Git commits for this task (T761) ─────────────────────────────────────────
+interface GitCommit { hash: string; date: string; subject: string; author: string; taskIds: number[] }
+const gitCommits = ref<GitCommit[]>([])
+const gitCommitsOpen = ref(false)
+
+async function fetchGitCommitsForTask(taskId: number): Promise<void> {
+  if (!store.projectPath) return
+  try {
+    const all = await window.electronAPI.gitLog(store.projectPath, { limit: 200 }) as GitCommit[]
+    gitCommits.value = all.filter(c => c.taskIds.includes(taskId))
+  } catch { gitCommits.value = [] }
+}
+
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') store.closeTask()
 }
@@ -129,9 +143,13 @@ watch(task, (val) => {
   if (val) {
     document.removeEventListener('keydown', handleKeydown)
     document.addEventListener('keydown', handleKeydown)
+    gitCommits.value = []
+    gitCommitsOpen.value = false
+    fetchGitCommitsForTask(val.id)
   } else {
     document.removeEventListener('keydown', handleKeydown)
     assignees.value = []
+    gitCommits.value = []
   }
 })
 
@@ -256,6 +274,31 @@ onUnmounted(() => {
                 :links="store.taskLinks"
                 @navigate="(id) => { const t = store.tasks.find(x => x.id === id); if (t) store.openTask(t) }"
               />
+            </div>
+
+            <!-- Section Commits liés (T761) — hidden when no commits -->
+            <div v-if="gitCommits.length > 0" class="border-b border-edge-subtle shrink-0">
+              <button
+                class="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-secondary/30 transition-colors"
+                @click="gitCommitsOpen = !gitCommitsOpen"
+              >
+                <p class="text-[10px] font-semibold text-content-subtle uppercase tracking-wider">
+                  {{ t('taskDetail.commits') }}
+                  <span class="ml-1 text-content-faint">({{ gitCommits.length }})</span>
+                </p>
+                <svg
+                  :class="['w-3 h-3 text-content-faint transition-transform', gitCommitsOpen ? 'rotate-90' : '']"
+                  viewBox="0 0 16 16" fill="currentColor"
+                >
+                  <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </button>
+              <div v-if="gitCommitsOpen" class="max-h-40 overflow-y-auto border-t border-edge-subtle">
+                <GitCommitList
+                  :commits="gitCommits"
+                  @open-task="(id) => { const t = store.tasks.find(x => x.id === id); if (t) store.openTask(t) }"
+                />
+              </div>
             </div>
 
             <!-- Section Assignés (read-only — T571) -->

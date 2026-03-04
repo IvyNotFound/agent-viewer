@@ -61,7 +61,11 @@
     "blocks": "Bloque",
     "blockedBy": "Bloqué par",
     "relatedTo": "Lié à",
-    "blockedTitle": "Tâche bloquée"
+    "blockedTitle": "Tâche bloquée",
+    "commits": "Commits liés"
+  },
+  "git": {
+    "noCommits": "Aucun commit — dépôt git non trouvé ou vide"
   },
   "logs": {
     "allAgents": "Tous les agents",
