@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.17.0] - 2026-03-04
+
+### Changes
+- docs(readme): update structure for v0.17.0 — remove terminal, add utils/wsl, stores split (T716) (6f3ce8d)
+- refactor(migration): numbered migrations with version table and SAVEPOINT (T709) (eaf4600)
+- refactor(agent-stream): use toWslPath from utils/wsl instead of local copy (T710) (2805f99)
+- feat(stream-view): style markdown tables and add agent background color on text blocks (T714, T720) (b067c23)
+- refactor(back-electron): remove terminal.ts, IPC PTY handlers and node-pty (T719) (c3a8f25)
+- refactor(store): split tasks.ts into useProjectStore, useAgentsStore, useTasksStore (T713) (f701d03)
+- refactor(types): move Window.electronAPI to src/renderer/src/types/electron.d.ts (T711) (8406ee8)
+- refactor(wsl): extract toWslPath into src/main/utils/wsl.ts (T710) (50babdc)
 ## [0.16.3] - 2026-03-04
 
 ### Changes
