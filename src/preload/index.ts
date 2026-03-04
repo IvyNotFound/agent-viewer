@@ -292,4 +292,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openWslTerminal: (): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('wsl:openTerminal'),
 
+  // Hook events — pushed by hookServer when Claude Code lifecycle hooks fire (T741)
+  onHookEvent: (callback: (event: { event: string; payload: unknown; ts: number }) => void): (() => void) => {
+    const handler = (_: unknown, data: { event: string; payload: unknown; ts: number }) => callback(data)
+    ipcRenderer.on('hook:event', handler)
+    return () => ipcRenderer.off('hook:event', handler)
+  },
+
 })

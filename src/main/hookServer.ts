@@ -1,9 +1,14 @@
 /**
- * Hook server — embedded HTTP server for Claude Code lifecycle hooks (T737)
+ * Hook server — embedded HTTP server for Claude Code lifecycle hooks (T737, T741)
  *
  * Listens on 127.0.0.1:27182 (HOOK_PORT) and handles POST requests from
- * Claude Code HTTP hooks (type: "http"). Currently handles:
- * - POST /hooks/stop → parse JSONL transcript, update session tokens in DB
+ * Claude Code HTTP hooks (type: "http"). Handles:
+ * - POST /hooks/stop          → parse JSONL transcript, update session tokens in DB
+ * - POST /hooks/session-start → log event + push IPC hook:event to renderer
+ * - POST /hooks/subagent-start → log event + push IPC hook:event
+ * - POST /hooks/subagent-stop  → log event + push IPC hook:event
+ * - POST /hooks/pre-tool-use   → push IPC hook:event (no DB write — high volume)
+ * - POST /hooks/post-tool-use  → push IPC hook:event (no DB write — high volume)
  *
  * Uses sql.js via writeDb() (same as IPC handlers) — no better-sqlite3.
  * Always returns 2xx to avoid blocking Claude Code shutdown.
@@ -14,6 +19,7 @@
 import http from 'http'
 import { join } from 'path'
 import { readFile } from 'fs/promises'
+import type { BrowserWindow } from 'electron'
 import { writeDb } from './db'
 
 export const HOOK_PORT = 27182
@@ -27,11 +33,38 @@ export interface TokenCounts {
   cacheWrite: number
 }
 
+export interface HookEvent {
+  event: string
+  payload: unknown
+  ts: number
+}
+
 interface StopPayload {
   hook_event_name?: string
   session_id?: string
   transcript_path?: string
   cwd?: string
+}
+
+// ── Window reference (set after BrowserWindow creation) ───────────────────────
+
+let hookWindow: BrowserWindow | null = null
+
+/**
+ * Set the BrowserWindow to use for IPC pushes (hook:event channel).
+ * Call this after createWindow() in main/index.ts.
+ */
+export function setHookWindow(win: BrowserWindow): void {
+  hookWindow = win
+}
+
+// ── IPC push ─────────────────────────────────────────────────────────────────
+
+function pushHookEvent(eventName: string, payload: unknown): void {
+  const win = hookWindow
+  if (!win || win.isDestroyed()) return
+  const event: HookEvent = { event: eventName, payload, ts: Date.now() }
+  win.webContents.send('hook:event', event)
 }
 
 // ── JSONL parsing ─────────────────────────────────────────────────────────────
@@ -82,6 +115,8 @@ export function parseTokensFromJSONL(content: string): TokenCounts {
  * Falls back to the most recent started session if no session matches convId.
  */
 async function handleStop(payload: StopPayload): Promise<void> {
+  pushHookEvent('Stop', payload)
+
   const { session_id: convId, transcript_path: transcriptPath, cwd } = payload
 
   if (!convId || !transcriptPath || !cwd) {
@@ -143,7 +178,64 @@ async function handleStop(payload: StopPayload): Promise<void> {
   }
 }
 
+// ── Lifecycle event handler ───────────────────────────────────────────────────
+
+/**
+ * Handle a lifecycle hook event (SessionStart, SubagentStart, SubagentStop).
+ *
+ * Pushes hook:event IPC to renderer immediately.
+ * Best-effort: persists in agent_logs if a matching session is found by conv_id.
+ * PreToolUse/PostToolUse are excluded from DB writes (high volume — IPC only).
+ */
+async function handleLifecycleEvent(
+  eventName: string,
+  payload: Record<string, unknown>,
+  persistDb: boolean
+): Promise<void> {
+  pushHookEvent(eventName, payload)
+  if (!persistDb) return
+
+  const convId = payload.session_id as string | undefined
+  const cwd = payload.cwd as string | undefined
+  if (!convId || !cwd) return
+
+  const dbPath = join(cwd, '.claude', 'project.db')
+
+  try {
+    await writeDb(dbPath, (db) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const stmt = db.prepare('SELECT s.id, s.agent_id FROM sessions s WHERE s.claude_conv_id = ?') as any
+      stmt.bind([convId])
+      let sessionId: number | null = null
+      let agentId: number | null = null
+      if (stmt.step()) {
+        const row = stmt.getAsObject() as { id: number; agent_id: number }
+        sessionId = row.id
+        agentId = row.agent_id
+      }
+      stmt.free()
+
+      if (sessionId === null || agentId === null) return
+
+      db.run(
+        'INSERT INTO agent_logs (session_id, agent_id, niveau, action, detail, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))',
+        [sessionId, agentId, 'info', eventName, JSON.stringify(payload)]
+      )
+    })
+  } catch (err) {
+    console.warn(`[hookServer] agent_logs insert failed for ${eventName}:`, err)
+  }
+}
+
 // ── Server ────────────────────────────────────────────────────────────────────
+
+const LIFECYCLE_ROUTES: Record<string, boolean> = {
+  '/hooks/session-start':  true,  // persistDb = true
+  '/hooks/subagent-start': true,
+  '/hooks/subagent-stop':  true,
+  '/hooks/pre-tool-use':   false, // high volume — IPC only, no DB write
+  '/hooks/post-tool-use':  false,
+}
 
 /**
  * Start the embedded HTTP hook server.
@@ -170,11 +262,19 @@ export function startHookServer(): http.Server {
       res.end('{}')
 
       try {
-        const payload = JSON.parse(Buffer.concat(chunks).toString()) as StopPayload
+        const raw = Buffer.concat(chunks).toString()
+        const payload = JSON.parse(raw) as Record<string, unknown>
+        const url = req.url!
 
-        if (req.url === '/hooks/stop') {
-          handleStop(payload).catch(err =>
+        if (url === '/hooks/stop') {
+          handleStop(payload as StopPayload).catch(err =>
             console.error('[hookServer] handleStop error:', err)
+          )
+        } else if (url in LIFECYCLE_ROUTES) {
+          const persistDb = LIFECYCLE_ROUTES[url]
+          const eventName = url.replace('/hooks/', '').replace(/-./g, m => m[1].toUpperCase())
+          handleLifecycleEvent(eventName, payload, persistDb).catch(err =>
+            console.error(`[hookServer] handleLifecycleEvent(${eventName}) error:`, err)
           )
         }
       } catch (err) {

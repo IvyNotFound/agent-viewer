@@ -14,7 +14,7 @@ import { join } from 'path'
 import type { Server } from 'http'
 import { registerIpcHandlers } from './ipc'
 import { registerAgentStreamHandlers } from './agent-stream'
-import { startHookServer } from './hookServer'
+import { startHookServer, setHookWindow } from './hookServer'
 
 // ── GPU flags for improved rendering performance ─────────────────────────────────
 // These MUST be set BEFORE app.whenReady() to take effect
@@ -145,6 +145,8 @@ function createWindow(): void {
       menu.popup()
     }
   })
+
+  setHookWindow(win)
 
   if (process.env['ELECTRON_RENDERER_URL']) {
     win.loadURL(process.env['ELECTRON_RENDERER_URL'])

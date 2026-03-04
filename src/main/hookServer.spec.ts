@@ -1,8 +1,28 @@
 /**
- * Tests for hookServer — JSONL transcript parsing (T737)
+ * Tests for hookServer — JSONL transcript parsing (T737) + exports (T741)
  */
 import { describe, it, expect } from 'vitest'
-import { parseTokensFromJSONL } from './hookServer'
+import { parseTokensFromJSONL, HOOK_PORT } from './hookServer'
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+describe('hookServer constants', () => {
+  it('HOOK_PORT is 27182', () => {
+    expect(HOOK_PORT).toBe(27182)
+  })
+
+  it('route-to-eventName conversion matches expected values', () => {
+    // Inline the same conversion used in startHookServer
+    const convert = (url: string) =>
+      url.replace('/hooks/', '').replace(/-./g, (m) => m[1].toUpperCase())
+
+    expect(convert('/hooks/session-start')).toBe('sessionStart')
+    expect(convert('/hooks/subagent-start')).toBe('subagentStart')
+    expect(convert('/hooks/subagent-stop')).toBe('subagentStop')
+    expect(convert('/hooks/pre-tool-use')).toBe('preToolUse')
+    expect(convert('/hooks/post-tool-use')).toBe('postToolUse')
+  })
+})
 
 // ── JSONL fixtures ────────────────────────────────────────────────────────────
 
