@@ -1,7 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { agentFg } from '@renderer/utils/agentColor'
+import ActivityHeatmap from './ActivityHeatmap.vue'
+import SessionActivityChart from './SessionActivityChart.vue'
+import SuccessRateChart from './SuccessRateChart.vue'
+import AgentQualityPanel from './AgentQualityPanel.vue'
+
+const WorkloadView = defineAsyncComponent(() => import('./WorkloadView.vue'))
 
 const store = useTasksStore()
 
@@ -80,14 +86,14 @@ function relativeTime(dateStr: string): string {
   if (m < 60) return `${m}m`
   const h = Math.floor(m / 60)
   if (h < 24) return `${h}h`
-  return `${Math.floor(h / 24)}j`
+  return `${Math.floor(h / 24)}d`
 }
 
 const STATUT_LABEL: Record<string, string> = {
   todo: 'todo',
-  in_progress: 'en cours',
+  in_progress: 'in progress',
   done: 'done',
-  archived: 'archivé',
+  archived: 'archived',
 }
 
 const STATUT_CLASSES: Record<string, string> = {
@@ -110,7 +116,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
 
     <!-- No project state -->
     <div v-if="!store.dbPath" class="flex items-center justify-center h-40">
-      <p class="text-sm text-content-faint italic">Aucun projet ouvert</p>
+      <p class="text-sm text-content-faint italic">No project open</p>
     </div>
 
     <template v-else>
@@ -130,7 +136,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div class="text-xl font-bold text-content-primary tabular-nums leading-tight">
               {{ activeAgentsCount }}
             </div>
-            <div class="text-[11px] text-content-faint truncate">Agents actifs</div>
+            <div class="text-[11px] text-content-faint truncate">Active agents</div>
             <div class="text-[10px] text-content-muted truncate">sessions started</div>
           </div>
         </div>
@@ -147,8 +153,8 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div class="text-xl font-bold text-content-primary tabular-nums leading-tight">
               {{ store.stats.in_progress }}
             </div>
-            <div class="text-[11px] text-content-faint truncate">En cours</div>
-            <div class="text-[10px] text-content-muted truncate">tâches actives</div>
+            <div class="text-[11px] text-content-faint truncate">In progress</div>
+            <div class="text-[10px] text-content-muted truncate">active tasks</div>
           </div>
         </div>
 
@@ -165,8 +171,8 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div class="text-xl font-bold text-content-primary tabular-nums leading-tight">
               {{ store.stats.todo }}
             </div>
-            <div class="text-[11px] text-content-faint truncate">À faire</div>
-            <div class="text-[10px] text-content-muted truncate">tâches en attente</div>
+            <div class="text-[11px] text-content-faint truncate">To do</div>
+            <div class="text-[10px] text-content-muted truncate">pending tasks</div>
           </div>
         </div>
 
@@ -182,8 +188,8 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div class="text-xl font-bold text-content-primary tabular-nums leading-tight">
               {{ sessionsTodayCount }}
             </div>
-            <div class="text-[11px] text-content-faint truncate">Aujourd'hui</div>
-            <div class="text-[10px] text-content-muted truncate">sessions lancées</div>
+            <div class="text-[11px] text-content-faint truncate">Today</div>
+            <div class="text-[10px] text-content-muted truncate">sessions started</div>
           </div>
         </div>
 
@@ -195,14 +201,14 @@ const PRIORITY_CLASSES: Record<string, string> = {
         <!-- Tâches récentes -->
         <div class="flex flex-col rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
           <div class="shrink-0 px-3 py-2 border-b border-edge-subtle">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-content-faint">Tâches récentes</span>
+            <span class="text-[11px] font-semibold uppercase tracking-wider text-content-faint">Recent tasks</span>
           </div>
           <div class="flex-1 overflow-y-auto">
             <div
               v-if="recentTasks.length === 0"
               class="flex items-center justify-center py-8"
             >
-              <span class="text-xs text-content-faint italic">Aucune tâche</span>
+              <span class="text-xs text-content-faint italic">No tasks</span>
             </div>
             <div
               v-for="task in recentTasks"
@@ -240,14 +246,14 @@ const PRIORITY_CLASSES: Record<string, string> = {
         <!-- Activité récente -->
         <div class="flex flex-col rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
           <div class="shrink-0 px-3 py-2 border-b border-edge-subtle">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-content-faint">Activité récente</span>
+            <span class="text-[11px] font-semibold uppercase tracking-wider text-content-faint">Recent activity</span>
           </div>
           <div class="flex-1 overflow-y-auto">
             <div
               v-if="recentActivity.length === 0"
               class="flex items-center justify-center py-8"
             >
-              <span class="text-xs text-content-faint italic">Aucune activité</span>
+              <span class="text-xs text-content-faint italic">No activity</span>
             </div>
             <div
               v-for="(entry, i) in recentActivity"
@@ -277,6 +283,21 @@ const PRIORITY_CLASSES: Record<string, string> = {
         </div>
 
       </div>
+
+      <!-- ── Heatmap (full width) ──────────────────────────────────────── -->
+      <ActivityHeatmap v-if="store.dbPath" :db-path="store.dbPath" class="w-full" />
+
+      <!-- ── Charts 14d (2 columns) ────────────────────────────────────── -->
+      <div class="grid grid-cols-2 gap-3">
+        <SessionActivityChart class="min-h-[200px]" />
+        <SuccessRateChart class="min-h-[200px]" />
+      </div>
+
+      <!-- ── Quality (full width) ───────────────────────────────────────── -->
+      <AgentQualityPanel class="w-full" />
+
+      <!-- ── Workload (full width, lazy) ───────────────────────────────── -->
+      <WorkloadView class="w-full" />
 
     </template>
   </div>

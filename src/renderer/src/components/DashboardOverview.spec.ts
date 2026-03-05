@@ -38,17 +38,17 @@ describe('DashboardOverview (T923)', () => {
       tasks: { dbPath: null, tasks: [], agents: [], stats: { todo: 0, in_progress: 0, done: 0, archived: 0 } },
     })
     await flushPromises()
-    expect(wrapper.text()).toContain('Aucun projet ouvert')
+    expect(wrapper.text()).toContain('No project open')
     wrapper.unmount()
   })
 
   it('renders 4 metric section labels when dbPath is set', async () => {
     const { wrapper } = mountWithState(BASE_STATE)
     await flushPromises()
-    expect(wrapper.text()).toContain('Agents actifs')
-    expect(wrapper.text()).toContain('En cours')
-    expect(wrapper.text()).toContain('À faire')
-    expect(wrapper.text()).toContain("Aujourd'hui")
+    expect(wrapper.text()).toContain('Active agents')
+    expect(wrapper.text()).toContain('In progress')
+    expect(wrapper.text()).toContain('To do')
+    expect(wrapper.text()).toContain('Today')
     wrapper.unmount()
   })
 
@@ -91,14 +91,14 @@ describe('DashboardOverview (T923)', () => {
   it('shows "Aucune tâche" empty state when tasks list is empty', async () => {
     const { wrapper } = mountWithState(BASE_STATE)
     await flushPromises()
-    expect(wrapper.text()).toContain('Aucune tâche')
+    expect(wrapper.text()).toContain('No tasks')
     wrapper.unmount()
   })
 
   it('shows "Aucune activité" when query returns no logs', async () => {
     const { wrapper } = mountWithState(BASE_STATE)
     await flushPromises()
-    expect(wrapper.text()).toContain('Aucune activité')
+    expect(wrapper.text()).toContain('No activity')
     wrapper.unmount()
   })
 
@@ -137,8 +137,8 @@ describe('DashboardOverview (T923)', () => {
   it('renders section headers for tâches récentes and activité récente', async () => {
     const { wrapper } = mountWithState(BASE_STATE)
     await flushPromises()
-    expect(wrapper.text()).toContain('Tâches récentes')
-    expect(wrapper.text()).toContain('Activité récente')
+    expect(wrapper.text()).toContain('Recent tasks')
+    expect(wrapper.text()).toContain('Recent activity')
     wrapper.unmount()
   })
 })
@@ -156,7 +156,7 @@ describe('DashboardOverview relativeTime() logic (T923)', () => {
     if (m < 60) return `${m}m`
     const h = Math.floor(m / 60)
     if (h < 24) return `${h}h`
-    return `${Math.floor(h / 24)}j`
+    return `${Math.floor(h / 24)}d`
   }
 
   it('returns seconds when diff < 60s', () => {
@@ -174,8 +174,8 @@ describe('DashboardOverview relativeTime() logic (T923)', () => {
     expect(relativeTime(threeHoursAgo)).toBe('3h')
   })
 
-  it('returns days (j) when diff >= 24h', () => {
+  it('returns days (d) when diff >= 24h', () => {
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString()
-    expect(relativeTime(twoDaysAgo)).toBe('2j')
+    expect(relativeTime(twoDaysAgo)).toBe('2d')
   })
 })
