@@ -230,35 +230,35 @@ agent-viewer/
 └── package.json
 ```
 
-### Agents par défaut (`default-agents.ts`)
+### Default Agents (`default-agents.ts`)
 
-Le fichier `src/main/default-agents.ts` exporte deux collections d'agents :
+The file `src/main/default-agents.ts` exports two agent collections:
 
 | Export | Usage |
 |--------|-------|
-| `GENERIC_AGENTS` | Agents génériques insérés dans **tout nouveau projet** créé via `create-project-db`. Aucune référence spécifique à agent-viewer — ils sont conçus pour fonctionner sur n'importe quel projet utilisant le workflow agent. |
-| `DEFAULT_AGENTS` | Agents propres au projet **agent-viewer** (dev-front-vuejs, dev-back-electron, arch, secu, perf, etc.). Insérés uniquement lors de l'initialisation de ce projet. |
+| `GENERIC_AGENTS` | Generic agents inserted into **every new project** created via `create-project-db`. No agent-viewer-specific references — designed to work on any project using the agent workflow. |
+| `DEFAULT_AGENTS` | Agents specific to the **agent-viewer** project (dev-front-vuejs, dev-back-electron, arch, secu, perf, etc.). Inserted only during this project's initialization. |
 
-Lors de la création d'un nouveau projet via le script `create-project-db`, seuls les `GENERIC_AGENTS` sont seedés : `dev`, `review`, `test`, `doc`, `task-creator`. Cela donne un projet fonctionnel immédiatement, sans agents liés au périmètre d'agent-viewer.
+When creating a new project via the `create-project-db` script, only `GENERIC_AGENTS` are seeded: `dev`, `review`, `test`, `doc`, `task-creator`. This gives a fully functional project immediately, without agents tied to the agent-viewer scope.
 
-### Scripts CLI
+### CLI Scripts
 
-Les scripts dans `scripts/` permettent aux agents d'interagir avec la base de données sans ouvrir l'application :
+The scripts in `scripts/` let agents interact with the database without opening the application:
 
 | Script | Description |
 |--------|-------------|
-| `node scripts/dbq.js "<SQL>"` | Lecture en mémoire (sql.js, bypass lock SQLite) |
-| `node scripts/dbw.js "<SQL>"` | Écriture atomique avec advisory lock (`.wlock`) |
-| `node scripts/dbstart.js <agent>` | Démarre une session agent, affiche tâches et locks |
-| `bash scripts/release.sh [patch\|minor\|major]` | Build + bump de version + tag Git + GitHub Release (draft) |
+| `node scripts/dbq.js "<SQL>"` | In-memory read (sql.js, bypasses SQLite lock) |
+| `node scripts/dbw.js "<SQL>"` | Atomic write with advisory lock (`.wlock`) |
+| `node scripts/dbstart.js <agent>` | Starts an agent session, displays tasks and locks |
+| `bash scripts/release.sh [patch\|minor\|major]` | Build + version bump + Git tag + GitHub Release (draft) |
 
-**Mode JSON (dbw.js)** — pour les valeurs contenant des apostrophes ou caractères spéciaux, utilisez le mode JSON via stdin :
+**JSON mode (dbw.js)** — for values containing apostrophes or special characters, use JSON mode via stdin:
 
 ```sh
 echo '{"sql":"INSERT INTO task_comments (task_id, agent_id, contenu) VALUES (?,?,?)","params":[42,3,"O'\''Brien"]}' | node scripts/dbw.js
 ```
 
-**Mode heredoc** — pour le SQL multiligne ou contenant des backticks / `$()` :
+**Heredoc mode** — for multi-line SQL or SQL containing backticks / `$()` :
 
 ```sh
 node scripts/dbw.js <<'SQL'
