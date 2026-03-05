@@ -6,7 +6,7 @@ declare global {
   interface Window {
     electronAPI: {
       selectProjectDir(): Promise<{ projectPath: string; dbPath: string | null; error: string | null; hasCLAUDEmd: boolean } | null>
-      createProjectDb(projectPath: string): Promise<{ success: boolean; dbPath: string; error?: string }>
+      createProjectDb(projectPath: string, lang?: string): Promise<{ success: boolean; dbPath: string; error?: string }>
       queryDb(dbPath: string, query: string, params?: unknown[]): Promise<unknown[]>
       watchDb(dbPath: string): Promise<void>
       unwatchDb(): Promise<void>
@@ -40,8 +40,6 @@ declare global {
       // Agents
       updateAgent(dbPath: string, agentId: number, updates: { name?: string; type?: string; perimetre?: string | null; thinkingMode?: string | null; allowedTools?: string | null; systemPrompt?: string | null; systemPromptSuffix?: string | null; autoLaunch?: boolean; permissionMode?: 'default' | 'auto' | null; maxSessions?: number }): Promise<{ success: boolean; error?: string }>
       createAgent(dbPath: string, projectPath: string, data: { name: string; type: string; perimetre: string | null; thinkingMode: string | null; systemPrompt: string | null; description: string }): Promise<{ success: boolean; agentId?: number; claudeMdUpdated?: boolean; error?: string }>
-      // GitHub (secure — token stays in main process)
-      testGithubConnection(dbPath: string, repoUrl: string): Promise<{ connected: boolean; error?: string }>
       checkForUpdates(dbPath: string, repoUrl: string, currentVersion: string): Promise<{ hasUpdate: boolean; latestVersion: string; error?: string }>
       // Task assignees (multi-agent — ADR-008)
       getTaskAssignees(dbPath: string, taskId: number): Promise<{ success: boolean; assignees: Array<{ agent_id: number; agent_name: string; role: string | null; assigned_at: string }>; error?: string }>

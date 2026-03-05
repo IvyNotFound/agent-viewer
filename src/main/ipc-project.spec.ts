@@ -341,6 +341,54 @@ describe('IPC project handlers', () => {
       expect(names).not.toContain('ux-front-vuejs')
     })
 
+    it('T889: GENERIC_AGENTS_BY_LANG["fr"] matches GENERIC_AGENTS (retrocompat)', async () => {
+      const { GENERIC_AGENTS, GENERIC_AGENTS_BY_LANG } = await import('./default-agents')
+      expect(GENERIC_AGENTS_BY_LANG['fr']).toBe(GENERIC_AGENTS)
+    })
+
+    it('T889: GENERIC_AGENTS_BY_LANG["en"] contains the 5 expected agents with English prompts', async () => {
+      const { GENERIC_AGENTS_BY_LANG } = await import('./default-agents')
+      const names = GENERIC_AGENTS_BY_LANG['en'].map((a) => a.name)
+      expect(names).toContain('dev')
+      expect(names).toContain('review')
+      expect(names).toContain('test')
+      expect(names).toContain('doc')
+      expect(names).toContain('task-creator')
+      const devAgent = GENERIC_AGENTS_BY_LANG['en'].find((a) => a.name === 'dev')
+      expect(devAgent?.system_prompt).toContain('You are the **dev** agent')
+    })
+
+    it('T889: create-project-db with lang=en seeds English agents', async () => {
+      const { mkdir, writeFile } = await import('fs/promises')
+      vi.mocked(mkdir).mockResolvedValue(undefined)
+      vi.mocked(writeFile).mockResolvedValue(undefined)
+      const result = await callHandler('create-project-db', '/fake/project', 'en') as {
+        success: boolean; dbPath: string
+      }
+      expect(result.success).toBe(true)
+      expect(result.dbPath).toContain('project.db')
+    })
+
+    it('T889: create-project-db with lang=fr (default) seeds French agents', async () => {
+      const { mkdir, writeFile } = await import('fs/promises')
+      vi.mocked(mkdir).mockResolvedValue(undefined)
+      vi.mocked(writeFile).mockResolvedValue(undefined)
+      const result = await callHandler('create-project-db', '/fake/project', 'fr') as {
+        success: boolean; dbPath: string
+      }
+      expect(result.success).toBe(true)
+    })
+
+    it('T889: create-project-db with unknown lang falls back to fr', async () => {
+      const { mkdir, writeFile } = await import('fs/promises')
+      vi.mocked(mkdir).mockResolvedValue(undefined)
+      vi.mocked(writeFile).mockResolvedValue(undefined)
+      const result = await callHandler('create-project-db', '/fake/project', 'de') as {
+        success: boolean; dbPath: string
+      }
+      expect(result.success).toBe(true)
+    })
+
     it('T688: should copy agent scripts to <projectPath>/scripts/ on success', async () => {
       const { mkdir, writeFile, copyFile } = await import('fs/promises')
       vi.mocked(mkdir).mockResolvedValue(undefined)

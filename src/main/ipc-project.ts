@@ -11,7 +11,8 @@ import { ipcMain, dialog, app, shell } from 'electron'
 import { access, copyFile, mkdir, readdir, readFile, writeFile } from 'fs/promises'
 import { join, basename } from 'path'
 import { deflateRawSync } from 'zlib'
-import { GENERIC_AGENTS } from './default-agents'
+import { GENERIC_AGENTS_BY_LANG } from './default-agents'
+import type { AgentLanguage } from './default-agents'
 import {
   registerDbPath,
   registerProjectPath,
@@ -185,8 +186,9 @@ export function registerProjectHandlers(): void {
    * @param projectPath - Absolute path to the project root
    * @returns {{ success: boolean, dbPath: string, error?: string }}
    */
-  ipcMain.handle('create-project-db', async (_event, projectPath: string) => {
+  ipcMain.handle('create-project-db', async (_event, projectPath: string, lang?: string) => {
     assertProjectPathAllowed(projectPath)
+    const agentLang: AgentLanguage = lang === 'en' ? 'en' : 'fr'
     try {
       const claudeDir = join(projectPath, '.claude')
       await mkdir(claudeDir, { recursive: true })
@@ -284,7 +286,7 @@ export function registerProjectHandlers(): void {
         CREATE INDEX IF NOT EXISTS idx_task_links_from_task ON task_links(from_task);
         CREATE INDEX IF NOT EXISTS idx_task_links_to_task ON task_links(to_task);
       `)
-      for (const agent of GENERIC_AGENTS) {
+      for (const agent of GENERIC_AGENTS_BY_LANG[agentLang]) {
         db.run(
           `INSERT OR IGNORE INTO agents (name, type, perimetre, system_prompt, system_prompt_suffix)
            VALUES (?, ?, ?, ?, ?)`,

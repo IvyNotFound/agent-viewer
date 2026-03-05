@@ -65,8 +65,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   initNewProject: (projectPath: string): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('init-new-project', projectPath),
 
-  createProjectDb: (projectPath: string): Promise<{ success: boolean; dbPath: string; error?: string }> =>
-    ipcRenderer.invoke('create-project-db', projectPath),
+  createProjectDb: (projectPath: string, lang?: string): Promise<{ success: boolean; dbPath: string; error?: string }> =>
+    ipcRenderer.invoke('create-project-db', projectPath, lang),
 
   findProjectDb: (projectPath: string): Promise<string | null> =>
     ipcRenderer.invoke('find-project-db', projectPath),
