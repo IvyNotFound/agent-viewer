@@ -67,8 +67,6 @@ const scan = (projectPath: string) => registeredHandlers['telemetry:scan'](fakeE
 describe('telemetry:scan', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Reset registered handlers dict so re-registration doesn't break anything
-    // (handlers were already registered — just keep the same reference).
   })
 
   // ── 1. Simple directory with .ts and .vue files ────────────────────────────
@@ -112,7 +110,6 @@ describe('telemetry:scan', () => {
 
     const result = await scan('/project')
 
-    // readdir should only be called once (no recursion into node_modules)
     expect(readdir).toHaveBeenCalledTimes(1)
     expect(result.totalFiles).toBe(1)
     expect(result.totalLines).toBe(2)
@@ -141,7 +138,6 @@ describe('telemetry:scan', () => {
       file('binary.ts'),
     ] as unknown as Awaited<ReturnType<typeof readdir>>)
 
-    // readFile rejects → countLines catches and returns ''
     vi.mocked(readFile).mockRejectedValueOnce(new Error('EACCES: permission denied'))
 
     const result = await scan('/project')
@@ -163,7 +159,7 @@ describe('telemetry:scan', () => {
 
     const result = await scan('/project')
 
-    expect(result.totalFiles).toBe(1)  // .xyz not counted
+    expect(result.totalFiles).toBe(1)
     expect(result.languages).toHaveLength(1)
     expect(result.languages[0].name).toBe('TypeScript')
   })
@@ -179,6 +175,9 @@ describe('telemetry:scan', () => {
     expect(result.totalLines).toBe(0)
     expect(result.languages).toHaveLength(0)
     expect(result.scannedAt).toBeTruthy()
+    expect(result.testRatio).toBe(0)
+    expect(result.totalSourceFiles).toBe(0)
+    expect(result.totalTestFiles).toBe(0)
   })
 
   // ── 7. percent sums to ~100 ───────────────────────────────────────────────
@@ -196,7 +195,6 @@ describe('telemetry:scan', () => {
     const result = await scan('/project')
 
     const total = result.languages.reduce((sum: number, l: { percent: number }) => sum + l.percent, 0)
-    // Due to rounding, allow ±1
     expect(total).toBeGreaterThanOrEqual(99)
     expect(total).toBeLessThanOrEqual(101)
   })
@@ -223,12 +221,10 @@ describe('telemetry:scan', () => {
 
   it('recurses into non-ignored subdirectories', async () => {
     vi.mocked(readdir)
-      // Root: one subdir + one file
       .mockResolvedValueOnce([
         dir('src'),
         file('index.ts'),
       ] as unknown as Awaited<ReturnType<typeof readdir>>)
-      // src/ contents
       .mockResolvedValueOnce([
         file('app.ts'),
       ] as unknown as Awaited<ReturnType<typeof readdir>>)
@@ -253,5 +249,137 @@ describe('telemetry:scan', () => {
     const result = await scan('/project')
 
     expect(() => new Date(result.scannedAt).toISOString()).not.toThrow()
+  })
+
+  // ── 11. Test file detection by .spec. name ─────────────────────────────────
+
+  it('detects .spec.ts files as test files', async () => {
+    vi.mocked(readdir).mockResolvedValueOnce([
+      file('app.ts'),
+      file('app.spec.ts'),
+    ] as unknown as Awaited<ReturnType<typeof readdir>>)
+
+    vi.mocked(readFile)
+      .mockResolvedValueOnce('a\nb\nc\nd\ne\nf\ng\nh\ni\nj')  // app.ts → 10 lines (source)
+      .mockResolvedValueOnce('x\ny\nz')                         // app.spec.ts → 3 lines (test)
+
+    const result = await scan('/project')
+
+    expect(result.totalSourceFiles).toBe(1)
+    expect(result.totalTestFiles).toBe(1)
+    expect(result.totalSourceLines).toBe(10)
+    expect(result.totalTestLines).toBe(3)
+    // testRatio = 3 / (10 + 3) * 100 = 23.1%
+    expect(result.testRatio).toBe(23.1)
+  })
+
+  // ── 12. Test file detection by .test. name ────────────────────────────────
+
+  it('detects .test.js files as test files', async () => {
+    vi.mocked(readdir).mockResolvedValueOnce([
+      file('utils.test.js'),
+    ] as unknown as Awaited<ReturnType<typeof readdir>>)
+
+    vi.mocked(readFile).mockResolvedValueOnce('a\nb')
+
+    const result = await scan('/project')
+
+    expect(result.totalTestFiles).toBe(1)
+    expect(result.totalSourceFiles).toBe(0)
+    expect(result.totalTestLines).toBe(2)
+    expect(result.totalSourceLines).toBe(0)
+  })
+
+  // ── 13. Test file detection by __tests__ directory ────────────────────────
+
+  it('detects files in __tests__ directory as test files', async () => {
+    vi.mocked(readdir)
+      .mockResolvedValueOnce([
+        dir('__tests__'),
+        file('main.ts'),
+      ] as unknown as Awaited<ReturnType<typeof readdir>>)
+      .mockResolvedValueOnce([
+        file('helper.ts'),
+      ] as unknown as Awaited<ReturnType<typeof readdir>>)
+
+    // __tests__ dir is iterated first → helper.ts read before main.ts
+    vi.mocked(readFile)
+      .mockResolvedValueOnce('x\ny')     // __tests__/helper.ts → test (2 lines)
+      .mockResolvedValueOnce('a\nb\nc')  // main.ts → source (3 lines)
+
+    const result = await scan('/project')
+
+    expect(result.totalSourceFiles).toBe(1)
+    expect(result.totalTestFiles).toBe(1)
+    expect(result.totalSourceLines).toBe(3)
+    expect(result.totalTestLines).toBe(2)
+  })
+
+  // ── 14. Blank and comment line counting ───────────────────────────────────
+
+  it('counts blank and comment lines correctly', async () => {
+    vi.mocked(readdir).mockResolvedValueOnce([
+      file('app.ts'),
+    ] as unknown as Awaited<ReturnType<typeof readdir>>)
+
+    // 1 blank, 2 comment, 2 code lines
+    vi.mocked(readFile).mockResolvedValueOnce(
+      'const x = 1\n// comment\n\n/* block */\nconst y = 2',
+    )
+
+    const result = await scan('/project')
+
+    expect(result.totalBlankLines).toBe(1)
+    expect(result.totalCommentLines).toBe(2)
+    expect(result.totalCodeLines).toBe(2)
+    expect(result.totalLines).toBe(5)
+
+    const ts = result.languages.find((l: { name: string }) => l.name === 'TypeScript')
+    expect(ts!.blankLines).toBe(1)
+    expect(ts!.commentLines).toBe(2)
+    expect(ts!.codeLines).toBe(2)
+  })
+
+  // ── 15. testRatio = 0 when no test files ──────────────────────────────────
+
+  it('returns testRatio = 0 when there are no test files', async () => {
+    vi.mocked(readdir).mockResolvedValueOnce([
+      file('main.ts'),
+    ] as unknown as Awaited<ReturnType<typeof readdir>>)
+
+    vi.mocked(readFile).mockResolvedValueOnce('a\nb\nc')
+
+    const result = await scan('/project')
+
+    expect(result.testRatio).toBe(0)
+    expect(result.totalTestFiles).toBe(0)
+    expect(result.totalSourceFiles).toBe(1)
+  })
+
+  // ── 16. per-language source/test breakdown ────────────────────────────────
+
+  it('tracks source/test breakdown per language', async () => {
+    vi.mocked(readdir).mockResolvedValueOnce([
+      file('a.ts'),
+      file('a.spec.ts'),
+      file('b.vue'),
+    ] as unknown as Awaited<ReturnType<typeof readdir>>)
+
+    vi.mocked(readFile)
+      .mockResolvedValueOnce('a\nb\nc\nd\ne')  // a.ts → 5 source
+      .mockResolvedValueOnce('x\ny')            // a.spec.ts → 2 test
+      .mockResolvedValueOnce('1\n2\n3')         // b.vue → 3 source
+
+    const result = await scan('/project')
+
+    const ts = result.languages.find((l: { name: string }) => l.name === 'TypeScript')
+    expect(ts!.sourceFiles).toBe(1)
+    expect(ts!.testFiles).toBe(1)
+    expect(ts!.sourceLines).toBe(5)
+    expect(ts!.testLines).toBe(2)
+
+    const vue = result.languages.find((l: { name: string }) => l.name === 'Vue')
+    expect(vue!.sourceFiles).toBe(1)
+    expect(vue!.testFiles).toBe(0)
   })
 })

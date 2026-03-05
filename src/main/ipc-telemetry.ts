@@ -29,12 +29,28 @@ const LANGUAGE_MAP: Record<string, { name: string; color: string }> = {
 
 const IGNORE_DIRS = new Set(['node_modules', '.git', 'dist', 'out', '.cache', 'coverage', '.nyc_output'])
 
+const TEST_NAME_RE = /\.(spec|test)\./
+
+interface LineStats {
+  total: number
+  blank: number
+  comment: number
+  code: number
+}
+
 interface LangStat {
   name: string
   color: string
   files: number
   lines: number
   percent: number
+  sourceFiles: number
+  testFiles: number
+  sourceLines: number
+  testLines: number
+  blankLines: number
+  commentLines: number
+  codeLines: number
 }
 
 interface TelemetryResult {
@@ -42,17 +58,58 @@ interface TelemetryResult {
   totalFiles: number
   totalLines: number
   scannedAt: string
+  totalSourceLines: number
+  totalTestLines: number
+  testRatio: number
+  totalBlankLines: number
+  totalCommentLines: number
+  totalCodeLines: number
+  totalSourceFiles: number
+  totalTestFiles: number
 }
 
-async function countLines(filePath: string): Promise<number> {
+function isTestFile(filePath: string): boolean {
+  const basename = path.basename(filePath)
+  if (TEST_NAME_RE.test(basename)) return true
+  const parts = filePath.split(/[\\/]/)
+  return parts.some((p) => p === '__tests__' || p === 'test')
+}
+
+async function analyzeFile(filePath: string): Promise<LineStats> {
   const content = await readFile(filePath, 'utf-8').catch(() => '')
-  return content.split('\n').length
+  const lines = content.split('\n')
+  let blank = 0
+  let comment = 0
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (trimmed === '') {
+      blank++
+    } else if (
+      trimmed.startsWith('//') ||
+      trimmed.startsWith('#') ||
+      trimmed.startsWith('*') ||
+      trimmed.startsWith('/*') ||
+      trimmed.startsWith('<!--')
+    ) {
+      comment++
+    }
+  }
+  return { total: lines.length, blank, comment, code: lines.length - blank - comment }
 }
 
-async function scanDir(
-  dir: string,
-  stats: Map<string, { files: number; lines: number }>,
-): Promise<void> {
+interface ExtStats {
+  files: number
+  lines: number
+  sourceFiles: number
+  testFiles: number
+  sourceLines: number
+  testLines: number
+  blankLines: number
+  commentLines: number
+  codeLines: number
+}
+
+async function scanDir(dir: string, stats: Map<string, ExtStats>): Promise<void> {
   const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
   for (const entry of entries) {
     if (entry.isDirectory()) {
@@ -62,9 +119,31 @@ async function scanDir(
     } else {
       const ext = path.extname(entry.name).toLowerCase()
       if (!LANGUAGE_MAP[ext]) continue
-      const lines = await countLines(path.join(dir, entry.name))
-      const s = stats.get(ext) ?? { files: 0, lines: 0 }
-      stats.set(ext, { files: s.files + 1, lines: s.lines + lines })
+      const filePath = path.join(dir, entry.name)
+      const ls = await analyzeFile(filePath)
+      const test = isTestFile(filePath)
+      const s = stats.get(ext) ?? {
+        files: 0,
+        lines: 0,
+        sourceFiles: 0,
+        testFiles: 0,
+        sourceLines: 0,
+        testLines: 0,
+        blankLines: 0,
+        commentLines: 0,
+        codeLines: 0,
+      }
+      stats.set(ext, {
+        files: s.files + 1,
+        lines: s.lines + ls.total,
+        sourceFiles: s.sourceFiles + (test ? 0 : 1),
+        testFiles: s.testFiles + (test ? 1 : 0),
+        sourceLines: s.sourceLines + (test ? 0 : ls.total),
+        testLines: s.testLines + (test ? ls.total : 0),
+        blankLines: s.blankLines + ls.blank,
+        commentLines: s.commentLines + ls.comment,
+        codeLines: s.codeLines + ls.code,
+      })
     }
   }
 }
@@ -81,12 +160,36 @@ export function registerTelemetryHandlers(): void {
     'telemetry:scan',
     async (_event, projectPath: string): Promise<TelemetryResult> => {
       if (typeof projectPath !== 'string' || !projectPath) {
-        return { languages: [], totalFiles: 0, totalLines: 0, scannedAt: new Date().toISOString() }
+        return {
+          languages: [],
+          totalFiles: 0,
+          totalLines: 0,
+          scannedAt: new Date().toISOString(),
+          totalSourceLines: 0,
+          totalTestLines: 0,
+          testRatio: 0,
+          totalBlankLines: 0,
+          totalCommentLines: 0,
+          totalCodeLines: 0,
+          totalSourceFiles: 0,
+          totalTestFiles: 0,
+        }
       }
-      const stats = new Map<string, { files: number; lines: number }>()
+      const stats = new Map<string, ExtStats>()
       await scanDir(projectPath, stats)
       const totalLines = [...stats.values()].reduce((s, v) => s + v.lines, 0)
       const totalFiles = [...stats.values()].reduce((s, v) => s + v.files, 0)
+      const totalSourceLines = [...stats.values()].reduce((s, v) => s + v.sourceLines, 0)
+      const totalTestLines = [...stats.values()].reduce((s, v) => s + v.testLines, 0)
+      const totalBlankLines = [...stats.values()].reduce((s, v) => s + v.blankLines, 0)
+      const totalCommentLines = [...stats.values()].reduce((s, v) => s + v.commentLines, 0)
+      const totalCodeLines = [...stats.values()].reduce((s, v) => s + v.codeLines, 0)
+      const totalSourceFiles = [...stats.values()].reduce((s, v) => s + v.sourceFiles, 0)
+      const totalTestFiles = [...stats.values()].reduce((s, v) => s + v.testFiles, 0)
+      const testRatio =
+        totalSourceLines + totalTestLines > 0
+          ? Math.round((totalTestLines / (totalSourceLines + totalTestLines)) * 1000) / 10
+          : 0
       const languages: LangStat[] = [...stats.entries()]
         .map(([ext, v]) => ({
           name: LANGUAGE_MAP[ext].name,
@@ -94,9 +197,29 @@ export function registerTelemetryHandlers(): void {
           files: v.files,
           lines: v.lines,
           percent: totalLines > 0 ? Math.round((v.lines / totalLines) * 1000) / 10 : 0,
+          sourceFiles: v.sourceFiles,
+          testFiles: v.testFiles,
+          sourceLines: v.sourceLines,
+          testLines: v.testLines,
+          blankLines: v.blankLines,
+          commentLines: v.commentLines,
+          codeLines: v.codeLines,
         }))
         .sort((a, b) => b.lines - a.lines)
-      return { languages, totalFiles, totalLines, scannedAt: new Date().toISOString() }
+      return {
+        languages,
+        totalFiles,
+        totalLines,
+        scannedAt: new Date().toISOString(),
+        totalSourceLines,
+        totalTestLines,
+        testRatio,
+        totalBlankLines,
+        totalCommentLines,
+        totalCodeLines,
+        totalSourceFiles,
+        totalTestFiles,
+      }
     },
   )
 }
