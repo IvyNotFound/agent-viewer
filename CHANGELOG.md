@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.23.0] - 2026-03-05
+
+### Changes
+- docs(back-electron): update JSDoc for handleStop — session completed on stop (T935) (5c7f426)
+- fix(back-electron): enrich PATH with .local\bin and npm in Windows PS1 script (T933) (68651f2)
+- feat(front-vuejs): orgchart interactif des agents avec statut live (T921) (eca0f21)
+- feat(front-vuejs): reset button for agent/level filters in logs feed (T925) (3d74200)
+- chore(global): supprimer toutes les références à npm run lint (T937) (a745c33)
+- feat(front-vuejs): charts 14 jours activité sessions et taux de succès (T924) (23db890)
+- test(front-vuejs): ajouter spec DashboardOverview (T923) (62a2f32)
+- fix(back-electron): inject WSL hooks via wsl.exe instead of UNC path (T934) (3476693)
+- chore(agents): ajouter étapes CI dans workflow release devops (T931) (a06df61)
+- feat(front-vuejs): restructurer le dashboard en grid 4-metrics + sections claires (T923) (d051714)
+- fix(front-vuejs): masquer scrollbar native sous-onglets dashboard (T932) (1c1fff9)
+- fix(front-vuejs): espacer le bouton fermer des onglets vers la droite (T930) (ec98d38)
+- feat(front-vuejs): indicateur pulsant cyan sur tâches in_progress (T922) (3cbe6c8)
+- fix(front-vuejs): decouple autoReviewEnabled from autoLaunchAgentSessions (T928) (44b663c)
 ## [0.22.0] - 2026-03-05
 
 ### Changes
