@@ -91,6 +91,24 @@ describe('renderMarkdown', () => {
     expect(result).not.toContain('onerror')
   })
 
+  // XSS regression tests — GHSA-v8jm-5vwx-cfxm (T848)
+  it('strips javascript: href payload', () => {
+    const result = renderMarkdown('[click me](javascript:alert(1))')
+    expect(result).not.toContain('javascript:')
+  })
+
+  it('strips SVG onload payload', () => {
+    const result = renderMarkdown('<svg onload="alert(1)"><rect/></svg>')
+    expect(result).not.toContain('onload')
+    expect(result).not.toContain('alert')
+  })
+
+  it('strips iframe injection', () => {
+    const result = renderMarkdown('<iframe src="https://evil.example.com"></iframe>')
+    expect(result).not.toContain('<iframe')
+    expect(result).not.toContain('evil.example.com')
+  })
+
   it('returns empty string for empty input', () => {
     const result = renderMarkdown('')
     expect(result.trim()).toBe('')
