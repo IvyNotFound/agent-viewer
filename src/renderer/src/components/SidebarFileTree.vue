@@ -2,7 +2,7 @@
 /**
  * SidebarFileTree — arborescence de fichiers du projet dans la sidebar (T815).
  */
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTabsStore } from '@renderer/stores/tabs'
 import type { FileNode } from '@renderer/types'
@@ -62,6 +62,8 @@ function flattenTree(
 }
 
 const flatSidebarTree = computed(() => flattenTree(sidebarTree.value))
+
+onMounted(() => loadSidebarTree())
 
 defineExpose({ loadSidebarTree })
 </script>
