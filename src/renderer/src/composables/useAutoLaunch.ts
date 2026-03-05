@@ -32,7 +32,7 @@ const FALLBACK_CLOSE_MS = 5 * 60 * 1000
  */
 const FALLBACK_CLOSE_NOTASK_MS = 30 * 60 * 1000
 
-/** Delay (ms) between Ctrl+C and terminalKill */
+/** Delay (ms) between agentKill signal and closeTab (allows the process to flush) */
 const KILL_DELAY_MS = 2_000
 
 /**
@@ -174,14 +174,9 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     }
 
     const tab = tabsStore.tabs.find(t => t.type === 'terminal' && t.agentName === agentName)
-    if (tab?.ptyId) {
-      window.electronAPI.terminalWrite(tab.ptyId, '\x03')
-      setTimeout(() => {
-        if (tab.ptyId) window.electronAPI.terminalKill(tab.ptyId)
-        tabsStore.closeTab(tab.id)
-      }, KILL_DELAY_MS)
-    } else if (tab) {
-      tabsStore.closeTab(tab.id)
+    if (tab) {
+      if (tab.streamId) window.electronAPI.agentKill(tab.streamId).catch(() => {})
+      setTimeout(() => tabsStore.closeTab(tab.id), KILL_DELAY_MS)
     }
   }
 

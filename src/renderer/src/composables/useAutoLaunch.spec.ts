@@ -16,8 +16,7 @@ const api = {
     success: true, systemPrompt: 'You are dev-front', systemPromptSuffix: null, thinkingMode: 'auto'
   }),
   buildAgentPrompt: vi.fn().mockResolvedValue('final prompt'),
-  terminalWrite: vi.fn().mockResolvedValue(undefined),
-  terminalKill: vi.fn().mockResolvedValue(undefined),
+  agentKill: vi.fn().mockResolvedValue(undefined),
   // queryDb: returns a completed session by default (used by scheduleClose poller)
   queryDb: vi.fn().mockResolvedValue([{ id: 1 }]),
 }
@@ -155,7 +154,7 @@ describe('composables/useAutoLaunch', () => {
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
     const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    termTab.ptyId = 'pty-123'
+    termTab.streamId = 'stream-123'
 
     // Task transitions to done
     tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
@@ -167,13 +166,13 @@ describe('composables/useAutoLaunch', () => {
     // Advance past the 80ms debounce + immediate 0ms poll, flush promises
     await vi.advanceTimersByTimeAsync(81)
 
-    // Ctrl+C should have been sent (completed session found in DB)
-    expect(api.terminalWrite).toHaveBeenCalledWith('pty-123', '\x03')
+    // agentKill should have been called (completed session found in DB)
+    expect(api.agentKill).toHaveBeenCalledWith('stream-123')
 
-    // Advance past kill delay (2s)
+    // Advance past kill delay (2s) — closeTab fires
     await vi.advanceTimersByTimeAsync(2000)
 
-    expect(api.terminalKill).toHaveBeenCalledWith('pty-123')
+    expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(0)
   })
 
   it('should wait for completed before closing (no early close when session still active)', async () => {
@@ -189,7 +188,7 @@ describe('composables/useAutoLaunch', () => {
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
     const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    termTab.ptyId = 'pty-waiting'
+    termTab.streamId = 'stream-waiting'
 
     // Task transitions to done
     tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
@@ -197,17 +196,17 @@ describe('composables/useAutoLaunch', () => {
 
     // Poll fires — but no completed session yet
     await vi.advanceTimersByTimeAsync(1)
-    expect(api.terminalWrite).not.toHaveBeenCalled()
+    expect(api.agentKill).not.toHaveBeenCalled()
 
     // More polls fire — still no completed
     await vi.advanceTimersByTimeAsync(5_000)
-    expect(api.terminalWrite).not.toHaveBeenCalled()
+    expect(api.agentKill).not.toHaveBeenCalled()
 
     // Session becomes completed
     api.queryDb.mockResolvedValue([{ id: 42 }])
     await vi.advanceTimersByTimeAsync(5_000)
 
-    expect(api.terminalWrite).toHaveBeenCalledWith('pty-waiting', '\x03')
+    expect(api.agentKill).toHaveBeenCalledWith('stream-waiting')
   })
 
   it('should force-close after fallback timeout even if session never completes', async () => {
@@ -223,7 +222,7 @@ describe('composables/useAutoLaunch', () => {
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
     const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    termTab.ptyId = 'pty-fallback'
+    termTab.streamId = 'stream-fallback'
 
     // Task transitions to done
     tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
@@ -232,8 +231,8 @@ describe('composables/useAutoLaunch', () => {
     // Advance 5 minutes + 80ms debounce (fallback timeout starts after debounce fires)
     await vi.advanceTimersByTimeAsync(5 * 60 * 1000 + 80)
 
-    // Force-close should have happened
-    expect(api.terminalWrite).toHaveBeenCalledWith('pty-fallback', '\x03')
+    // Force-close should have happened via agentKill
+    expect(api.agentKill).toHaveBeenCalledWith('stream-fallback')
   })
 
   it('should reset tracking when dbPath changes', async () => {
@@ -439,7 +438,7 @@ describe('composables/useAutoLaunch', () => {
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('task-creator', 'Ubuntu-24.04')
       const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-      termTab.ptyId = 'pty-task-creator-notask'
+      termTab.streamId = 'stream-task-creator-notask'
 
       // Trigger tasks watch (task for a different agent)
       tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 999 })]
@@ -449,7 +448,7 @@ describe('composables/useAutoLaunch', () => {
       await vi.advanceTimersByTimeAsync(200)
 
       // Terminal must still be open — old session must not trigger close
-      expect(api.terminalWrite).not.toHaveBeenCalled()
+      expect(api.agentKill).not.toHaveBeenCalled()
       expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(1)
     })
 
@@ -466,20 +465,20 @@ describe('composables/useAutoLaunch', () => {
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('task-creator', 'Ubuntu-24.04')
       const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-      termTab.ptyId = 'pty-task-creator-close'
+      termTab.streamId = 'stream-task-creator-close'
 
       // Trigger no-task check
       tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 999 })]
       await nextTick()
       await vi.advanceTimersByTimeAsync(200) // debounce + immediate poll → no close
 
-      expect(api.terminalWrite).not.toHaveBeenCalled()
+      expect(api.agentKill).not.toHaveBeenCalled()
 
       // Session completes → next poll detects it
       api.queryDb.mockResolvedValue([{ id: 99 }])
       await vi.advanceTimersByTimeAsync(5_000 + 100) // POLL_INTERVAL_MS = 5_000
 
-      expect(api.terminalWrite).toHaveBeenCalledWith('pty-task-creator-close', '\x03')
+      expect(api.agentKill).toHaveBeenCalledWith('stream-task-creator-close')
     })
 
     it('should pass a notBefore ISO timestamp as 2nd queryDb param (with 5min lookback)', async () => {
@@ -533,7 +532,7 @@ describe('composables/useAutoLaunch', () => {
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
       const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-      termTab.ptyId = 'pty-race'
+      termTab.streamId = 'stream-race'
 
       // Task transitions to done — agent session was already completed (race condition)
       tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
@@ -542,7 +541,7 @@ describe('composables/useAutoLaunch', () => {
       // Past debounce + immediate poll → lookback window covers the completed session
       await vi.advanceTimersByTimeAsync(150)
 
-      expect(api.terminalWrite).toHaveBeenCalledWith('pty-race', '\x03')
+      expect(api.agentKill).toHaveBeenCalledWith('stream-race')
     })
   })
 
@@ -610,7 +609,7 @@ describe('composables/useAutoLaunch', () => {
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
       const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-      termTab.ptyId = 'pty-no-auto'
+      termTab.streamId = 'stream-no-auto'
 
       // Task transitions to done
       tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
@@ -620,21 +619,20 @@ describe('composables/useAutoLaunch', () => {
       await vi.advanceTimersByTimeAsync(5000)
       await vi.advanceTimersByTimeAsync(2000)
 
-      expect(api.terminalWrite).not.toHaveBeenCalled()
-      expect(api.terminalKill).not.toHaveBeenCalled()
+      expect(api.agentKill).not.toHaveBeenCalled()
       expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(1)
     })
   })
 
   describe('scheduleClose edge cases', () => {
-    it('should closeTab directly when tab has no ptyId', async () => {
+    it('should closeTab without agentKill when tab has no streamId', async () => {
       useAutoLaunch({ tasks, agents, dbPath })
 
       // Seed with in_progress task
       tasks.value = [makeTask({ id: 1, statut: 'in_progress', agent_assigne_id: 10 })]
       await nextTick()
 
-      // Add terminal WITHOUT setting ptyId
+      // Add terminal WITHOUT setting streamId
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
 
@@ -645,9 +643,12 @@ describe('composables/useAutoLaunch', () => {
       // Advance past 80ms debounce + immediate 0ms poll, flush promises
       await vi.advanceTimersByTimeAsync(81)
 
-      // Tab should be closed directly (no terminalWrite/Kill since no ptyId)
-      expect(api.terminalWrite).not.toHaveBeenCalled()
-      expect(api.terminalKill).not.toHaveBeenCalled()
+      // agentKill not called (no streamId); closeTab fires after KILL_DELAY_MS
+      expect(api.agentKill).not.toHaveBeenCalled()
+      expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(1)
+
+      // Advance past kill delay (2s) — closeTab fires
+      await vi.advanceTimersByTimeAsync(2000)
       expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(0)
     })
 
@@ -661,7 +662,7 @@ describe('composables/useAutoLaunch', () => {
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
       const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-      termTab.ptyId = 'pty-456'
+      termTab.streamId = 'stream-456'
 
       // First done transition
       tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
@@ -680,9 +681,11 @@ describe('composables/useAutoLaunch', () => {
       // Advance to fire any new immediate poll
       await vi.advanceTimersByTimeAsync(5000)
 
-      // The key assertion: terminalWrite should have been called at most once
-      // (first doClose found the terminal; subsequent polls find no terminal)
-      expect(api.terminalWrite).toHaveBeenCalledTimes(1)
+      // The key assertion: doClose was triggered only once (first close found the terminal).
+      // agentKill is called twice: once by doClose, once internally by closeTab.
+      // Subsequent polls find no terminal and do not trigger additional calls.
+      expect(api.agentKill).toHaveBeenCalledTimes(2)
+      expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(0)
     })
   })
 })
