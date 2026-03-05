@@ -1,6 +1,6 @@
 # agent-viewer
 
-![Version](https://img.shields.io/badge/version-0.22.0-blue)
+![Version](https://img.shields.io/badge/version-0.23.0-blue)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 
 Desktop interface in Trello/Jira style for real-time visualization of Claude agent tasks from a local SQLite database. The application manages agents, launches Claude sessions in external WSL terminals, and monitors activity in real time.
@@ -14,6 +14,7 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 - **Task Tree**: Hierarchical view of tasks via `parent_task_id`, collapsible subtree nodes
 - **Task Dependencies**: Dependency graph (`task_links`) visualised in `TaskDependencyGraph`
 - **Multi-agent Assignments**: Multiple agents per task (primary / support / reviewer roles), task card avatars
+- **In-Progress Indicator**: Pulsating cyan accent on task cards and agent session tabs for active `in_progress` items — instantly identifies which tasks and agents are currently running
 - **Kanban Drag & Drop**: Drag task cards between columns to update status directly in the database
 - **Archive Pagination**: Paginated archive view (50 tasks per page), archives excluded from main refresh for better performance
 - **Search**: Full-text search in tasks with filters (status, agent, scope)
@@ -53,7 +54,8 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 - **Windows Native Claude**: Launch Claude sessions directly on Windows (no WSL) via PowerShell spawn with a `.ps1` script — system prompt passed verbatim via `List[string]`, bypassing cmd.exe quoting issues
 - **External WSL Terminal**: Launch Claude sessions in external WSL terminal windows (Windows Terminal → `wsl://` URI → `wsl.exe` fallback chain)
 - **Auto-launch Terminals**: Automatic agent session launch on task creation with assignment
-- **Auto-trigger Review**: Automatic review session launch when ≥10 tasks reach `done` status (configurable threshold, cooldown)
+- **Auto-close Session on Stop Hook**: When Claude Code sends a `Stop` hook, the session is automatically marked as `completed` in the database — no manual cleanup needed
+- **Auto-trigger Review**: Automatic review session launch when ≥10 tasks reach `done` status (configurable threshold, cooldown); fires independently of the agent auto-launch toggle
 - **Pre-inject Session Context**: Startup context (agent_id, session_id, assigned tasks, active locks, last session summary) automatically injected into the first agent message via `build-agent-prompt` IPC — agents no longer need to call `dbstart.js` manually
 
 ### UI & UX
@@ -134,7 +136,6 @@ Outputs:
 | `npm run dev` | Start in development mode |
 | `npm run build` | Windows production build |
 | `npm run build:dir` | Build without packaging |
-| `npm run lint` | ESLint check |
 | `npm run test` | Run tests (Vitest) |
 | `npm run test:watch` | Tests in watch mode |
 | `npm run test:coverage` | Coverage report |
