@@ -5,12 +5,20 @@ import { useTasksStore } from '@renderer/stores/tasks'
 import DashboardOverview from '@renderer/components/DashboardOverview.vue'
 import { mockElectronAPI } from '../../../test/setup'
 
+const CHILD_STUBS = {
+  ActivityHeatmap: { template: '<div class="stub-heatmap" />' },
+  SessionActivityChart: { template: '<div class="stub-session-chart" />' },
+  SuccessRateChart: { template: '<div class="stub-success-chart" />' },
+  AgentQualityPanel: { template: '<div class="stub-quality" />' },
+  WorkloadView: { template: '<div class="stub-workload" />' },
+}
+
 function mountWithState(state: Record<string, unknown>) {
   const pinia = createTestingPinia({ initialState: state })
   const store = useTasksStore(pinia)
   // Provide query as a real stub returning empty arrays by default
   ;(store.query as ReturnType<typeof vi.fn>).mockResolvedValue([])
-  const wrapper = mount(DashboardOverview, { global: { plugins: [pinia] } })
+  const wrapper = mount(DashboardOverview, { global: { plugins: [pinia], stubs: CHILD_STUBS } })
   return { wrapper, store, pinia }
 }
 
@@ -128,7 +136,7 @@ describe('DashboardOverview (T923)', () => {
       .mockResolvedValueOnce([
         { created_at: '2026-01-01T10:00:00', action: 'task_started', detail: 'T999', agent_name: 'agent-y' },
       ])
-    const wrapper = mount(DashboardOverview, { global: { plugins: [pinia] } })
+    const wrapper = mount(DashboardOverview, { global: { plugins: [pinia], stubs: CHILD_STUBS } })
     await flushPromises()
     expect(wrapper.text()).toContain('task_started')
     wrapper.unmount()
