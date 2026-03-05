@@ -162,31 +162,6 @@ describe('stores/settings', () => {
     })
   })
 
-  describe('setClaudeMdInfo', () => {
-    it('should update claudeMdInfo fields partially', () => {
-      const store = useSettingsStore()
-
-      store.setClaudeMdInfo({ sha: 'abc123', hasUpdate: true })
-
-      expect(store.claudeMdInfo.sha).toBe('abc123')
-      expect(store.claudeMdInfo.hasUpdate).toBe(true)
-    })
-
-    it('should not crash with empty object', () => {
-      const store = useSettingsStore()
-      expect(() => store.setClaudeMdInfo({})).not.toThrow()
-    })
-
-    it('should merge partial updates without losing existing fields', () => {
-      const store = useSettingsStore()
-      store.setClaudeMdInfo({ sha: 'abc', hasUpdate: false })
-      store.setClaudeMdInfo({ hasUpdate: true })
-
-      // sha should be preserved, hasUpdate updated
-      expect(store.claudeMdInfo.sha).toBe('abc')
-      expect(store.claudeMdInfo.hasUpdate).toBe(true)
-    })
-  })
 })
 
 
@@ -313,6 +288,60 @@ describe('stores/settings — appInfo', () => {
     const store = useSettingsStore()
     expect(typeof store.appInfo.version).toBe('string')
     expect(store.appInfo.version.length).toBeGreaterThan(0)
+  })
+})
+
+describe('stores/settings — defaultClaudeInstance (T857)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    document.documentElement.className = ''
+  })
+
+  it('should default to empty string', () => {
+    const store = useSettingsStore()
+    expect(store.defaultClaudeInstance).toBe('')
+  })
+
+  it('should persist distro to localStorage', () => {
+    const store = useSettingsStore()
+    store.setDefaultClaudeInstance('Ubuntu-24.04')
+    expect(store.defaultClaudeInstance).toBe('Ubuntu-24.04')
+    expect(localStorage.getItem('defaultClaudeInstance')).toBe('Ubuntu-24.04')
+  })
+
+  it('should read stored value on init', () => {
+    localStorage.setItem('defaultClaudeInstance', 'Debian')
+    const store = useSettingsStore()
+    expect(store.defaultClaudeInstance).toBe('Debian')
+  })
+})
+
+describe('stores/settings — defaultClaudeProfile (T857)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    document.documentElement.className = ''
+  })
+
+  it('should default to "claude"', () => {
+    const store = useSettingsStore()
+    expect(store.defaultClaudeProfile).toBe('claude')
+  })
+
+  it('should persist profile to localStorage', () => {
+    const store = useSettingsStore()
+    store.setDefaultClaudeProfile('claude-work')
+    expect(store.defaultClaudeProfile).toBe('claude-work')
+    expect(localStorage.getItem('defaultClaudeProfile')).toBe('claude-work')
+  })
+
+  it('should read stored value on init', () => {
+    localStorage.setItem('defaultClaudeProfile', 'claude-beta')
+    const store = useSettingsStore()
+    expect(store.defaultClaudeProfile).toBe('claude-beta')
   })
 })
 

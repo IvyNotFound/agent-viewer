@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useTasksStore } from '@renderer/stores/tasks'
+import { useSettingsStore } from '@renderer/stores/settings'
 import { agentFg, agentBorder } from '@renderer/utils/agentColor'
 import { useModalEscape } from '@renderer/composables/useModalEscape'
 import type { Agent, ClaudeInstance } from '@renderer/types'
@@ -15,6 +16,7 @@ useModalEscape(() => emit('close'))
 const { t } = useI18n()
 const tabsStore = useTabsStore()
 const tasksStore = useTasksStore()
+const settingsStore = useSettingsStore()
 
 /** Detected Claude Code instances (WSL distros and/or native installs with claude) */
 const claudeInstances = ref<ClaudeInstance[]>([])
@@ -53,10 +55,19 @@ onMounted(async () => {
   const rawInstances = await window.electronAPI.getClaudeInstances()
   claudeInstances.value = rawInstances as ClaudeInstance[]
 
-  // Auto-select: prefer default distro, then first available
+  // Auto-select: prefer stored user preference, fall back to isDefault/first
   if (claudeInstances.value.length > 0) {
+    const stored = settingsStore.defaultClaudeInstance
     selectedInstance.value =
-      claudeInstances.value.find(i => i.isDefault) ?? claudeInstances.value[0]
+      (stored ? claudeInstances.value.find(i => i.distro === stored) : undefined)
+      ?? claudeInstances.value.find(i => i.isDefault)
+      ?? claudeInstances.value[0]
+      ?? null
+
+    const storedProfile = settingsStore.defaultClaudeProfile
+    if (storedProfile && selectedInstance.value?.profiles.includes(storedProfile)) {
+      selectedProfile.value = storedProfile
+    }
   }
 
   // Get the agent's system prompts and thinking mode from the DB

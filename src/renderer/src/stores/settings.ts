@@ -6,7 +6,6 @@
  * - Language (fr/en)
  * - GitHub integration (token, repo URL)
  * - App info (version, name)
- * - CLAUDE.md sync status
  *
  * @module stores/settings
  */
@@ -32,12 +31,6 @@ interface AppInfo {
   name: string
 }
 
-interface ClaudeMdInfo {
-  projectCommit: string | null
-  masterCommit: string | null
-  needsUpdate: boolean
-}
-
 /**
  * Settings store using Pinia composition API.
  *
@@ -46,13 +39,11 @@ interface ClaudeMdInfo {
  * - language: UI language ('fr' | 'en')
  * - github: GitHub connection settings
  * - appInfo: Application metadata
- * - claudeMdInfo: CLAUDE.md sync status
  *
  * Actions:
  * - setTheme, applyTheme: Theme management
  * - setLanguage: Language switching
  * - setGitHubRepo: GitHub config
- * - setClaudeMdInfo: Update sync status
  *
  * @returns {object} Store instance with state and methods
  */
@@ -181,6 +172,19 @@ export const useSettingsStore = defineStore('settings', () => {
     localStorage.setItem('autoReviewThreshold', String(clamped))
   }
 
+  // Default Claude instance (T857)
+  const defaultClaudeInstance = ref<string>(localStorage.getItem('defaultClaudeInstance') || '')
+  function setDefaultClaudeInstance(distro: string) {
+    defaultClaudeInstance.value = distro
+    localStorage.setItem('defaultClaudeInstance', distro)
+  }
+
+  const defaultClaudeProfile = ref<string>(localStorage.getItem('defaultClaudeProfile') || 'claude')
+  function setDefaultClaudeProfile(profile: string) {
+    defaultClaudeProfile.value = profile
+    localStorage.setItem('defaultClaudeProfile', profile)
+  }
+
   // Desktop notifications (T755)
   const notificationsEnabled = ref<boolean>(localStorage.getItem('notificationsEnabled') === 'true')
 
@@ -192,18 +196,6 @@ export const useSettingsStore = defineStore('settings', () => {
     }
     notificationsEnabled.value = enabled
     localStorage.setItem('notificationsEnabled', String(enabled))
-  }
-
-  // CLAUDE.md sync
-  const claudeMdInfo = ref<ClaudeMdInfo>({
-    projectCommit: null,
-    masterCommit: null,
-    needsUpdate: false
-  })
-
-  /** @param info - Partial CLAUDE.md sync state to merge */
-  function setClaudeMdInfo(info: Partial<ClaudeMdInfo>) {
-    Object.assign(claudeMdInfo.value, info)
   }
 
   return {
@@ -220,9 +212,6 @@ export const useSettingsStore = defineStore('settings', () => {
     setGitHubConnected,
     // App info
     appInfo,
-    // CLAUDE.md
-    claudeMdInfo,
-    setClaudeMdInfo,
     // Auto-launch (T340)
     autoLaunchAgentSessions,
     setAutoLaunchAgentSessions,
@@ -234,5 +223,10 @@ export const useSettingsStore = defineStore('settings', () => {
     // Desktop notifications (T755)
     notificationsEnabled,
     setNotificationsEnabled,
+    // Default Claude instance (T857)
+    defaultClaudeInstance,
+    setDefaultClaudeInstance,
+    defaultClaudeProfile,
+    setDefaultClaudeProfile,
   }
 })

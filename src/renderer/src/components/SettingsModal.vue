@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@renderer/stores/settings'
 import { useTasksStore } from '@renderer/stores/tasks'
 import ToggleSwitch from '@renderer/components/ToggleSwitch.vue'
+import type { ClaudeInstance } from '@renderer/types'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -42,21 +43,20 @@ const connectionError = ref('')
 const updateStatus = ref('')
 const updateAvailable = ref(false)
 
-// CLAUDE.md sync state
-const claudeMdChecking = ref(false)
-const claudeMdApplying = ref(false)
-const claudeMdStatus = ref<'idle' | 'up-to-date' | 'update-available' | 'error'>('idle')
-const claudeMdError = ref('')
-const pendingContent = ref<string | null>(null)
-const pendingSha = ref<string | null>(null)
+// Claude instances for default selection (T857)
+const claudeInstances = ref<ClaudeInstance[]>([])
+
+function instanceLabel(inst: ClaudeInstance): string {
+  if (inst.distro === 'local') return `Local (v${inst.version})`
+  return `${inst.distro}${inst.isDefault ? ' ★' : ''} (v${inst.version})`
+}
 
 onMounted(async () => {
-  if (store.dbPath) {
-    const shaRes = await window.electronAPI.getConfigValue(store.dbPath, 'claude_md_commit')
-    if (shaRes.success && shaRes.value) {
-      settingsStore.setClaudeMdInfo({ projectCommit: shaRes.value })
-    }
+  // Load Claude instances for default selection (T857)
+  const rawInstances = await window.electronAPI.getClaudeInstances()
+  claudeInstances.value = Array.isArray(rawInstances) ? (rawInstances as ClaudeInstance[]) : []
 
+  if (store.dbPath) {
     // Silent reconnection if repo already configured
     if (githubRepo.value) {
       await testGithubConnection()
@@ -75,7 +75,6 @@ async function testGithubConnection() {
     connectionError.value = result.error || 'Connexion échouée'
   } else {
     connectionError.value = ''
-    await checkClaudeMdStatus()
   }
 }
 
@@ -97,65 +96,6 @@ async function checkUpdates() {
     updateStatus.value = 'Erreur de vérification'
   } finally {
     checkingUpdates.value = false
-  }
-}
-
-async function checkClaudeMdStatus() {
-  if (!store.dbPath) return
-  claudeMdChecking.value = true
-  claudeMdStatus.value = 'idle'
-  claudeMdError.value = ''
-  pendingContent.value = null
-  pendingSha.value = null
-
-  try {
-    const result = await window.electronAPI.checkMasterClaudeMd(store.dbPath)
-    if (!result.success) {
-      claudeMdStatus.value = 'error'
-      claudeMdError.value = result.error ?? 'Erreur inconnue'
-      return
-    }
-
-    settingsStore.setClaudeMdInfo({ masterCommit: result.sha ?? null })
-
-    if (result.upToDate) {
-      claudeMdStatus.value = 'up-to-date'
-    } else {
-      claudeMdStatus.value = 'update-available'
-      pendingContent.value = result.content ?? null
-      pendingSha.value = result.sha ?? null
-    }
-  } catch (err) {
-    claudeMdStatus.value = 'error'
-    claudeMdError.value = String(err)
-  } finally {
-    claudeMdChecking.value = false
-  }
-}
-
-async function applyClaudeMdUpdate() {
-  if (!store.dbPath || !store.projectPath || !pendingContent.value || !pendingSha.value) return
-  claudeMdApplying.value = true
-  try {
-    const result = await window.electronAPI.applyMasterClaudeMd(
-      store.dbPath,
-      store.projectPath,
-      pendingContent.value,
-      pendingSha.value
-    )
-    if (result.success) {
-      settingsStore.setClaudeMdInfo({ projectCommit: pendingSha.value, needsUpdate: false })
-      claudeMdStatus.value = 'up-to-date'
-      pendingContent.value = null
-      pendingSha.value = null
-      emit('toast', 'CLAUDE.md mis à jour avec succès', 'success')
-    } else {
-      emit('toast', result.error ?? 'Erreur lors de la mise à jour', 'error')
-    }
-  } catch (err) {
-    emit('toast', String(err), 'error')
-  } finally {
-    claudeMdApplying.value = false
   }
 }
 
@@ -294,6 +234,39 @@ function handleKeydown(e: KeyboardEvent) {
             </div>
           </div>
 
+          <!-- Default Claude instance (T857) -->
+          <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
+            <p class="text-[11px] text-content-subtle mb-3 uppercase tracking-wider">{{ t('settings.defaultClaudeInstance') }}</p>
+            <div v-if="claudeInstances.length === 0" class="text-sm text-content-subtle">—</div>
+            <div v-else class="flex flex-col gap-2">
+              <select
+                class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-sm text-content-primary outline-none focus:ring-1 focus:ring-violet-500"
+                :value="settingsStore.defaultClaudeInstance || claudeInstances[0]?.distro"
+                @change="settingsStore.setDefaultClaudeInstance(($event.target as HTMLSelectElement).value)"
+              >
+                <option v-for="inst in claudeInstances" :key="inst.distro" :value="inst.distro">
+                  {{ instanceLabel(inst) }}
+                </option>
+              </select>
+              <div v-if="(claudeInstances.find(i => i.distro === (settingsStore.defaultClaudeInstance || claudeInstances[0]?.distro))?.profiles?.length ?? 0) > 1">
+                <p class="text-[11px] text-content-subtle mb-1 uppercase tracking-wider">{{ t('settings.defaultClaudeProfile') }}</p>
+                <select
+                  class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-sm text-content-primary outline-none focus:ring-1 focus:ring-violet-500"
+                  :value="settingsStore.defaultClaudeProfile"
+                  @change="settingsStore.setDefaultClaudeProfile(($event.target as HTMLSelectElement).value)"
+                >
+                  <option
+                    v-for="profile in claudeInstances.find(i => i.distro === (settingsStore.defaultClaudeInstance || claudeInstances[0]?.distro))?.profiles"
+                    :key="profile"
+                    :value="profile"
+                  >
+                    {{ profile }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <!-- GitHub Connection -->
           <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
             <p class="text-[11px] text-content-subtle mb-3 uppercase tracking-wider">{{ t('settings.github') }}</p>
@@ -366,45 +339,6 @@ function handleKeydown(e: KeyboardEvent) {
               >
                 {{ updateStatus }}
               </span>
-            </div>
-          </div>
-
-          <!-- CLAUDE.md Sync -->
-          <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
-            <p class="text-[11px] text-content-subtle mb-3 uppercase tracking-wider">{{ t('settings.claudeMd') }}</p>
-            <div class="text-sm text-content-muted space-y-1 mb-3">
-              <p>{{ t('settings.project') }}: <span class="font-mono text-content-tertiary text-xs">{{ settingsStore.claudeMdInfo.projectCommit ? settingsStore.claudeMdInfo.projectCommit.slice(0, 12) : '—' }}</span></p>
-              <p>{{ t('settings.master') }}: <span class="font-mono text-content-tertiary text-xs">{{ settingsStore.claudeMdInfo.masterCommit ? settingsStore.claudeMdInfo.masterCommit.slice(0, 12) : '—' }}</span></p>
-            </div>
-
-            <!-- Status feedback -->
-            <div v-if="claudeMdStatus === 'up-to-date'" class="mb-2 text-sm text-emerald-400">
-              {{ t('settings.upToDate') }}
-            </div>
-            <div v-else-if="claudeMdStatus === 'update-available'" class="mb-2 text-sm text-amber-400">
-              {{ t('settings.updateAvailable') }}
-            </div>
-            <div v-else-if="claudeMdStatus === 'error'" class="mb-2 text-xs text-red-400 break-all">
-              {{ claudeMdError }}
-            </div>
-
-            <div v-if="!store.dbPath" class="text-xs text-content-subtle">{{ t('settings.noProject') }}</div>
-            <div v-else class="flex gap-2">
-              <button
-                class="flex-1 py-2 text-sm bg-surface-tertiary hover:bg-content-faint text-content-primary rounded-md transition-colors disabled:opacity-50"
-                :disabled="claudeMdChecking || claudeMdApplying"
-                @click="checkClaudeMdStatus"
-              >
-                {{ claudeMdChecking ? t('settings.checking') : t('settings.check') }}
-              </button>
-              <button
-                v-if="claudeMdStatus === 'update-available'"
-                class="flex-1 py-2 text-sm bg-violet-600 hover:bg-violet-500 text-white rounded-md transition-colors disabled:opacity-50"
-                :disabled="claudeMdApplying"
-                @click="applyClaudeMdUpdate"
-              >
-                {{ claudeMdApplying ? t('settings.applying') : t('settings.apply') }}
-              </button>
             </div>
           </div>
 

@@ -197,7 +197,9 @@
     "exportConfirm": "Exporter",
     "exporting": "Export en cours...",
     "exportSuccess": "Export téléchargé : {path}",
-    "exportError": "Erreur export : {error}"
+    "exportError": "Erreur export : {error}",
+    "defaultClaudeInstance": "Instance Claude Code par défaut",
+    "defaultClaudeProfile": "Profil Claude par défaut"
   },
   "setup": {
     "missingDb": "Base de données manquante",
