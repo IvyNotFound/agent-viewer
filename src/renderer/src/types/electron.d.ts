@@ -78,6 +78,8 @@ declare global {
       gitLog(projectPath: string, options?: { limit?: number; since?: string }): Promise<Array<{ hash: string; date: string; subject: string; author: string; taskIds: number[] }>>
       /** Subscribe to Claude Code hook events (SessionStart, SubagentStart/Stop, PreToolUse, PostToolUse). Returns unsubscribe fn. */
       onHookEvent(callback: (event: { event: string; payload: unknown; ts: number }) => void): () => void
+      /** Quality stats per agent: total tasks, rejections, rejection rate (T770). Heuristic-based. */
+      tasksQualityStats(dbPath: string, params?: { perimetre?: string | null }): Promise<{ success: boolean; rows: unknown[]; error?: string }>
     }
   }
 }

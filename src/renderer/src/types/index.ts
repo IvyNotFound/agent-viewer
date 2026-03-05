@@ -171,6 +171,17 @@ export interface AgentGroup {
   members: Array<{ agent_id: number; sort_order: number }>
 }
 
+/** Quality stat row for one agent (from tasks:qualityStats IPC). */
+export interface AgentQualityRow {
+  agent_id: number
+  agent_name: string
+  agent_perimetre: string | null
+  total_tasks: number
+  rejected_tasks: number
+  /** Rejection rate as a percentage (0–100). */
+  rejection_rate: number
+}
+
 /** Agent log entry from the `agent_logs` table. */
 export interface AgentLog {
   id: number

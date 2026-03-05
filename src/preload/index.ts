@@ -320,4 +320,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   projectExportZip: (dbPath: string): Promise<{ success: boolean; path?: string; error?: string }> =>
     ipcRenderer.invoke('project:exportZip', dbPath),
 
+  /** Quality stats per agent: total tasks, rejections, rejection rate. */
+  tasksQualityStats: (dbPath: string, params?: { perimetre?: string | null }): Promise<{ success: boolean; rows: unknown[]; error?: string }> =>
+    ipcRenderer.invoke('tasks:qualityStats', dbPath, params),
+
 })

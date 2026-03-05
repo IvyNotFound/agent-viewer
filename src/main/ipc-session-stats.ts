@@ -139,6 +139,55 @@ export function registerSessionStatsHandlers(): void {
   })
 
   /**
+   * Quality stats per agent: total tasks, rejection count, rejection rate.
+   * A "rejection" is detected when a task_comment from the reviewer (agent_id=4)
+   * contains keywords: "rejet", "retour", "todo".
+   * NOTE: heuristic-based; may miss non-standard rejection comments.
+   * @param dbPath - Registered DB path
+   * @param params - { perimetre?: string | null } optional filter by perimetre
+   * @returns {{ success: boolean, rows: AgentQualityRow[], error?: string }}
+   */
+  ipcMain.handle('tasks:qualityStats', async (_event, dbPath: string, params?: {
+    perimetre?: string | null
+  }) => {
+    assertDbPathAllowed(dbPath)
+    const conditions: string[] = ["t.statut IN ('done','archived')"]
+    const binds: unknown[] = []
+    if (params?.perimetre != null) {
+      conditions.push('t.perimetre = ?')
+      binds.push(params.perimetre)
+    }
+    const where = conditions.join(' AND ')
+    try {
+      const rows = await queryLive(dbPath, `
+        SELECT
+          a.id as agent_id,
+          a.name as agent_name,
+          a.perimetre as agent_perimetre,
+          COUNT(DISTINCT t.id) as total_tasks,
+          COUNT(DISTINCT CASE WHEN tc.id IS NOT NULL THEN t.id END) as rejected_tasks,
+          ROUND(
+            100.0 * COUNT(DISTINCT CASE WHEN tc.id IS NOT NULL THEN t.id END)
+            / MAX(COUNT(DISTINCT t.id), 1),
+            1
+          ) as rejection_rate
+        FROM agents a
+        LEFT JOIN tasks t ON t.agent_assigne_id = a.id AND ${where}
+        LEFT JOIN task_comments tc ON tc.task_id = t.id
+          AND tc.agent_id = 4
+          AND (tc.contenu LIKE '%rejet%' OR tc.contenu LIKE '%retour%' OR tc.contenu LIKE '%todo%')
+        GROUP BY a.id, a.name, a.perimetre
+        HAVING total_tasks > 0
+        ORDER BY rejected_tasks DESC, total_tasks DESC
+      `, binds)
+      return { success: true, rows }
+    } catch (err) {
+      console.error('[IPC tasks:qualityStats]', err)
+      return { success: false, error: String(err), rows: [] }
+    }
+  })
+
+  /**
    * Update a task's status in the DB (used by drag & drop, etc.)
    * @param dbPath - Registered DB path
    * @param taskId - Task ID to update
