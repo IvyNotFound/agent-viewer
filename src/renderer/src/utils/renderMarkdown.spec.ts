@@ -19,13 +19,22 @@ beforeAll(() => {
   }
 })
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 marked.use({
   renderer: {
     code({ text, lang }: { text: string; lang?: string }) {
       const language = lang && hljs.getLanguage(lang) ? lang : undefined
       const highlighted = language
         ? hljs.highlight(text, { language }).value
-        : hljs.highlightAuto(text).value
+        : escapeHtml(text)
       return `<pre class="hljs"><code class="${language ? `language-${language}` : ''}">${highlighted}</code></pre>`
     }
   }
@@ -90,5 +99,19 @@ describe('renderMarkdown', () => {
   it('renders plain text unchanged (wrapped in p)', () => {
     const result = renderMarkdown('hello world')
     expect(result).toContain('hello world')
+  })
+
+  it('renders code block without language as plaintext (no hljs auto, T841)', () => {
+    const result = renderMarkdown('```\nconst x = 1\n```')
+    expect(result).toContain('<pre class="hljs">')
+    expect(result).toContain('const x = 1')
+    // No language class when lang is absent
+    expect(result).toContain('<code class="">')
+  })
+
+  it('escapes HTML in unlabeled code blocks (T841)', () => {
+    const result = renderMarkdown('```\n<script>alert(1)</script>\n```')
+    expect(result).not.toContain('<script>')
+    expect(result).toContain('&lt;script&gt;')
   })
 })
