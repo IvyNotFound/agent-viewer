@@ -986,6 +986,12 @@ const migrations: Migration[] = [
     if (!cols.has('duration_ms')) db.run('ALTER TABLE sessions ADD COLUMN duration_ms INTEGER')
     if (!cols.has('num_turns')) db.run('ALTER TABLE sessions ADD COLUMN num_turns INTEGER')
   } },
+
+  // v21: add indexes on task_links(from_task) and task_links(to_task) (T789)
+  { version: 21, up: (db) => {
+    db.run('CREATE INDEX IF NOT EXISTS idx_task_links_from_task ON task_links(from_task)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_task_links_to_task ON task_links(to_task)')
+  } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */

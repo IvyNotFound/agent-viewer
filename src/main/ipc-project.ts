@@ -281,6 +281,8 @@ export function registerProjectHandlers(): void {
         CREATE INDEX IF NOT EXISTS idx_tasks_agent_assigne ON tasks(agent_assigne_id);
         CREATE INDEX IF NOT EXISTS idx_sessions_agent_started ON sessions(agent_id, started_at DESC);
         CREATE INDEX IF NOT EXISTS idx_task_comments_task_id ON task_comments(task_id);
+        CREATE INDEX IF NOT EXISTS idx_task_links_from_task ON task_links(from_task);
+        CREATE INDEX IF NOT EXISTS idx_task_links_to_task ON task_links(to_task);
       `)
       for (const agent of GENERIC_AGENTS) {
         db.run(
