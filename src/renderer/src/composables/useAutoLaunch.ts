@@ -81,6 +81,10 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     if (!initialized) {
       previousStatuses = new Map(newTasks.map(t => [t.id, t.statut]))
       initialized = true
+      // Check threshold on initial load — tasks already done before app restart must trigger review
+      if (settingsStore.autoLaunchAgentSessions && settingsStore.autoReviewEnabled) {
+        checkReviewThreshold(newTasks)
+      }
       return
     }
 

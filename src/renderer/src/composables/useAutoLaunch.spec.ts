@@ -87,6 +87,47 @@ describe('composables/useAutoLaunch', () => {
     expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(0)
   })
 
+  it('T900: should launch review on initial load when done count >= threshold', async () => {
+    const reviewAgent = makeAgent({ id: 99, name: 'review-master', type: 'review' })
+    agents.value = [makeAgent(), reviewAgent]
+
+    const settingsStore = useSettingsStore()
+    settingsStore.setAutoReviewThreshold(3)
+
+    useAutoLaunch({ tasks, agents, dbPath })
+
+    // First watch trigger = init phase: 5 done tasks already present at startup
+    tasks.value = Array.from({ length: 5 }, (_, i) =>
+      makeTask({ id: i + 1, statut: 'done', agent_assigne_id: 10 })
+    )
+    await nextTick()
+
+    await vi.waitFor(() => {
+      const tabsStore = useTabsStore()
+      expect(tabsStore.tabs.some(t => t.type === 'terminal' && t.agentName === 'review-master')).toBe(true)
+    })
+  })
+
+  it('T900: should NOT launch review on initial load when done count < threshold', async () => {
+    const reviewAgent = makeAgent({ id: 99, name: 'review-master', type: 'review' })
+    agents.value = [makeAgent(), reviewAgent]
+
+    const settingsStore = useSettingsStore()
+    settingsStore.setAutoReviewThreshold(10)
+
+    useAutoLaunch({ tasks, agents, dbPath })
+
+    // First watch trigger = init phase: only 3 done tasks, below threshold of 10
+    tasks.value = Array.from({ length: 3 }, (_, i) =>
+      makeTask({ id: i + 1, statut: 'done', agent_assigne_id: 10 })
+    )
+    await nextTick()
+    await nextTick()
+
+    const tabsStore = useTabsStore()
+    expect(tabsStore.tabs.some(t => t.agentName === 'review-master')).toBe(false)
+  })
+
   it('should NOT auto-launch terminal when new task appears (T345: removed)', async () => {
     useAutoLaunch({ tasks, agents, dbPath })
 
