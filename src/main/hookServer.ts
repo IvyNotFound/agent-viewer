@@ -197,11 +197,101 @@ export async function injectHookUrls(settingsPath: string, ip: string): Promise<
 }
 
 /**
+ * Inject hook secret and URLs into a single WSL distro's ~/.claude/settings.json
+ * by reading and writing via `wsl.exe -d <distro> -- bash -c "..."`.
+ *
+ * Bypasses the UNC path approach (\\wsl.localhost\...) which fails silently on
+ * Windows when the distro filesystem is not fully mounted.
+ */
+async function injectIntoDistroViaWsl(distro: string, wslIp: string | null): Promise<void> {
+  // Read current settings via wsl.exe (cat returns '{}' if file missing)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let settings: any = {}
+  try {
+    const raw = execSync(
+      `wsl.exe -d "${distro}" -- bash -c "cat ~/.claude/settings.json 2>/dev/null || echo '{}'"`,
+      { timeout: 5000, encoding: 'utf-8' }
+    ) as string
+    settings = JSON.parse(raw.trim() || '{}')
+  } catch {
+    settings = {}
+  }
+
+  let changed = false
+
+  // Inject hook auth secret into existing http hooks
+  if (settings.hooks && hookSecret) {
+    for (const eventGroups of Object.values(settings.hooks as Record<string, unknown[]>)) {
+      for (const group of eventGroups as Array<{ hooks?: Array<{ type: string; headers?: Record<string, string> }> }>) {
+        if (!Array.isArray(group.hooks)) continue
+        for (const hook of group.hooks) {
+          if (hook.type === 'http') {
+            const expected = `Bearer ${hookSecret}`
+            if (hook.headers?.['Authorization'] !== expected) {
+              hook.headers = { ...hook.headers, Authorization: expected }
+              changed = true
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Inject hook URLs for the WSL gateway IP
+  if (wslIp) {
+    if (!settings.hooks) settings.hooks = {}
+    const hooks = settings.hooks as Record<string, unknown[]>
+
+    for (const [event, path] of Object.entries(HOOK_ROUTES)) {
+      if (!hooks[event]) {
+        hooks[event] = [{ hooks: [{ type: 'http', url: `http://${wslIp}:${HOOK_PORT}${path}` }] }]
+        changed = true
+      } else {
+        const groups = hooks[event] as Array<{ hooks?: Array<{ type: string; url?: string }> }>
+        const hasHttp = groups.some(g => Array.isArray(g.hooks) && g.hooks.some(h => h.type === 'http'))
+        if (!hasHttp) {
+          groups.push({ hooks: [{ type: 'http', url: `http://${wslIp}:${HOOK_PORT}${path}` }] })
+          changed = true
+        }
+      }
+    }
+
+    // Update host in existing http hook URLs
+    for (const eventGroups of Object.values(hooks)) {
+      for (const group of eventGroups as Array<{ hooks?: Array<{ type: string; url?: string }> }>) {
+        if (!Array.isArray(group.hooks)) continue
+        for (const hook of group.hooks) {
+          if (hook.type === 'http' && hook.url) {
+            const updated = (hook.url as string).replace(
+              /^http:\/\/[^/]+\/hooks\//,
+              `http://${wslIp}:${HOOK_PORT}/hooks/`
+            )
+            if (updated !== hook.url) {
+              hook.url = updated
+              changed = true
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (!changed) return
+
+  const json = JSON.stringify(settings, null, 2) + '\n'
+  execSync(
+    `wsl.exe -d "${distro}" -- bash -c "mkdir -p ~/.claude && cat > ~/.claude/settings.json"`,
+    { input: json, timeout: 5000, encoding: 'utf-8' }
+  )
+  console.log(`[hookServer] Injected hooks into WSL distro "${distro}" via wsl.exe`)
+}
+
+/**
  * Detect active WSL distros and inject hook secret + URLs into each one's
- * ~/.claude/settings.json via Windows UNC path (\\wsl.localhost\<Distro>\...).
+ * ~/.claude/settings.json via `wsl.exe -d <distro> -- bash -c "..."`.
  *
  * No-op on non-Windows or when wsl.exe is unavailable.
- * Silently skips stopped distros (UNC path unreachable).
+ * Logs errors for stopped/unreachable distros instead of silently skipping.
  */
 export async function injectIntoWslDistros(wslIp: string | null): Promise<void> {
   if (process.platform !== 'win32') return
@@ -223,22 +313,9 @@ export async function injectIntoWslDistros(wslIp: string | null): Promise<void> 
 
   for (const distro of distros) {
     try {
-      const homeRaw = execSync(`wsl.exe -d "${distro}" -- printenv HOME`, {
-        timeout: 5000,
-        encoding: 'utf-8',
-      }) as string
-      const homeDir = homeRaw.trim()
-      if (!homeDir) continue
-
-      // Convert Linux path to Windows UNC: /home/user → \\wsl.localhost\Distro\home\user
-      const winHome = homeDir.replace(/\//g, '\\')
-      const settingsPath = `\\\\wsl.localhost\\${distro}${winHome}\\.claude\\settings.json`
-
-      await injectHookSecret(settingsPath)
-      if (wslIp) await injectHookUrls(settingsPath, wslIp)
-      console.log(`[hookServer] Injected hooks into WSL distro ${distro}: ${settingsPath}`)
-    } catch {
-      // Distro stopped or unreachable — skip silently
+      await injectIntoDistroViaWsl(distro, wslIp)
+    } catch (err) {
+      console.error(`[hookServer] Failed to inject into WSL distro "${distro}":`, err)
     }
   }
 }
