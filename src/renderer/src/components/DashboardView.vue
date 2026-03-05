@@ -74,14 +74,14 @@ const subTabs: { id: SubTab; label: string }[] = [
   <div class="flex flex-col h-full bg-surface-primary min-h-0">
 
     <!-- Sub-tab bar -->
-    <div class="shrink-0 flex items-center gap-0.5 px-4 pt-2.5 pb-0 bg-surface-base overflow-x-auto">
+    <div class="shrink-0 flex items-center gap-0.5 px-4 pt-2.5 pb-0 bg-surface-base border-b border-edge-subtle overflow-x-auto">
       <button
         v-for="tab in subTabs"
         :key="tab.id"
         :class="[
           'px-3 py-1 rounded-t text-xs font-semibold transition-colors border border-b-0 shrink-0',
           activeSubTab === tab.id
-            ? 'text-content-secondary bg-surface-primary border-edge-subtle'
+            ? 'text-content-secondary bg-surface-primary border-edge-subtle mb-[-1px]'
             : 'text-content-faint bg-transparent border-transparent hover:text-content-tertiary hover:bg-surface-secondary/40'
         ]"
         @click="activeSubTab = tab.id"
