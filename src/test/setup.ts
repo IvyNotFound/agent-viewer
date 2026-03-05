@@ -76,6 +76,10 @@ const mockElectronAPI = {
   agentGroupsReorder: vi.fn().mockResolvedValue({ success: true }),
   sessionsStatsCost: vi.fn().mockResolvedValue({ success: true, rows: [] }),
   projectExportZip: vi.fn().mockResolvedValue({ success: true, path: '/home/user/Downloads/project.zip' }),
+  // Telemetry IPC (T810/T842)
+  telemetryScan: vi.fn().mockResolvedValue({ languages: [], totalFiles: 0, totalLines: 0, scannedAt: new Date().toISOString() }),
+  // Quality stats IPC (T842)
+  tasksQualityStats: vi.fn().mockResolvedValue({ success: true, rows: [] }),
 }
 
 // Make it available globally (jsdom only — node environment has no window)
