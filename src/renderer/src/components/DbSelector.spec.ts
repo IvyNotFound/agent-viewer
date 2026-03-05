@@ -35,10 +35,14 @@ describe('DbSelector', () => {
     const { useTasksStore } = await import('@renderer/stores/tasks')
     const store = useTasksStore()
 
-    // Find the open project button
+    // Find the open project button (not the language toggle buttons)
     const buttons = wrapper.findAll('button')
-    if (buttons.length > 0) {
-      await buttons[0].trigger('click')
+    const openBtn = buttons.find(b => {
+      const text = b.text()
+      return text.includes('Ouvrir') || text.includes('Open')
+    })
+    if (openBtn) {
+      await openBtn.trigger('click')
       expect(store.selectProject).toHaveBeenCalled()
     }
   })

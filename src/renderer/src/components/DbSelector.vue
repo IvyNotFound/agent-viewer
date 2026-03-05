@@ -3,10 +3,17 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useTabsStore } from '@renderer/stores/tabs'
+import { useSettingsStore } from '@renderer/stores/settings'
+import type { Language } from '@renderer/stores/settings'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const store = useTasksStore()
 const tabsStore = useTabsStore()
+const settingsStore = useSettingsStore()
+
+function setLocale(lang: Language) {
+  settingsStore.setLanguage(lang)
+}
 
 const step = ref<'home' | 'create'>('home')
 const wslUsers = ref<string[]>([])
@@ -48,7 +55,21 @@ async function create() {
 
 <template>
   <!-- Accueil -->
-  <div v-if="step === 'home'" class="h-full flex items-center justify-center">
+  <div v-if="step === 'home'" class="h-full flex items-center justify-center relative">
+    <!-- Language selector -->
+    <div class="absolute top-4 right-4 flex items-center gap-1 text-xs">
+      <button
+        :class="locale === 'fr' ? 'text-violet-400 font-semibold' : 'text-zinc-500 hover:text-zinc-400'"
+        class="transition-colors"
+        @click="setLocale('fr')"
+      >FR</button>
+      <span class="text-zinc-600">/</span>
+      <button
+        :class="locale === 'en' ? 'text-violet-400 font-semibold' : 'text-zinc-500 hover:text-zinc-400'"
+        class="transition-colors"
+        @click="setLocale('en')"
+      >EN</button>
+    </div>
     <div class="text-center space-y-6 max-w-sm px-6">
       <!-- Logo -->
       <div class="w-14 h-14 rounded-2xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center mx-auto">
