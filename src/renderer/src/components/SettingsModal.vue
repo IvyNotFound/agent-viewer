@@ -246,11 +246,11 @@ function handleKeydown(e: KeyboardEvent) {
                   updaterStatus === 'error' ? 'text-red-400' : 'text-content-muted'
                 ]"
               >
-                <template v-if="updaterStatus === 'up-to-date'">À jour</template>
-                <template v-else-if="updaterStatus === 'available'">Mise à jour disponible</template>
-                <template v-else-if="updaterStatus === 'downloading'">Téléchargement en cours…</template>
-                <template v-else-if="updaterStatus === 'downloaded'">Prête à installer</template>
-                <template v-else-if="updaterStatus === 'error'">Erreur de vérification</template>
+                <template v-if="updaterStatus === 'up-to-date'">{{ t('settings.upToDate') }}</template>
+                <template v-else-if="updaterStatus === 'available'">{{ t('settings.updateAvailable') }}</template>
+                <template v-else-if="updaterStatus === 'downloading'">{{ t('settings.downloading') }}</template>
+                <template v-else-if="updaterStatus === 'downloaded'">{{ t('settings.downloaded') }}</template>
+                <template v-else-if="updaterStatus === 'error'">{{ t('settings.updateError') }}</template>
               </span>
             </div>
           </div>

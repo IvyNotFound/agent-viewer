@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, shallowMount, flushPromises } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import AgentQualityPanel from '@renderer/components/AgentQualityPanel.vue'
 import { mockElectronAPI } from '../../../test/setup'
+import i18n from '@renderer/plugins/i18n'
 
 describe('AgentQualityPanel (T842)', () => {
   beforeEach(() => {
@@ -16,7 +17,7 @@ describe('AgentQualityPanel (T842)', () => {
   it('calls tasksQualityStats IPC with dbPath on mount', async () => {
     const wrapper = mount(AgentQualityPanel, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { dbPath: '/p/project.db', projectPath: '/p' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { dbPath: '/p/project.db', projectPath: '/p' } } }), i18n],
       },
     })
     await flushPromises()
@@ -34,7 +35,7 @@ describe('AgentQualityPanel (T842)', () => {
     })
     const wrapper = mount(AgentQualityPanel, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { dbPath: '/p/project.db', projectPath: '/p' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { dbPath: '/p/project.db', projectPath: '/p' } } }), i18n],
       },
     })
     await flushPromises()
@@ -54,7 +55,7 @@ describe('AgentQualityPanel (T842)', () => {
     })
     const wrapper = mount(AgentQualityPanel, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { dbPath: '/p/project.db', projectPath: '/p' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { dbPath: '/p/project.db', projectPath: '/p' } } }), i18n],
       },
     })
     await flushPromises()
@@ -65,7 +66,7 @@ describe('AgentQualityPanel (T842)', () => {
   it('shows "Aucune tâche" empty state when rows is empty', async () => {
     const wrapper = mount(AgentQualityPanel, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { dbPath: '/p/project.db', projectPath: '/p' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { dbPath: '/p/project.db', projectPath: '/p' } } }), i18n],
       },
     })
     await flushPromises()
@@ -81,7 +82,7 @@ describe('AgentQualityPanel (T842)', () => {
     })
     const wrapper = mount(AgentQualityPanel, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { dbPath: '/p/project.db', projectPath: '/p' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { dbPath: '/p/project.db', projectPath: '/p' } } }), i18n],
       },
     })
     await flushPromises()
