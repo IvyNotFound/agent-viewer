@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download sqlite3 binary
+        run: node scripts/download-sqlite3.js
+
+      - name: Build (Vite + electron-builder Windows)
+        run: npx electron-vite build && npx electron-builder --win --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-windows
+          path: dist/*.exe
+
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (Vite + electron-builder macOS)
+        run: npx electron-vite build && npx electron-builder --mac --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-mac
+          path: dist/*.dmg
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (Vite + electron-builder Linux)
+        run: npx electron-vite build && npx electron-builder --linux --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-linux
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+
+  create-release:
+    needs: [build-windows, build-mac, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create draft GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            artifacts/installer-windows/*.exe
+            artifacts/installer-mac/*.dmg
+            artifacts/installer-linux/*.AppImage
+            artifacts/installer-linux/*.deb

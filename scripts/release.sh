@@ -3,6 +3,9 @@ set -e
 
 # agent-viewer Release Script
 # Usage: ./scripts/release.sh [patch|minor|major]
+#
+# This script bumps the version, generates CHANGELOG, commits and tags,
+# then pushes to trigger GitHub Actions (which handles all builds and release creation).
 
 BUMP_TYPE="${1:-patch}"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
@@ -37,28 +40,21 @@ if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main 2>/dev/null)" ]; th
     fi
 fi
 
-# Run pre-release checks
 echo ""
 echo "=== Pre-release Checks ==="
 echo "Running npm install..."
 npm install --silent 2>/dev/null
 
-# Bump version before build so electron-builder picks up the new version in artifact names
+echo "Running lint..."
+npm run lint
+
+# Bump version
 echo ""
 echo "=== Bumping Version ==="
 NEW_VERSION=$(npm version "$BUMP_TYPE" --no-git-tag-version --allow-same-version)
 # Strip leading 'v' prefix from npm version output to avoid double-v (vv0.x.0)
 NEW_VERSION="${NEW_VERSION#v}"
 echo "New version: $NEW_VERSION"
-
-echo "Running build (vite + electron-builder packaging)..."
-# TODO(v1.0): move artifact production to GitHub Actions
-npm run build
-
-echo "Running lint..."
-if ! npm run lint 2>&1 | grep -q "error\|warning\|0 warnings"; then
-    echo "WARNING: Lint may have issues. Review above."
-fi
 
 # Generate/update CHANGELOG.md
 echo ""
@@ -70,9 +66,6 @@ if [ ! -f CHANGELOG.md ]; then
     echo "" >> CHANGELOG.md
 fi
 
-# Generate conventional changelog and prepend to CHANGELOG.md
-# Note: conventional-changelog-cli would be installed as devDependency
-# For now, generate from git log
 {
     echo "## [$NEW_VERSION] - $(date +%Y-%m-%d)"
     echo ""
@@ -81,9 +74,7 @@ fi
     echo ""
 } > /tmp/changelog_entry.md
 
-# Prepend entry to CHANGELOG.md
 if [ -f CHANGELOG.md ]; then
-    # Skip header lines when prepending
     head -6 CHANGELOG.md > /tmp/changelog_header.md
     { cat /tmp/changelog_header.md /tmp/changelog_entry.md; tail -n +7 CHANGELOG.md; } > /tmp/changelog_new.md
     mv /tmp/changelog_new.md CHANGELOG.md
@@ -110,35 +101,17 @@ echo ""
 echo "=== Creating Tag ==="
 git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
 
-# Push to remote
+# Push to remote (triggers GitHub Actions release workflow)
 echo ""
 echo "=== Pushing ==="
 git push origin main --tags
 
-# Create GitHub Release
 echo ""
-echo "=== Creating GitHub Release ==="
-# Extract changelog for this release
-RELEASE_NOTES=$(sed -n '/## \[v'"$NEW_VERSION"'\]/,/## \[/p' CHANGELOG.md | head -20)
-RELEASE_NOTES=$(echo "$RELEASE_NOTES" | sed 's/## \[v'"$NEW_VERSION"'\] - .*/## '"$NEW_VERSION"'/')
-
-# Resolve Windows installer artifact path
-EXE_PATH="dist/agent-viewer-Setup-${NEW_VERSION}.exe"
-
-if [ ! -f "$EXE_PATH" ]; then
-    echo "ERROR: Installer not found: $EXE_PATH"
-    echo "Check electron-builder output above."
-    exit 1
-fi
-
-gh release create "v$NEW_VERSION" \
-    --title "Release v$NEW_VERSION" \
-    --notes "$RELEASE_NOTES" \
-    --target main \
-    --draft \
-    "$EXE_PATH"
-
+echo "=== Release v$NEW_VERSION Triggered ==="
+echo "GitHub Actions will now:"
+echo "  1. Build installers for Windows, macOS, and Linux"
+echo "  2. Create a draft GitHub Release with all installers attached"
 echo ""
-echo "=== Release v$NEW_VERSION Complete ==="
-echo "Review the draft release at: https://github.com/$(gh repo --json name,owner --jq '.owner.login + "/" + .name')/releases"
-echo "When ready, publish the release from the GitHub UI."
+REPO=$(gh repo --json name,owner --jq '.owner.login + "/" + .name' 2>/dev/null || echo 'your-org/agent-viewer')
+echo "Monitor the build at: https://github.com/$REPO/actions"
+echo "When builds complete, publish the draft release from the GitHub UI."

@@ -23,9 +23,19 @@ nsis:
 
 mac:
   icon: build/icon.icns
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  artifactName: ${productName}-${version}.${ext}
 
 linux:
   icon: build/icon.png
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+  artifactName: ${productName}-${version}.${ext}
 
 extraResources:
   - from: resources/bin/
