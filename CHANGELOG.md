@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.21.0] - 2026-03-05
+
+### Changes
+- docs(readme): update version badge and JSDoc for v0.21.0 (T901) (d467bc7)
+- feat(front-vuejs): option configurable pour limiter la taille maximale des fichiers générés (T899) (cf0c2ab)
+- feat(front-vuejs): augmenter padding/min-w des sous-onglets dans TabBar (T913) (30617f3)
+- feat(front-vuejs): afficher métriques télémétrie avancées dans TelemetryView (T897) (ff3293a)
+- fix(back-electron): séparer TTL buffer/instance DB dans dbCache (T910) (9bc25ff)
+- fix(front-vuejs): traduire les statuts updater dans SettingsModal (T892) (a5779f4)
+- fix(front-vuejs): corriger overflow horizontal dans StreamView (T893) (d9bc768)
+- chore(global): supprimer ESLint du projet (1af79fd)
+- fix(front-vuejs): corriger doClose() dans useAutoLaunch — utiliser agentKill/streamId au lieu des APIs PTY supprimées (T909) (b4aafb6)
+- fix(back-electron): éviter double instanciation WASM Database dans writeDb (T908) (d1cf7c1)
+- fix(front-vuejs): corriger les couleurs hardcodées dark-only (T895) (2acb4e8)
+- fix(front-vuejs): restaurer confirmation fermeture onglet terminal actif (T912) (7723c07)
+- fix(back-electron): stream JSONL transcript dans parseTokensFromJSONL pour éviter OOM (T907) (7ab96b2)
+- chore(global): remove GitHub PAT — repository is now public (T904) (248f5d0)
+- fix(front-vuejs): restaurer auto-fermeture onglets — format datetime SQLite (T906) (aadc228)
+- fix(front-vuejs): traduire labels Heatmap et Qualité dans DashboardView et AgentQualityPanel (T891) (b3a71f1)
+- refactor(front-vuejs): déplacer la bulle thinking vers l'indicateur de streaming (T903) (c7884c0)
+- fix(front-vuejs): cleanup mémoire mineurs — _lastNotifTs, onHookEvent, eventsForSession (T911) (02d83fa)
+- docs(readme): translate agents and scripts sections to English (T884) (c9d2f01)
+- feat(back-electron): enrich ipc-telemetry with advanced metrics (T894) (f8f3aeb)
+- refactor(front-vuejs): supprimer la section connexion GitHub des paramètres (T886) (7563b9f)
+- feat(front-vuejs): sélecteur FR/EN sur l'écran d'accueil DbSelector (T887) (4931f60)
+- fix(back-electron): register projectPath in find-project-db to fix fsListDir allowlist (T896) (25625eb)
+- fix(front-vuejs): trigger auto-review on startup when done count >= threshold (T900) (8d23575)
+- feat(back-electron): support FR/EN lang for GENERIC_AGENTS (T889) (87b381e)
+- fix(back-electron): bootstrap hooks in settings.json if absent (T888) (48a4bd7)
+- fix(back-electron): actionable error for WSL exit 4294967295 (T885) (f6b908d)
 ## [0.20.1] - 2026-03-05
 
 ### Changes
