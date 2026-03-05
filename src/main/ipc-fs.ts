@@ -10,6 +10,7 @@ import { ipcMain } from 'electron'
 import { readFile, writeFile, readdir } from 'fs/promises'
 import type { Dirent } from 'fs'
 import { join, resolve, sep } from 'path'
+import { assertProjectPathAllowed } from './db'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -75,6 +76,10 @@ export function registerFsHandlers(): void {
       console.warn('[IPC fs:listDir] Missing mandatory allowedDir')
       return []
     }
+    try { assertProjectPathAllowed(allowedDir) } catch {
+      console.warn('[IPC fs:listDir] allowedDir not in allowlist:', allowedDir)
+      return []
+    }
     if (dirPath.includes('..')) {
       console.warn('[IPC fs:listDir] Blocked path traversal attempt:', dirPath)
       return []
@@ -96,6 +101,10 @@ export function registerFsHandlers(): void {
     if (!allowedDir) {
       console.warn('[IPC fs:readFile] Missing mandatory allowedDir')
       return { success: false, error: 'Missing mandatory allowedDir' }
+    }
+    try { assertProjectPathAllowed(allowedDir) } catch {
+      console.warn('[IPC fs:readFile] allowedDir not in allowlist:', allowedDir)
+      return { success: false, error: 'Directory not in allowed project paths' }
     }
     if (filePath.includes('..')) {
       console.warn('[IPC fs:readFile] Blocked path traversal attempt:', filePath)
@@ -124,6 +133,10 @@ export function registerFsHandlers(): void {
     if (!allowedDir) {
       console.warn('[IPC fs:writeFile] Missing mandatory allowedDir')
       return { success: false, error: 'Missing mandatory allowedDir' }
+    }
+    try { assertProjectPathAllowed(allowedDir) } catch {
+      console.warn('[IPC fs:writeFile] allowedDir not in allowlist:', allowedDir)
+      return { success: false, error: 'Directory not in allowed project paths' }
     }
     if (filePath.includes('..')) {
       console.warn('[IPC fs:writeFile] Blocked path traversal attempt:', filePath)

@@ -170,6 +170,9 @@ describe('IPC handlers — src/main/ipc.ts', () => {
     // T527/T528: Register paths used in find-project-db and create-project-db tests
     registerProjectPath('/empty/project')
     registerProjectPath('/my/project')
+    // T776: Register paths used in fs:writeFile / fs:readFile security tests
+    registerProjectPath('/home/user/project')
+    registerProjectPath('/allowed')
   })
 
   afterEach(() => {
