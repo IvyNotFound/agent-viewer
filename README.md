@@ -29,7 +29,7 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 ### Dashboard & Analytics
 - **Dashboard Tab**: `DashboardView` — unified analytics hub with 9 sub-tabs (Token Stats, Git, Hooks, Tools, Heatmap, Quality, Workload, Topology, Logs); active sub-tab persisted in `localStorage`
 - **Token Stats**: `TokenStatsView` — period selector (1h / 24h / 7d / 30d / ∞), estimated cost (Sonnet 4.6 pricing), cache hit rate with colour indicator, 7-day activity sparkline, per-agent bars and per-session table
-- **Cost Stats**: `CostStatsSection` — grouped cost breakdowns with chart
+- **Cost Stats**: `CostStatsSection` — grouped cost breakdowns with sparkline trend; accepts an optional `period` prop (`'day' | 'week' | 'month'`) — when provided the internal period selector is hidden and the period is driven by the parent (e.g. `TokenStatsView` maps its own period selector: 1h/24h→day, 7d→week, 30d/∞→month)
 - **Activity Heatmap**: `ActivityHeatmap` — GitHub-style contribution heatmap of agent activity over time
 - **Workload View**: `WorkloadView` — per-agent task load and effort distribution
 - **Agent Quality Panel**: `AgentQualityPanel` — quality metrics (done rate, rejection rate, avg effort) per agent

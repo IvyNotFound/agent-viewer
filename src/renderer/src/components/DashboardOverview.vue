@@ -1,3 +1,11 @@
+/**
+ * DashboardOverview — Landing sub-tab of DashboardView.
+ *
+ * Displays 4 real-time metric cards (active agents, in-progress tasks, todo tasks,
+ * sessions today) alongside recent tasks, recent agent_logs activity, an activity
+ * heatmap, 14-day session/success charts, agent quality panel, and workload view.
+ * Data is polled every 10 seconds.
+ */
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { useTasksStore } from '@renderer/stores/tasks'
@@ -28,6 +36,11 @@ const activeAgentsCount = computed(() =>
 // ── Metric: sessions today ────────────────────────────────────────────────────
 const sessionsTodayCount = ref(0)
 
+/**
+ * Queries the number of sessions started on the current calendar day.
+ * Updates `sessionsTodayCount`.
+ * @returns Promise that resolves when the count is updated.
+ */
 async function fetchSessionsToday(): Promise<void> {
   const today = new Date().toISOString().slice(0, 10)
   const rows = await store.query<{ count: number }>(
@@ -47,6 +60,11 @@ const recentTasks = computed(() =>
 // ── Recent activity (agent_logs) ──────────────────────────────────────────────
 const recentActivity = ref<ActivityRow[]>([])
 
+/**
+ * Fetches the 10 most recent agent_logs entries (joined with agent name).
+ * Updates `recentActivity`.
+ * @returns Promise that resolves when activity rows are populated.
+ */
 async function fetchActivity(): Promise<void> {
   const rows = await store.query<ActivityRow>(`
     SELECT al.created_at, al.action, al.detail, a.name as agent_name
@@ -59,6 +77,11 @@ async function fetchActivity(): Promise<void> {
 }
 
 // ── Load + polling ────────────────────────────────────────────────────────────
+/**
+ * Runs all data fetches in parallel. No-ops when no database is connected.
+ * Called on mount, every 10 s, and whenever `store.dbPath` changes.
+ * @returns Promise that resolves when all fetches complete.
+ */
 async function load(): Promise<void> {
   if (!store.dbPath) return
   await Promise.all([fetchSessionsToday(), fetchActivity()])
@@ -78,6 +101,12 @@ onUnmounted(() => {
 watch(() => store.dbPath, (val) => { if (val) load() })
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+/**
+ * Converts an ISO date string into a compact relative time label.
+ * Examples: "12s", "5m", "3h", "2d".
+ * @param dateStr - ISO 8601 date string from the database.
+ * @returns Human-readable relative time string.
+ */
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const s = Math.floor(diff / 1000)

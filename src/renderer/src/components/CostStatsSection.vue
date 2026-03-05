@@ -1,8 +1,20 @@
+/**
+ * CostStatsSection — Cost breakdown section with per-agent bars and sparkline trend.
+ *
+ * When the optional `period` prop is provided, the internal day/week/month selector
+ * is hidden and the component follows the parent's period (used by TokenStatsView to
+ * keep the two selectors in sync).
+ */
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
 
+/**
+ * @property dbPath  - Path to the active SQLite database (null = no project open).
+ * @property period  - Optional period override from parent. When set, hides the internal
+ *                    period selector. Accepts 'day' | 'week' | 'month'.
+ */
 const props = defineProps<{
   dbPath: string | null
   period?: 'day' | 'week' | 'month'
@@ -52,6 +64,11 @@ const rows = ref<CostRow[]>([])
 const loading = ref(false)
 const hasData = ref<boolean | null>(null) // null = unknown (loading), false = no data, true = has data
 
+/**
+ * Fetches aggregated cost statistics from the backend.
+ * Uses `props.period` when set, otherwise falls back to the internal `selectedPeriod`.
+ * @returns Promise that resolves when rows are populated.
+ */
 async function fetchCostStats(): Promise<void> {
   if (!props.dbPath) return
   loading.value = true
@@ -125,11 +142,22 @@ const globalTurns    = computed(() => byAgent.value.reduce((s, r) => s + r.total
 // Bar widths
 const maxAgentCost = computed(() => Math.max(...byAgent.value.map(r => r.total_cost), 0.0001))
 
+/**
+ * Returns a percentage width string for the cost bar relative to the highest agent cost.
+ * Minimum bar width is 2% so zero-cost bars remain visible.
+ * @param cost - Agent total cost in USD.
+ * @returns CSS width string, e.g. "42%".
+ */
 function barWidth(cost: number): string {
   return Math.max((cost / maxAgentCost.value) * 100, 2) + '%'
 }
 
-// Cache efficiency per agent
+/**
+ * Computes the cache hit rate for an agent as an integer percentage (0–100).
+ * Returns 0 when no cache tokens were recorded.
+ * @param row - Aggregated cost row for the agent.
+ * @returns Cache efficiency percentage.
+ */
 function cacheEfficiency(row: AgentCostAgg): number {
   const total = row.cache_read + row.cache_write
   if (total === 0) return 0
@@ -138,6 +166,15 @@ function cacheEfficiency(row: AgentCostAgg): number {
 
 // ── Formatting ─────────────────────────────────────────────────────────────
 
+/**
+ * Formats a USD cost value as a human-readable string.
+ * - Zero → "$0.00"
+ * - Sub-millicent → "< $0.001"
+ * - Sub-cent → 3 decimal places
+ * - Otherwise → 2 decimal places
+ * @param usd - Cost amount in US dollars.
+ * @returns Formatted cost string.
+ */
 function formatCost(usd: number): string {
   if (usd === 0) return '$0.00'
   if (usd < 0.001) return '< $0.001'
