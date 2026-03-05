@@ -148,6 +148,10 @@ export function buildWindowsPS1Script(opts: {
 
   const lines: string[] = [
     '$ErrorActionPreference = \'Continue\'',
+    // Enrich PATH with common Claude install locations (T933):
+    // Electron launched from Start Menu may not inherit full user PATH (HKCU\Environment).
+    // Adding .local\bin (Anthropic uv install) and npm (npm -g install) ensures claude.exe is found.
+    '$env:PATH = "$env:USERPROFILE\\.local\\bin;" + "$env:APPDATA\\npm;" + $env:PATH',
     '$a = [System.Collections.Generic.List[string]]::new()',
     '$a.Add(\'-p\')',
     '$a.Add(\'--verbose\')',

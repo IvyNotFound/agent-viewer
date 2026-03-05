@@ -140,6 +140,17 @@ describe('buildWindowsPS1Script', () => {
     const script = buildWindowsPS1Script({})
     expect(script).not.toContain('--append-system-prompt')
   })
+
+  it('includes PATH enrichment with .local\\bin and npm (T933)', () => {
+    const script = buildWindowsPS1Script({})
+    expect(script).toContain('$env:PATH')
+    expect(script).toContain('.local\\bin')
+    expect(script).toContain('\\npm')
+    // PATH line must appear before the & claude @a invocation
+    const pathIdx = script.indexOf('$env:PATH')
+    const invokeIdx = script.indexOf('& claude @a')
+    expect(pathIdx).toBeLessThan(invokeIdx)
+  })
 })
 
 // ── agent:create local Windows spawn integration ──────────────────────────────
