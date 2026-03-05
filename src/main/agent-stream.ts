@@ -324,6 +324,9 @@ export function registerAgentStreamHandlers(): void {
 
     let eventsReceived = 0
     let stderrBuffer = ''
+    // Buffer non-JSON stdout lines for error context (WSL errors go to stdout, not stderr).
+    // Strip null bytes — wsl.exe error output is UTF-16LE which appears as char-space-char.
+    let stdoutErrorBuffer = ''
 
     // Buffer stderr — do NOT emit line-by-line to avoid spamming the renderer (T697).
     // Flushed only on abnormal exit (exitCode !== 0) as context for error:exit.
@@ -361,7 +364,12 @@ export function registerAgentStreamHandlers(): void {
         }
         wc.send(`agent:stream:${id}`, parsed)
       } catch {
-        // Non-JSON line (bash startup, profile output, etc.) — skip silently
+        // Non-JSON line (bash startup, WSL error, profile output, etc.) — buffer for diagnostics.
+        // Strip null bytes: wsl.exe outputs UTF-16LE which reads as "c h a r   c h a r" over readline.
+        const readable = clean.replace(/\x00/g, '').replace(/  +/g, ' ').trim()
+        if (readable) {
+          stdoutErrorBuffer = (stdoutErrorBuffer + '\n' + readable).slice(-1000)
+        }
       }
     })
 
@@ -385,17 +393,28 @@ export function registerAgentStreamHandlers(): void {
       if (spTempFile) try { unlinkSync(spTempFile) } catch { /* cleanup best-effort */ }
       try { unlinkSync(scriptTempFile) } catch { /* cleanup best-effort */ }
 
-      logDebug(`close id=${id}: exitCode=${exitCode} eventsReceived=${eventsReceived} stderr=${stderrBuffer.slice(0, 200)}`)
+      logDebug(`close id=${id}: exitCode=${exitCode} eventsReceived=${eventsReceived} stderr=${stderrBuffer.slice(0, 200)} stdout_error=${stdoutErrorBuffer.slice(0, 200)}`)
 
       // Signal exit without output — covers exitCode=0 (silent claude failure) and exitCode≠0.
       // Replaces the previous exitCode!==0 check: if claude exits 0 but emits no JSONL,
-      // the renderer would see nothing (T704). Include buffered stderr as diagnostic context (T697).
+      // the renderer would see nothing (T704). Include buffered stderr/stdout as diagnostic context (T697).
       if (eventsReceived === 0) {
         const wc = webContents.fromId(wcId)
         if (wc && !wc.isDestroyed()) {
-          const msg = exitCode !== 0
-            ? `Process exited with code ${exitCode}`
-            : `Process exited without producing any output (code ${exitCode})`
+          // Exit code -1 / 4294967295 = WSL process failed before producing output.
+          // Most common cause: distro name not found. Capture stdout error output from WSL (T885).
+          const isAbnormalExit = exitCode === -1 || exitCode === 4294967295
+          const stdoutCtx = stdoutErrorBuffer.trim()
+          let msg: string
+          if (isAbnormalExit && stdoutCtx) {
+            msg = `WSL exited abnormally (code ${exitCode}): ${stdoutCtx}`
+          } else if (isAbnormalExit) {
+            msg = `WSL exited abnormally (code ${exitCode}). Check your distro name — run "wsl --list" in a terminal.`
+          } else if (exitCode !== 0) {
+            msg = `Process exited with code ${exitCode}`
+          } else {
+            msg = `Process exited without producing any output (code ${exitCode})`
+          }
           wc.send(`agent:stream:${id}`, {
             type: 'error:exit',
             error: msg,
@@ -404,6 +423,7 @@ export function registerAgentStreamHandlers(): void {
         }
       }
       stderrBuffer = ''
+      stdoutErrorBuffer = ''
 
       const wc = webContents.fromId(wcId)
       if (wc && !wc.isDestroyed()) {
