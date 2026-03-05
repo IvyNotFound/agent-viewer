@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.24.0] - 2026-03-05
+
+### Changes
+- fix(front-vuejs): audit global i18n — éliminer chaînes hardcodées françaises (T943) (d2c16f2)
+- feat(front-vuejs): hierarchical agent groups in sidebar (T946) (14b5ace)
+- docs(global): update README and JSDoc for CostStatsSection period prop (T948) (000b6dc)
+- docs(global): translate all French .md files to English (T952) (3ea61de)
+- docs(global): update CONTRIBUTING.md with current IPC architecture (T953) (7ce68b1)
+- feat(back-electron): add parent_id hierarchy to agent_groups + update IPC (T945) (aacabca)
+- feat(front-vuejs): use agent groups hierarchy in OrgChartView (T947) (2ce0831)
+- fix(front-vuejs): reduce forced-close fallback delays (T950) (63ebf7c)
+- feat(front-vuejs): supprimer les 5 onglets redondants de DashboardView (T942) (aa4eabd)
+- fix(front-vuejs): lazy-load dir children on click in SidebarFileTree (T944) (29b50c5)
+- fix(back-electron): improve claude.exe discovery in PS1 Windows script (T939) (047b250)
+- fix(front-vuejs): supprimer boutons day/week/month redondants de CostStatsSection (T940) (068eb06)
+- fix(front-vuejs): translate DashboardOverview strings to English (T938) (37a71a8)
+- fix(front-vuejs): translate SessionActivityChart and SuccessRateChart strings to English (T941) (4724107)
+- fix(front-vuejs): translate DashboardOverview strings to English (T938) (20a26c6)
 ## [0.23.0] - 2026-03-05
 
 ### Changes
