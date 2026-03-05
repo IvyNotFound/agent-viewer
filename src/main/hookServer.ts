@@ -254,8 +254,19 @@ export function startHookServer(): http.Server {
       return
     }
 
+    const MAX_BODY_SIZE = 1 * 1024 * 1024 // 1 MB
+    let bodySize = 0
     const chunks: Buffer[] = []
-    req.on('data', (c: Buffer) => chunks.push(c))
+    req.on('data', (c: Buffer) => {
+      bodySize += c.length
+      if (bodySize > MAX_BODY_SIZE) {
+        res.writeHead(413, { 'Content-Type': 'application/json' })
+        res.end('{"error":"Payload too large"}')
+        req.destroy()
+        return
+      }
+      chunks.push(c)
+    })
     req.on('end', () => {
       // Always respond 2xx immediately — hooks must never block Claude Code
       res.writeHead(200, { 'Content-Type': 'application/json' })
