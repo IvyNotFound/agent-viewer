@@ -24,6 +24,26 @@ const sqlArg = process.argv[2]
 const dbPath = path.resolve(process.cwd(), '.claude/project.db')
 
 /**
+ * Retries fs.renameSync up to maxRetries times on EPERM/EBUSY (Windows file lock).
+ * @param {string} src
+ * @param {string} dest
+ * @param {number} [maxRetries=3]
+ * @param {number} [delayMs=200]
+ */
+function renameWithRetry(src, dest, maxRetries = 3, delayMs = 200) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      fs.renameSync(src, dest)
+      return
+    } catch (err) {
+      if (i === maxRetries - 1 || (err.code !== 'EPERM' && err.code !== 'EBUSY')) throw err
+      // On Windows the file may be temporarily locked — wait and retry
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delayMs)
+    }
+  }
+}
+
+/**
  * Executes a write SQL statement and persists the result.
  * Serialized via advisory lock to prevent concurrent lost-update races.
  * @param {string} sql
@@ -52,11 +72,14 @@ function run(sql, params = []) {
       // T313: Atomic write — unique temp file + rename prevents partial reads
       const tmpPath = `${dbPath}.tmp.${process.pid}.${Date.now()}`
       fs.writeFileSync(tmpPath, Buffer.from(db.export()))
-      fs.renameSync(tmpPath, dbPath)
+      renameWithRetry(tmpPath, dbPath)
       db.close()
     } finally {
       releaseLock(lockPath)
     }
+  }).catch((err) => {
+    console.error('ERREUR dbw:', err.message)
+    process.exit(1)
   })
 }
 

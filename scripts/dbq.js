@@ -58,6 +58,9 @@ function run(sql) {
         console.log(row.map((v) => (v === null ? 'NULL' : String(v))).join('|'))
       }
     }
+  }).catch((err) => {
+    console.error('ERREUR dbq:', err.message)
+    process.exit(1)
   })
 }
 
