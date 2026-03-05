@@ -79,7 +79,7 @@ describe('StreamView', () => {
     expect(block.text()).toContain('Bonjour depuis Claude !')
   })
 
-  it('renders thinking block (collapsed by default capable)', async () => {
+  it('does not render thinking block in message list (T903)', async () => {
     const event: StreamEvent = {
       type: 'assistant',
       message: {
@@ -90,8 +90,7 @@ describe('StreamView', () => {
     const { wrapper } = await mountStream([event])
     await nextTick()
     const block = wrapper.find('[data-testid="block-thinking"]')
-    expect(block.exists()).toBe(true)
-    expect(block.text()).toContain('Thinking…')
+    expect(block.exists()).toBe(false)
   })
 
   it('renders tool_use block with tool name', async () => {

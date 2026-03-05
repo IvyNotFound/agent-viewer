@@ -4,16 +4,17 @@
  * Renders agent sessions as structured blocks: text, tool_use, tool_result, thinking, result.
  * Used in App.vue for tabs with viewMode === 'stream' (T597).
  */
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useTasksStore } from '@renderer/stores/tasks'
+import { useSettingsStore } from '@renderer/stores/settings'
 import { agentFg, agentBg, agentBorder, colorVersion } from '@renderer/utils/agentColor'
 import { renderMarkdown } from '@renderer/utils/renderMarkdown'
 import HookEventBar from './HookEventBar.vue'
 import StreamToolBlock from './StreamToolBlock.vue'
 import StreamInputBar from './StreamInputBar.vue'
-
-import 'highlight.js/styles/github-dark.css'
+import githubDarkUrl from 'highlight.js/styles/github-dark.css?url'
+import githubUrl from 'highlight.js/styles/github.css?url'
 
 // Re-export stream types so existing consumers keep their import paths (T816).
 export type { StreamContentBlock, StreamEvent } from '@renderer/types/stream'
@@ -26,6 +27,21 @@ const props = defineProps<{
 
 const tabsStore = useTabsStore()
 const tasksStore = useTasksStore()
+const settingsStore = useSettingsStore()
+
+// Dynamic highlight.js theme — switches between github.css (light) and github-dark.css (T895)
+function applyHljsTheme(theme: string): void {
+  const id = 'hljs-theme'
+  let link = document.getElementById(id) as HTMLLinkElement | null
+  if (!link) {
+    link = document.createElement('link')
+    link.id = id
+    link.rel = 'stylesheet'
+    document.head.appendChild(link)
+  }
+  link.href = theme === 'dark' ? githubDarkUrl : githubUrl
+}
+watch(() => settingsStore.theme, applyHljsTheme, { immediate: true })
 
 const events = ref<StreamEvent[]>([])
 const scrollContainer = ref<HTMLElement | null>(null)
@@ -272,7 +288,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-zinc-950 text-zinc-100 font-mono text-sm">
+  <div class="flex flex-col h-full bg-surface-base text-content-primary font-mono text-sm">
     <!-- Agent color accent header bar (T680) -->
     <div v-if="agentName" class="h-0.5 w-full shrink-0" :style="{ background: accentFg }" />
 
@@ -280,7 +296,7 @@ onUnmounted(() => {
     <div ref="scrollContainer" class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
       <div
         v-if="displayEvents.length === 0 && !isStreaming"
-        class="flex items-center justify-center h-full text-zinc-500 text-xs"
+        class="flex items-center justify-center h-full text-content-subtle text-xs"
         data-testid="empty-state"
       >
         En attente de messages…
@@ -290,19 +306,19 @@ onUnmounted(() => {
         <!-- system:init -->
         <div
           v-if="event.type === 'system' && event.subtype === 'init'"
-          class="text-zinc-500 text-xs italic"
+          class="text-content-subtle text-xs italic"
           data-testid="block-system-init"
         >
           Session démarrée
           <span v-if="event.session_id" class="ml-1 font-mono">· {{ event.session_id.slice(0, 8) }}…</span>
           <template v-if="sessionContextMap.get(event._id!)">
             <button
-              class="ml-2 text-zinc-600 hover:text-zinc-400 transition-colors not-italic"
+              class="ml-2 text-content-faint hover:text-content-muted transition-colors not-italic"
               @click="toggleCollapsed(`init-ctx-${event._id}`, true)"
             >{{ (collapsed[`init-ctx-${event._id}`] ?? true) ? '▶ ctx' : '▼ ctx' }}</button>
             <div
               v-show="!(collapsed[`init-ctx-${event._id}`] ?? true)"
-              class="mt-1 ml-4 not-italic text-zinc-600 whitespace-pre-wrap font-mono text-xs"
+              class="mt-1 ml-4 not-italic text-content-faint whitespace-pre-wrap font-mono text-xs"
             >{{ sessionContextMap.get(event._id!) }}</div>
           </template>
         </div>
@@ -328,7 +344,7 @@ onUnmounted(() => {
           data-testid="block-user"
         >
           <div
-            class="bg-zinc-800 border rounded-lg px-4 py-3 max-w-[80%] whitespace-pre-wrap text-sm text-zinc-100 leading-relaxed select-text cursor-text"
+            class="bg-surface-secondary border rounded-lg px-4 py-3 max-w-[80%] whitespace-pre-wrap text-sm text-content-primary leading-relaxed select-text cursor-text"
             :style="{ borderColor: accentBorder }"
           >
             <template v-for="(block, bIdx) in event.message.content" :key="bIdx">
@@ -349,21 +365,6 @@ onUnmounted(() => {
               v-html="block._html ?? ''"
             />
 
-            <!-- thinking block — collapsible (collapsed by default) -->
-            <div v-else-if="block.type === 'thinking'" class="border border-zinc-700 rounded-lg overflow-hidden" data-testid="block-thinking">
-              <button
-                class="w-full flex items-center gap-2 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 transition-colors text-zinc-400 text-xs"
-                @click="toggleCollapsed(`${event._id}-${bIdx}`, true)"
-              >
-                <span class="transition-transform duration-200" :class="(collapsed[`${event._id}-${bIdx}`] ?? true) ? '' : 'rotate-90'">▶</span>
-                <span>Thinking…</span>
-              </button>
-              <div
-                v-show="!(collapsed[`${event._id}-${bIdx}`] ?? true)"
-                class="px-4 py-3 bg-zinc-900 text-zinc-400 text-xs whitespace-pre-wrap select-text cursor-text"
-              >{{ block.text }}</div>
-            </div>
-
             <!-- tool_use / tool_result — delegated to StreamToolBlock (T816) -->
             <StreamToolBlock
               v-else-if="block.type === 'tool_use' || block.type === 'tool_result'"
@@ -382,13 +383,13 @@ onUnmounted(() => {
         <!-- result footer — cost / duration / turns -->
         <div
           v-if="event.type === 'result'"
-          class="flex flex-wrap gap-4 text-xs text-zinc-500 border-t border-zinc-800 pt-2"
+          class="flex flex-wrap gap-4 text-xs text-content-subtle border-t border-edge-subtle pt-2"
           data-testid="block-result"
         >
           <span v-if="event.num_turns !== undefined">{{ event.num_turns }} tour{{ event.num_turns > 1 ? 's' : '' }}</span>
           <span v-if="event.cost_usd !== undefined">${{ event.cost_usd.toFixed(4) }}</span>
           <span v-if="event.duration_ms !== undefined">{{ (event.duration_ms / 1000).toFixed(1) }}s</span>
-          <span v-if="event.session_id" class="ml-auto font-mono text-zinc-600">{{ event.session_id.slice(0, 8) }}…</span>
+          <span v-if="event.session_id" class="ml-auto font-mono text-content-faint">{{ event.session_id.slice(0, 8) }}…</span>
         </div>
       </template>
 
@@ -404,8 +405,11 @@ onUnmounted(() => {
           <span class="w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:150ms]" :style="{ backgroundColor: accentFg }" />
           <span class="w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:300ms]" :style="{ backgroundColor: accentFg }" />
         </span>
-        <span v-if="activeThinkingText" class="truncate italic opacity-75" data-testid="thinking-preview">{{ activeThinkingText.slice(-120) }}</span>
-        <span v-else>En cours…</span>
+        <span v-if="activeThinkingText" class="flex items-center gap-1 min-w-0">
+          <span class="shrink-0 font-medium" data-testid="thinking-label">Thinking…</span>
+          <span class="truncate italic opacity-75 text-zinc-400" data-testid="thinking-preview">{{ activeThinkingText.slice(-120) }}</span>
+        </span>
+        <span v-else class="opacity-75">En cours…</span>
       </div>
     </div>
 
