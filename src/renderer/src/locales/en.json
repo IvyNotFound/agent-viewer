@@ -88,12 +88,18 @@
       "idle": "idle"
     }
   },
+  "orgchart": {
+    "tabLabel": "OrgChart",
+    "noAgents": "No agents found"
+  },
   "logs": {
     "allAgents": "All agents",
     "noLogs": "No logs",
     "prevPage": "Previous page",
     "nextPage": "Next page",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "reset": "reset",
+    "resetFilters": "Reset filters"
   },
   "toolStats": {
     "title": "Tools",
@@ -344,6 +350,8 @@
     "workload": "Workload",
     "topology": "Topology",
     "heatmap": "Heatmap",
+    "sessionActivity": "Activity 14d",
+    "successRate": "Success 14d",
     "quality": "Quality",
     "project": "Project",
     "agents": "Agents",
