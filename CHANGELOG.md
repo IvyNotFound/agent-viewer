@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.20.1] - 2026-03-05
+
+### Changes
+- docs(readme): update version badge to 0.20.1 (f362b84)
+- chore(back-electron): mettre à jour les prompts release dans default-agents.ts (T883) (c4e031a)
+- fix(front-vuejs): UpdateNotification dans flux normal sous TitleBar (T880) (432e77e)
+- fix(back-electron): injecter hooks dans settings globaux WSL/Windows (T878) (b6976dc)
+- fix(back-electron): afficher message erreur mise à jour, guard token absent (T874) (a27f8d6)
+- fix(back-electron): remove disable-software-rasterizer, guard enable-zero-copy to non-win32 (T875) (91999f8)
+- fix(front-vuejs): drag-drop todo→in_progress uses settings instance/profile (T879) (d8aed0f)
+- fix(front-vuejs): agrandir police sous-onglets dashboard text-[11px] → text-xs (T876) (05f1c52)
+- fix(devops): inclure latest.yml dans les assets des GitHub Releases (7ad2592)
+- fix(devops): add Linux maintainer email in electron-builder.yml (6eda6a0)
 ## [0.20.0] - 2026-03-05
 
 ### Changes
