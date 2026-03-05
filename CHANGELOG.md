@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.22.0] - 2026-03-05
+
+### Changes
+- docs(readme): update feature list and version refs for T917/T919/T920 (e111e6c)
+- fix(back-electron): spawn claude natif Windows via PowerShell (T916) (3f756de)
+- fix(back-electron): inject HTTP hook even if event already present in settings.json (T917) (07a0e5d)
+- fix(front-vuejs): couleur cohérente sous l'onglet actif dashboard (T918) (9317922)
+- ux(sidebar): supprimer la redondance des labels agent/périmètre (T920) (f9f7f81)
+- ci(release): add workflow_dispatch trigger for manual re-runs (ab17355)
 ## [0.21.0] - 2026-03-05
 
 ### Changes

@@ -416,7 +416,11 @@ async function handleStop(payload: StopPayload): Promise<void> {
         'UPDATE sessions SET tokens_in=?, tokens_out=?, tokens_cache_read=?, tokens_cache_write=? WHERE id=?',
         [tokens.tokensIn, tokens.tokensOut, tokens.cacheRead, tokens.cacheWrite, sessionId]
       )
-      console.log(`[hookServer] session ${sessionId}: in=${tokens.tokensIn} out=${tokens.tokensOut} cacheR=${tokens.cacheRead} cacheW=${tokens.cacheWrite}`)
+      db.run(
+        "UPDATE sessions SET statut='completed', ended_at=datetime('now') WHERE id=? AND statut='started'",
+        [sessionId]
+      )
+      console.log(`[hookServer] session ${sessionId}: in=${tokens.tokensIn} out=${tokens.tokensOut} cacheR=${tokens.cacheRead} cacheW=${tokens.cacheWrite} → completed`)
     })
   } catch (err) {
     console.error('[hookServer] writeDb failed:', err)
