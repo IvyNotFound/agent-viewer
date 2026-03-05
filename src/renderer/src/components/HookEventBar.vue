@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useHookEventsStore, type HookEvent } from '@renderer/stores/hookEvents'
+
+const { t } = useI18n()
 import HookEventPayloadModal from './HookEventPayloadModal.vue'
 import { eventIcon, toolColor, eventColor, toolName } from '@renderer/composables/useHookEventDisplay'
 
@@ -58,7 +61,7 @@ function rowLabel(e: HookEvent): string {
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
         </svg>
         <span :class="['text-[11px] font-mono font-semibold', toolColor(activeTool)]">{{ activeTool }}</span>
-        <span class="text-[10px] text-content-faint">en cours…</span>
+        <span class="text-[10px] text-content-faint">{{ t('hooks.inProgress') }}</span>
       </div>
       <!-- Idle: last event summary -->
       <div v-else-if="events.length > 0" class="flex items-center gap-1.5">
@@ -88,7 +91,7 @@ function rowLabel(e: HookEvent): string {
           {{ new Date(e.ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
         </span>
       </div>
-      <div v-if="events.length === 0" class="text-[10px] text-content-faint italic py-1">Aucun événement</div>
+      <div v-if="events.length === 0" class="text-[10px] text-content-faint italic py-1">{{ t('hooks.noEvents') }}</div>
     </div>
   </div>
 

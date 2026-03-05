@@ -16,7 +16,7 @@ const emit = defineEmits<{
   (e: 'toast', message: string, type: 'success' | 'error'): void
 }>()
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const isEditMode = computed(() => props.mode === 'edit' && props.agent != null)
 
 const store = useTasksStore()
@@ -59,24 +59,16 @@ function onNameInput(event: Event) {
   name.value = raw.toLowerCase().replace(/ /g, '-')
 }
 
-function defaultDescription(t: string): string {
-  const map: Record<string, string> = {
-    dev: 'Implémentation / nouvelles fonctionnalités',
-    test: 'Tests & couverture',
-    ux: 'Interface utilisateur & expérience',
-    review: 'Audit local de périmètre',
-    'review-master': 'Audit global, arbitrage inter-périmètres',
-    arch: 'ADR, interfaces, décisions structurantes',
-    devops: 'Commits, branches, CI/CD, releases',
-    doc: 'README, CONTRIBUTING, JSDoc',
-  }
-  return map[t] ?? ''
+function defaultDescription(agentType: string): string {
+  const typeKey = agentType === 'review-master' ? 'reviewMaster' : agentType
+  const key = `agent.typeDesc.${typeKey}`
+  return te(key) ? t(key as never) : ''
 }
 
-watch(type, (t) => {
+watch(type, (newType) => {
   if (!isEditMode.value) {
-    if (!description.value || description.value === defaultDescription(ALL_TYPES.find(x => x !== t) ?? '')) {
-      description.value = defaultDescription(t)
+    if (!description.value || description.value === defaultDescription(ALL_TYPES.find(x => x !== newType) ?? '')) {
+      description.value = defaultDescription(newType)
     }
   }
 }, { immediate: true })
@@ -124,10 +116,10 @@ async function submit() {
         maxSessions: maxSessionsDbValue.value,
       })
       if (!result.success) {
-        emit('toast', result.error ?? 'Erreur lors de la sauvegarde', 'error')
+        emit('toast', result.error ?? t('agent.saveError'), 'error')
         return
       }
-      emit('toast', `Agent "${trimmed}" mis à jour`, 'success')
+      emit('toast', t('agent.updated', { name: trimmed }), 'success')
       emit('saved')
       emit('close')
       return
@@ -146,13 +138,13 @@ async function submit() {
 
     if (!result.success) {
       if (result.error?.includes('existe déjà')) nameError.value = result.error
-      else emit('toast', result.error ?? 'Erreur lors de la création', 'error')
+      else emit('toast', result.error ?? t('agent.createError'), 'error')
       return
     }
 
     const msg = result.claudeMdUpdated
-      ? `Agent "${trimmed}" créé et ajouté dans CLAUDE.md`
-      : `Agent "${trimmed}" créé`
+      ? t('agent.createdWithClaude', { name: trimmed })
+      : t('agent.created', { name: trimmed })
     emit('toast', msg, 'success')
     emit('created')
     emit('close')
@@ -174,7 +166,7 @@ async function deleteAgent() {
       return
     }
     if (!result.success) {
-      deleteError.value = result.error ?? 'Erreur inconnue'
+      deleteError.value = result.error ?? t('common.unknownError')
       return
     }
     await store.refresh()
@@ -319,7 +311,7 @@ function handleKeydown(e: KeyboardEvent) {
                 v-model="systemPrompt"
                 rows="14"
                 spellcheck="true"
-                placeholder="Instructions spécifiques à cet agent..."
+                :placeholder="t('agent.systemPromptPlaceholder')"
                 class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-xs text-content-tertiary font-mono outline-none focus:ring-1 focus:ring-violet-500 resize-y"
               />
               <div v-if="isEditMode">
@@ -328,7 +320,7 @@ function handleKeydown(e: KeyboardEvent) {
                   v-model="systemPromptSuffix"
                   rows="12"
                   spellcheck="true"
-                  placeholder="Suffixe injecté en fin de system prompt (protocole agent, etc.)..."
+                  :placeholder="t('agent.systemPromptSuffixPlaceholder')"
                   class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-xs text-content-tertiary font-mono outline-none focus:ring-1 focus:ring-violet-500 resize-y"
                 />
               </div>

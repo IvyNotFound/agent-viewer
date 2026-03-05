@@ -4,6 +4,7 @@ import { mount, shallowMount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import ActivityHeatmap from '@renderer/components/ActivityHeatmap.vue'
 import { mockElectronAPI } from '../../../test/setup'
+import i18n from '@renderer/plugins/i18n'
 
 describe('ActivityHeatmap (T784)', () => {
   beforeEach(() => {
@@ -18,6 +19,7 @@ describe('ActivityHeatmap (T784)', () => {
   it('renders without error with a dbPath prop', async () => {
     const wrapper = mount(ActivityHeatmap, {
       props: { dbPath: '/tmp/test.db' },
+      global: { plugins: [i18n] },
     })
     await flushPromises()
     expect(wrapper.exists()).toBe(true)
@@ -27,6 +29,7 @@ describe('ActivityHeatmap (T784)', () => {
   it('renders "Tous" agent filter button by default', async () => {
     const wrapper = mount(ActivityHeatmap, {
       props: { dbPath: '/tmp/test.db' },
+      global: { plugins: [i18n] },
     })
     await flushPromises()
     expect(wrapper.text()).toContain('Tous')
@@ -37,6 +40,7 @@ describe('ActivityHeatmap (T784)', () => {
     mockElectronAPI.queryDb.mockClear()
     const wrapper = mount(ActivityHeatmap, {
       props: { dbPath: '' },
+      global: { plugins: [i18n] },
     })
     await flushPromises()
     expect(mockElectronAPI.queryDb).not.toHaveBeenCalled()
@@ -49,7 +53,7 @@ describe('ActivityHeatmap (T784)', () => {
       { day: '2025-01-01', agentId: 2, agentName: 'agentB', count: 2 },
       { day: '2025-01-02', agentId: 1, agentName: 'agentA', count: 1 },
     ]).mockResolvedValueOnce([])
-    const wrapper = mount(ActivityHeatmap, { props: { dbPath: '/tmp/test.db' } })
+    const wrapper = mount(ActivityHeatmap, { props: { dbPath: '/tmp/test.db' }, global: { plugins: [i18n] } })
     await flushPromises()
     // max = 5 (sum for 2025-01-01)
     expect(wrapper.text()).toContain('5')
@@ -58,7 +62,7 @@ describe('ActivityHeatmap (T784)', () => {
 
   it('dayCountMap is empty when rows = []', async () => {
     mockElectronAPI.queryDb.mockResolvedValue([])
-    const wrapper = mount(ActivityHeatmap, { props: { dbPath: '/tmp/test.db' } })
+    const wrapper = mount(ActivityHeatmap, { props: { dbPath: '/tmp/test.db' }, global: { plugins: [i18n] } })
     await flushPromises()
     // max fallback = 1
     expect(wrapper.text()).toContain('max : 1')
@@ -73,7 +77,7 @@ describe('ActivityHeatmap (T784)', () => {
       { id: 1, name: 'agentA' },
       { id: 2, name: 'agentB' },
     ])
-    const wrapper = mount(ActivityHeatmap, { props: { dbPath: '/tmp/test.db' } })
+    const wrapper = mount(ActivityHeatmap, { props: { dbPath: '/tmp/test.db' }, global: { plugins: [i18n] } })
     await flushPromises()
     const agentABtn = wrapper.findAll('button').find(b => b.text() === 'agentA')
     expect(agentABtn).toBeTruthy()

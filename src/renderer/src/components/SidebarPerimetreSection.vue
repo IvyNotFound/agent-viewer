@@ -66,9 +66,9 @@ async function savePerimetre() {
 
 async function addPerimetre() {
   const confirmed = await window.electronAPI.showConfirmDialog({
-    title: 'Ajouter un périmètre',
-    message: 'Une session Claude Code va être lancée pour créer le nouveau périmètre.',
-    detail: 'L\'agent arch guidera la configuration. Continuer ?',
+    title: t('sidebar.addPerimeterTitle'),
+    message: t('sidebar.addPerimeterMessage'),
+    detail: t('sidebar.addPerimeterDetail'),
   })
   if (!confirmed) return
   tabsStore.addTerminal(
@@ -110,7 +110,7 @@ async function addPerimetre() {
           </div>
           <p v-if="p.description" class="text-[10px] text-content-faint truncate mt-0.5">{{ p.description }}</p>
         </button>
-        <button class="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded text-content-faint hover:text-content-secondary hover:bg-surface-tertiary transition-colors opacity-0 group-hover:opacity-100" title="Modifier" @click.stop="openEditPerimetre(p)">
+        <button class="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded text-content-faint hover:text-content-secondary hover:bg-surface-tertiary transition-colors opacity-0 group-hover:opacity-100" :title="t('sidebar.editPerimeter')" @click.stop="openEditPerimetre(p)">
           <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3"><path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/></svg>
         </button>
       </div>

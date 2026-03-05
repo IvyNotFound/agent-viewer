@@ -92,7 +92,7 @@ const isStaleTask = computed(() =>
 )
 const staleTooltip = computed(() => {
   const d = staleDuration(props.task.started_at)
-  return d ? `En cours depuis ${d}` : 'En cours depuis longtemps'
+  return d ? t('task.staleFor', { duration: d }) : t('task.staleLong')
 })
 
 const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
@@ -130,8 +130,8 @@ const PRIORITY_LABEL: Record<string, string> = {
         <span
           v-if="task.statut === 'in_progress'"
           class="mt-1 shrink-0 w-2 h-2 rounded-full bg-cyan-400 animate-pulse"
-          title="Tâche en cours d'exécution"
-          aria-label="Tâche en cours d'exécution"
+          :title="t('task.running')"
+          :aria-label="t('task.running')"
         />
         <p class="text-sm text-content-primary font-medium leading-snug min-w-0 break-words">{{ task.titre }}</p>
       </div>

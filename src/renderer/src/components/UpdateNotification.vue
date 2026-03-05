@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useUpdater } from '@renderer/composables/useUpdater'
+
+const { t } = useI18n()
 
 const { status, progress, info, errorMessage, download, install, dismiss } = useUpdater()
 
@@ -28,18 +31,18 @@ const versionLabel = computed(() => (info.value?.version ? `v${info.value.versio
     >
       <!-- Available -->
       <template v-if="status === 'available'">
-        <span>Mise à jour {{ versionLabel }} disponible</span>
+        <span>{{ t('update.available', { version: versionLabel }) }}</span>
         <button
           class="ml-4 px-3 py-1 bg-white text-violet-700 rounded font-medium hover:bg-violet-100 transition-colors text-xs"
           @click="download"
         >
-          Télécharger
+          {{ t('update.download') }}
         </button>
       </template>
 
       <!-- Downloading -->
       <template v-else-if="status === 'downloading'">
-        <span>Téléchargement en cours…</span>
+        <span>{{ t('update.downloading') }}</span>
         <div class="flex items-center gap-2 ml-4">
           <div class="w-32 h-1.5 bg-violet-500 rounded-full overflow-hidden">
             <div
@@ -53,26 +56,26 @@ const versionLabel = computed(() => (info.value?.version ? `v${info.value.versio
 
       <!-- Downloaded -->
       <template v-else-if="status === 'downloaded'">
-        <span>Mise à jour {{ versionLabel }} prête à installer</span>
+        <span>{{ t('update.ready', { version: versionLabel }) }}</span>
         <div class="flex items-center gap-2 ml-4">
           <button
             class="px-3 py-1 bg-white text-violet-700 rounded font-medium hover:bg-violet-100 transition-colors text-xs"
             @click="install"
           >
-            Redémarrer maintenant
+            {{ t('update.restart') }}
           </button>
           <button
             class="px-2 py-1 text-violet-200 hover:text-white transition-colors text-xs"
             @click="dismiss"
           >
-            Plus tard
+            {{ t('update.later') }}
           </button>
         </div>
       </template>
 
       <!-- Error -->
       <template v-else-if="status === 'error'">
-        <span class="text-red-200">Erreur : {{ errorMessage ?? 'Vérification échouée' }}</span>
+        <span class="text-red-200">{{ t('update.error', { msg: errorMessage ?? '' }) }}</span>
         <button
           class="ml-4 text-violet-200 hover:text-white transition-colors text-xs"
           @click="dismiss"

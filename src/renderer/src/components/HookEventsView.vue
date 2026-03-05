@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useHookEventsStore, type HookEvent } from '@renderer/stores/hookEvents'
+
+const { t } = useI18n()
 import { EVENT_ICON, eventIcon, toolColor, eventColor, toolName } from '@renderer/composables/useHookEventDisplay'
 import HookEventPayloadModal from './HookEventPayloadModal.vue'
 
@@ -55,17 +58,17 @@ watch(() => store.events.length, () => {
   <div class="flex flex-col h-full overflow-hidden bg-surface-primary">
     <!-- Header filters -->
     <div class="flex items-center gap-2 px-3 py-2 border-b border-edge-subtle shrink-0 flex-wrap">
-      <span class="text-xs text-content-faint font-semibold mr-1">Filtres :</span>
+      <span class="text-xs text-content-faint font-semibold mr-1">{{ t('hooks.filters') }}</span>
       <button
-        v-for="t in ALL_TYPES"
-        :key="t"
+        v-for="eventType in ALL_TYPES"
+        :key="eventType"
         class="text-[11px] font-mono px-2 py-0.5 rounded border transition-colors"
-        :class="filterTypes.includes(t)
+        :class="filterTypes.includes(eventType)
           ? 'border-amber-500 text-amber-300 bg-amber-950/40'
           : 'border-edge-subtle text-content-subtle hover:text-content-secondary hover:border-edge-default'"
-        @click="toggleType(t)"
+        @click="toggleType(eventType)"
       >
-        {{ EVENT_ICON[t] }} {{ t }}
+        {{ EVENT_ICON[eventType] }} {{ eventType }}
       </button>
       <div class="flex-1" />
       <span class="text-[11px] text-content-faint font-mono tabular-nums">
@@ -92,7 +95,7 @@ watch(() => store.events.length, () => {
         v-if="filtered.length === 0"
         class="flex items-center justify-center h-full text-content-faint text-xs italic"
       >
-        Aucun événement
+        {{ t('hooks.noEvents') }}
       </div>
       <div
         v-for="e in filtered"

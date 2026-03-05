@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import type { StreamContentBlock } from '@renderer/types/stream'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   block: StreamContentBlock
@@ -50,7 +53,7 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
     >
       <span class="transition-transform duration-200" :class="isCollapsed(eventId, blockIdx, true) ? '' : 'rotate-90'">▶</span>
       <span class="font-semibold">{{ block.name }}</span>
-      <span class="ml-auto opacity-60">outil</span>
+      <span class="ml-auto opacity-60">{{ t('stream.tool') }}</span>
     </button>
     <div
       v-show="!isCollapsed(eventId, blockIdx, true)"
@@ -76,11 +79,11 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
         class="transition-transform duration-200"
         :class="isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong) ? '' : 'rotate-90'"
       >▶</span>
-      <span>{{ block.is_error ? '✗ Erreur' : '✓ Résultat' }}</span>
+      <span>{{ block.is_error ? t('stream.error') : t('stream.result') }}</span>
       <span
         v-if="isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong)"
         class="ml-1 opacity-60"
-      >({{ block._lineCount ?? 0 }} lignes)</span>
+      >({{ block._lineCount ?? 0 }} {{ t('stream.lines') }})</span>
     </button>
     <!-- eslint-disable vue/no-v-html -->
     <div

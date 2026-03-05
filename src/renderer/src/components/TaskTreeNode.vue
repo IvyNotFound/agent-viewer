@@ -7,7 +7,7 @@ import AgentBadge from './AgentBadge.vue'
 import { perimeterFg, perimeterBg, perimeterBorder } from '@renderer/utils/agentColor'
 import { parseUtcDate } from '@renderer/utils/parseDate'
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 
 const props = defineProps<{
   node: TaskNode
@@ -49,7 +49,7 @@ const EFFORT_BADGE: Record<number, string> = {
       <button
         v-if="hasChildren"
         class="shrink-0 w-4 h-4 flex items-center justify-center text-content-subtle hover:text-content-tertiary transition-colors mt-0.5"
-        :title="expanded ? 'Réduire' : 'Développer'"
+        :title="expanded ? t('common.collapse') : t('common.expand')"
         @click.stop="toggle"
       >
         <svg
@@ -96,7 +96,7 @@ const EFFORT_BADGE: Record<number, string> = {
 
         <!-- Children count hint when collapsed -->
         <p v-if="hasChildren && !expanded" class="text-[10px] text-content-subtle italic">
-          {{ node.children.length }} sous-tâche{{ node.children.length > 1 ? 's' : '' }}
+          {{ t('task.subtasks', node.children.length, { named: { n: node.children.length } }) }}
         </p>
       </div>
     </div>

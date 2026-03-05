@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   dbPath: string
@@ -18,7 +21,7 @@ interface AgentOption {
 }
 
 const rows = ref<DayData[]>([])
-const agents = ref<AgentOption[]>([{ id: null, name: 'Tous' }])
+const agents = ref<AgentOption[]>([{ id: null, name: '' }])
 const filterAgentId = ref<number | null>(null)
 
 async function fetchData(): Promise<void> {
@@ -50,7 +53,7 @@ async function fetchData(): Promise<void> {
     ])
     rows.value = heatData as DayData[]
     agents.value = [
-      { id: null, name: 'Tous' },
+      { id: null, name: '' },
       ...(agentData as Array<{ id: number; name: string }>).map(a => ({ id: a.id, name: a.name })),
     ]
   } catch {
@@ -119,7 +122,7 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
   <div class="flex flex-col h-full min-h-0 overflow-y-auto px-4 py-3 gap-3">
     <!-- Filters -->
     <div class="flex items-center gap-3 shrink-0 flex-wrap">
-      <span class="text-xs text-content-faint font-semibold">Agent :</span>
+      <span class="text-xs text-content-faint font-semibold">{{ t('heatmap.agentLabel') }}</span>
       <div class="flex gap-1.5 flex-wrap">
         <button
           v-for="a in agents"
@@ -130,7 +133,7 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
             : 'border-edge-subtle text-content-subtle hover:text-content-secondary'"
           @click="filterAgentId = a.id"
         >
-          {{ a.name }}
+          {{ a.id === null ? t('heatmap.all') : a.name }}
         </button>
       </div>
     </div>
@@ -147,22 +150,22 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
           class="w-3 h-3 rounded-sm transition-colors cursor-default"
           :class="COLORS[intensity(cell.count)]"
           :style="{ gridColumn: cell.week + 1, gridRow: cell.day + 1 }"
-          :title="`${cell.date} — ${cell.count} tâche${cell.count !== 1 ? 's' : ''}`"
+          :title="t('heatmap.tooltip', cell.count, { named: { date: cell.date, n: cell.count } })"
         />
       </div>
     </div>
 
     <!-- Legend -->
     <div class="flex items-center gap-2 text-[10px] text-content-faint shrink-0">
-      <span>Moins</span>
+      <span>{{ t('heatmap.less') }}</span>
       <div
         v-for="(cls, idx) in COLORS"
         :key="idx"
         class="w-3 h-3 rounded-sm"
         :class="cls"
       />
-      <span>Plus</span>
-      <span class="ml-auto font-mono">max : {{ maxCount }} tâche{{ maxCount !== 1 ? 's' : '' }} / jour</span>
+      <span>{{ t('heatmap.more') }}</span>
+      <span class="ml-auto font-mono">{{ t('heatmap.maxPerDay', maxCount, { named: { n: maxCount } }) }}</span>
     </div>
   </div>
 </template>

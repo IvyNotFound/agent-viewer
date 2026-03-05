@@ -5,6 +5,7 @@ import { nextTick } from 'vue'
 import StreamView from '@renderer/components/StreamView.vue'
 import type { StreamEvent } from '@renderer/components/StreamView.vue'
 import { mockElectronAPI } from '../../../test/setup'
+import i18n from '@renderer/plugins/i18n'
 
 describe('StreamView', () => {
   // Helper to mount StreamView with a fake tab and inject stream events via the IPC callback.
@@ -42,7 +43,7 @@ describe('StreamView', () => {
 
     const wrapper = mount(StreamView, {
       props: { terminalId: 'test-terminal-1' },
-      global: { plugins: [pinia] },
+      global: { plugins: [pinia, i18n] },
     })
 
     // Wait for async agentCreate + onAgentStream subscription
