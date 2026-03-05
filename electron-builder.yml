@@ -2,6 +2,12 @@ appId: com.ivynotfound.agent-viewer
 productName: agent-viewer
 copyright: Copyright © 2024-2026 IvyNotFound
 
+publish:
+  provider: github
+  owner: IvyNotFound
+  repo: agent-viewer
+  private: true
+
 win:
   icon: build/icon.ico
   target:

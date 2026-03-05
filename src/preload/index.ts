@@ -321,4 +321,35 @@ contextBridge.exposeInMainWorld('electronAPI', {
   telemetryScan: (projectPath: string): Promise<{ languages: Array<{ name: string; color: string; files: number; lines: number; percent: number }>; totalFiles: number; totalLines: number; scannedAt: string }> =>
     ipcRenderer.invoke('telemetry:scan', projectPath),
 
+  // Auto-updater (GitHub Releases — private repo, token stored via safeStorage)
+  updater: {
+    /** Returns '****' if a token is saved, null otherwise. Token is never sent to renderer. */
+    getToken: (): Promise<string | null> =>
+      ipcRenderer.invoke('updater:get-token'),
+
+    /** Save the GitHub PAT (scope: repo read) encrypted via safeStorage. */
+    setToken: (token: string): Promise<boolean> =>
+      ipcRenderer.invoke('updater:set-token', token),
+
+    /** Trigger an update check (no-op in dev). */
+    check: (): Promise<unknown> =>
+      ipcRenderer.invoke('updater:check'),
+
+    /** Start downloading the available update (no-op in dev). */
+    download: (): Promise<unknown> =>
+      ipcRenderer.invoke('updater:download'),
+
+    /** Quit and install the downloaded update. */
+    install: (): Promise<void> =>
+      ipcRenderer.invoke('updater:install'),
+
+    /** Subscribe to an update event. Returns an unsubscribe function. */
+    on: (event: 'available' | 'not-available' | 'progress' | 'downloaded' | 'error', cb: (data: unknown) => void): (() => void) => {
+      const channel = `update:${event}`
+      const handler = (_: unknown, data: unknown) => cb(data)
+      ipcRenderer.on(channel, handler)
+      return () => ipcRenderer.off(channel, handler)
+    },
+  },
+
 })

@@ -16,6 +16,7 @@ import { registerIpcHandlers } from './ipc'
 import { restoreTrustedPaths } from './ipc-project'
 import { registerAgentStreamHandlers } from './agent-stream'
 import { startHookServer, setHookWindow, injectHookSecret, injectHookUrls, detectWslGatewayIp } from './hookServer'
+import { setupAutoUpdater, registerUpdaterIpc } from './updater'
 
 // ── GPU flags for improved rendering performance ─────────────────────────────────
 // These MUST be set BEFORE app.whenReady() to take effect
@@ -88,7 +89,7 @@ function getIconPath(): string | undefined {
  *
  * @returns {void}
  */
-function createWindow(): void {
+function createWindow(): BrowserWindow {
   const iconPath = getIconPath()
 
   const win = new BrowserWindow({
@@ -153,6 +154,8 @@ function createWindow(): void {
   } else {
     win.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  return win
 }
 
 let hookServer: Server | null = null
@@ -160,6 +163,7 @@ let hookServer: Server | null = null
 app.whenReady().then(async () => {
   setupCSP()
   registerIpcHandlers()
+  registerUpdaterIpc()
   await restoreTrustedPaths()
   registerAgentStreamHandlers()
   hookServer = startHookServer(app.getPath('userData'))
@@ -171,12 +175,16 @@ app.whenReady().then(async () => {
   if (wslIp) {
     injectHookUrls(settingsPath, wslIp).catch(() => {})
   }
-  createWindow()
+  const win = createWindow()
+  setupAutoUpdater(win)
 })
 app.on('window-all-closed', () => {
   hookServer?.close()
   if (process.platform !== 'darwin') app.quit()
 })
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  if (BrowserWindow.getAllWindows().length === 0) {
+    const win = createWindow()
+    setupAutoUpdater(win)
+  }
 })
