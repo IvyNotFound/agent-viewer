@@ -145,4 +145,26 @@ describe('usePolledData (T784)', () => {
     expect(fetcher).toHaveBeenCalledTimes(1)
     wrapper.unmount()
   })
+
+  it('does NOT start timer after unmount (race condition guard)', async () => {
+    // Simulates: active changes to true in Vue microtask queue, but
+    // component unmounts before that microtask runs → mounted=false → start() is a noop.
+    const fetcher = vi.fn().mockResolvedValue(undefined)
+    const active = ref(false)
+    const { wrapper } = mountWithPolledData(fetcher, active, 1000)
+    await nextTick()
+
+    // Unmount before the watch batch for active=true fires
+    wrapper.unmount()
+
+    // Now trigger active=true (simulates late batch execution after unmount)
+    active.value = true
+    await nextTick()
+
+    vi.advanceTimersByTime(3000)
+    await nextTick()
+
+    // fetcher should never have been called (mounted=false prevented start())
+    expect(fetcher).not.toHaveBeenCalled()
+  })
 })

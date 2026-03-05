@@ -21,6 +21,7 @@ export function usePolledData(
 } {
   const loading = ref(false)
   let timer: ReturnType<typeof setInterval> | null = null
+  let mounted = true
 
   async function safeFetch(): Promise<void> {
     if (document.visibilityState === 'hidden') return
@@ -33,7 +34,7 @@ export function usePolledData(
   }
 
   function start() {
-    if (!timer) {
+    if (!timer && mounted) {
       timer = setInterval(safeFetch, interval)
     }
   }
@@ -54,7 +55,10 @@ export function usePolledData(
     }
   }, { immediate: true })
 
-  onUnmounted(stop)
+  onUnmounted(() => {
+    mounted = false
+    stop()
+  })
 
   return { loading, refresh: safeFetch }
 }
