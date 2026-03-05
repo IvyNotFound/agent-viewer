@@ -433,10 +433,13 @@ export function parseTokensFromJSONLStream(transcriptPath: string): Promise<Toke
 // ── Stop handler ──────────────────────────────────────────────────────────────
 
 /**
- * Handle the Stop hook: parse JSONL transcript and persist token counts.
+ * Handle the Stop hook: parse JSONL transcript, persist token counts, and
+ * mark the session as completed.
  *
  * Derives DB path from `cwd` (the project root sent by Claude Code).
  * Falls back to the most recent started session if no session matches convId.
+ * Sets `statut='completed'` and `ended_at=datetime('now')` on the matched
+ * session if it was previously in `'started'` state.
  */
 async function handleStop(payload: StopPayload): Promise<void> {
   pushHookEvent('Stop', payload)
