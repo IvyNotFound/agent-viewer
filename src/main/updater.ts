@@ -18,21 +18,37 @@ import { safeStorage } from 'electron'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 
+// Injected at build time by Vite define (GH_TOKEN_UPDATER secret from GitHub Actions).
+// Empty string when building locally — falls back to safeStorage or GH_TOKEN env var.
+declare const __GH_TOKEN__: string
+
 const TOKEN_FILE = join(app.getPath('userData'), 'gh_token.enc')
 
 /**
- * Load the GitHub token from encrypted storage.
- * Returns null if no token is saved or decryption fails.
+ * Load the GitHub token using priority order:
+ * 0. Build-time injected token (works on any machine, set via GH_TOKEN_UPDATER secret)
+ * 1. safeStorage encrypted file
+ * 2. GH_TOKEN environment variable (fallback for local dev)
+ * Returns null if no token is available.
  */
 export function loadToken(): string | null {
-  try {
-    if (!safeStorage.isEncryptionAvailable()) return null
-    if (!existsSync(TOKEN_FILE)) return null
-    const encrypted = readFileSync(TOKEN_FILE)
-    return safeStorage.decryptString(encrypted)
-  } catch {
-    return null
+  // Priority 0: build-time injected token
+  if (typeof __GH_TOKEN__ !== 'undefined' && __GH_TOKEN__) {
+    return __GH_TOKEN__
   }
+
+  // Priority 1: safeStorage encrypted file
+  try {
+    if (safeStorage.isEncryptionAvailable() && existsSync(TOKEN_FILE)) {
+      const encrypted = readFileSync(TOKEN_FILE)
+      return safeStorage.decryptString(encrypted)
+    }
+  } catch {
+    // fall through
+  }
+
+  // Priority 2: GH_TOKEN env var
+  return process.env.GH_TOKEN ?? null
 }
 
 /**
