@@ -20,15 +20,15 @@ import { setupAutoUpdater, registerUpdaterIpc } from './updater'
 
 // ── GPU flags for improved rendering performance ─────────────────────────────────
 // These MUST be set BEFORE app.whenReady() to take effect
-// They improve GPU rasterization and reduce CPU usage for animations
 app.commandLine.appendSwitch('enable-gpu-rasterization')
-app.commandLine.appendSwitch('enable-zero-copy')
-app.commandLine.appendSwitch('disable-software-rasterizer')
 // Disable GPU shader disk cache to avoid Windows "access denied" errors on WSL
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
-// Optional: uncomment if GPU is blocked by Chromium blocklist
-// app.commandLine.appendSwitch('ignore-gpu-blocklist')
-// app.commandLine.appendSwitch('enable-native-gpu-memory-buffers')
+// Zero-copy only on Linux/WSL — crashes on some Windows GPU configs (exit code 4294967295)
+// disable-software-rasterizer removed: suppresses CPU fallback → Chromium crash on Windows
+// when GPU is unsupported (VMs, RDP, Chromium blocklist)
+if (process.platform !== 'win32') {
+  app.commandLine.appendSwitch('enable-zero-copy')
+}
 
 // ── Content Security Policy ───────────────────────────────────────────────────
 // 'unsafe-inline' for style-src is required by Tailwind CSS (utility classes injected as inline styles).
