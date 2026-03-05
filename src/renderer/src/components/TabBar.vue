@@ -390,7 +390,7 @@ function openGroupMenu(event: MouseEvent, group: TabGroup): void {
               <span v-if="tab.dirty" class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" :title="t('tabBar.unsaved')" />
               <!-- Fermer -->
               <span
-                class="flex items-center justify-center w-4 h-4 rounded opacity-40 hover:opacity-100 hover:text-red-400 hover:bg-black/20 transition-all text-xs cursor-pointer"
+                class="flex items-center justify-center w-4 h-4 rounded opacity-40 hover:opacity-100 hover:text-red-400 hover:bg-black/20 transition-all text-xs cursor-pointer ml-auto"
                 :title="t('tabBar.closeTab')"
                 @click.stop="handleCloseTab(tab)"
               >✕</span>
