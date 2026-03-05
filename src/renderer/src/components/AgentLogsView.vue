@@ -154,6 +154,11 @@ const filterLevelConfig: Record<string, string> = {
   debug: 'text-violet-700 dark:text-violet-400 bg-violet-100 dark:bg-violet-950/60 ring-violet-300 dark:ring-violet-800',
 }
 
+function resetFilters(): void {
+  filterLevel.value = 'all'
+  filterAgentId.value = null
+}
+
 // ── Detail toggle ─────────────────────────────────────────────────────────
 function toggleExpand(id: number): void {
   if (expandedIds.value[id]) {
@@ -223,6 +228,14 @@ watch(() => props.initialAgentId, (v) => {
           :value="id"
         >{{ name }}</option>
       </select>
+
+      <!-- Reset filters -->
+      <button
+        v-if="filterLevel !== 'all' || filterAgentId !== null"
+        class="px-2 py-0.5 rounded text-xs font-mono text-content-subtle bg-transparent ring-1 ring-edge-default hover:text-content-secondary hover:ring-violet-500 transition-all"
+        :title="t('logs.resetFilters')"
+        @click="resetFilters"
+      >{{ t('logs.reset') }}</button>
 
       <!-- Spacer -->
       <div class="flex-1" />

@@ -50,6 +50,46 @@ describe('AgentLogsView', () => {
     expect(buttons.length).toBeGreaterThanOrEqual(2)
   })
 
+  it('shows reset button when a filter is active and resets on click', async () => {
+    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
+    api.queryDb.mockResolvedValue([{ total: 0 }])
+
+    const wrapper = mount(AgentLogsView, {
+      global: {
+        plugins: [createTestingPinia({
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db', agents: [] },
+            tabs: { activeTabId: 'dashboard' },
+          },
+        }), i18n],
+        stubs: { TokenStatsView: true },
+      },
+    })
+    await flushPromises()
+
+    // Reset button should not be visible initially (filters at default)
+    expect(wrapper.find('button[title]').exists()).toBe(true)
+    const resetBefore = wrapper.findAll('button').find(b => b.text().includes('réinitialiser') || b.text().includes('reset'))
+    expect(resetBefore).toBeUndefined()
+
+    // Click 'error' level filter
+    const errorBtn = wrapper.findAll('button').find(b => b.text() === 'error')
+    await errorBtn!.trigger('click')
+    await flushPromises()
+
+    // Reset button should now be visible
+    const resetBtn = wrapper.findAll('button').find(b => b.text().includes('réinitialiser') || b.text().includes('reset'))
+    expect(resetBtn).toBeDefined()
+
+    // Click reset button
+    await resetBtn!.trigger('click')
+    await flushPromises()
+
+    // Reset button should disappear again
+    const resetAfter = wrapper.findAll('button').find(b => b.text().includes('réinitialiser') || b.text().includes('reset'))
+    expect(resetAfter).toBeUndefined()
+  })
+
   it('calls queryDb to fetch logs when dbPath is set', async () => {
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.queryDb
