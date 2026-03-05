@@ -33,7 +33,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: installer-windows
-          path: dist/*.exe
+          path: |
+            dist/*.exe
+            dist/latest.yml
 
   build-mac:
     runs-on: macos-latest
@@ -56,7 +58,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: installer-mac
-          path: dist/*.dmg
+          path: |
+            dist/*.dmg
+            dist/latest-mac.yml
 
   build-linux:
     runs-on: ubuntu-latest
@@ -82,6 +86,7 @@ jobs:
           path: |
             dist/*.AppImage
             dist/*.deb
+            dist/latest-linux.yml
 
   create-release:
     needs: [build-windows, build-mac, build-linux]
@@ -106,6 +111,9 @@ jobs:
           body_path: /tmp/release_notes.md
           files: |
             artifacts/installer-windows/*.exe
+            artifacts/installer-windows/latest.yml
             artifacts/installer-mac/*.dmg
+            artifacts/installer-mac/latest-mac.yml
             artifacts/installer-linux/*.AppImage
             artifacts/installer-linux/*.deb
+            artifacts/installer-linux/latest-linux.yml
