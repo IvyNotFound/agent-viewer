@@ -90,6 +90,43 @@ describe('SettingsModal', () => {
     expect(settingsStore.setLanguage).toHaveBeenCalledWith('en')
   })
 
+  it('hides maxFileLinesCount input when maxFileLinesEnabled is false', async () => {
+    const wrapper = shallowMount(SettingsModal, {
+      global: {
+        plugins: [createTestingPinia({
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: { maxFileLinesEnabled: false },
+          },
+        }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    await flushPromises()
+    // No number input should be visible for maxFileLinesCount
+    const inputs = wrapper.findAll('input[type="number"]')
+    const maxInput = inputs.find(i => Number(i.attributes('min')) === 50)
+    expect(maxInput).toBeUndefined()
+  })
+
+  it('shows maxFileLinesCount input when maxFileLinesEnabled is true', async () => {
+    const wrapper = shallowMount(SettingsModal, {
+      global: {
+        plugins: [createTestingPinia({
+          initialState: {
+            tasks: { dbPath: '/p/.clone/db' },
+            settings: { maxFileLinesEnabled: true, maxFileLinesCount: 400 },
+          },
+        }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    await flushPromises()
+    const inputs = wrapper.findAll('input[type="number"]')
+    const maxInput = inputs.find(i => Number(i.attributes('min')) === 50)
+    expect(maxInput).toBeDefined()
+  })
+
   it('shows version info', async () => {
     const wrapper = shallowMount(SettingsModal, {
       global: {

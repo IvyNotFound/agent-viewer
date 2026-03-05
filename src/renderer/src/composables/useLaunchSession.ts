@@ -91,6 +91,9 @@ export function useLaunchSession() {
       const parts: string[] = []
       if (promptResult.systemPrompt) parts.push(promptResult.systemPrompt)
       if (promptResult.systemPromptSuffix) parts.push(promptResult.systemPromptSuffix)
+      if (settingsStore.maxFileLinesEnabled) {
+        parts.push(`Always produce and maintain files of maximum ${settingsStore.maxFileLinesCount} lines. Split files that exceed this limit into logical modules.`)
+      }
       const fullSystemPrompt = parts.join('\n\n') || undefined
 
       const thinkingMode = (promptResult.thinkingMode as 'auto' | 'disabled') ?? 'auto'
@@ -153,6 +156,9 @@ export function useLaunchSession() {
       const parts: string[] = []
       if (promptResult.systemPrompt) parts.push(promptResult.systemPrompt)
       if (promptResult.systemPromptSuffix) parts.push(promptResult.systemPromptSuffix)
+      if (settingsStore.maxFileLinesEnabled) {
+        parts.push(`Always produce and maintain files of maximum ${settingsStore.maxFileLinesCount} lines. Split files that exceed this limit into logical modules.`)
+      }
       const fullSystemPrompt = parts.join('\n\n') || undefined
 
       const thinkingMode = (promptResult.thinkingMode as 'auto' | 'disabled') ?? 'auto'

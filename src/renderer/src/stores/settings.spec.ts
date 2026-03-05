@@ -211,6 +211,84 @@ describe('stores/settings — autoReviewThreshold', () => {
 })
 
 
+describe('stores/settings — maxFileLinesEnabled (T899)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    document.documentElement.className = ''
+  })
+
+  it('should default to false', () => {
+    const store = useSettingsStore()
+    expect(store.maxFileLinesEnabled).toBe(false)
+  })
+
+  it('should persist enabled state to localStorage', () => {
+    const store = useSettingsStore()
+    store.setMaxFileLinesEnabled(true)
+    expect(store.maxFileLinesEnabled).toBe(true)
+    expect(localStorage.getItem('maxFileLinesEnabled')).toBe('true')
+  })
+
+  it('should persist disabled state to localStorage', () => {
+    const store = useSettingsStore()
+    store.setMaxFileLinesEnabled(true)
+    store.setMaxFileLinesEnabled(false)
+    expect(store.maxFileLinesEnabled).toBe(false)
+    expect(localStorage.getItem('maxFileLinesEnabled')).toBe('false')
+  })
+
+  it('should read stored value on init', () => {
+    localStorage.setItem('maxFileLinesEnabled', 'true')
+    const store = useSettingsStore()
+    expect(store.maxFileLinesEnabled).toBe(true)
+  })
+})
+
+
+describe('stores/settings — maxFileLinesCount (T899)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    document.documentElement.className = ''
+  })
+
+  it('should default to 400', () => {
+    const store = useSettingsStore()
+    expect(store.maxFileLinesCount).toBe(400)
+  })
+
+  it('should persist count to localStorage', () => {
+    const store = useSettingsStore()
+    store.setMaxFileLinesCount(600)
+    expect(store.maxFileLinesCount).toBe(600)
+    expect(localStorage.getItem('maxFileLinesCount')).toBe('600')
+  })
+
+  it('should clamp minimum to 50', () => {
+    const store = useSettingsStore()
+    store.setMaxFileLinesCount(10)
+    expect(store.maxFileLinesCount).toBe(50)
+    expect(localStorage.getItem('maxFileLinesCount')).toBe('50')
+  })
+
+  it('should clamp maximum to 10000', () => {
+    const store = useSettingsStore()
+    store.setMaxFileLinesCount(99999)
+    expect(store.maxFileLinesCount).toBe(10000)
+    expect(localStorage.getItem('maxFileLinesCount')).toBe('10000')
+  })
+
+  it('should read stored value on init', () => {
+    localStorage.setItem('maxFileLinesCount', '250')
+    const store = useSettingsStore()
+    expect(store.maxFileLinesCount).toBe(250)
+  })
+})
+
+
 describe('stores/settings — appInfo', () => {
   beforeEach(() => {
     setActivePinia(createPinia())

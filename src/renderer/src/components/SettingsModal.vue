@@ -175,6 +175,31 @@ function handleKeydown(e: KeyboardEvent) {
             </div>
           </div>
 
+          <!-- Max file lines instruction (T899) -->
+          <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
+            <div class="flex items-center justify-between gap-4 mb-2">
+              <div>
+                <p class="text-[11px] text-content-subtle mb-1 uppercase tracking-wider">{{ t('settings.maxFileLinesEnabled') }}</p>
+                <p class="text-xs text-content-faint">{{ t('settings.maxFileLinesEnabledDesc') }}</p>
+              </div>
+              <ToggleSwitch
+                :model-value="settingsStore.maxFileLinesEnabled"
+                @update:model-value="settingsStore.setMaxFileLinesEnabled($event)"
+              />
+            </div>
+            <div v-if="settingsStore.maxFileLinesEnabled" class="flex items-center gap-2 mt-2">
+              <label class="text-xs text-content-muted">{{ t('settings.maxFileLinesCount') }}</label>
+              <input
+                type="number"
+                :value="settingsStore.maxFileLinesCount"
+                min="50"
+                max="10000"
+                class="w-20 bg-surface-secondary border border-edge-default rounded px-2 py-1 text-sm text-content-primary text-center outline-none focus:ring-1 focus:ring-violet-500"
+                @change="settingsStore.setMaxFileLinesCount(Number(($event.target as HTMLInputElement).value))"
+              />
+            </div>
+          </div>
+
           <!-- Desktop notifications (T755) -->
           <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
             <div class="flex items-center justify-between gap-4">

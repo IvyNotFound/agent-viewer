@@ -134,6 +134,21 @@ export const useSettingsStore = defineStore('settings', () => {
     localStorage.setItem('defaultClaudeProfile', profile)
   }
 
+  // Max file lines instruction (T899)
+  const maxFileLinesEnabled = ref<boolean>(localStorage.getItem('maxFileLinesEnabled') === 'true')
+  const maxFileLinesCount = ref<number>(parseInt(localStorage.getItem('maxFileLinesCount') ?? '400', 10) || 400)
+
+  function setMaxFileLinesEnabled(enabled: boolean) {
+    maxFileLinesEnabled.value = enabled
+    localStorage.setItem('maxFileLinesEnabled', String(enabled))
+  }
+
+  function setMaxFileLinesCount(n: number) {
+    const clamped = Math.max(50, Math.min(10000, n))
+    maxFileLinesCount.value = clamped
+    localStorage.setItem('maxFileLinesCount', String(clamped))
+  }
+
   // Desktop notifications (T755)
   const notificationsEnabled = ref<boolean>(localStorage.getItem('notificationsEnabled') === 'true')
 
@@ -165,6 +180,11 @@ export const useSettingsStore = defineStore('settings', () => {
     autoReviewThreshold,
     setAutoReviewEnabled,
     setAutoReviewThreshold,
+    // Max file lines instruction (T899)
+    maxFileLinesEnabled,
+    maxFileLinesCount,
+    setMaxFileLinesEnabled,
+    setMaxFileLinesCount,
     // Desktop notifications (T755)
     notificationsEnabled,
     setNotificationsEnabled,
