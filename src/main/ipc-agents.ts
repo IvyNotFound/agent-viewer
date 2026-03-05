@@ -7,7 +7,9 @@
  */
 
 import { ipcMain } from 'electron'
-import { readFile, writeFile, rename } from 'fs/promises'
+import { createReadStream } from 'fs'
+import { createInterface } from 'readline'
+import { writeFile, rename } from 'fs/promises'
 import { join, dirname } from 'path'
 import { homedir } from 'os'
 import { assertDbPathAllowed, assertProjectPathAllowed, queryLive, writeDb } from './db'
@@ -60,24 +62,31 @@ function claudeProjectSlug(projectPath: string): string {
 async function parseConvTokens(projectPath: string, convId: string): Promise<TokenCounts> {
   const slug = claudeProjectSlug(projectPath)
   const jsonlPath = join(homedir(), '.claude', 'projects', slug, `${convId}.jsonl`)
-  const content = await readFile(jsonlPath, 'utf-8')
 
   let tokensIn = 0, tokensOut = 0, cacheRead = 0, cacheWrite = 0
 
-  for (const line of content.split('\n')) {
-    if (!line.trim()) continue
-    try {
-      const obj = JSON.parse(line)
-      // Only count finalized assistant messages (stop_reason != null = streaming start only)
-      if (obj.type !== 'assistant') continue
-      if (!obj.message?.usage || obj.message.stop_reason == null) continue
-      const u = obj.message.usage
-      tokensIn  += (u.input_tokens                ?? 0)
-      tokensOut += (u.output_tokens               ?? 0)
-      cacheRead += (u.cache_read_input_tokens      ?? 0)
-      cacheWrite += (u.cache_creation_input_tokens ?? 0)
-    } catch { /* malformed line — skip */ }
-  }
+  await new Promise<void>((resolve, reject) => {
+    const rl = createInterface({
+      input: createReadStream(jsonlPath, { encoding: 'utf-8' }),
+      crlfDelay: Infinity,
+    })
+    rl.on('line', (line) => {
+      if (!line.trim()) return
+      try {
+        const obj = JSON.parse(line)
+        // Only count finalized assistant messages (stop_reason != null = streaming start only)
+        if (obj.type !== 'assistant') return
+        if (!obj.message?.usage || obj.message.stop_reason == null) return
+        const u = obj.message.usage
+        tokensIn  += (u.input_tokens                ?? 0)
+        tokensOut += (u.output_tokens               ?? 0)
+        cacheRead += (u.cache_read_input_tokens      ?? 0)
+        cacheWrite += (u.cache_creation_input_tokens ?? 0)
+      } catch { /* malformed line — skip */ }
+    })
+    rl.on('close', resolve)
+    rl.on('error', reject)
+  })
 
   return { tokensIn, tokensOut, cacheRead, cacheWrite }
 }

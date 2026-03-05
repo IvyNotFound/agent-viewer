@@ -51,6 +51,42 @@ vi.mock('fs/promises', () => ({
   unlink: vi.fn().mockResolvedValue(undefined),
 }))
 
+// ── Mock readline — emits lines from jsonlMockContent ─────────────────────────
+// createReadStream (from 'fs') is NOT mocked — the real stream is created but
+// immediately silenced and destroyed so file-not-found errors don't propagate.
+vi.mock('readline', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('readline')>()
+  const { EventEmitter } = await import('events')
+  const createInterface = vi.fn(({ input }: { input: NodeJS.ReadableStream }) => {
+    // Silence and destroy the real stream to prevent unhandled errors in test env
+    input.on('error', () => {})
+    if ('destroy' in input && typeof input.destroy === 'function') input.destroy()
+
+    const rl = new EventEmitter() as NodeJS.EventEmitter & { close: () => void }
+    rl.close = () => {}
+    setImmediate(() => {
+      if (jsonlMockContent instanceof Error) {
+        rl.emit('error', jsonlMockContent)
+        return
+      }
+      if (jsonlMockContent === null) {
+        rl.emit('error', new Error('ENOENT: no such file'))
+        return
+      }
+      for (const line of jsonlMockContent.split('\n')) {
+        rl.emit('line', line)
+      }
+      rl.emit('close')
+    })
+    return rl
+  })
+  return {
+    ...actual,
+    createInterface,
+    default: { ...actual, createInterface },
+  }
+})
+
 // ── Mock electron ────────────────────────────────────────────────────────────
 const handlers: Record<string, (event: unknown, ...args: unknown[]) => unknown> = {}
 
@@ -1358,7 +1394,7 @@ describe('session:parseTokens (T581)', () => {
   it('parses valid JSONL and returns summed token counts', async () => {
     const agentId = await insertAgent('parse-tokens-agent')
     await insertSession(agentId, VALID_CONV_ID)
-    ;(readFileMock as ReturnType<typeof vi.fn>).mockResolvedValueOnce(VALID_JSONL)
+    jsonlMockContent = VALID_JSONL
 
     const result = await handlers['session:parseTokens'](null, TEST_DB_PATH, VALID_CONV_ID, '/mnt/c/project') as {
       success: boolean; tokensIn?: number; tokensOut?: number; cacheRead?: number; cacheWrite?: number
@@ -1372,7 +1408,7 @@ describe('session:parseTokens (T581)', () => {
   })
 
   it('returns { success: false } when JSONL file not found', async () => {
-    ;(readFileMock as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('ENOENT: no such file'))
+    jsonlMockContent = null // readline mock will emit ENOENT
     const result = await handlers['session:parseTokens'](null, TEST_DB_PATH, VALID_CONV_ID, '/mnt/c/project') as { success: boolean; error?: string }
     expect(result.success).toBe(false)
     expect(result.error).toContain('ENOENT')
@@ -1382,7 +1418,7 @@ describe('session:parseTokens (T581)', () => {
     const jsonlWithGarbage = 'garbage-line\n' + JSON.stringify({ type: 'assistant', message: { stop_reason: 'end_turn', usage: { input_tokens: 10, output_tokens: 5 } } })
     const agentId = await insertAgent('malformed-jsonl-agent')
     await insertSession(agentId, VALID_CONV_ID)
-    ;(readFileMock as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonlWithGarbage)
+    jsonlMockContent = jsonlWithGarbage
 
     const result = await handlers['session:parseTokens'](null, TEST_DB_PATH, VALID_CONV_ID, '/mnt/c/project') as { success: boolean; tokensIn?: number }
     expect(result.success).toBe(true)
@@ -1409,7 +1445,7 @@ describe('session:syncAllTokens (T581)', () => {
   it('updates sessions with convId and nonzero tokens, returns updated count', async () => {
     const agentId = await insertAgent('sync-tokens-agent')
     const sessionId = await insertSession(agentId, VALID_CONV_ID)
-    ;(readFileMock as ReturnType<typeof vi.fn>).mockResolvedValueOnce(VALID_JSONL)
+    jsonlMockContent = VALID_JSONL
 
     const result = await handlers['session:syncAllTokens'](null, TEST_DB_PATH, '/mnt/c/project') as { success: boolean; updated: number; errors: string[] }
     expect(result.success).toBe(true)
@@ -1423,7 +1459,7 @@ describe('session:syncAllTokens (T581)', () => {
   it('skips sessions where JSONL file is missing (error captured, not thrown)', async () => {
     const agentId = await insertAgent('sync-missing-jsonl-agent')
     await insertSession(agentId, VALID_CONV_ID)
-    ;(readFileMock as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('ENOENT'))
+    jsonlMockContent = null // readline mock will emit ENOENT
 
     const result = await handlers['session:syncAllTokens'](null, TEST_DB_PATH, '/mnt/c/project') as { success: boolean; updated: number; errors: string[] }
     expect(result.success).toBe(true)
@@ -1456,7 +1492,7 @@ describe('session:collectTokens (T581)', () => {
   it('returns aggregated tokens for agent with convId session', async () => {
     const agentId = await insertAgent('collect-tokens-agent')
     await insertSession(agentId, VALID_CONV_ID)
-    ;(readFileMock as ReturnType<typeof vi.fn>).mockResolvedValueOnce(VALID_JSONL)
+    jsonlMockContent = VALID_JSONL
 
     const result = await handlers['session:collectTokens'](null, TEST_DB_PATH, 'collect-tokens-agent') as {
       success: boolean; tokens: { tokensIn: number; tokensOut: number } | null
