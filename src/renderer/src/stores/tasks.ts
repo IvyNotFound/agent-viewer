@@ -176,6 +176,11 @@ export const useTasksStore = defineStore('tasks', () => {
             })
           }
         }
+        // Purge stale entries (>60s) to keep _lastNotifTs bounded
+        const cutoff = now - 60_000
+        for (const [id, ts] of Object.entries(_lastNotifTs)) {
+          if (ts < cutoff) delete _lastNotifTs[Number(id)]
+        }
       }
       tasks.value = newTasks
       // Rebuild boardAssignees in-place — avoids new Map allocation each refresh (T819)

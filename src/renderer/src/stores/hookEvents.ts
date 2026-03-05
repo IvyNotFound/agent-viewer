@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, type ComputedRef } from 'vue'
 
 export interface HookEvent {
   /** Unique monotonic counter */
@@ -54,9 +54,16 @@ export const useHookEventsStore = defineStore('hookEvents', () => {
     }
   }
 
+  /** Memoized computed views by sessionId — avoids orphaned computeds on repeated calls. */
+  const _sessionComputeds = new Map<string, ComputedRef<HookEvent[]>>()
+
   /** Reactive computed view of events for a given sessionId. */
   function eventsForSession(sessionId: string | null) {
-    return computed(() => events.value.filter(e => e.sessionId === sessionId))
+    const key = sessionId ?? '__null__'
+    if (!_sessionComputeds.has(key)) {
+      _sessionComputeds.set(key, computed(() => events.value.filter(e => e.sessionId === sessionId)))
+    }
+    return _sessionComputeds.get(key)!
   }
 
   /** Reactive computed active tool name for a given sessionId. null = idle. */

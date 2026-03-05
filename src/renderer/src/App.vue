@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent } from 'vue'
+import { ref, computed, defineAsyncComponent, onUnmounted } from 'vue'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useTabsStore } from '@renderer/stores/tabs'
 import TitleBar from '@renderer/components/TitleBar.vue'
@@ -31,9 +31,8 @@ const hookEventsStore = useHookEventsStore()
 
 // Set up global IPC listener for Claude Code hook events (T742).
 // Registered once at app level so all StreamView instances share the same store.
-if (window.electronAPI.onHookEvent) {
-  window.electronAPI.onHookEvent((e) => hookEventsStore.push(e))
-}
+const unsubHookEvent = window.electronAPI.onHookEvent?.((e) => hookEventsStore.push(e))
+onUnmounted(() => unsubHookEvent?.())
 
 // Auto-launch agent terminals when tasks are created with assigned agents (T340)
 useAutoLaunch({
