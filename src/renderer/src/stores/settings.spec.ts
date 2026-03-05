@@ -102,66 +102,6 @@ describe('stores/settings', () => {
     })
   })
 
-  describe('setGitHubRepo', () => {
-    it('should parse owner and repo from HTTPS URL', () => {
-      const store = useSettingsStore()
-
-      store.setGitHubRepo('https://github.com/owner/repo')
-
-      expect(store.github.owner).toBe('owner')
-      expect(store.github.repo).toBe('repo')
-      expect(store.github.repoUrl).toBe('https://github.com/owner/repo')
-    })
-
-    it('should parse owner and repo from SSH URL', () => {
-      const store = useSettingsStore()
-
-      store.setGitHubRepo('git@github.com:owner/repo.git')
-
-      expect(store.github.owner).toBe('owner')
-      expect(store.github.repo).toBe('repo')
-    })
-
-    it('should remove .git suffix', () => {
-      const store = useSettingsStore()
-
-      store.setGitHubRepo('https://github.com/owner/repo.git')
-
-      expect(store.github.repo).toBe('repo')
-    })
-
-    it('should handle invalid URL gracefully', () => {
-      const store = useSettingsStore()
-
-      store.setGitHubRepo('invalid-url')
-
-      expect(store.github.owner).toBe('')
-      expect(store.github.repo).toBe('')
-    })
-  })
-
-  describe('setGitHubConnected', () => {
-    it('should set connected to true and update lastCheck', () => {
-      const store = useSettingsStore()
-      store.setGitHubConnected(true)
-
-      expect(store.github.connected).toBe(true)
-      expect(store.github.lastCheck).not.toBeNull()
-    })
-
-    it('should set connected to false without updating lastCheck', () => {
-      const store = useSettingsStore()
-      store.setGitHubConnected(true)
-      const lastCheck = store.github.lastCheck
-
-      store.setGitHubConnected(false)
-
-      expect(store.github.connected).toBe(false)
-      // lastCheck should not change when disconnecting
-      expect(store.github.lastCheck).toBe(lastCheck)
-    })
-  })
-
 })
 
 

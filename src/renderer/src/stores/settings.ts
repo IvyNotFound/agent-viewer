@@ -4,7 +4,6 @@
  * Manages:
  * - Theme (dark/light mode)
  * - Language (fr/en)
- * - GitHub integration (token, repo URL)
  * - App info (version, name)
  *
  * @module stores/settings
@@ -17,14 +16,6 @@ import { setDarkMode } from '../utils/agentColor'
 
 export type Theme = 'dark' | 'light'
 export type Language = 'fr' | 'en'
-
-interface GitHubSettings {
-  repoUrl: string
-  owner: string
-  repo: string
-  connected: boolean
-  lastCheck: string | null
-}
 
 interface AppInfo {
   version: string
@@ -43,7 +34,6 @@ interface AppInfo {
  * Actions:
  * - setTheme, applyTheme: Theme management
  * - setLanguage: Language switching
- * - setGitHubRepo: GitHub config
  *
  * @returns {object} Store instance with state and methods
  */
@@ -97,47 +87,6 @@ export const useSettingsStore = defineStore('settings', () => {
     localStorage.setItem('language', l)
     // Sync to vue-i18n global locale for hot-switching
     i18n.global.locale.value = l
-  }
-
-  // GitHub settings
-  const github = ref<GitHubSettings>({
-    repoUrl: localStorage.getItem('github_repo_url') || '',
-    owner: '',
-    repo: '',
-    connected: false,
-    lastCheck: localStorage.getItem('github_last_check') || null
-  })
-
-  /**
-   * Parses and stores a GitHub repository URL.
-   * Extracts owner and repo name from HTTPS or SSH URL formats.
-   *
-   * @param url - GitHub repository URL (e.g. https://github.com/owner/repo)
-   * @returns {void}
-   */
-  function setGitHubRepo(url: string) {
-    github.value.repoUrl = url
-    localStorage.setItem('github_repo_url', url)
-    // Parse owner/repo from URL
-    const match = url.match(/github\.com[/:]([^/]+)\/([^/.]+)/)
-    if (match) {
-      github.value.owner = match[1]
-      github.value.repo = match[2].replace(/\.git$/, '')
-    }
-  }
-
-  /**
-   * Updates GitHub connection status and persists the last check timestamp.
-   *
-   * @param connected - Whether the GitHub connection is active
-   * @returns {void}
-   */
-  function setGitHubConnected(connected: boolean) {
-    github.value.connected = connected
-    if (connected) {
-      github.value.lastCheck = new Date().toISOString()
-      localStorage.setItem('github_last_check', github.value.lastCheck)
-    }
   }
 
   // App info
@@ -206,10 +155,6 @@ export const useSettingsStore = defineStore('settings', () => {
     // Language
     language,
     setLanguage,
-    // GitHub
-    github,
-    setGitHubRepo,
-    setGitHubConnected,
     // App info
     appInfo,
     // Auto-launch (T340)

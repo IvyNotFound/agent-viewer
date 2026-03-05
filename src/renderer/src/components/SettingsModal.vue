@@ -39,9 +39,6 @@ const settingsStore = useSettingsStore()
 const store = useTasksStore()
 const { status: updaterStatus, check: checkUpdaterNow } = useUpdater()
 
-const githubRepo = ref(settingsStore.github.repoUrl)
-const connectionError = ref('')
-
 // Claude instances for default selection (T857)
 const claudeInstances = ref<ClaudeInstance[]>([])
 
@@ -55,28 +52,7 @@ onMounted(async () => {
   const rawInstances = await window.electronAPI.getClaudeInstances()
   claudeInstances.value = Array.isArray(rawInstances) ? (rawInstances as ClaudeInstance[]) : []
 
-  if (store.dbPath) {
-    // Silent reconnection if repo already configured
-    if (githubRepo.value) {
-      await testGithubConnection()
-    }
-  }
 })
-
-async function testGithubConnection() {
-  if (!store.dbPath || !githubRepo.value) return
-  connectionError.value = ''
-  settingsStore.setGitHubRepo(githubRepo.value)
-  const result = await window.electronAPI.testGithubConnection(store.dbPath, githubRepo.value)
-  settingsStore.setGitHubConnected(result.connected)
-  // Bug 2 fix: display error message if connection failed
-  if (!result.connected) {
-    connectionError.value = result.error || 'Connexion échouée'
-  } else {
-    connectionError.value = ''
-  }
-}
-
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
@@ -243,54 +219,6 @@ function handleKeydown(e: KeyboardEvent) {
                   </option>
                 </select>
               </div>
-            </div>
-          </div>
-
-          <!-- GitHub Connection -->
-          <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
-            <p class="text-[11px] text-content-subtle mb-3 uppercase tracking-wider">{{ t('settings.github') }}</p>
-
-            <!-- Repo URL input -->
-            <div class="mb-3">
-              <label class="block text-xs text-content-muted mb-1">{{ t('settings.repoLabel') }}</label>
-              <input
-                v-model="githubRepo"
-                type="text"
-                class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-sm text-content-primary font-mono outline-none focus:ring-1 focus:ring-violet-500"
-                placeholder="https://github.com/owner/repo"
-                @change="settingsStore.setGitHubRepo(githubRepo)"
-              />
-            </div>
-
-            <!-- Connection status & test -->
-            <div class="flex items-center justify-between">
-              <div class="flex flex-col">
-                <span class="flex items-center gap-1.5">
-                  <span
-                    :class="[
-                      'inline-block w-2 h-2 rounded-full',
-                      settingsStore.github.connected ? 'bg-emerald-400' : 'bg-content-faint'
-                    ]"
-                  />
-                  <span
-                    :class="[
-                      'text-sm font-medium',
-                      settingsStore.github.connected ? 'text-emerald-400' : 'text-content-subtle'
-                    ]"
-                  >
-                    {{ settingsStore.github.connected ? t('settings.connected') : t('settings.notConnected') }}
-                  </span>
-                </span>
-                <!-- Bug 2 fix: show error message -->
-                <span v-if="connectionError" class="text-xs text-red-400 mt-1">{{ connectionError }}</span>
-              </div>
-              <button
-                class="px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-500 text-white rounded-md transition-colors disabled:opacity-50"
-                :disabled="!githubRepo"
-                @click="testGithubConnection"
-              >
-                {{ t('settings.test') }}
-              </button>
             </div>
           </div>
 

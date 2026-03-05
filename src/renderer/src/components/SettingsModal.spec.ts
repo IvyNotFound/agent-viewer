@@ -13,7 +13,6 @@ describe('SettingsModal', () => {
     vi.clearAllMocks()
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.getConfigValue.mockResolvedValue({ success: true, value: null })
-    api.testGithubConnection.mockResolvedValue({ connected: false })
   })
 
   it('renders settings title', async () => {
