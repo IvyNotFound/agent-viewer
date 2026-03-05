@@ -96,6 +96,7 @@
   "orgchart": {
     "tabLabel": "OrgChart",
     "noAgents": "Aucun agent trouvé",
+    "ungrouped": "Sans groupe",
     "status": {
       "active": "actif",
       "blocked": "bloqué",

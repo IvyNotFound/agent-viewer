@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
+import { useAgentsStore } from '@renderer/stores/agents'
 import { agentFg } from '@renderer/utils/agentColor'
 
+const { t } = useI18n()
 const store = useTasksStore()
+const agentStore = useAgentsStore()
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -30,6 +34,7 @@ interface LayoutNode {
 
 interface LayoutGroup {
   key: string
+  label: string
   x: number
   y: number
   w: number
@@ -45,20 +50,23 @@ async function fetchData(): Promise<void> {
   if (!store.dbPath) return
   loading.value = true
   try {
-    const result = await window.electronAPI.queryDb(
-      store.dbPath,
-      `SELECT a.id, a.name, a.type, a.perimetre,
-              s.statut as session_statut,
-              (SELECT COUNT(*) FROM tasks WHERE agent_assigne_id = a.id AND statut = 'in_progress') as tasks_in_progress,
-              (SELECT COUNT(*) FROM tasks WHERE agent_assigne_id = a.id AND statut = 'todo') as tasks_todo
-       FROM agents a
-       LEFT JOIN sessions s ON s.id = (
-         SELECT s2.id FROM sessions s2 WHERE s2.agent_id = a.id
-         ORDER BY s2.started_at DESC LIMIT 1
-       )
-       ORDER BY a.perimetre, a.name`,
-      []
-    ) as AgentRow[]
+    const [result] = await Promise.all([
+      window.electronAPI.queryDb(
+        store.dbPath,
+        `SELECT a.id, a.name, a.type, a.perimetre,
+                s.statut as session_statut,
+                (SELECT COUNT(*) FROM tasks WHERE agent_assigne_id = a.id AND statut = 'in_progress') as tasks_in_progress,
+                (SELECT COUNT(*) FROM tasks WHERE agent_assigne_id = a.id AND statut = 'todo') as tasks_todo
+         FROM agents a
+         LEFT JOIN sessions s ON s.id = (
+           SELECT s2.id FROM sessions s2 WHERE s2.agent_id = a.id
+           ORDER BY s2.started_at DESC LIMIT 1
+         )
+         ORDER BY a.name`,
+        []
+      ) as Promise<AgentRow[]>,
+      agentStore.fetchAgentGroups(),
+    ])
     agents.value = result
   } catch {
     agents.value = []
@@ -96,43 +104,79 @@ const GROUP_H = 38
 const GROUP_H_GAP = 22
 const PADDING = 32
 
+function buildGroupColumn(
+  key: string,
+  label: string,
+  groupAgents: AgentRow[],
+  curX: number,
+): LayoutGroup {
+  const n = groupAgents.length
+  const groupW = Math.max(CARD_W, n * CARD_W + (n - 1) * H_GAP)
+  const nodes: LayoutNode[] = groupAgents.map((a, i) => ({
+    id: a.id,
+    name: a.name,
+    type: a.type,
+    status: dotStatus(a),
+    x: curX + i * (CARD_W + H_GAP),
+    y: PADDING + GROUP_H + V_GAP,
+  }))
+  return { key, label, x: curX, y: PADDING, w: groupW, agents: nodes }
+}
+
 const layout = computed<{ groups: LayoutGroup[]; totalW: number; totalH: number }>(() => {
-  const grouped = new Map<string, AgentRow[]>()
-  for (const a of agents.value) {
-    const key = a.perimetre ?? '__global__'
-    if (!grouped.has(key)) grouped.set(key, [])
-    grouped.get(key)!.push(a)
-  }
-
-  const sortedKeys = [...grouped.keys()].sort((a, b) => {
-    if (a === '__global__') return 1
-    if (b === '__global__') return -1
-    return a.localeCompare(b)
-  })
-
   const groups: LayoutGroup[] = []
   let curX = PADDING
 
-  for (const key of sortedKeys) {
-    const groupAgents = grouped.get(key)!
-    const n = groupAgents.length
-    const groupW = Math.max(CARD_W, n * CARD_W + (n - 1) * H_GAP)
-    const startX = curX
+  if (agentStore.agentGroups.length > 0) {
+    // Group agents by agent_groups membership
+    const agentGroupMap = new Map<number, number>() // agentId → groupId
+    for (const group of agentStore.agentGroups) {
+      for (const member of group.members) {
+        agentGroupMap.set(member.agent_id, group.id)
+      }
+    }
 
-    const nodes: LayoutNode[] = groupAgents.map((a, i) => ({
-      id: a.id,
-      name: a.name,
-      type: a.type,
-      status: dotStatus(a),
-      x: startX + i * (CARD_W + H_GAP),
-      y: PADDING + GROUP_H + V_GAP,
-    }))
+    const sortedGroups = [...agentStore.agentGroups].sort((a, b) => a.sort_order - b.sort_order)
 
-    groups.push({ key, x: startX, y: PADDING, w: groupW, agents: nodes })
-    curX += groupW + GROUP_H_GAP
+    for (const group of sortedGroups) {
+      const groupAgents = agents.value.filter(a => agentGroupMap.get(a.id) === group.id)
+      if (groupAgents.length === 0) continue
+      const col = buildGroupColumn(String(group.id), group.name, groupAgents, curX)
+      groups.push(col)
+      curX += col.w + GROUP_H_GAP
+    }
+
+    // Ungrouped agents
+    const ungrouped = agents.value.filter(a => !agentGroupMap.has(a.id))
+    if (ungrouped.length > 0) {
+      const col = buildGroupColumn('__ungrouped__', t('orgchart.ungrouped'), ungrouped, curX)
+      groups.push(col)
+      curX += col.w + GROUP_H_GAP
+    }
+  } else {
+    // Fallback: group by perimetre
+    const grouped = new Map<string, AgentRow[]>()
+    for (const a of agents.value) {
+      const key = a.perimetre ?? '__global__'
+      if (!grouped.has(key)) grouped.set(key, [])
+      grouped.get(key)!.push(a)
+    }
+
+    const sortedKeys = [...grouped.keys()].sort((a, b) => {
+      if (a === '__global__') return 1
+      if (b === '__global__') return -1
+      return a.localeCompare(b)
+    })
+
+    for (const key of sortedKeys) {
+      const label = key === '__global__' ? 'Global' : key
+      const col = buildGroupColumn(key, label, grouped.get(key)!, curX)
+      groups.push(col)
+      curX += col.w + GROUP_H_GAP
+    }
   }
 
-  const totalW = curX - GROUP_H_GAP + PADDING
+  const totalW = groups.length > 0 ? curX - GROUP_H_GAP + PADDING : PADDING * 2
   const totalH = PADDING + GROUP_H + V_GAP + CARD_H + PADDING
 
   return { groups, totalW, totalH }
@@ -211,9 +255,7 @@ function connectorPath(gx: number, gw: number, gy: number, nx: number, ny: numbe
   return `M ${px} ${py} L ${px} ${midY} L ${cx} ${midY} L ${cx} ${cy}`
 }
 
-function groupLabel(key: string): string {
-  return key === '__global__' ? 'Global' : key
-}
+
 </script>
 
 <template>
@@ -229,7 +271,7 @@ function groupLabel(key: string): string {
         <div class="hidden sm:flex items-center gap-3 mr-3">
           <span v-for="(color, key) in DOT_COLORS" :key="key" class="flex items-center gap-1 text-[10px] text-content-faint">
             <span class="w-2 h-2 rounded-full inline-block" :style="{ background: color }"></span>
-            <span>{{ key === 'cyan' ? 'actif' : key === 'green' ? 'todo' : key === 'yellow' ? 'idle' : key === 'red' ? 'bloqué' : 'inactif' }}</span>
+            <span>{{ key === 'cyan' ? t('orgchart.status.active') : key === 'green' ? t('orgchart.status.todo') : key === 'yellow' ? t('orgchart.status.idle') : key === 'red' ? t('orgchart.status.blocked') : t('orgchart.status.inactive') }}</span>
           </span>
         </div>
         <button
@@ -245,7 +287,7 @@ function groupLabel(key: string): string {
 
     <!-- Empty state -->
     <div v-if="!loading && agents.length === 0" class="flex items-center justify-center flex-1">
-      <p class="text-sm text-content-faint italic">Aucun agent trouvé</p>
+      <p class="text-sm text-content-faint italic">{{ t('orgchart.noAgents') }}</p>
     </div>
 
     <!-- SVG Canvas -->
@@ -290,7 +332,7 @@ function groupLabel(key: string): string {
             font-family="ui-monospace, monospace"
             font-weight="600"
             fill="#a1a1aa"
-          >{{ groupLabel(group.key) }}</text>
+          >{{ group.label }}</text>
         </g>
 
         <!-- Agent cards -->
@@ -348,7 +390,7 @@ function groupLabel(key: string): string {
             font-size="10"
             font-family="ui-sans-serif, system-ui, sans-serif"
             :fill="DOT_COLORS[node.status]"
-          >{{ node.status === 'cyan' ? 'actif' : node.status === 'green' ? 'todo assigné' : node.status === 'yellow' ? 'idle' : node.status === 'red' ? 'bloqué' : 'inactif' }}</text>
+          >{{ node.status === 'cyan' ? t('orgchart.status.active') : node.status === 'green' ? t('orgchart.status.todoAssigned') : node.status === 'yellow' ? t('orgchart.status.idle') : node.status === 'red' ? t('orgchart.status.blocked') : t('orgchart.status.inactive') }}</text>
         </g>
       </g>
     </svg>
