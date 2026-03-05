@@ -19,7 +19,7 @@ export interface DefaultAgent {
   system_prompt_suffix: string | null
 }
 
-// Shared suffix for all agents — DB schema reminder + heredoc SQL warning
+// Shared suffix for all agents — DB schema reminder + heredoc SQL warning + agent protocol
 const SHARED_SUFFIX = `## Rappel schéma DB
 Les colonnes de la table tasks sont en **anglais** : priority (pas priorite), statut, effort, perimetre, created_at, updated_at, started_at, completed_at, validated_at, parent_task_id, agent_createur_id, agent_assigne_id, agent_valideur_id, session_id.
 Toujours utiliser les noms anglais dans les requêtes SQL.
@@ -31,7 +31,20 @@ node scripts/dbw.js <<'SQL'
 INSERT INTO tasks (...) VALUES (...);
 SQL
 \`\`\`
-Ne JAMAIS passer du SQL complexe en argument positionnel \`node scripts/dbw.js "..."\`.`
+Ne JAMAIS passer du SQL complexe en argument positionnel \`node scripts/dbw.js "..."\`.
+
+---
+AGENT PROTOCOL REMINDER (mandatory):
+⚠️ TASK ISOLATION (CRITICAL): Work ONLY on the task specified in your initial prompt. NEVER auto-select another task from your backlog. One session = one task.
+
+- On startup: votre contexte (agent_id, session_id, tâches, locks) est pré-injecté dans le premier message user (bloc === IDENTIFIANTS ===). Ne pas appeler dbstart.js.
+- Before task: read description + all task_comments (SELECT id, task_id, agent_id, contenu, created_at FROM task_comments WHERE task_id=?)
+- Before modifying a file: check locks, INSERT OR REPLACE INTO locks
+- Taking task: UPDATE tasks SET statut='in_progress', started_at=datetime('now')
+- Finishing task: UPDATE tasks SET statut='done', completed_at=datetime('now') + INSERT task_comment format: "fichiers:lignes · fait · pourquoi · reste"
+- After task: STOP — close session immediately. One task per session, always.
+- Ending session: release locks + UPDATE sessions SET statut='completed', summary='Done:... Pending:... Next:...' (max 200 chars)
+- Never push to main | Never edit project.db manually`
 
 /**
  * Generic agents for new projects — no project-specific references.
@@ -57,7 +70,7 @@ Développeur généraliste : implémentation des fonctionnalités, correction de
 ## Workflow DB
 - Lecture : node scripts/dbq.js "<SQL>"
 - Écriture : node scripts/dbw.js "<SQL>" — ou heredoc si SQL complexe
-- Démarrage session : node scripts/dbstart.js dev
+- On startup: votre contexte (agent_id, session_id, tâches, locks) est pré-injecté dans le premier message user (bloc === IDENTIFIANTS ===). Ne pas appeler dbstart.js. Identifier votre tâche et démarrer immédiatement.
 
 ## Checklist done
 - [ ] Implémentation complète des critères d'acceptation
@@ -96,7 +109,7 @@ Un agent doit pouvoir corriger sans échange supplémentaire.
 ## Workflow DB
 - Lecture : node scripts/dbq.js "<SQL>"
 - Écriture : node scripts/dbw.js "<SQL>"
-- Démarrage session : node scripts/dbstart.js review
+- On startup: votre contexte (agent_id, session_id, tâches, locks) est pré-injecté dans le premier message user (bloc === IDENTIFIANTS ===). Ne pas appeler dbstart.js. Identifier votre tâche et démarrer immédiatement.
 
 ## Règle release
 Aucune release tant qu'il reste des tickets todo/in_progress non bloqués.`,
@@ -121,7 +134,7 @@ Auditer la couverture de tests, identifier les zones sans tests, créer les tick
 ## Workflow DB
 - Lecture : node scripts/dbq.js "<SQL>"
 - Écriture : node scripts/dbw.js "<SQL>"
-- Démarrage session : node scripts/dbstart.js test
+- On startup: votre contexte (agent_id, session_id, tâches, locks) est pré-injecté dans le premier message user (bloc === IDENTIFIANTS ===). Ne pas appeler dbstart.js. Identifier votre tâche et démarrer immédiatement.
 
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
@@ -149,7 +162,7 @@ Auditer la couverture de tests, identifier les zones sans tests, créer les tick
 ## Workflow DB
 - Lecture : node scripts/dbq.js "<SQL>"
 - Écriture : node scripts/dbw.js "<SQL>"
-- Démarrage session : node scripts/dbstart.js doc
+- On startup: votre contexte (agent_id, session_id, tâches, locks) est pré-injecté dans le premier message user (bloc === IDENTIFIANTS ===). Ne pas appeler dbstart.js. Identifier votre tâche et démarrer immédiatement.
 
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
@@ -187,7 +200,7 @@ VALUES (?, ?, 'todo', ?, ?, ?, ?, ?);
   node scripts/dbw.js <<'SQL'
   INSERT INTO tasks (...) VALUES (...);
   SQL
-- Démarrage session : node scripts/dbstart.js task-creator
+- On startup: votre contexte (agent_id, session_id, tâches, locks) est pré-injecté dans le premier message user (bloc === IDENTIFIANTS ===). Ne pas appeler dbstart.js. Identifier votre tâche et démarrer immédiatement.
 
 ## Règles
 - Un ticket = une unité de travail cohérente et livrable
