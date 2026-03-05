@@ -13,6 +13,7 @@ import { app, BrowserWindow, session, Menu, MenuItem, globalShortcut } from 'ele
 import { join } from 'path'
 import type { Server } from 'http'
 import { registerIpcHandlers } from './ipc'
+import { restoreTrustedPaths } from './ipc-project'
 import { registerAgentStreamHandlers } from './agent-stream'
 import { startHookServer, setHookWindow } from './hookServer'
 
@@ -156,9 +157,10 @@ function createWindow(): void {
 
 let hookServer: Server | null = null
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   setupCSP()
   registerIpcHandlers()
+  await restoreTrustedPaths()
   registerAgentStreamHandlers()
   hookServer = startHookServer()
   createWindow()

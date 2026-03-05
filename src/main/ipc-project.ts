@@ -15,9 +15,33 @@ import { GENERIC_AGENTS } from './default-agents'
 import {
   registerDbPath,
   registerProjectPath,
+  getAllowedProjectPaths,
   assertProjectPathAllowed,
   getSqlJs,
 } from './db'
+
+// ── Trusted project paths persistence ────────────────────────────────────────
+// Paths registered via native dialog are persisted to userData so they can be
+// restored on cold start. find-project-db no longer self-registers (T782).
+
+function getTrustedPathsFile(): string {
+  return join(app.getPath('userData'), 'trusted-project-paths.json')
+}
+
+async function persistTrustedPaths(): Promise<void> {
+  try {
+    await writeFile(getTrustedPathsFile(), JSON.stringify(getAllowedProjectPaths()), 'utf-8')
+  } catch { /* non-fatal */ }
+}
+
+/** Restore dialog-approved project paths from the persisted JSON file on startup. */
+export async function restoreTrustedPaths(): Promise<void> {
+  try {
+    const raw = await readFile(getTrustedPathsFile(), 'utf-8')
+    const paths: string[] = JSON.parse(raw)
+    for (const p of paths) registerProjectPath(p)
+  } catch { /* first run or corrupt file — ignore */ }
+}
 export const AGENT_SCRIPTS = [
   'dbq.js',
   'dbw.js',
@@ -149,6 +173,7 @@ export function registerProjectHandlers(): void {
     const dbPath = await findProjectDb(projectPath)
     registerDbPath(dbPath)
     registerProjectPath(projectPath)
+    void persistTrustedPaths()
     let hasCLAUDEmd = false
     try { await access(join(projectPath, 'CLAUDE.md')); hasCLAUDEmd = true } catch { /* not found */ }
     if (!dbPath) return { projectPath, dbPath: null, error: null, hasCLAUDEmd }
@@ -305,6 +330,7 @@ export function registerProjectHandlers(): void {
     if (result.canceled || result.filePaths.length === 0) return null
     const selectedPath = result.filePaths[0]
     registerProjectPath(selectedPath)
+    void persistTrustedPaths()
     return selectedPath
   })
 
@@ -333,12 +359,13 @@ export function registerProjectHandlers(): void {
 
   /**
    * Locate project.db inside .claude/ subdirectory.
+   * Does NOT register the path in the allowlist (T782: only native dialogs may register).
+   * On cold start, allowlist is restored from the trusted-project-paths.json file via restoreTrustedPaths().
    * @param projectPath - Project root path
    * @returns {string|null} Found DB path, or null
    */
   ipcMain.handle('find-project-db', async (_event, projectPath: string) => {
     if (!projectPath) throw new Error('PROJECT_PATH_REQUIRED')
-    registerProjectPath(projectPath)
     const dbPath = await findProjectDb(projectPath)
     registerDbPath(dbPath)
     return dbPath

@@ -423,11 +423,12 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       await expect(callHandler('find-project-db', '')).rejects.toThrow('PROJECT_PATH_REQUIRED')
     })
 
-    it('T615: should register path and work without prior registration', async () => {
+    it('T615: should return db path without self-registering the project path (T782)', async () => {
       const { access, readdir } = await import('fs/promises')
       vi.mocked(access).mockResolvedValue(undefined)
       vi.mocked(readdir as (path: string) => Promise<string[]>).mockResolvedValue(['project.db'])
-      // Path never registered before — must succeed (idempotent registration)
+      // T782: find-project-db must not register arbitrary renderer-supplied paths.
+      // Cold-start registration is handled by restoreTrustedPaths() at startup.
       const result = await callHandler('find-project-db', '/cold-start/project')
       expect(result).toContain('project.db')
     })

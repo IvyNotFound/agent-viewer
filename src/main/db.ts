@@ -37,6 +37,11 @@ export function registerProjectPath(projectPath: string | null | undefined): voi
   if (projectPath) allowedProjectPaths.add(resolve(projectPath))
 }
 
+/** Returns the list of currently registered project paths (for persistence). */
+export function getAllowedProjectPaths(): string[] {
+  return [...allowedProjectPaths]
+}
+
 /**
  * Throws if projectPath was not registered via registerProjectPath().
  * @throws {Error} PROJECT_PATH_NOT_ALLOWED if path is not in the allow-list.
