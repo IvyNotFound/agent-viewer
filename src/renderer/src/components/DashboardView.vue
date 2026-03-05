@@ -74,7 +74,7 @@ const subTabs: { id: SubTab; label: string }[] = [
   <div class="flex flex-col h-full bg-surface-primary min-h-0">
 
     <!-- Sub-tab bar -->
-    <div class="shrink-0 flex items-center gap-0.5 px-4 pt-2.5 pb-0 bg-surface-base border-b border-edge-subtle overflow-x-auto">
+    <div class="subtab-scroll shrink-0 flex items-center gap-0.5 px-4 pt-2.5 pb-0 bg-surface-base border-b border-edge-subtle overflow-x-scroll">
       <button
         v-for="tab in subTabs"
         :key="tab.id"
@@ -162,3 +162,8 @@ const subTabs: { id: SubTab; label: string }[] = [
 
   </div>
 </template>
+
+<style scoped>
+.subtab-scroll::-webkit-scrollbar { display: none; }
+.subtab-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+</style>
