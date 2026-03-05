@@ -3,7 +3,10 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
 
-const props = defineProps<{ dbPath: string | null }>()
+const props = defineProps<{
+  dbPath: string | null
+  period?: 'day' | 'week' | 'month'
+}>()
 
 const { t } = useI18n()
 
@@ -54,7 +57,7 @@ async function fetchCostStats(): Promise<void> {
   loading.value = true
   try {
     const res = await window.electronAPI.sessionsStatsCost(props.dbPath, {
-      period: selectedPeriod.value,
+      period: props.period ?? selectedPeriod.value,
       limit: 30,
     })
     if (res.success) {
@@ -70,6 +73,7 @@ async function fetchCostStats(): Promise<void> {
 
 onMounted(fetchCostStats)
 watch(selectedPeriod, fetchCostStats)
+watch(() => props.period, fetchCostStats)
 watch(() => props.dbPath, fetchCostStats)
 
 // ── Aggregations ───────────────────────────────────────────────────────────
@@ -168,7 +172,7 @@ const hoveredBar = ref<number | null>(null)
   <section class="space-y-3">
 
     <!-- Header + period selector -->
-    <div class="flex items-center justify-between">
+    <div v-if="!props.period" class="flex items-center justify-between">
       <h3 class="text-[11px] uppercase tracking-wider text-content-faint">
         {{ t('costStats.title') }}
       </h3>

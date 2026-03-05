@@ -76,6 +76,12 @@ const selectedPeriod = ref<PeriodKey>(loadSavedPeriod())
 
 const activePeriod = computed(() => PERIODS.find(p => p.key === selectedPeriod.value) ?? PERIODS[1])
 
+const costPeriod = computed((): 'day' | 'week' | 'month' => {
+  if (selectedPeriod.value === '1h' || selectedPeriod.value === '24h') return 'day'
+  if (selectedPeriod.value === '7d') return 'week'
+  return 'month'
+})
+
 /**
  * Builds a SQL WHERE clause filtering sessions by period.
  * @param periodSql - SQLite datetime expression (e.g. `datetime('now', '-24 hours')`), or null for no filter.
@@ -469,7 +475,7 @@ const agentStyles = computed<Map<string, AgentStyle>>(() => {
     <div class="flex-1 overflow-y-auto min-h-0 px-4 py-3 space-y-4">
 
       <!-- Cost analytics section (T769) -->
-      <CostStatsSection :db-path="store.dbPath" />
+      <CostStatsSection :db-path="store.dbPath" :period="costPeriod" />
 
       <!-- Per-agent table with bars -->
       <section>
