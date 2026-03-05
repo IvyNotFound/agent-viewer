@@ -22,6 +22,7 @@ import { join } from 'path'
 import { readFile, writeFile } from 'fs/promises'
 import { readFileSync, writeFileSync } from 'fs'
 import { randomBytes } from 'crypto'
+import { execSync } from 'child_process'
 import type { BrowserWindow } from 'electron'
 import { writeDb } from './db'
 
@@ -140,6 +141,53 @@ export async function injectHookUrls(settingsPath: string, ip: string): Promise<
     }
   } catch (err) {
     console.warn('[hookServer] Could not inject hook URLs into settings:', err)
+  }
+}
+
+/**
+ * Detect active WSL distros and inject hook secret + URLs into each one's
+ * ~/.claude/settings.json via Windows UNC path (\\wsl.localhost\<Distro>\...).
+ *
+ * No-op on non-Windows or when wsl.exe is unavailable.
+ * Silently skips stopped distros (UNC path unreachable).
+ */
+export async function injectIntoWslDistros(wslIp: string | null): Promise<void> {
+  if (process.platform !== 'win32') return
+
+  let distros: string[]
+  try {
+    // wsl.exe --list --quiet outputs UTF-16LE on Windows
+    const raw = execSync('wsl.exe --list --quiet', { timeout: 5000 }) as Buffer
+    distros = raw.toString('utf16le')
+      .replace(/\0/g, '')
+      .replace(/\r/g, '')
+      .split('\n')
+      .map((d) => d.trim())
+      .filter(Boolean)
+  } catch {
+    console.warn('[hookServer] wsl.exe --list failed — WSL unavailable or no distros')
+    return
+  }
+
+  for (const distro of distros) {
+    try {
+      const homeRaw = execSync(`wsl.exe -d "${distro}" -- printenv HOME`, {
+        timeout: 5000,
+        encoding: 'utf-8',
+      }) as string
+      const homeDir = homeRaw.trim()
+      if (!homeDir) continue
+
+      // Convert Linux path to Windows UNC: /home/user → \\wsl.localhost\Distro\home\user
+      const winHome = homeDir.replace(/\//g, '\\')
+      const settingsPath = `\\\\wsl.localhost\\${distro}${winHome}\\.claude\\settings.json`
+
+      await injectHookSecret(settingsPath)
+      if (wslIp) await injectHookUrls(settingsPath, wslIp)
+      console.log(`[hookServer] Injected hooks into WSL distro ${distro}: ${settingsPath}`)
+    } catch {
+      // Distro stopped or unreachable — skip silently
+    }
   }
 }
 

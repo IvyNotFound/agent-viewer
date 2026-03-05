@@ -2,18 +2,24 @@
  * Tests for hookServer — JSONL transcript parsing (T737) + exports (T741) + WSL fix (T858)
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { parseTokensFromJSONL, HOOK_PORT, detectWslGatewayIp, injectHookUrls } from './hookServer'
+import { parseTokensFromJSONL, HOOK_PORT, detectWslGatewayIp, injectHookUrls, injectIntoWslDistros } from './hookServer'
 
 // ── Hoisted mocks (must be declared before vi.mock, which are hoisted) ────────
-const { mockNetworkInterfaces, mockReadFile, mockWriteFile } = vi.hoisted(() => ({
+const { mockNetworkInterfaces, mockReadFile, mockWriteFile, mockExecSync } = vi.hoisted(() => ({
   mockNetworkInterfaces: vi.fn(),
   mockReadFile: vi.fn(),
   mockWriteFile: vi.fn().mockResolvedValue(undefined),
+  mockExecSync: vi.fn(),
 }))
 
 vi.mock('os', () => ({
   default: { networkInterfaces: mockNetworkInterfaces },
   networkInterfaces: mockNetworkInterfaces,
+}))
+
+vi.mock('child_process', () => ({
+  default: { execSync: mockExecSync },
+  execSync: mockExecSync,
 }))
 
 vi.mock('fs/promises', () => ({
@@ -257,5 +263,98 @@ describe('injectHookUrls', () => {
     mockReadFile.mockResolvedValue(JSON.stringify(settings))
     await injectHookUrls('/fake/settings.json', '172.17.240.1')
     expect(mockWriteFile).not.toHaveBeenCalled()
+  })
+})
+
+// ── injectIntoWslDistros ──────────────────────────────────────────────────────
+
+describe('injectIntoWslDistros', () => {
+  const originalPlatform = process.platform
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    mockWriteFile.mockResolvedValue(undefined)
+  })
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true })
+  })
+
+  it('returns early on non-Windows platforms', async () => {
+    Object.defineProperty(process, 'platform', { value: 'linux', configurable: true })
+    await injectIntoWslDistros('172.17.240.1')
+    expect(mockExecSync).not.toHaveBeenCalled()
+  })
+
+  it('returns gracefully when wsl.exe --list fails', async () => {
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
+    mockExecSync.mockImplementation(() => { throw new Error('wsl.exe not found') })
+    await expect(injectIntoWslDistros('172.17.240.1')).resolves.toBeUndefined()
+    expect(mockWriteFile).not.toHaveBeenCalled()
+  })
+
+  it('processes distros and injects into UNC settings path', async () => {
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
+    // UTF-16LE encoded "Ubuntu\n"
+    const distroList = Buffer.from('Ubuntu\n', 'utf16le')
+    mockExecSync
+      .mockReturnValueOnce(distroList) // wsl.exe --list --quiet
+      .mockReturnValueOnce('/home/user\n') // wsl.exe -d Ubuntu -- printenv HOME
+    mockReadFile.mockResolvedValue('{}') // settings.json has no hooks → no write
+
+    await injectIntoWslDistros('172.17.240.1')
+
+    expect(mockExecSync).toHaveBeenCalledWith('wsl.exe --list --quiet', { timeout: 5000 })
+    expect(mockExecSync).toHaveBeenCalledWith('wsl.exe -d "Ubuntu" -- printenv HOME', {
+      timeout: 5000,
+      encoding: 'utf-8',
+    })
+  })
+
+  it('skips distros where printenv HOME fails (distro stopped)', async () => {
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
+    const distroList = Buffer.from('Ubuntu\n', 'utf16le')
+    mockExecSync
+      .mockReturnValueOnce(distroList)
+      .mockImplementationOnce(() => { throw new Error('distro stopped') })
+
+    await expect(injectIntoWslDistros('172.17.240.1')).resolves.toBeUndefined()
+    expect(mockWriteFile).not.toHaveBeenCalled()
+  })
+
+  it('handles multiple distros, injecting into each', async () => {
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
+    const distroList = Buffer.from('Ubuntu\nDebian\n', 'utf16le')
+    mockExecSync
+      .mockReturnValueOnce(distroList)
+      .mockReturnValueOnce('/home/alice\n') // Ubuntu
+      .mockReturnValueOnce('/home/bob\n')   // Debian
+    const settings = {
+      hooks: {
+        Stop: [{ hooks: [{ type: 'http', url: 'http://127.0.0.1:27182/hooks/stop' }] }],
+      },
+    }
+    mockReadFile.mockResolvedValue(JSON.stringify(settings))
+
+    await injectIntoWslDistros('172.17.240.1')
+
+    // writeFile called twice: once per distro (injectHookUrls writes, injectHookSecret may also write)
+    const writtenPaths = mockWriteFile.mock.calls.map((c) => c[0] as string)
+    expect(writtenPaths.some((p) => p.includes('Ubuntu'))).toBe(true)
+    expect(writtenPaths.some((p) => p.includes('Debian'))).toBe(true)
+  })
+
+  it('passes null wslIp and skips injectHookUrls', async () => {
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
+    const distroList = Buffer.from('Ubuntu\n', 'utf16le')
+    mockExecSync
+      .mockReturnValueOnce(distroList)
+      .mockReturnValueOnce('/home/user\n')
+    mockReadFile.mockResolvedValue('{}')
+
+    await injectIntoWslDistros(null)
+
+    // Only one execSync call for printenv (no injectHookUrls → no readFile for URLs)
+    expect(mockExecSync).toHaveBeenCalledTimes(2)
   })
 })

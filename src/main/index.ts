@@ -15,7 +15,7 @@ import type { Server } from 'http'
 import { registerIpcHandlers } from './ipc'
 import { restoreTrustedPaths } from './ipc-project'
 import { registerAgentStreamHandlers } from './agent-stream'
-import { startHookServer, setHookWindow, injectHookSecret, injectHookUrls, detectWslGatewayIp } from './hookServer'
+import { startHookServer, setHookWindow, injectHookSecret, injectHookUrls, detectWslGatewayIp, injectIntoWslDistros } from './hookServer'
 import { setupAutoUpdater, registerUpdaterIpc } from './updater'
 
 // ── GPU flags for improved rendering performance ─────────────────────────────────
@@ -167,14 +167,16 @@ app.whenReady().then(async () => {
   await restoreTrustedPaths()
   registerAgentStreamHandlers()
   hookServer = startHookServer(app.getPath('userData'))
-  const settingsPath = join(process.cwd(), '.claude', 'settings.json')
-  // Inject auth secret into .claude/settings.json so Claude Code hooks include the Authorization header
-  injectHookSecret(settingsPath).catch(() => {})
-  // On Windows with WSL in NAT mode, replace 127.0.0.1 in hook URLs with the Windows gateway IP
   const wslIp = detectWslGatewayIp()
-  if (wslIp) {
-    injectHookUrls(settingsPath, wslIp).catch(() => {})
+  // Inject into Windows global settings and project settings
+  const winGlobalSettings = join(app.getPath('home'), '.claude', 'settings.json')
+  const projectSettings = join(process.cwd(), '.claude', 'settings.json')
+  for (const p of [winGlobalSettings, projectSettings]) {
+    injectHookSecret(p).catch(() => {})
+    if (wslIp) injectHookUrls(p, wslIp).catch(() => {})
   }
+  // Inject into active WSL distros via UNC paths
+  if (process.platform === 'win32') injectIntoWslDistros(wslIp).catch(() => {})
   const win = createWindow()
   setupAutoUpdater(win)
 })
