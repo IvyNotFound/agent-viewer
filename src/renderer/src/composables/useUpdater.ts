@@ -34,6 +34,7 @@ export interface UpdateInfo {
 const status = ref<UpdateStatus>('idle')
 const progress = ref(0)
 const info = ref<UpdateInfo | null>(null)
+const errorMessage = ref<string | null>(null)
 
 /**
  * Composable for auto-update state management.
@@ -74,8 +75,9 @@ export function useUpdater() {
         status.value = 'downloaded'
         info.value = data as UpdateInfo
       }),
-      updater.on('error', () => {
+      updater.on('error', (msg) => {
         status.value = 'error'
+        errorMessage.value = (msg as string) ?? 'Unknown error'
       }),
     )
   })
@@ -102,5 +104,5 @@ export function useUpdater() {
     status.value = 'idle'
   }
 
-  return { status, progress, info, check, download, install, dismiss }
+  return { status, progress, info, errorMessage, check, download, install, dismiss }
 }

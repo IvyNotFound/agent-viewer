@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useUpdater } from '@renderer/composables/useUpdater'
 
-const { status, progress, info, download, install, dismiss } = useUpdater()
+const { status, progress, info, errorMessage, download, install, dismiss } = useUpdater()
 
 const isVisible = computed(
   () =>
@@ -17,14 +17,14 @@ const versionLabel = computed(() => (info.value?.version ? `v${info.value.versio
 
 <template>
   <Transition
-    enter-active-class="transition-all duration-300 ease-out"
-    enter-from-class="-translate-y-full opacity-0"
-    leave-active-class="transition-all duration-200 ease-in"
-    leave-to-class="-translate-y-full opacity-0"
+    enter-active-class="transition-all duration-300 ease-out overflow-hidden"
+    enter-from-class="opacity-0 max-h-0 py-0"
+    leave-active-class="transition-all duration-200 ease-in overflow-hidden"
+    leave-to-class="opacity-0 max-h-0 py-0"
   >
     <div
       v-if="isVisible"
-      class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-violet-700 text-white text-sm shadow-lg"
+      class="flex items-center justify-between px-4 py-2 bg-violet-700 text-white text-sm shadow-lg shrink-0 max-h-12"
     >
       <!-- Available -->
       <template v-if="status === 'available'">
@@ -72,7 +72,7 @@ const versionLabel = computed(() => (info.value?.version ? `v${info.value.versio
 
       <!-- Error -->
       <template v-else-if="status === 'error'">
-        <span class="text-red-200">Erreur lors de la mise à jour</span>
+        <span class="text-red-200">Erreur : {{ errorMessage ?? 'Vérification échouée' }}</span>
         <button
           class="ml-4 text-violet-200 hover:text-white transition-colors text-xs"
           @click="dismiss"

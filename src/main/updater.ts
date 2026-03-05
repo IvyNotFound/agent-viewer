@@ -24,6 +24,9 @@ declare const __GH_TOKEN__: string
 
 const TOKEN_FILE = join(app.getPath('userData'), 'gh_token.enc')
 
+let isConfigured = false
+let mainWindow: BrowserWindow | null = null
+
 /**
  * Load the GitHub token using priority order:
  * 0. Build-time injected token (works on any machine, set via GH_TOKEN_UPDATER secret)
@@ -66,6 +69,7 @@ export function saveToken(token: string): void {
  * Only runs in packaged app — no-op in dev to avoid spurious errors.
  */
 export function setupAutoUpdater(win: BrowserWindow): void {
+  mainWindow = win
   if (!app.isPackaged) return
 
   const token = loadToken()
@@ -81,6 +85,7 @@ export function setupAutoUpdater(win: BrowserWindow): void {
 
   autoUpdater.autoDownload = false
   autoUpdater.autoInstallOnAppQuit = false
+  isConfigured = true
 
   autoUpdater.on('update-available', (info) => {
     win.webContents.send('update:available', info)
@@ -124,6 +129,13 @@ export function registerUpdaterIpc(): void {
 
   ipcMain.handle('updater:check', () => {
     if (!app.isPackaged) return null
+    if (!isConfigured) {
+      mainWindow?.webContents.send(
+        'update:error',
+        'No GitHub token configured. Go to Settings > Updates.',
+      )
+      return null
+    }
     return autoUpdater.checkForUpdates()
   })
 
