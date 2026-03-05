@@ -88,8 +88,6 @@ describe('Sidebar — context menu & advanced flows', () => {
     api.updateAgentSystemPrompt.mockResolvedValue({ success: true })
     api.renameAgent.mockResolvedValue({ success: true })
     api.updatePerimetre.mockResolvedValue({ success: true })
-    api.checkMasterClaudeMd.mockResolvedValue({ inSync: true, diff: '' })
-    api.applyMasterClaudeMd.mockResolvedValue({ success: true })
     api.queryDb.mockResolvedValue([])
   })
 

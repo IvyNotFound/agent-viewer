@@ -37,9 +37,6 @@ declare global {
       // Config DB
       getConfigValue(dbPath: string, key: string): Promise<{ success: boolean; value: string | null; error?: string }>
       setConfigValue(dbPath: string, key: string, value: string): Promise<{ success: boolean; error?: string }>
-      // CLAUDE.md sync
-      checkMasterClaudeMd(dbPath: string): Promise<{ success: boolean; sha?: string; content?: string; upToDate?: boolean; localSha?: string; error?: string }>
-      applyMasterClaudeMd(dbPath: string, projectPath: string, content: string, sha: string): Promise<{ success: boolean; error?: string }>
       // Agents
       updateAgent(dbPath: string, agentId: number, updates: { name?: string; type?: string; perimetre?: string | null; thinkingMode?: string | null; allowedTools?: string | null; systemPrompt?: string | null; systemPromptSuffix?: string | null; autoLaunch?: boolean; permissionMode?: 'default' | 'auto' | null; maxSessions?: number }): Promise<{ success: boolean; error?: string }>
       createAgent(dbPath: string, projectPath: string, data: { name: string; type: string; perimetre: string | null; thinkingMode: string | null; systemPrompt: string | null; description: string }): Promise<{ success: boolean; agentId?: number; claudeMdUpdated?: boolean; error?: string }>
