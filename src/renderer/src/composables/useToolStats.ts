@@ -1,11 +1,25 @@
+/**
+ * Composable: aggregate Claude tool usage statistics from hook events.
+ *
+ * Pairs `PreToolUse` and `PostToolUse` events via `toolUseId` to compute
+ * per-tool call counts, error rates and average durations.
+ *
+ * @returns `toolStats` — reactive computed array of {@link ToolStat}, sorted by call count desc
+ */
 import { computed } from 'vue'
 import { useHookEventsStore } from '@renderer/stores/hookEvents'
 
+/** Aggregated statistics for a single Claude tool. */
 export interface ToolStat {
+  /** Tool name as reported by `PreToolUse.tool_name` */
   name: string
+  /** Total invocation count */
   calls: number
+  /** Number of `PostToolUseFailure` events for this tool */
   errors: number
+  /** Fraction of calls that failed (0–1) */
   errorRate: number
+  /** Average wall-clock duration in ms between PreToolUse and PostToolUse, or `null` if unavailable */
   avgDurationMs: number | null
 }
 

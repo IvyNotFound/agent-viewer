@@ -1,3 +1,12 @@
+/**
+ * IPC Handlers — Project telemetry (language statistics)
+ *
+ * Provides `telemetry:scan` which walks the project directory tree and returns
+ * per-language file/line counts (ignoring build artifacts and `node_modules`).
+ * Results are displayed in {@link TelemetryView}.
+ *
+ * @module ipc-telemetry
+ */
 import { ipcMain } from 'electron'
 import { readdir, readFile } from 'fs/promises'
 import path from 'path'
@@ -60,7 +69,14 @@ async function scanDir(
   }
 }
 
+/** Register telemetry IPC handlers. */
 export function registerTelemetryHandlers(): void {
+  /**
+   * Recursively scan `projectPath` and return per-language statistics.
+   * Build directories (`dist`, `node_modules`, `.git`, etc.) are skipped.
+   * @param projectPath - Absolute path to the project root
+   * @returns {TelemetryResult} Language breakdown, total counts, and scan timestamp
+   */
   ipcMain.handle(
     'telemetry:scan',
     async (_event, projectPath: string): Promise<TelemetryResult> => {

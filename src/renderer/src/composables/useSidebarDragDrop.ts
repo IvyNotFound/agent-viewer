@@ -1,5 +1,10 @@
 /**
- * Composable: drag & drop agents between groups in the Sidebar (T815).
+ * Composable: HTML5 drag-and-drop for moving agents between sidebar groups.
+ *
+ * Tracks the dragged agent id and the currently hovered drop target group.
+ * On drop, calls `store.setAgentGroup(agentId, targetGroupId)` to persist
+ * the new membership. Passing `targetGroupId = null` moves the agent to the
+ * ungrouped section.
  */
 import { ref } from 'vue'
 import type { Agent } from '@renderer/types'

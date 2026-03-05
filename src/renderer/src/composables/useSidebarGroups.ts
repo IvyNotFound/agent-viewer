@@ -1,5 +1,9 @@
 /**
- * Composable: agent group management (rename, create, delete) in the Sidebar (T815).
+ * Composable: agent group management (rename, create, delete) in the Sidebar.
+ *
+ * Provides inline rename state, create-group flow and delete confirmation
+ * (with a guard when the group still has members). All mutations are delegated
+ * to `useTasksStore`.
  */
 import { ref, nextTick } from 'vue'
 import { useTasksStore } from '@renderer/stores/tasks'

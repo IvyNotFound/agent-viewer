@@ -1,3 +1,13 @@
+/**
+ * Composable: module-level singleton toast notification system.
+ *
+ * Maintains a reactive stack of at most 5 toasts; oldest entry is evicted
+ * when the stack is full. Toasts auto-dismiss after `duration` ms.
+ *
+ * @example
+ * const { push } = useToast()
+ * push('Saved successfully', 'info')
+ */
 import { ref } from 'vue'
 
 export type ToastType = 'error' | 'warn' | 'info'
@@ -14,6 +24,12 @@ const _timers = new Map<number, ReturnType<typeof setTimeout>>()
 let _id = 0
 
 export function useToast() {
+  /**
+   * Push a new toast to the stack.
+   * @param message - Text content of the toast
+   * @param type - Visual variant (`'error'` | `'warn'` | `'info'`), default `'error'`
+   * @param duration - Auto-dismiss delay in milliseconds, default 5000
+   */
   function push(message: string, type: ToastType = 'error', duration = 5000): void {
     if (toasts.value.length >= 5) toasts.value.shift()
     const id = ++_id
@@ -21,6 +37,10 @@ export function useToast() {
     _timers.set(id, setTimeout(() => dismiss(id), duration))
   }
 
+  /**
+   * Dismiss a toast by id, clearing its auto-dismiss timer.
+   * @param id - Toast id returned by `push`
+   */
   function dismiss(id: number): void {
     const timer = _timers.get(id)
     if (timer !== undefined) {

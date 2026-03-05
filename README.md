@@ -1,6 +1,6 @@
 # agent-viewer
 
-![Version](https://img.shields.io/badge/version-0.18.0-blue)
+![Version](https://img.shields.io/badge/version-0.19.0-blue)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 
 Desktop interface in Trello/Jira style for real-time visualization of Claude agent tasks from a local SQLite database. The application manages agents, launches Claude sessions in external WSL terminals, and monitors activity in real time.
@@ -9,35 +9,75 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 
 ## Key Features
 
+### Board & Task Management
 - **Trello/Jira Board**: Columns by status (`todo`, `in_progress`, `done`, `archived`), task cards with drill-down, S/M/L effort badge and priority
-- **Agent Management**: Creation, configuration, system prompt editing, thinking mode (auto/disabled), mandatory assignment, right-click delete/duplicate, max sessions limit (including `-1` for unlimited); review agents highlighted with amber accent in a dedicated sidebar section
-- **Keyboard Shortcuts**: Press `Escape` to close any modal (standardised via `useModalEscape` composable)
+- **Task Tree**: Hierarchical view of tasks via `parent_task_id`, collapsible subtree nodes
+- **Task Dependencies**: Dependency graph (`task_links`) visualised in `TaskDependencyGraph`
 - **Multi-agent Assignments**: Multiple agents per task (primary / support / reviewer roles), task card avatars
-- **Permission Mode per Agent**: Configure each agent to run Claude with `--dangerously-skip-permissions` (auto mode, opt-in with visible warning)
-- **Project Popup**: Click the project button in the sidebar to open a modal showing active project name, database path, version, and quick actions (switch project, close project)
 - **Kanban Drag & Drop**: Drag task cards between columns to update status directly in the database
+- **Archive Pagination**: Paginated archive view (50 tasks per page), archives excluded from main refresh for better performance
+- **Search**: Full-text search in tasks with filters (status, agent, scope)
+
+### Agent Management
+- **Agent Management**: Creation, configuration, system prompt editing, thinking mode (auto/disabled), mandatory assignment, right-click delete/duplicate, max sessions limit (including `-1` for unlimited); review agents highlighted with amber accent in a dedicated sidebar section
+- **Agent Groups & Drag & Drop**: Sidebar agent groups with drag-and-drop reordering (`useSidebarGroups`, `useSidebarDragDrop`)
+- **Multi-instance**: Launch multiple instances of the same agent with git worktree isolation
+- **Permission Mode per Agent**: Configure each agent to run Claude with `--dangerously-skip-permissions` (auto mode, opt-in with visible warning)
+- **Setup Wizard**: First-run configuration assistant (`SetupWizard`) — guides through WSL detection, project creation and initial agents
+
+### Monitoring & Analytics
+- **Token Stats**: Full `TokenStatsView` — period selector (1h / 24h / 7d / 30d / ∞), estimated cost (Sonnet 4.6 pricing), cache hit rate with colour indicator, 7-day activity sparkline, per-agent bars and per-session table
+- **Cost Stats**: `CostStatsSection` — grouped cost breakdowns with chart
+- **Activity Heatmap**: `ActivityHeatmap` — GitHub-style contribution heatmap of agent activity over time
+- **Workload View**: `WorkloadView` — per-agent task load and effort distribution
+- **Agent Quality Panel**: `AgentQualityPanel` — quality metrics (done rate, rejection rate, avg effort) per agent
+- **Tool Stats Panel**: `ToolStatsPanel` — usage frequency and timing per Claude tool
+- **Telemetry View**: `TelemetryView` — system-level metrics (CPU, memory, timings) from Electron hooks
+- **Timeline / Gantt**: `TimelineView` — inter-agent Gantt chart of sessions and tasks over time
+
+### Topology & Exploration
+- **Topology View**: `TopologyView` — force-directed graph of agents, groups and their relationships
+- **File Explorer**: `ExplorerView` + `FileView` — project file navigation and syntax-highlighted display with CodeMirror 6
+- **Git Commit List**: `GitCommitList` — browse recent commits with diff preview via IPC `git:getCommits` / `git:getDiff`
+- **Hook Events View**: `HookEventsView` + `HookEventPayloadModal` — live hook events feed with payload inspection; events persisted in SQLite
+
+### Stream & Session
+- **Improved StreamView**: User message bubbles, live thinking preview, collapsible `tool_use` / `tool_result` / `thinking` blocks (auto-collapse >15 lines), ANSI stripping, markdown rendering
+- **Stream Input Bar**: `StreamInputBar` — send messages to active Claude sessions via IPC
+- **Stream Tool Block**: `StreamToolBlock` — isolated rendering of individual tool call blocks
+- **Thinking Live Preview**: Status bar shows last 120 chars of live thinking text in real time
+- **Guaranteed Agent Kill on Tab Close**: `agentKill` called explicitly before tab unmount — eliminates orphan processes
+- **Session Resume**: Claude Code sessions resumed via `--resume <conv_id>` to save tokens
 - **External WSL Terminal**: Launch Claude sessions in external WSL terminal windows (Windows Terminal → `wsl://` URI → `wsl.exe` fallback chain)
 - **Auto-launch Terminals**: Automatic agent session launch on task creation with assignment
 - **Auto-trigger Review**: Automatic review session launch when ≥10 tasks reach `done` status (configurable threshold, cooldown)
-- **Archive Pagination**: Paginated archive view (50 tasks per page), archives excluded from main refresh for better performance
-- **Token Stats**: Period selector (1h / 24h / 7d / 30d / ∞), estimated cost (Sonnet 4.6 pricing), cache hit rate with colour indicator, 7-day activity sparkline, per-agent bars and per-session table
-- **Multi-instance**: Launch multiple instances of the same agent with git worktree isolation
-- **Session Resume**: Claude Code sessions resumed via `--resume <conv_id>` to save tokens
-- **Multi-distro Detection**: Automatic discovery of WSL distributions with Claude Code installed
-- **External File Connection**: Open any `.claude/project.db` file
-- **File Explorer**: Project file navigation and editing with CodeMirror 6
-- **Search**: Full-text search in tasks with filters (status, agent, scope)
-- **CLAUDE.md Sync**: Compare and update from a GitHub master repository
-- **Spell Check**: Native spell check on prompt textareas with right-click context menu suggestions
+
+### UI & UX
+- **Command Palette**: `CommandPalette` (Cmd+K / Ctrl+K) — fuzzy search across tasks, agents and views
+- **Context Menu**: Right-click `ContextMenu` component for task and agent actions
+- **Confirm Dialog**: `ConfirmDialog` — unified confirmation modal with keyboard support
+- **Toast Notifications**: `ToastContainer` — stacked toast system via `useToast` composable
+- **Toggle Switch**: `ToggleSwitch` — accessible boolean toggle component
+- **Tab Bar**: `TabBar` — multi-type tab bar with close / reorder support
+- **Title Bar**: `TitleBar` — custom Electron frameless title bar with window controls
+- **Agent Badge**: `AgentBadge` — colour-coded agent avatar with role indicator
+- **DB Selector**: `DbSelector` — graphical project database switcher
+- **Project Popup**: Click the project button in the sidebar to open a modal showing active project name, database path, version, and quick actions (switch project, close project)
+- **Keyboard Shortcuts**: Press `Escape` to close any modal (standardised via `useModalEscape` composable)
 - **Dark / Light Mode**: Dark theme by default, light mode available
 - **Internationalization**: Interface available in French and English (vue-i18n)
+- **Spell Check**: Native spell check on prompt textareas with right-click context menu suggestions
+
+### Security & Data
+- **DOMPurify 3.3.1**: XSS protection upgraded — GHSA-v8jm-5vwx-cfxm patched, regression tests included
+- **IPC Path Guard**: All IPC file handlers protected by `assertDbPathAllowed` / `assertProjectPathAllowed` — prevents path traversal to unauthorized paths
 - **Secure GitHub Token**: OS-level encryption via Electron `safeStorage` (DPAPI Windows / Keychain macOS)
-- **IPC Path Guard**: All read-only IPC handlers protected by `assertDbPathAllowed` — prevents path traversal to unauthorized databases
+- **Export ZIP**: Export `project.db` as a ZIP archive from the UI via IPC
+- **Multi-distro Detection**: Automatic discovery of WSL distributions with Claude Code installed
+- **External File Connection**: Open any `.claude/project.db` file
+- **CLAUDE.md Sync**: Compare and update from a GitHub master repository
 - **WSL Memory Monitoring**: Real-time WSL RAM monitoring with alerts and memory release
-- **Agent Error Visibility**: Spawn failures (`error:spawn`) and abnormal exits (`error:exit`) are surfaced directly in the StreamView UI — no DevTools needed; full stderr output included when available
-- **Collapsible Stream Blocks**: `tool_use`, `tool_result`, and `thinking` blocks are collapsed by default — long results (>15 lines) auto-collapse; error results always expand. ANSI escape codes are stripped from tool output for clean display (T727/T729)
-- **Thinking Live Preview**: While streaming with thinking mode active, the status bar shows the last 120 characters of the live thinking text in real time (T731)
-- **Guaranteed Agent Kill on Tab Close**: Closing a stream tab calls `agentKill` explicitly before unmounting — eliminates orphan agent processes (T730)
+- **Agent Error Visibility**: Spawn failures (`error:spawn`) and abnormal exits (`error:exit`) surfaced directly in StreamView UI — no DevTools needed
 
 ## Prerequisites
 
@@ -102,40 +142,82 @@ Outputs:
 ```
 agent-viewer/
 ├── src/
-│   ├── main/                   # Electron main process
-│   │   ├── index.ts            # Entry point, BrowserWindow, CSP
-│   │   ├── ipc.ts              # Core IPC handlers (SQL, window, locks, migrations)
-│   │   ├── ipc-agents.ts       # Agent IPC handlers (CRUD, sessions, search, assignees)
-│   │   ├── ipc-fs.ts           # Filesystem IPC handlers (listDir, readFile, writeFile)
-│   │   ├── ipc-settings.ts     # Settings IPC handlers (config, GitHub, updates)
-│   │   ├── ipc-wsl.ts          # WSL IPC handlers (wsl:getClaudeInstances, wsl:openTerminal)
-│   │   ├── db.ts               # SQLite utilities (queryLive, writeLive)
-│   │   ├── claude-md.ts        # CLAUDE.md manipulation (agent insertion)
-│   │   ├── migration.ts        # Numbered SQLite migrations (PRAGMA user_version), SAVEPOINT atomicity
+│   ├── main/                        # Electron main process
+│   │   ├── index.ts                 # Entry point, BrowserWindow, CSP
+│   │   ├── ipc.ts                   # Core IPC (SQL, window, locks, migrations, ZIP export)
+│   │   ├── ipc-agents.ts            # Re-exports agent IPC modules (facade)
+│   │   ├── ipc-agent-crud.ts        # Agent CRUD (create, update, delete, list)
+│   │   ├── ipc-agent-groups.ts      # Agent groups (list, create, reorder, drag-drop)
+│   │   ├── ipc-agent-sessions.ts    # Agent sessions (launch, kill, resume, stats)
+│   │   ├── ipc-agent-tasks.ts       # Task-agents assignments (get, set roles)
+│   │   ├── ipc-tasks.ts             # Tasks IPC (CRUD, links, qualityStats)
+│   │   ├── ipc-session-stats.ts     # Session statistics and cost aggregation
+│   │   ├── ipc-db.ts                # Database management (open, close, migrate)
+│   │   ├── ipc-project.ts           # Project IPC (create-db, init, metadata)
+│   │   ├── ipc-git.ts               # Git IPC (getCommits, getDiff)
+│   │   ├── ipc-telemetry.ts         # Telemetry IPC (system metrics)
+│   │   ├── ipc-fs.ts                # Filesystem IPC (listDir, readFile, writeFile)
+│   │   ├── ipc-settings.ts          # Settings IPC (config, GitHub, updates)
+│   │   ├── ipc-window.ts            # Window IPC (minimize, maximize, close)
+│   │   ├── ipc-wsl.ts               # WSL IPC (getClaudeInstances, openTerminal)
+│   │   ├── db.ts                    # SQLite utilities (queryLive, writeLive)
+│   │   ├── claude-md.ts             # CLAUDE.md manipulation (agent insertion)
+│   │   ├── migration.ts             # Numbered SQLite migrations (SAVEPOINT atomicity)
+│   │   ├── seed.ts                  # Demo data for project.db
+│   │   ├── default-agents.ts        # GENERIC_AGENTS (new projects) + DEFAULT_AGENTS (agent-viewer)
 │   │   └── utils/
-│   │       └── wsl.ts          # WSL path conversion (toWslPath)
-│   │   ├── seed.ts             # Demo data for project.db
-│   │   └── default-agents.ts   # Agent definitions: GENERIC_AGENTS (new projects) + DEFAULT_AGENTS (agent-viewer)
+│   │       └── wsl.ts               # WSL path conversion (toWslPath)
 │   ├── preload/
-│   │   └── index.ts            # contextBridge — exposes electronAPI to renderer
-│   └── renderer/               # Vue 3 application
+│   │   └── index.ts                 # contextBridge — exposes electronAPI to renderer
+│   └── renderer/                    # Vue 3 application
 │       └── src/
-│           ├── main.ts         # Vue + Pinia + i18n entry point
-│           ├── App.vue         # Root component
-│           ├── stores/         # Pinia stores
-│           │   ├── tasks.ts    # Tasks CRUD, filtering, polling (facade → project + agents)
-│           │   ├── agents.ts   # Agents list, locks, agent groups
-│           │   ├── project.ts  # Project connection (dbPath, projectPath)
-│           │   ├── tabs.ts     # Tab management (multi-type)
-│           │   └── settings.ts # Theme, language, GitHub, CLAUDE.md
-│           ├── components/     # Vue components (~20 components)
-│           ├── composables/    # Vue composables (useAutoLaunch, useArchivedPagination, useModalEscape…)
-│           ├── locales/        # i18n translations (fr.json, en.json)
-│           ├── utils/          # Utilities (agentColor, db normalisation…)
+│           ├── main.ts              # Vue + Pinia + i18n entry point
+│           ├── App.vue              # Root component
+│           ├── stores/              # Pinia stores
+│           │   ├── tasks.ts         # Tasks CRUD, filtering, polling
+│           │   ├── agents.ts        # Agents list, locks, agent groups
+│           │   ├── project.ts       # Project connection (dbPath, projectPath)
+│           │   ├── tabs.ts          # Tab management (multi-type)
+│           │   ├── hookEvents.ts    # Hook events feed (live + persisted)
+│           │   └── settings.ts      # Theme, language, GitHub, CLAUDE.md
+│           ├── components/          # Vue components (~45 components)
+│           │   ├── BoardView.vue          # Kanban board
+│           │   ├── TimelineView.vue       # Inter-agent Gantt chart
+│           │   ├── TopologyView.vue       # Force-directed agent graph
+│           │   ├── ExplorerView.vue       # File explorer
+│           │   ├── FileView.vue           # Syntax-highlighted file viewer
+│           │   ├── GitCommitList.vue      # Git commits + diff
+│           │   ├── HookEventsView.vue     # Live hook events feed
+│           │   ├── TelemetryView.vue      # System telemetry
+│           │   ├── ActivityHeatmap.vue    # Agent activity heatmap
+│           │   ├── WorkloadView.vue       # Agent workload chart
+│           │   ├── AgentQualityPanel.vue  # Per-agent quality metrics
+│           │   ├── ToolStatsPanel.vue     # Claude tool usage stats
+│           │   ├── TokenStatsView.vue     # Token / cost dashboard
+│           │   ├── CostStatsSection.vue   # Cost breakdown section
+│           │   ├── StreamView.vue         # Claude session streaming
+│           │   ├── StreamInputBar.vue     # Send messages to active session
+│           │   ├── StreamToolBlock.vue    # Tool call block renderer
+│           │   ├── CommandPalette.vue     # Cmd+K fuzzy search
+│           │   ├── TaskDetailModal.vue    # Task drill-down modal
+│           │   ├── SetupWizard.vue        # First-run setup assistant
+│           │   └── …                      # + 25 more UI components
+│           ├── composables/         # Vue composables
+│           │   ├── useAutoLaunch.ts       # Auto-launch session on task create
+│           │   ├── useArchivedPagination.ts # Paginated archive fetch
+│           │   ├── useModalEscape.ts      # ESC key to close modals
+│           │   ├── useSidebarGroups.ts    # Sidebar group management
+│           │   ├── useSidebarDragDrop.ts  # Sidebar drag-and-drop reorder
+│           │   ├── useToast.ts            # Toast notification system
+│           │   ├── useConfirmDialog.ts    # Confirm dialog (promise-based)
+│           │   ├── useToolStats.ts        # Tool usage stats aggregation
+│           │   └── useHookEventDisplay.ts # Hook event formatting helpers
+│           ├── locales/             # i18n translations (fr.json, en.json)
+│           ├── utils/               # Utilities (agentColor, buildTree, renderMarkdown…)
 │           └── types/
-│               ├── index.ts    # Shared TypeScript types
-│               └── electron.d.ts # Window.electronAPI interface (contextBridge)
-├── scripts/                    # CLI scripts (dbq.js, dbw.js, dbstart.js, dblock.js)
+│               ├── index.ts         # Shared TypeScript types
+│               └── electron.d.ts    # Window.electronAPI interface (contextBridge)
+├── scripts/                         # CLI scripts (dbq.js, dbw.js, dbstart.js, dblock.js)
 ├── electron.vite.config.ts
 ├── electron-builder.yml
 └── package.json
