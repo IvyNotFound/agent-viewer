@@ -79,7 +79,7 @@ const subTabs: { id: SubTab; label: string }[] = [
         v-for="tab in subTabs"
         :key="tab.id"
         :class="[
-          'px-3 py-1 rounded-t text-[11px] font-semibold transition-colors border border-b-0 shrink-0',
+          'px-3 py-1 rounded-t text-xs font-semibold transition-colors border border-b-0 shrink-0',
           activeSubTab === tab.id
             ? 'text-content-secondary bg-surface-primary border-edge-subtle'
             : 'text-content-faint bg-transparent border-transparent hover:text-content-tertiary hover:bg-surface-secondary/40'
