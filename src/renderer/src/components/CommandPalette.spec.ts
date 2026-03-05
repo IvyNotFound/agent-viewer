@@ -1,0 +1,110 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { setActivePinia, createPinia } from 'pinia'
+import { mount, shallowMount, flushPromises } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
+import CommandPalette from '@renderer/components/CommandPalette.vue'
+import i18n from '@renderer/plugins/i18n'
+
+function makeTask(overrides: Partial<Task> = {}): Task {
+  return {
+    id: 1,
+    titre: 'Fix login bug',
+    description: 'Users cannot login with special chars',
+    statut: 'todo',
+    perimetre: 'front-vuejs',
+    effort: 2,
+    agent_assigne_id: 1,
+    agent_name: 'dev-front',
+    agent_createur_id: null,
+    agent_createur_name: null,
+    agent_perimetre: null,
+    parent_task_id: null,
+    session_id: null,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+    started_at: null,
+    completed_at: null,
+    validated_at: null,
+    ...overrides,
+  } as Task
+}
+
+// ── StatusColumn ──────────────────────────────────────────────────────────────
+
+describe('CommandPalette', () => {
+  const teleportStub = {
+    Teleport: { template: '<div><slot /></div>' },
+    Transition: { template: '<div><slot /></div>' },
+  }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+  })
+
+  it('renders nothing when modelValue is false', () => {
+    const wrapper = shallowMount(CommandPalette, {
+      props: { modelValue: false },
+      global: {
+        plugins: [createTestingPinia(), i18n],
+        stubs: teleportStub,
+      },
+    })
+    // With modelValue=false, v-if hides the palette content
+    const inner = wrapper.find('.fixed')
+    expect(inner.exists()).toBe(false)
+  })
+
+  it('renders search input when modelValue is true', () => {
+    const wrapper = shallowMount(CommandPalette, {
+      props: { modelValue: true },
+      global: {
+        plugins: [createTestingPinia(), i18n],
+        stubs: teleportStub,
+      },
+    })
+    const input = wrapper.find('input[type="text"]')
+    expect(input.exists()).toBe(true)
+  })
+
+  it('emits update:modelValue false when backdrop is clicked', async () => {
+    const wrapper = shallowMount(CommandPalette, {
+      props: { modelValue: true },
+      global: {
+        plugins: [createTestingPinia(), i18n],
+        stubs: teleportStub,
+      },
+    })
+
+    const backdrop = wrapper.find('.fixed.inset-0')
+    await backdrop.trigger('click')
+    expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+    expect(wrapper.emitted('update:modelValue')![0]).toEqual([false])
+  })
+
+  it('shows empty state when no tasks are loaded', () => {
+    const wrapper = shallowMount(CommandPalette, {
+      props: { modelValue: true },
+      global: {
+        plugins: [createTestingPinia({ initialState: { tasks: { tasks: [] } } }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    // Should display "no tasks loaded" message (i18n fr: "Aucune tâche chargée")
+    const text = wrapper.text()
+    expect(text).toContain('Aucune')
+  })
+
+  it('displays tasks from store when tasks are present', () => {
+    const tasks = [makeTask({ id: 1, titre: 'Fix login bug' }), makeTask({ id: 2, titre: 'Add dark mode' })]
+    const wrapper = shallowMount(CommandPalette, {
+      props: { modelValue: true },
+      global: {
+        plugins: [createTestingPinia({ initialState: { tasks: { tasks } } }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    expect(wrapper.text()).toContain('Fix login bug')
+    expect(wrapper.text()).toContain('Add dark mode')
+  })
+})
