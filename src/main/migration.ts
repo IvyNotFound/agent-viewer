@@ -992,6 +992,22 @@ const migrations: Migration[] = [
     db.run('CREATE INDEX IF NOT EXISTS idx_task_links_from_task ON task_links(from_task)')
     db.run('CREATE INDEX IF NOT EXISTS idx_task_links_to_task ON task_links(to_task)')
   } },
+
+  // v22: FTS4 virtual table + triggers for full-text search on tasks (T790)
+  { version: 22, up: (db) => {
+    db.run('CREATE VIRTUAL TABLE IF NOT EXISTS tasks_fts USING fts4(titre, description)')
+    db.run(`CREATE TRIGGER IF NOT EXISTS tasks_fts_ai AFTER INSERT ON tasks BEGIN
+      INSERT INTO tasks_fts(rowid, titre, description) VALUES (new.id, new.titre, new.description);
+    END`)
+    db.run(`CREATE TRIGGER IF NOT EXISTS tasks_fts_au AFTER UPDATE ON tasks BEGIN
+      DELETE FROM tasks_fts WHERE rowid = old.id;
+      INSERT INTO tasks_fts(rowid, titre, description) VALUES (new.id, new.titre, new.description);
+    END`)
+    db.run(`CREATE TRIGGER IF NOT EXISTS tasks_fts_ad AFTER DELETE ON tasks BEGIN
+      DELETE FROM tasks_fts WHERE rowid = old.id;
+    END`)
+    db.run('INSERT INTO tasks_fts(rowid, titre, description) SELECT id, titre, description FROM tasks')
+  } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */

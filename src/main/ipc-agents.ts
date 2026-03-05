@@ -584,33 +584,88 @@ export function registerAgentHandlers(): void {
   ) => {
     try {
       assertDbPathAllowed(dbPath)
-      const conditions: string[] = []
-      const params: unknown[] = []
 
-      if (query && query.trim()) {
-        const q = `%${query.trim()}%`
-        conditions.push('(t.titre LIKE ? OR t.description LIKE ?)')
-        params.push(q, q)
-      }
+      const trimmed = query?.trim() ?? ''
+      const useFts = trimmed.length > 0
+      const filterConditions: string[] = []
+      const filterParams: unknown[] = []
 
       if (filters?.statut) {
-        conditions.push('t.statut = ?')
-        params.push(filters.statut)
+        filterConditions.push('t.statut = ?')
+        filterParams.push(filters.statut)
       }
       if (filters?.agent_id) {
-        conditions.push('t.agent_assigne_id = ?')
-        params.push(filters.agent_id)
+        filterConditions.push('t.agent_assigne_id = ?')
+        filterParams.push(filters.agent_id)
       }
       if (filters?.perimetre) {
-        conditions.push('t.perimetre = ?')
-        params.push(filters.perimetre)
+        filterConditions.push('t.perimetre = ?')
+        filterParams.push(filters.perimetre)
       }
 
-      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      if (useFts) {
+        // FTS4 MATCH query — sanitize input to avoid FTS syntax errors
+        const ftsQuery = trimmed
+          .replace(/[+\-*"()^]/g, ' ')
+          .split(/\s+/)
+          .filter(Boolean)
+          .map(token => `"${token}"`)
+          .join(' ')
 
-      // PERF: LIKE %...% requires a full table scan (no index usable on leading wildcard).
-      // LIMIT 20 caps results early; the scan still touches all rows but avoids large
-      // result payloads. For proper fix: add an FTS5 virtual table on titre+description.
+        const ftsWhere = filterConditions.length > 0
+          ? `AND ${filterConditions.join(' AND ')}`
+          : ''
+
+        const sql = `
+          SELECT
+            t.id,
+            t.titre,
+            t.statut,
+            t.perimetre,
+            t.updated_at,
+            t.description,
+            SUBSTR(t.description, 1, 100) as description_excerpt,
+            a.name as agent_assigne
+          FROM tasks_fts f
+          JOIN tasks t ON t.id = f.rowid
+          LEFT JOIN agents a ON a.id = t.agent_assigne_id
+          WHERE tasks_fts MATCH ?
+          ${ftsWhere}
+          ORDER BY t.updated_at DESC
+          LIMIT 20
+        `
+        try {
+          const rows = await queryLive(dbPath, sql, [ftsQuery, ...filterParams])
+          return { success: true, results: rows }
+        } catch {
+          // FTS table not available (pre-migration DB) — fall back to LIKE
+          const q = `%${trimmed}%`
+          const fallbackWhere = `WHERE (t.titre LIKE ? OR t.description LIKE ?)${filterConditions.length > 0 ? ` AND ${filterConditions.join(' AND ')}` : ''}`
+          const fallbackSql = `
+            SELECT
+              t.id,
+              t.titre,
+              t.statut,
+              t.perimetre,
+              t.updated_at,
+              t.description,
+              SUBSTR(t.description, 1, 100) as description_excerpt,
+              a.name as agent_assigne
+            FROM tasks t
+            LEFT JOIN agents a ON a.id = t.agent_assigne_id
+            ${fallbackWhere}
+            ORDER BY t.updated_at DESC
+            LIMIT 20
+          `
+          const rows = await queryLive(dbPath, fallbackSql, [q, q, ...filterParams])
+          return { success: true, results: rows }
+        }
+      }
+
+      const whereClause = filterConditions.length > 0
+        ? `WHERE ${filterConditions.join(' AND ')}`
+        : ''
+
       const sql = `
         SELECT
           t.id,
@@ -628,7 +683,7 @@ export function registerAgentHandlers(): void {
         LIMIT 20
       `
 
-      const rows = await queryLive(dbPath, sql, params)
+      const rows = await queryLive(dbPath, sql, filterParams)
       return { success: true, results: rows }
     } catch (err) {
       console.error('[IPC search-tasks]', err)
