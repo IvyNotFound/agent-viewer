@@ -75,6 +75,7 @@ export function registerSettingsHandlers(): void {
    */
   ipcMain.handle('check-master-md', async (_event, dbPath: string) => {
     try {
+      assertDbPathAllowed(dbPath)
       const configRows = await queryLive(
         dbPath,
         "SELECT key, value FROM config WHERE key = 'claude_md_commit'",
