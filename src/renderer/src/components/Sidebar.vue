@@ -1,90 +1,24 @@
 <script setup lang="ts">
-import { computed, ref, nextTick } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useTasksStore } from '@renderer/stores/tasks'
 import { useTabsStore } from '@renderer/stores/tabs'
-import { agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
-import { useToast } from '@renderer/composables/useToast'
-import LaunchSessionModal from './LaunchSessionModal.vue'
+import { useTasksStore } from '@renderer/stores/tasks'
 import SettingsModal from './SettingsModal.vue'
-import ContextMenu from './ContextMenu.vue'
-import CreateAgentModal from './CreateAgentModal.vue'
-import ConfirmModal from './ConfirmModal.vue'
 import ProjectPopup from './ProjectPopup.vue'
-import type { ContextMenuItem } from './ContextMenu.vue'
-import type { Agent, FileNode, Perimetre } from '@renderer/types'
+import SidebarFileTree from './SidebarFileTree.vue'
+import SidebarAgentSection from './SidebarAgentSection.vue'
+import SidebarPerimetreSection from './SidebarPerimetreSection.vue'
 
 type Section = 'perimetres' | 'agents' | 'tree'
 
 const { t } = useI18n()
-const store = useTasksStore()
 const tabsStore = useTabsStore()
-const { push: pushToast } = useToast()
+const store = useTasksStore()
 
-const launchTarget = ref<Agent | null>(null)
-const showCreateAgent = ref(false)
 const activeSection = ref<Section | null>('agents')
 const isSettingsOpen = ref(false)
 const isProjectPopupOpen = ref(false)
-const confirmDeleteGroup = ref<{ groupId: number } | null>(null)
-
-// ── Context menu ──────────────────────────────────────────────────────────────
-const contextMenu = ref<{ x: number; y: number; agent: Agent } | null>(null)
-
-// ── Agent edit modal ───────────────────────────────────────────────────────────
-const editAgentTarget = ref<Agent | null>(null)
-
-// ── Périmètre editor ─────────────────────────────────────────────────────────
-const editPerimetre = ref<Perimetre | null>(null)
-const editPerimetreName = ref('')
-const editPerimetreDesc = ref('')
-const savingPerimetre = ref(false)
-
-// ── Arborescence ──────────────────────────────────────────────────────────────
-const sidebarTree = ref<FileNode[]>([])
-const sidebarOpenDirs = ref(new Set<string>())
-const loadingSidebarTree = ref(false)
-
-async function loadSidebarTree(): Promise<void> {
-  if (!store.projectPath) return
-  loadingSidebarTree.value = true
-  sidebarTree.value = []
-  sidebarOpenDirs.value = new Set()
-  try {
-    const nodes = (await window.electronAPI.fsListDir(store.projectPath, store.projectPath)) as FileNode[]
-    sidebarTree.value = nodes
-    const dirs = new Set<string>()
-    for (const n of nodes) {
-      if (n.isDir) dirs.add(n.path)
-    }
-    sidebarOpenDirs.value = dirs
-  } finally {
-    loadingSidebarTree.value = false
-  }
-}
-
-function toggleSidebarDir(path: string): void {
-  const next = new Set(sidebarOpenDirs.value)
-  if (next.has(path)) next.delete(path)
-  else next.add(path)
-  sidebarOpenDirs.value = next
-}
-
-function isDirOpen(path: string): boolean {
-  return sidebarOpenDirs.value.has(path)
-}
-
-function flattenTree(nodes: FileNode[], depth = 0, result: Array<{ node: FileNode; depth: number }> = []): Array<{ node: FileNode; depth: number }> {
-  for (const node of nodes) {
-    result.push({ node, depth })
-    if (node.isDir && isDirOpen(node.path) && node.children?.length) {
-      flattenTree(node.children, depth + 1, result)
-    }
-  }
-  return result
-}
-
-const flatSidebarTree = computed(() => flattenTree(sidebarTree.value))
+const fileTreeRef = ref<InstanceType<typeof SidebarFileTree> | null>(null)
 
 const sectionTitles = computed((): Record<Section, string> => ({
   perimetres: t('sidebar.perimeters'),
@@ -95,268 +29,10 @@ const sectionTitles = computed((): Record<Section, string> => ({
 function toggleSection(section: Section) {
   const next = activeSection.value === section ? null : section
   activeSection.value = next
-  if (next === 'tree' && sidebarTree.value.length === 0) {
-    loadSidebarTree()
+  if (next === 'tree') {
+    fileTreeRef.value?.loadSidebarTree()
   }
 }
-
-const openTerminalAgents = computed(() => {
-  const set = new Set<string>()
-  for (const t of tabsStore.tabs) {
-    if (t.type === 'terminal' && t.agentName) set.add(t.agentName)
-  }
-  return set
-})
-
-function hasOpenTerminal(agentName: string): boolean {
-  return openTerminalAgents.value.has(agentName)
-}
-
-function openAgentSession(agent: Agent) {
-  const terminalCount = tabsStore.tabs.filter(t => t.type === 'terminal' && t.agentName === agent.name).length
-  const maxSessions = agent.max_sessions ?? 1
-  if (maxSessions !== -1 && terminalCount >= maxSessions) {
-    const existing = tabsStore.tabs.find(t => t.type === 'terminal' && t.agentName === agent.name)
-    if (existing) { tabsStore.setActive(existing.id); return }
-  }
-  launchTarget.value = agent
-}
-
-function openLaunchModal(event: MouseEvent, agent: Agent) {
-  event.stopPropagation()
-  openAgentSession(agent)
-}
-
-function openContextMenu(event: MouseEvent, agent: Agent) {
-  event.preventDefault()
-  event.stopPropagation()
-  contextMenu.value = { x: event.clientX, y: event.clientY, agent }
-}
-
-function contextMenuItemsFor(agent: Agent): ContextMenuItem[] {
-  const terminalCount = tabsStore.tabs.filter(t => t.type === 'terminal' && t.agentName === agent.name).length
-  const maxSessions = agent.max_sessions ?? 1
-  const multiSession = maxSessions === -1 || maxSessions > 1
-  const atLimit = maxSessions !== -1 && terminalCount >= maxSessions
-  const primaryLabel = multiSession && !atLimit
-    ? 'Nouvelle session'
-    : (hasOpenTerminal(agent.name) ? 'Aller à la session' : 'Ouvrir session')
-  return [
-    {
-      label: primaryLabel,
-      action: () => openAgentSession(agent)
-    },
-    {
-      label: 'Voir les logs',
-      action: () => tabsStore.addLogs(agent.id)
-    },
-    {
-      label: 'Voir ses tâches',
-      action: () => store.toggleAgentFilter(agent.id)
-    },
-    { separator: true, label: '', action: () => {} },
-    {
-      label: 'Éditer l\'agent',
-      action: () => { editAgentTarget.value = agent }
-    },
-    {
-      label: 'Dupliquer l\'agent',
-      action: () => duplicateAgent(agent)
-    },
-  ]
-}
-
-async function duplicateAgent(agent: Agent): Promise<void> {
-  const dbPath = store.dbPath
-  if (!dbPath) return
-  const result = await window.electronAPI.duplicateAgent(dbPath, agent.id)
-  if (result.success) {
-    pushToast(`Agent dupliqué : ${result.name}`, 'success')
-    await store.refresh()
-  } else {
-    pushToast(result.error ?? 'Erreur lors de la duplication', 'error')
-  }
-}
-
-// ── Agent groups (T557) ──────────────────────────────────────────────────────
-
-const groupedAgentIds = computed(() => {
-  const s = new Set<number>()
-  for (const g of store.agentGroups)
-    for (const m of g.members) s.add(m.agent_id)
-  return s
-})
-
-const ungroupedAgents = computed(() =>
-  store.agents.filter(a => !groupedAgentIds.value.has(a.id))
-)
-
-const groupedAgents = computed(() => {
-  const map = new Map<number, Agent[]>()
-  for (const group of store.agentGroups) {
-    const agents = [...group.members]
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map(m => store.agents.find(a => a.id === m.agent_id))
-      .filter(Boolean) as Agent[]
-    map.set(group.id, agents)
-  }
-  return map
-})
-
-// Drag & drop state
-const dragAgentId = ref<number | null>(null)
-const dragOverGroupId = ref<number | null | '__ungrouped__'>(null)
-
-function onAgentDragStart(event: DragEvent, agent: Agent) {
-  dragAgentId.value = agent.id
-  event.dataTransfer!.setData('agent-id', String(agent.id))
-  event.dataTransfer!.effectAllowed = 'move'
-}
-
-function onGroupDragOver(event: DragEvent, groupId: number | null) {
-  event.preventDefault()
-  dragOverGroupId.value = groupId === null ? '__ungrouped__' : groupId
-  event.dataTransfer!.dropEffect = 'move'
-}
-
-function onGroupDragLeave(event: DragEvent) {
-  const target = event.currentTarget as HTMLElement
-  // relatedTarget is null when dragging outside the window — contains(null) returns false → correct reset
-  if (target.contains(event.relatedTarget as Node)) return
-  dragOverGroupId.value = null
-}
-
-async function onGroupDrop(event: DragEvent, targetGroupId: number | null) {
-  event.preventDefault()
-  dragOverGroupId.value = null
-  const agentId = Number(event.dataTransfer!.getData('agent-id'))
-  dragAgentId.value = null
-  if (!agentId) return
-  await store.setAgentGroup(agentId, targetGroupId)
-}
-
-// Inline rename
-const renamingGroupId = ref<number | null>(null)
-const renameGroupName = ref('')
-const renameGroupInputEl = ref<HTMLInputElement | null>(null)
-
-async function startRename(group: { id: number; name: string }) {
-  renamingGroupId.value = group.id
-  renameGroupName.value = group.name
-  await nextTick()
-  renameGroupInputEl.value?.focus()
-}
-
-async function confirmRename(groupId: number) {
-  const name = renameGroupName.value.trim()
-  if (name) await store.renameAgentGroup(groupId, name)
-  renamingGroupId.value = null
-}
-
-function cancelRename() {
-  renamingGroupId.value = null
-}
-
-// Create group
-const creatingGroup = ref(false)
-const newGroupName = ref('')
-const createGroupInputEl = ref<HTMLInputElement | null>(null)
-
-async function startCreateGroup() {
-  creatingGroup.value = true
-  newGroupName.value = ''
-  await nextTick()
-  createGroupInputEl.value?.focus()
-}
-
-async function confirmCreateGroup() {
-  const name = newGroupName.value.trim()
-  if (name) await store.createAgentGroup(name)
-  creatingGroup.value = false
-}
-
-function cancelCreateGroup() {
-  creatingGroup.value = false
-}
-
-// Delete group
-async function handleDeleteGroup(groupId: number) {
-  const members = store.agentGroups.find(g => g.id === groupId)?.members ?? []
-  if (members.length > 0) {
-    confirmDeleteGroup.value = { groupId }
-    return
-  }
-  await store.deleteAgentGroup(groupId)
-}
-async function onConfirmDeleteGroup() {
-  if (!confirmDeleteGroup.value) return
-  await store.deleteAgentGroup(confirmDeleteGroup.value.groupId)
-  confirmDeleteGroup.value = null
-}
-
-function isAgentSelected(id: number | string): boolean {
-  return store.selectedAgentId !== null && Number(store.selectedAgentId) === Number(id)
-}
-
-const taskCountByPerimetre = computed(() => {
-  const map = new Map<string, number>()
-  for (const t of store.tasks) {
-    if (t.statut !== 'archived' && t.perimetre) {
-      map.set(t.perimetre, (map.get(t.perimetre) ?? 0) + 1)
-    }
-  }
-  return map
-})
-
-const agentCountByPerimetre = computed(() => {
-  const map = new Map<string, number>()
-  for (const a of store.agents) {
-    if (a.perimetre) {
-      map.set(a.perimetre, (map.get(a.perimetre) ?? 0) + 1)
-    }
-  }
-  return map
-})
-
-function openEditPerimetre(p: Perimetre) {
-  editPerimetre.value = p
-  editPerimetreName.value = p.name
-  editPerimetreDesc.value = p.description ?? ''
-}
-
-async function savePerimetre() {
-  if (!editPerimetre.value || !store.dbPath || !editPerimetreName.value.trim()) return
-  savingPerimetre.value = true
-  try {
-    await window.electronAPI.updatePerimetre(
-      store.dbPath,
-      editPerimetre.value.id,
-      editPerimetre.value.name,
-      editPerimetreName.value.trim(),
-      editPerimetreDesc.value
-    )
-    await store.refresh()
-  } finally {
-    savingPerimetre.value = false
-    editPerimetre.value = null
-  }
-}
-
-async function addPerimetre() {
-  const confirmed = await window.electronAPI.showConfirmDialog({
-    title: 'Ajouter un périmètre',
-    message: 'Une session Claude Code va être lancée pour créer le nouveau périmètre.',
-    detail: 'L\'agent arch guidera la configuration. Continuer ?',
-  })
-  if (!confirmed) return
-  tabsStore.addTerminal(
-    'arch',
-    undefined,
-    'Tu es l\'agent arch. Crée un nouveau périmètre dans ce projet : mets à jour la table perimetres dans .claude/project.db et le CLAUDE.md si nécessaire. Demande d\'abord le nom et la description du périmètre.'
-  )
-}
-
-
 </script>
 
 <template>
@@ -366,11 +42,7 @@ async function addPerimetre() {
     <div class="w-12 flex flex-col items-center py-2 gap-1 shrink-0 border-r border-edge-subtle">
 
       <!-- Backlog — navigation directe vers l'onglet backlog -->
-      <button
-        :title="t('sidebar.backlog')"
-        class="rail-btn"
-        @click="tabsStore.setActive('backlog')"
-      >
+      <button :title="t('sidebar.backlog')" class="rail-btn" @click="tabsStore.setActive('backlog')">
         <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
           <rect x="1"  y="2" width="4" height="12" rx="1.5"/>
           <rect x="6"  y="2" width="4" height="8"  rx="1.5"/>
@@ -378,15 +50,10 @@ async function addPerimetre() {
         </svg>
       </button>
 
-      <!-- Divider -->
       <hr class="border-edge-subtle w-6 my-0.5">
 
       <!-- Agents -->
-      <button
-        :title="t('sidebar.agents')"
-        :class="['rail-btn', activeSection === 'agents' && 'rail-btn--active']"
-        @click="toggleSection('agents')"
-      >
+      <button :title="t('sidebar.agents')" :class="['rail-btn', activeSection === 'agents' && 'rail-btn--active']" @click="toggleSection('agents')">
         <span v-if="activeSection === 'agents'" class="rail-indicator" />
         <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
           <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816zM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.276zM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
@@ -394,11 +61,7 @@ async function addPerimetre() {
       </button>
 
       <!-- Périmètres -->
-      <button
-        :title="t('sidebar.perimeters')"
-        :class="['rail-btn', activeSection === 'perimetres' && 'rail-btn--active']"
-        @click="toggleSection('perimetres')"
-      >
+      <button :title="t('sidebar.perimeters')" :class="['rail-btn', activeSection === 'perimetres' && 'rail-btn--active']" @click="toggleSection('perimetres')">
         <span v-if="activeSection === 'perimetres'" class="rail-indicator" />
         <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
           <path d="M8.235 1.559a.5.5 0 0 0-.47 0l-7.5 4a.5.5 0 0 0 0 .882L3.188 8 .264 9.559a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882L12.813 8l2.922-1.559a.5.5 0 0 0 0-.882l-7.5-4zm3.515 7.008L14.438 10 8 13.433 1.562 10 4.25 8.567l3.515 1.874a.5.5 0 0 0 .47 0l3.515-1.874zM8 9.433 1.562 6 8 2.567 14.438 6 8 9.433z"/>
@@ -406,38 +69,25 @@ async function addPerimetre() {
       </button>
 
       <!-- Arborescence -->
-      <button
-        :title="t('sidebar.tree')"
-        :class="['rail-btn', activeSection === 'tree' && 'rail-btn--active']"
-        @click="toggleSection('tree')"
-      >
+      <button :title="t('sidebar.tree')" :class="['rail-btn', activeSection === 'tree' && 'rail-btn--active']" @click="toggleSection('tree')">
         <span v-if="activeSection === 'tree'" class="rail-indicator" />
         <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
           <path fill-rule="evenodd" d="M4.5 11.5A.5.5 0 0 1 5 11h10a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 1 3h10a.5.5 0 0 1 0 1H1a.5.5 0 0 1-.5-.5z"/>
         </svg>
       </button>
 
-      <!-- Spacer -->
       <div class="flex-1" />
 
-      <!-- Projet — ouvre popup centrée -->
-      <button
-        :title="t('sidebar.project')"
-        :class="['rail-btn', isProjectPopupOpen && 'rail-btn--active']"
-        @click="isProjectPopupOpen = true"
-      >
+      <!-- Projet -->
+      <button :title="t('sidebar.project')" :class="['rail-btn', isProjectPopupOpen && 'rail-btn--active']" @click="isProjectPopupOpen = true">
         <span v-if="isProjectPopupOpen" class="rail-indicator" />
         <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
           <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.98 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z"/>
         </svg>
       </button>
 
-      <!-- Paramètres (bas) -->
-      <button
-        :title="t('sidebar.settings')"
-        :class="['rail-btn mb-1', isSettingsOpen && 'rail-btn--active']"
-        @click="isSettingsOpen = true"
-      >
+      <!-- Paramètres -->
+      <button :title="t('sidebar.settings')" :class="['rail-btn mb-1', isSettingsOpen && 'rail-btn--active']" @click="isSettingsOpen = true">
         <span v-if="isSettingsOpen" class="rail-indicator" />
         <svg viewBox="0 0 16 16" fill="currentColor" class="w-[18px] h-[18px]">
           <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
@@ -446,497 +96,40 @@ async function addPerimetre() {
     </div>
 
     <!-- ── Panel collapsible ── -->
-    <div
-      class="overflow-hidden transition-[width] duration-200 ease-in-out"
-      :style="{ width: activeSection ? '272px' : '0px' }"
-    >
+    <div class="overflow-hidden transition-[width] duration-200 ease-in-out" :style="{ width: activeSection ? '272px' : '0px' }">
       <div class="w-[272px] h-full flex flex-col bg-surface-base border-r border-edge-subtle">
 
-        <!-- En-tête du panel -->
+        <!-- En-tête -->
         <div class="px-4 py-2.5 border-b border-edge-subtle flex items-center justify-between shrink-0">
           <p class="text-[11px] font-semibold text-content-subtle uppercase tracking-wider select-none">
             {{ activeSection ? sectionTitles[activeSection] : '' }}
           </p>
-          <button
-            class="w-5 h-5 flex items-center justify-center rounded text-content-faint hover:text-content-tertiary hover:bg-surface-secondary transition-colors"
-            :title="t('sidebar.close')"
-            @click="activeSection = null"
-          >
+          <button class="w-5 h-5 flex items-center justify-center rounded text-content-faint hover:text-content-tertiary hover:bg-surface-secondary transition-colors" :title="t('sidebar.close')" @click="activeSection = null">
             <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
               <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854z"/>
             </svg>
           </button>
         </div>
 
-        <!-- ── Périmètres ── -->
+        <!-- ── Sections ── -->
         <template v-if="activeSection === 'perimetres'">
-          <div class="flex-1 overflow-y-auto min-h-0 px-4 py-3 flex flex-col gap-1">
-            <div class="flex items-center justify-between mb-2">
-              <p class="text-[11px] font-semibold text-content-subtle uppercase tracking-wider">{{ t('sidebar.perimeters') }}</p>
-              <button
-                v-if="store.selectedPerimetre !== null"
-                class="text-xs text-violet-400 hover:text-violet-300 transition-colors"
-                @click="store.selectedPerimetre = null"
-              >{{ t('sidebar.reset') }}</button>
-            </div>
-
-            <!-- Liste des périmètres depuis la DB -->
-            <div
-              v-for="p in store.perimetresData"
-              :key="p.id"
-              class="group rounded-md"
-            >
-              <!-- Bloc principal -->
-              <div class="relative">
-                <button
-                  :class="[
-                    'w-full text-left px-2 py-2 rounded-md transition-colors pr-8',
-                    store.selectedPerimetre === p.name ? 'ring-1 ring-content-faint' : 'hover:bg-surface-primary'
-                  ]"
-                  :style="store.selectedPerimetre === p.name ? { backgroundColor: agentBg(p.name), borderColor: agentBorder(p.name) } : {}"
-                  @click="store.togglePerimetreFilter(p.name)"
-                >
-                  <div class="flex items-center justify-between gap-2">
-                    <span class="text-sm font-mono truncate font-medium" :style="{ color: agentFg(p.name) }">{{ p.name }}</span>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                      <span
-                        v-if="(agentCountByPerimetre.get(p.name) ?? 0) > 0"
-                        class="inline-flex items-center gap-1 text-[11px] font-mono px-1.5 py-0.5 rounded border"
-                        :style="{ color: agentFg(p.name), backgroundColor: agentBg(p.name), borderColor: agentBorder(p.name) }"
-                        :title="t('sidebar.nbAgents', agentCountByPerimetre.get(p.name) ?? 0, { named: { n: agentCountByPerimetre.get(p.name) ?? 0 } })"
-                      >
-                        <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 shrink-0">
-                          <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
-                        </svg>
-                        {{ agentCountByPerimetre.get(p.name) ?? 0 }}
-                      </span>
-                      <span
-                        v-if="(taskCountByPerimetre.get(p.name) ?? 0) > 0"
-                        class="inline-flex items-center gap-1 text-[11px] font-mono px-1.5 py-0.5 rounded border"
-                        :style="{ color: agentFg(p.name), backgroundColor: agentBg(p.name), borderColor: agentBorder(p.name) }"
-                        :title="t('sidebar.nbActiveTasks', taskCountByPerimetre.get(p.name) ?? 0, { named: { n: taskCountByPerimetre.get(p.name) ?? 0 } })"
-                      >
-                        <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 shrink-0">
-                          <path d="M2.5 2a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm3 0a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1h-8zm0 4a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1h-8zm0 4a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1h-8zm-3-4a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm0 4a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z"/>
-                        </svg>
-                        {{ taskCountByPerimetre.get(p.name) ?? 0 }}
-                      </span>
-                    </div>
-                  </div>
-                  <p v-if="p.description" class="text-[10px] text-content-faint truncate mt-0.5">{{ p.description }}</p>
-                </button>
-                <!-- Bouton edit au hover -->
-                <button
-                  class="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded text-content-faint hover:text-content-secondary hover:bg-surface-tertiary transition-colors opacity-0 group-hover:opacity-100"
-                  title="Modifier"
-                  @click.stop="openEditPerimetre(p)"
-                >
-                  <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
-                    <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div v-if="store.perimetresData.length === 0" class="text-sm text-content-faint px-2 py-2">{{ t('sidebar.noPerimeter') }}</div>
-
-            <!-- Bouton ajouter -->
-            <button
-              class="mt-2 flex items-center gap-2 px-2 py-2 rounded-md text-xs text-content-faint hover:text-content-tertiary hover:bg-surface-primary transition-colors w-full"
-              @click="addPerimetre"
-            >
-              <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
-                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-              </svg>
-              {{ t('sidebar.addPerimeter') }}
-            </button>
-          </div>
+          <SidebarPerimetreSection />
         </template>
 
-        <!-- ── Agents ── -->
         <template v-else-if="activeSection === 'agents'">
-          <div class="flex-1 overflow-y-auto min-h-0 px-4 py-3">
-            <div class="flex items-center justify-between mb-3">
-              <p class="text-[11px] font-semibold text-content-subtle uppercase tracking-wider">{{ t('sidebar.agents') }}</p>
-              <button
-                v-if="store.selectedAgentId !== null"
-                class="text-xs text-violet-400 hover:text-violet-300 transition-colors"
-                @click="store.selectedAgentId = null"
-              >{{ t('sidebar.reset') }}</button>
-            </div>
-
-            <!-- Création de groupe inline -->
-            <div v-if="creatingGroup" class="mb-2 flex items-center gap-1">
-              <input
-                ref="createGroupInputEl"
-                v-model="newGroupName"
-                class="flex-1 bg-surface-secondary border border-edge-default rounded px-2 py-1 text-xs text-content-primary outline-none focus:ring-1 focus:ring-violet-500 font-semibold"
-                :placeholder="t('sidebar.newGroupPlaceholder')"
-                @keydown.enter="confirmCreateGroup"
-                @keydown.esc="cancelCreateGroup"
-              />
-              <button
-                class="w-6 h-6 flex items-center justify-center rounded text-emerald-400 hover:bg-surface-secondary transition-colors text-xs"
-                @click="confirmCreateGroup"
-              >✓</button>
-              <button
-                class="w-6 h-6 flex items-center justify-center rounded text-content-faint hover:text-content-secondary hover:bg-surface-secondary transition-colors text-xs"
-                @click="cancelCreateGroup"
-              >✕</button>
-            </div>
-
-            <!-- ── Groupes dynamiques ── -->
-            <div
-              v-for="group in store.agentGroups"
-              :key="group.id"
-              class="mb-3"
-              @dragover="onGroupDragOver($event, group.id)"
-              @dragleave="onGroupDragLeave"
-              @drop="onGroupDrop($event, group.id)"
-            >
-              <!-- En-tête du groupe -->
-              <div
-                class="flex items-center gap-0.5 mb-0.5 group/header rounded px-1 transition-colors"
-                :class="dragOverGroupId === group.id ? 'bg-violet-500/10 ring-1 ring-violet-500/40' : ''"
-              >
-                <template v-if="renamingGroupId === group.id">
-                  <input
-                    ref="renameGroupInputEl"
-                    v-model="renameGroupName"
-                    class="flex-1 bg-surface-secondary border border-edge-default rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-content-primary outline-none focus:ring-1 focus:ring-violet-500"
-                    @keydown.enter="confirmRename(group.id)"
-                    @keydown.esc="cancelRename"
-                    @blur="confirmRename(group.id)"
-                  />
-                </template>
-                <span
-                  v-else
-                  class="flex-1 text-[11px] font-semibold text-content-subtle uppercase tracking-wider cursor-pointer select-none truncate py-0.5"
-                  @dblclick="startRename(group)"
-                >{{ group.name }}</span>
-                <button
-                  class="w-5 h-5 flex items-center justify-center rounded text-content-dim hover:text-content-secondary hover:bg-surface-secondary transition-colors opacity-0 group-hover/header:opacity-100"
-                  :title="t('sidebar.editAgent')"
-                  @click.stop="startRename(group)"
-                >
-                  <svg viewBox="0 0 16 16" fill="currentColor" class="w-2.5 h-2.5">
-                    <path d="M9.5 1.5a2.121 2.121 0 0 1 3 3L4 13H1v-3L9.5 1.5z"/>
-                  </svg>
-                </button>
-                <button
-                  class="w-5 h-5 flex items-center justify-center rounded text-content-dim hover:text-red-400 hover:bg-surface-secondary transition-colors opacity-0 group-hover/header:opacity-100"
-                  :title="t('sidebar.deleteGroup')"
-                  @click.stop="handleDeleteGroup(group.id)"
-                >
-                  <svg viewBox="0 0 16 16" fill="currentColor" class="w-2.5 h-2.5">
-                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                  </svg>
-                </button>
-              </div>
-
-              <!-- Indicateur drop zone -->
-              <div
-                v-if="dragOverGroupId === group.id"
-                class="mx-1 py-1 text-[10px] text-violet-400/70 text-center border border-dashed border-violet-500/40 rounded mb-1"
-              >{{ t('sidebar.dropAgentHere') }}</div>
-
-              <!-- Agents dans ce groupe -->
-              <div class="space-y-0.5">
-                <div
-                  v-for="agent in groupedAgents.get(group.id) ?? []"
-                  :key="agent.id"
-                  class="group"
-                  draggable="true"
-                  @dragstart="onAgentDragStart($event, agent)"
-                  @contextmenu.prevent="openContextMenu($event, agent)"
-                >
-                  <div class="relative">
-                    <button
-                      :class="[
-                        'w-full flex items-center gap-3 px-2 py-1.5 rounded-md text-left transition-colors cursor-pointer pr-[80px]',
-                        isAgentSelected(agent.id) ? 'bg-surface-secondary ring-1 ring-content-faint' : 'hover:bg-surface-primary'
-                      ]"
-                      @click="store.toggleAgentFilter(agent.id)"
-                    >
-                      <span class="relative shrink-0 flex items-center justify-center w-4 h-4">
-                        <svg v-if="tabsStore.isAgentActive(agent.name)" class="w-3.5 h-3.5 animate-spin" viewBox="0 0 16 16" fill="none" :style="{ color: agentFg(agent.name) }">
-                          <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" stroke-opacity="0.25"/>
-                          <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                        <svg v-else-if="hasOpenTerminal(agent.name) && !tabsStore.isAgentActive(agent.name)" class="w-3.5 h-3.5 animate-pulse" viewBox="0 0 14 14" fill="none" :style="{ color: agentFg(agent.name) }">
-                          <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="2"/>
-                          <circle cx="7" cy="7" r="2" fill="currentColor"/>
-                        </svg>
-                        <span v-else class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: agentFg(agent.name) }" />
-                      </span>
-                      <span :class="['text-sm truncate font-mono', isAgentSelected(agent.id) ? 'text-content-primary' : 'text-content-muted']">{{ agent.name }}</span>
-                    </button>
-                    <div class="absolute right-1 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span class="w-5 h-5 flex items-center justify-center cursor-grab text-content-dim" title="Déplacer">
-                        <svg viewBox="0 0 16 16" fill="currentColor" class="w-2.5 h-2.5">
-                          <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-                        </svg>
-                      </span>
-                      <button class="w-5 h-5 flex items-center justify-center rounded transition-colors text-content-subtle hover:text-content-secondary hover:bg-surface-tertiary" :title="t('sidebar.editAgent')" @click.stop="editAgentTarget = agent">
-                        <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3"><path d="M9.5 1.5a2.121 2.121 0 0 1 3 3L4 13H1v-3L9.5 1.5z"/></svg>
-                      </button>
-                      <button class="w-5 h-5 flex items-center justify-center rounded transition-colors" :style="{ color: agentFg(agent.name), backgroundColor: agentBg(agent.name) }" :title="t('sidebar.launchAgent', { name: agent.name })" @click.stop="openLaunchModal($event, agent)">
-                        <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3"><path d="M3.5 2.635a.5.5 0 0 1 .752-.43l9 5.364a.5.5 0 0 1 0 .862l-9 5.365A.5.5 0 0 1 3.5 13.364V2.635z"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  v-if="(groupedAgents.get(group.id) ?? []).length === 0 && dragOverGroupId !== group.id"
-                  class="text-[11px] text-content-dim px-2 py-1 italic"
-                >{{ t('sidebar.dropAgentHere') }}</div>
-              </div>
-            </div>
-
-            <!-- ── Non groupés ── -->
-            <div
-              class="mb-2"
-              @dragover="onGroupDragOver($event, null)"
-              @dragleave="onGroupDragLeave"
-              @drop="onGroupDrop($event, null)"
-            >
-              <div
-                class="flex items-center gap-0.5 mb-0.5 px-1 rounded transition-colors"
-                :class="dragOverGroupId === '__ungrouped__' ? 'bg-violet-500/10 ring-1 ring-violet-500/40' : ''"
-              >
-                <span class="flex-1 text-[11px] font-semibold text-content-subtle uppercase tracking-wider py-0.5 select-none">{{ t('sidebar.ungrouped') }}</span>
-              </div>
-              <div
-                v-if="dragOverGroupId === '__ungrouped__'"
-                class="mx-1 py-1 text-[10px] text-violet-400/70 text-center border border-dashed border-violet-500/40 rounded mb-1"
-              >{{ t('sidebar.dropAgentHere') }}</div>
-              <div class="space-y-0.5">
-                <div
-                  v-for="agent in ungroupedAgents"
-                  :key="agent.id"
-                  class="group"
-                  draggable="true"
-                  @dragstart="onAgentDragStart($event, agent)"
-                  @contextmenu.prevent="openContextMenu($event, agent)"
-                >
-                  <div class="relative">
-                    <button
-                      :class="[
-                        'w-full flex items-center gap-3 px-2 py-1.5 rounded-md text-left transition-colors cursor-pointer pr-[80px]',
-                        isAgentSelected(agent.id) ? 'bg-surface-secondary ring-1 ring-content-faint' : 'hover:bg-surface-primary'
-                      ]"
-                      @click="store.toggleAgentFilter(agent.id)"
-                    >
-                      <span class="relative shrink-0 flex items-center justify-center w-4 h-4">
-                        <svg v-if="tabsStore.isAgentActive(agent.name)" class="w-3.5 h-3.5 animate-spin" viewBox="0 0 16 16" fill="none" :style="{ color: agentFg(agent.name) }">
-                          <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" stroke-opacity="0.25"/>
-                          <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                        <svg v-else-if="hasOpenTerminal(agent.name) && !tabsStore.isAgentActive(agent.name)" class="w-3.5 h-3.5 animate-pulse" viewBox="0 0 14 14" fill="none" :style="{ color: agentFg(agent.name) }">
-                          <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="2"/>
-                          <circle cx="7" cy="7" r="2" fill="currentColor"/>
-                        </svg>
-                        <span v-else class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: agentFg(agent.name) }" />
-                      </span>
-                      <span :class="['text-sm truncate font-mono', isAgentSelected(agent.id) ? 'text-content-primary' : 'text-content-muted']">{{ agent.name }}</span>
-                    </button>
-                    <div class="absolute right-1 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span class="w-5 h-5 flex items-center justify-center cursor-grab text-content-dim" title="Déplacer">
-                        <svg viewBox="0 0 16 16" fill="currentColor" class="w-2.5 h-2.5">
-                          <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-                        </svg>
-                      </span>
-                      <button class="w-5 h-5 flex items-center justify-center rounded transition-colors text-content-subtle hover:text-content-secondary hover:bg-surface-tertiary" :title="t('sidebar.editAgent')" @click.stop="editAgentTarget = agent">
-                        <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3"><path d="M9.5 1.5a2.121 2.121 0 0 1 3 3L4 13H1v-3L9.5 1.5z"/></svg>
-                      </button>
-                      <button class="w-5 h-5 flex items-center justify-center rounded transition-colors" :style="{ color: agentFg(agent.name), backgroundColor: agentBg(agent.name) }" :title="t('sidebar.launchAgent', { name: agent.name })" @click.stop="openLaunchModal($event, agent)">
-                        <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3"><path d="M3.5 2.635a.5.5 0 0 1 .752-.43l9 5.364a.5.5 0 0 1 0 .862l-9 5.365A.5.5 0 0 1 3.5 13.364V2.635z"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div v-if="ungroupedAgents.length === 0 && store.agents.length > 0 && dragOverGroupId !== '__ungrouped__'" class="text-[11px] text-content-dim px-2 py-1 italic">{{ t('sidebar.dropAgentHere') }}</div>
-              <div v-if="store.agents.length === 0" class="text-sm text-content-faint px-2 py-2">{{ t('sidebar.noAgent') }}</div>
-            </div>
-
-            <!-- Bouton nouveau groupe -->
-            <button
-              v-if="!creatingGroup"
-              class="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-content-faint hover:text-content-tertiary hover:bg-surface-primary transition-colors w-full"
-              @click="startCreateGroup"
-            >
-              <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
-                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-              </svg>
-              {{ t('sidebar.newGroup') }}
-            </button>
-
-            <!-- Bouton ajouter agent -->
-            <button
-              class="mt-1 flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-content-faint hover:text-content-tertiary hover:bg-surface-primary transition-colors w-full"
-              @click="showCreateAgent = true"
-            >
-              <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
-                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-              </svg>
-              {{ t('sidebar.addAgent') }}
-            </button>
-          </div>
+          <SidebarAgentSection />
         </template>
 
-        <!-- ── Arborescence ── -->
         <template v-else-if="activeSection === 'tree'">
-          <div class="flex-1 overflow-y-auto min-h-0 py-1 min-w-0">
-            <div v-if="loadingSidebarTree" class="flex items-center justify-center py-6">
-              <span class="text-xs text-content-faint animate-pulse">{{ t('common.loading') }}</span>
-            </div>
-            <div v-else-if="!store.projectPath" class="px-4 py-3 text-xs text-content-faint">
-              {{ t('common.noProject') }}
-            </div>
-            <div v-else-if="flatSidebarTree.length === 0 && !loadingSidebarTree" class="px-4 py-3 text-xs text-content-faint">
-              {{ t('sidebar.emptyFolder') }}
-            </div>
-            <button
-              v-for="item in flatSidebarTree"
-              :key="item.node.path"
-              class="w-full flex items-center gap-2 py-1 text-left text-sm transition-colors rounded pr-2 group"
-              :class="item.node.isDir ? 'hover:bg-surface-secondary/70' : 'hover:bg-surface-secondary/50'"
-              :style="{ paddingLeft: `${6 + item.depth * 12}px` }"
-              @click="item.node.isDir ? toggleSidebarDir(item.node.path) : tabsStore.openFile(item.node.path, item.node.name)"
-            >
-              <!-- Icône dossier ouvert/fermé ou fichier -->
-              <svg v-if="item.node.isDir && isDirOpen(item.node.path)" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 shrink-0 text-amber-400">
-                <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2H6a1 1 0 0 1 .8.4L7.5 3.5H13.5A1.5 1.5 0 0 1 15 5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12V3.5z"/>
-              </svg>
-              <svg v-else-if="item.node.isDir" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 shrink-0 text-amber-500/70">
-                <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.98 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z"/>
-              </svg>
-              <svg v-else viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 shrink-0 text-content-subtle group-hover:text-content-muted">
-                <path d="M4 0h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm5.5 1.5v2a1 1 0 0 0 1 1h2L9.5 1.5z"/>
-              </svg>
-              <!-- Nom -->
-              <span
-                class="truncate font-mono"
-                :class="item.node.isDir
-                  ? 'text-content-secondary font-medium group-hover:text-content-primary'
-                  : 'text-content-muted group-hover:text-content-secondary'"
-              >{{ item.node.name }}</span>
-            </button>
-          </div>
-          <div class="px-4 py-2 border-t border-edge-subtle shrink-0 flex items-center justify-between">
-            <button
-              class="text-xs text-content-subtle hover:text-content-tertiary transition-colors"
-              @click="loadSidebarTree"
-            >↺ {{ t('common.refresh') }}</button>
-          </div>
+          <SidebarFileTree ref="fileTreeRef" :project-path="store.projectPath" />
         </template>
-
-        <!-- ── Paramètres (removed - now in modal) ── -->
-
 
       </div>
     </div>
   </aside>
 
-  <!-- Modal lancement de session -->
-  <LaunchSessionModal
-    v-if="launchTarget"
-    :agent="launchTarget"
-    @close="launchTarget = null"
-  />
-
-  <!-- Modal paramètres -->
-  <SettingsModal
-    v-if="isSettingsOpen"
-    @close="isSettingsOpen = false"
-  />
-
-  <!-- Modal création agent -->
-  <CreateAgentModal
-    v-if="showCreateAgent"
-    @close="showCreateAgent = false"
-    @created="store.refresh()"
-    @toast="(msg, type) => pushToast(msg, type === 'success' ? 'info' : 'error')"
-  />
-
-  <!-- Modal édition agent (réutilise CreateAgentModal en mode edit) -->
-  <CreateAgentModal
-    v-if="editAgentTarget"
-    mode="edit"
-    :agent="editAgentTarget"
-    @close="editAgentTarget = null"
-    @saved="editAgentTarget = null; store.refresh()"
-    @toast="(msg, type) => pushToast(msg, type === 'success' ? 'info' : 'error')"
-  />
-
-  <!-- Context menu clic droit agent -->
-  <ContextMenu
-    v-if="contextMenu"
-    :x="contextMenu.x"
-    :y="contextMenu.y"
-    :items="contextMenuItemsFor(contextMenu.agent)"
-    @close="contextMenu = null"
-  />
-
-  <ConfirmModal
-    v-if="confirmDeleteGroup"
-    :title="t('sidebar.deleteGroup')"
-    :message="t('sidebar.deleteGroupDetail')"
-    danger
-    @confirm="onConfirmDeleteGroup"
-    @cancel="confirmDeleteGroup = null"
-  />
-
-
-  <!-- Modal édition périmètre -->
-  <Teleport to="body">
-    <div
-      v-if="editPerimetre"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-      @click.self="editPerimetre = null"
-    >
-      <div class="bg-surface-primary border border-edge-default rounded-xl shadow-2xl p-5 w-96 flex flex-col gap-3">
-        <p class="text-sm font-semibold text-content-secondary">{{ t('sidebar.editPerimeter') }}</p>
-        <div>
-          <label class="text-xs text-content-subtle uppercase tracking-wider font-semibold block mb-1">{{ t('sidebar.name') }}</label>
-          <input
-            v-model="editPerimetreName"
-            class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-1.5 text-sm text-content-primary font-mono outline-none focus:ring-1 focus:ring-violet-500"
-            :placeholder="t('sidebar.namePlaceholder')"
-            @keydown.esc="editPerimetre = null"
-          />
-        </div>
-        <div>
-          <label class="text-xs text-content-subtle uppercase tracking-wider font-semibold block mb-1">{{ t('sidebar.description') }}</label>
-          <input
-            v-model="editPerimetreDesc"
-            class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-1.5 text-sm text-content-tertiary outline-none focus:ring-1 focus:ring-violet-500"
-            :placeholder="t('sidebar.descriptionPlaceholder')"
-            @keydown.enter="savePerimetre"
-            @keydown.esc="editPerimetre = null"
-          />
-        </div>
-        <div class="flex gap-2 justify-end">
-          <button
-            class="px-3 py-1.5 text-xs rounded-md text-content-muted hover:text-content-secondary hover:bg-surface-secondary transition-colors"
-            @click="editPerimetre = null"
-          >{{ t('common.cancel') }}</button>
-          <button
-            class="px-3 py-1.5 text-xs rounded-md bg-violet-600 hover:bg-violet-500 text-white transition-colors disabled:opacity-40"
-            :disabled="savingPerimetre || !editPerimetreName.trim()"
-            @click="savePerimetre"
-          >{{ savingPerimetre ? t('common.saving') : t('common.save') }}</button>
-        </div>
-      </div>
-    </div>
-  </Teleport>
-
-  <ProjectPopup
-    v-if="isProjectPopupOpen"
-    @close="isProjectPopupOpen = false"
-  />
+  <SettingsModal v-if="isSettingsOpen" @close="isSettingsOpen = false" />
+  <ProjectPopup v-if="isProjectPopupOpen" @close="isProjectPopupOpen = false" />
 </template>
 
 <style scoped>

@@ -420,6 +420,7 @@ describe('TaskCard', () => {
 // ── Sidebar (T230) ───────────────────────────────────────────────────────────
 
 import Sidebar from '@renderer/components/Sidebar.vue'
+import SidebarAgentSection from '@renderer/components/SidebarAgentSection.vue'
 
 describe('Sidebar', () => {
   beforeEach(() => {
@@ -433,19 +434,19 @@ describe('Sidebar', () => {
       { id: 1, name: 'review-master', type: 'global', perimetre: null, session_statut: null, session_started_at: null, created_at: '2026-01-01', last_log_at: null },
       { id: 2, name: 'dev-front-vuejs', type: 'scoped', perimetre: 'front-vuejs', session_statut: 'en_cours', session_started_at: '2026-01-01', created_at: '2026-01-01', last_log_at: null },
     ]
-    const wrapper = shallowMount(Sidebar, {
+    // Agent names are rendered by SidebarAgentSection (T815 refacto)
+    const wrapper = shallowMount(SidebarAgentSection, {
       global: {
         plugins: [createTestingPinia({
           initialState: {
-            tasks: { agents, projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [] },
+            tasks: { agents, projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [], agentGroups: [] },
           },
         }), i18n],
         stubs: {
           LaunchSessionModal: true,
-          SettingsModal: true,
           ContextMenu: true,
           CreateAgentModal: true,
-          AgentEditModal: true,
+          ConfirmModal: true,
           Teleport: true,
         },
       },
@@ -2835,12 +2836,12 @@ describe('Sidebar — context menu & advanced flows', () => {
 // Full drag-and-drop group management (T557) tests are in .skip blocks below.
 
 describe('Sidebar — agent groupings (T558)', () => {
+  // Agent groupings are now rendered by SidebarAgentSection (T815 refacto)
   const sidebarGroupStubs = {
     LaunchSessionModal: true,
-    SettingsModal: true,
     ContextMenu: true,
     CreateAgentModal: true,
-    AgentEditModal: true,
+    ConfirmModal: true,
     Teleport: true,
   }
 
@@ -2876,11 +2877,12 @@ describe('Sidebar — agent groupings (T558)', () => {
       makeGroupAgent({ id: 2, name: 'dev-front-vuejs', type: 'scoped' }),
       makeGroupAgent({ id: 3, name: 'test-front-vuejs', type: 'scoped' }),
     ]
-    const wrapper = shallowMount(Sidebar, {
+    // Agent names rendered by SidebarAgentSection after T815 refacto
+    const wrapper = shallowMount(SidebarAgentSection, {
       global: {
         plugins: [createTestingPinia({
           initialState: {
-            tasks: { agents, projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [] },
+            tasks: { agents, projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [], agentGroups: [] },
           },
         }), i18n],
         stubs: sidebarGroupStubs,
@@ -2897,11 +2899,11 @@ describe('Sidebar — agent groupings (T558)', () => {
       makeGroupAgent({ id: 1, name: 'dev-front-vuejs', type: 'scoped' }),
       makeGroupAgent({ id: 2, name: 'dev-back-electron', type: 'scoped' }),
     ]
-    const wrapper = shallowMount(Sidebar, {
+    const wrapper = shallowMount(SidebarAgentSection, {
       global: {
         plugins: [createTestingPinia({
           initialState: {
-            tasks: { agents, projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [] },
+            tasks: { agents, projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [], agentGroups: [] },
           },
         }), i18n],
         stubs: sidebarGroupStubs,
@@ -2917,11 +2919,11 @@ describe('Sidebar — agent groupings (T558)', () => {
       makeGroupAgent({ id: 1, name: 'task-creator', type: 'scoped' }),
       makeGroupAgent({ id: 2, name: 'dev-front-vuejs', type: 'scoped' }),
     ]
-    const wrapper = shallowMount(Sidebar, {
+    const wrapper = shallowMount(SidebarAgentSection, {
       global: {
         plugins: [createTestingPinia({
           initialState: {
-            tasks: { agents, projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [] },
+            tasks: { agents, projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [], agentGroups: [] },
           },
         }), i18n],
         stubs: sidebarGroupStubs,
@@ -2938,11 +2940,11 @@ describe('Sidebar — agent groupings (T558)', () => {
       makeGroupAgent({ id: 1, name: 'arch', type: 'review' }),
       makeGroupAgent({ id: 2, name: 'doc', type: 'scoped' }),
     ]
-    const wrapper = shallowMount(Sidebar, {
+    const wrapper = shallowMount(SidebarAgentSection, {
       global: {
         plugins: [createTestingPinia({
           initialState: {
-            tasks: { agents, projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [] },
+            tasks: { agents, projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [], agentGroups: [] },
           },
         }), i18n],
         stubs: sidebarGroupStubs,
@@ -2954,11 +2956,11 @@ describe('Sidebar — agent groupings (T558)', () => {
   })
 
   it('sidebar renders correctly with empty agents list', () => {
-    const wrapper = shallowMount(Sidebar, {
+    const wrapper = shallowMount(SidebarAgentSection, {
       global: {
         plugins: [createTestingPinia({
           initialState: {
-            tasks: { agents: [], projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [] },
+            tasks: { agents: [], projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [], agentGroups: [] },
           },
         }), i18n],
         stubs: sidebarGroupStubs,
