@@ -119,7 +119,7 @@ export function detectWslGatewayIp(): string | null {
  * Inject the detected Windows/WSL gateway IP into all http-type hook URLs
  * in a Claude Code settings.json file.
  *
- * - If settings.json is missing: creates it with all 6 managed hooks.
+ * - If settings.json is missing: creates it with all 7 managed hooks.
  * - If settings.json exists but `hooks` is absent: adds the full hooks structure.
  * - If `hooks` is present but some events are missing: adds only the missing ones.
  * - Always updates the host of existing http hook URLs to `ip:HOOK_PORT`.

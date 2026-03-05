@@ -1,6 +1,6 @@
 # agent-viewer
 
-![Version](https://img.shields.io/badge/version-0.21.0-blue)
+![Version](https://img.shields.io/badge/version-0.22.0-blue)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 
 Desktop interface in Trello/Jira style for real-time visualization of Claude agent tasks from a local SQLite database. The application manages agents, launches Claude sessions in external WSL terminals, and monitors activity in real time.
@@ -40,7 +40,8 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 - **Topology View**: `TopologyView` — force-directed graph of agents, groups and their relationships (accessible from Dashboard)
 - **File Explorer**: `ExplorerView` + `FileView` — project file navigation and syntax-highlighted display with CodeMirror 6
 - **Git Commit List**: `GitCommitList` — browse recent commits with diff preview via IPC `git:getCommits` / `git:getDiff` (accessible from Dashboard)
-- **Hook Events View**: `HookEventsView` + `HookEventPayloadModal` — live hook events feed with payload inspection; events persisted in SQLite (accessible from Dashboard)
+- **Hook Events View**: `HookEventsView` + `HookEventPayloadModal` — live hook events feed with payload inspection; events persisted in SQLite (accessible from Dashboard); supports 7 hook routes including `InstructionsLoaded` (Claude Code 2.1.69+)
+- **Peon-ping coexistence**: HTTP hooks injected into `settings.json` even when the event already contains other hooks (e.g. peon-ping command hooks) — existing entries are preserved and the agent-viewer http hook is appended
 
 ### Stream & Session
 - **Improved StreamView**: User message bubbles, live thinking preview, collapsible `tool_use` / `tool_result` / `thinking` blocks (auto-collapse >15 lines), ANSI stripping, markdown rendering
@@ -49,6 +50,7 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 - **Thinking Live Preview**: Status bar shows last 120 chars of live thinking text in real time
 - **Guaranteed Agent Kill on Tab Close**: `agentKill` called explicitly before tab unmount — eliminates orphan processes
 - **Session Resume**: Claude Code sessions resumed via `--resume <conv_id>` to save tokens
+- **Windows Native Claude**: Launch Claude sessions directly on Windows (no WSL) via PowerShell spawn with a `.ps1` script — system prompt passed verbatim via `List[string]`, bypassing cmd.exe quoting issues
 - **External WSL Terminal**: Launch Claude sessions in external WSL terminal windows (Windows Terminal → `wsl://` URI → `wsl.exe` fallback chain)
 - **Auto-launch Terminals**: Automatic agent session launch on task creation with assignment
 - **Auto-trigger Review**: Automatic review session launch when ≥10 tasks reach `done` status (configurable threshold, cooldown)
