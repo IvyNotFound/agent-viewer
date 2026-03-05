@@ -1,3 +1,19 @@
+/**
+ * Auto-update composable for agent-viewer.
+ *
+ * Wraps the `window.electronAPI.updater` IPC bridge and exposes a reactive
+ * state machine that drives the `UpdateNotification` banner.
+ *
+ * State transitions:
+ *   idle → checking → available → downloading → downloaded → (install triggers restart)
+ *                              ↘ up-to-date
+ *                              ↘ error
+ *
+ * State is kept at module level (singleton) so multiple component instances
+ * share the same update status without duplicating IPC subscriptions.
+ *
+ * @module useUpdater
+ */
 import { ref, onMounted, onUnmounted } from 'vue'
 
 export type UpdateStatus =
@@ -19,6 +35,22 @@ const status = ref<UpdateStatus>('idle')
 const progress = ref(0)
 const info = ref<UpdateInfo | null>(null)
 
+/**
+ * Composable for auto-update state management.
+ *
+ * Subscribe to Electron `update:*` events and expose controls to
+ * trigger download and install. Safe to call in multiple components —
+ * shares singleton state.
+ *
+ * @returns {{ status, progress, info, check, download, install, dismiss }}
+ *   - `status` — current update state (`UpdateStatus`)
+ *   - `progress` — download progress percentage (0–100)
+ *   - `info` — update metadata from electron-updater (`UpdateInfo | null`)
+ *   - `check()` — trigger an explicit update check
+ *   - `download()` — start downloading the available update
+ *   - `install()` — quit and install the downloaded update
+ *   - `dismiss()` — reset status to `idle` without installing
+ */
 export function useUpdater() {
   const unsubs: Array<() => void> = []
 

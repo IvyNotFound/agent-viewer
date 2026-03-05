@@ -1,6 +1,6 @@
 # agent-viewer
 
-![Version](https://img.shields.io/badge/version-0.19.0-blue)
+![Version](https://img.shields.io/badge/version-0.20.0-blue)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 
 Desktop interface in Trello/Jira style for real-time visualization of Claude agent tasks from a local SQLite database. The application manages agents, launches Claude sessions in external WSL terminals, and monitors activity in real time.
@@ -25,8 +25,9 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 - **Permission Mode per Agent**: Configure each agent to run Claude with `--dangerously-skip-permissions` (auto mode, opt-in with visible warning)
 - **Setup Wizard**: First-run configuration assistant (`SetupWizard`) — guides through WSL detection, project creation and initial agents
 
-### Monitoring & Analytics
-- **Token Stats**: Full `TokenStatsView` — period selector (1h / 24h / 7d / 30d / ∞), estimated cost (Sonnet 4.6 pricing), cache hit rate with colour indicator, 7-day activity sparkline, per-agent bars and per-session table
+### Dashboard & Analytics
+- **Dashboard Tab**: `DashboardView` — unified analytics hub with 9 sub-tabs (Token Stats, Git, Hooks, Tools, Heatmap, Quality, Workload, Topology, Logs); active sub-tab persisted in `localStorage`
+- **Token Stats**: `TokenStatsView` — period selector (1h / 24h / 7d / 30d / ∞), estimated cost (Sonnet 4.6 pricing), cache hit rate with colour indicator, 7-day activity sparkline, per-agent bars and per-session table
 - **Cost Stats**: `CostStatsSection` — grouped cost breakdowns with chart
 - **Activity Heatmap**: `ActivityHeatmap` — GitHub-style contribution heatmap of agent activity over time
 - **Workload View**: `WorkloadView` — per-agent task load and effort distribution
@@ -36,10 +37,10 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 - **Timeline / Gantt**: `TimelineView` — inter-agent Gantt chart of sessions and tasks over time
 
 ### Topology & Exploration
-- **Topology View**: `TopologyView` — force-directed graph of agents, groups and their relationships
+- **Topology View**: `TopologyView` — force-directed graph of agents, groups and their relationships (accessible from Dashboard)
 - **File Explorer**: `ExplorerView` + `FileView` — project file navigation and syntax-highlighted display with CodeMirror 6
-- **Git Commit List**: `GitCommitList` — browse recent commits with diff preview via IPC `git:getCommits` / `git:getDiff`
-- **Hook Events View**: `HookEventsView` + `HookEventPayloadModal` — live hook events feed with payload inspection; events persisted in SQLite
+- **Git Commit List**: `GitCommitList` — browse recent commits with diff preview via IPC `git:getCommits` / `git:getDiff` (accessible from Dashboard)
+- **Hook Events View**: `HookEventsView` + `HookEventPayloadModal` — live hook events feed with payload inspection; events persisted in SQLite (accessible from Dashboard)
 
 ### Stream & Session
 - **Improved StreamView**: User message bubbles, live thinking preview, collapsible `tool_use` / `tool_result` / `thinking` blocks (auto-collapse >15 lines), ANSI stripping, markdown rendering
@@ -51,6 +52,7 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 - **External WSL Terminal**: Launch Claude sessions in external WSL terminal windows (Windows Terminal → `wsl://` URI → `wsl.exe` fallback chain)
 - **Auto-launch Terminals**: Automatic agent session launch on task creation with assignment
 - **Auto-trigger Review**: Automatic review session launch when ≥10 tasks reach `done` status (configurable threshold, cooldown)
+- **Pre-inject Session Context**: Startup context (agent_id, session_id, assigned tasks, active locks, last session summary) automatically injected into the first agent message via `build-agent-prompt` IPC — agents no longer need to call `dbstart.js` manually
 
 ### UI & UX
 - **Command Palette**: `CommandPalette` (Cmd+K / Ctrl+K) — fuzzy search across tasks, agents and views
@@ -67,15 +69,16 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 - **Dark / Light Mode**: Dark theme by default, light mode available
 - **Internationalization**: Interface available in French and English (vue-i18n)
 - **Spell Check**: Native spell check on prompt textareas with right-click context menu suggestions
+- **Default Claude Code Profile**: Configure a default Claude Code instance/profile per agent in Settings; stored in `localStorage` via `defaultClaudeProfile`
 
 ### Security & Data
 - **DOMPurify 3.3.1**: XSS protection upgraded — GHSA-v8jm-5vwx-cfxm patched, regression tests included
 - **IPC Path Guard**: All IPC file handlers protected by `assertDbPathAllowed` / `assertProjectPathAllowed` — prevents path traversal to unauthorized paths
 - **Secure GitHub Token**: OS-level encryption via Electron `safeStorage` (DPAPI Windows / Keychain macOS)
+- **Auto-Update**: In-app updates from GitHub Releases (private repo); token baked at build time by GitHub Actions (`GH_TOKEN_UPDATER` secret) with `safeStorage` fallback; `UpdateNotification` banner with download progress bar and one-click install (`useUpdater` composable)
 - **Export ZIP**: Export `project.db` as a ZIP archive from the UI via IPC
 - **Multi-distro Detection**: Automatic discovery of WSL distributions with Claude Code installed
 - **External File Connection**: Open any `.claude/project.db` file
-- **CLAUDE.md Sync**: Compare and update from a GitHub master repository
 - **WSL Memory Monitoring**: Real-time WSL RAM monitoring with alerts and memory release
 - **Agent Error Visibility**: Spawn failures (`error:spawn`) and abnormal exits (`error:exit`) surfaced directly in StreamView UI — no DevTools needed
 
@@ -160,6 +163,7 @@ agent-viewer/
 │   │   ├── ipc-settings.ts          # Settings IPC (config, GitHub, updates)
 │   │   ├── ipc-window.ts            # Window IPC (minimize, maximize, close)
 │   │   ├── ipc-wsl.ts               # WSL IPC (getClaudeInstances, openTerminal)
+│   │   ├── updater.ts               # Auto-update (electron-updater, token loading, IPC handlers)
 │   │   ├── db.ts                    # SQLite utilities (queryLive, writeLive)
 │   │   ├── claude-md.ts             # CLAUDE.md manipulation (agent insertion)
 │   │   ├── migration.ts             # Numbered SQLite migrations (SAVEPOINT atomicity)
@@ -180,7 +184,7 @@ agent-viewer/
 │           │   ├── tabs.ts          # Tab management (multi-type)
 │           │   ├── hookEvents.ts    # Hook events feed (live + persisted)
 │           │   └── settings.ts      # Theme, language, GitHub, CLAUDE.md
-│           ├── components/          # Vue components (~45 components)
+│           ├── components/          # Vue components (~46 components)
 │           │   ├── BoardView.vue          # Kanban board
 │           │   ├── TimelineView.vue       # Inter-agent Gantt chart
 │           │   ├── TopologyView.vue       # Force-directed agent graph
@@ -195,9 +199,11 @@ agent-viewer/
 │           │   ├── ToolStatsPanel.vue     # Claude tool usage stats
 │           │   ├── TokenStatsView.vue     # Token / cost dashboard
 │           │   ├── CostStatsSection.vue   # Cost breakdown section
+│           │   ├── DashboardView.vue      # Analytics hub (9 sub-tabs)
 │           │   ├── StreamView.vue         # Claude session streaming
 │           │   ├── StreamInputBar.vue     # Send messages to active session
 │           │   ├── StreamToolBlock.vue    # Tool call block renderer
+│           │   ├── UpdateNotification.vue # Auto-update banner (download progress + install)
 │           │   ├── CommandPalette.vue     # Cmd+K fuzzy search
 │           │   ├── TaskDetailModal.vue    # Task drill-down modal
 │           │   ├── SetupWizard.vue        # First-run setup assistant
@@ -211,6 +217,7 @@ agent-viewer/
 │           │   ├── useToast.ts            # Toast notification system
 │           │   ├── useConfirmDialog.ts    # Confirm dialog (promise-based)
 │           │   ├── useToolStats.ts        # Tool usage stats aggregation
+│           │   ├── useUpdater.ts          # Auto-update state machine (singleton, IPC events)
 │           │   └── useHookEventDisplay.ts # Hook event formatting helpers
 │           ├── locales/             # i18n translations (fr.json, en.json)
 │           ├── utils/               # Utilities (agentColor, buildTree, renderMarkdown…)
@@ -332,6 +339,8 @@ The application uses `localStorage` for:
 - `github_token` — GitHub token (if configured, encrypted via `safeStorage` on main side)
 - `github_repo_url` — GitHub repository URL
 - `github_last_check` — Timestamp of the last GitHub connection check
+- `defaultClaudeProfile` — Default Claude Code instance/profile name (defaults to `claude`)
+- `dashboard.activeSubTab` — Last active Dashboard sub-tab
 
 ## Contributing
 
