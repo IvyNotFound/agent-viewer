@@ -1601,7 +1601,7 @@ describe('IPC handlers — src/main/ipc.ts', () => {
     const SEP = '\x1F'
 
     beforeEach(() => {
-      mockExecSync.mockReset()
+      mockExecFile.mockReset()
     })
 
     it('should throw PROJECT_PATH_NOT_ALLOWED for unregistered projectPath', async () => {
@@ -1610,50 +1610,50 @@ describe('IPC handlers — src/main/ipc.ts', () => {
       ).rejects.toThrow()
     })
 
-    it('should return [] when execSync throws (git absent or invalid repo)', async () => {
-      mockExecSync.mockImplementation(() => { throw new Error('git: command not found') })
+    it('should return [] when execFile errors (git absent or invalid repo)', async () => {
+      mockExecFile.mockImplementation((_f: unknown, _a: unknown, _o: unknown, cb: (err: Error | null, stdout: string) => void) => cb(new Error('git: command not found'), ''))
       const result = await callHandler('git:log', '/fake/project') as unknown[]
       expect(result).toEqual([])
     })
 
     it('should clamp limit < 1 to 1', async () => {
-      mockExecSync.mockReturnValue('')
+      mockExecFile.mockImplementation((_f: unknown, _a: unknown, _o: unknown, cb: (err: null, stdout: string) => void) => cb(null, ''))
       await callHandler('git:log', '/fake/project', { limit: 0 })
-      const cmd = mockExecSync.mock.calls[0][0] as string
-      expect(cmd).toContain('-n 1')
+      const args = mockExecFile.mock.calls[0][1] as string[]
+      expect(args.join(' ')).toContain('-n 1')
     })
 
     it('should clamp limit > 500 to 500', async () => {
-      mockExecSync.mockReturnValue('')
+      mockExecFile.mockImplementation((_f: unknown, _a: unknown, _o: unknown, cb: (err: null, stdout: string) => void) => cb(null, ''))
       await callHandler('git:log', '/fake/project', { limit: 9999 })
-      const cmd = mockExecSync.mock.calls[0][0] as string
-      expect(cmd).toContain('-n 500')
+      const args = mockExecFile.mock.calls[0][1] as string[]
+      expect(args.join(' ')).toContain('-n 500')
     })
 
     it('should floor decimal limit (2.9 → 2)', async () => {
-      mockExecSync.mockReturnValue('')
+      mockExecFile.mockImplementation((_f: unknown, _a: unknown, _o: unknown, cb: (err: null, stdout: string) => void) => cb(null, ''))
       await callHandler('git:log', '/fake/project', { limit: 2.9 })
-      const cmd = mockExecSync.mock.calls[0][0] as string
-      expect(cmd).toContain('-n 2')
+      const args = mockExecFile.mock.calls[0][1] as string[]
+      expect(args.join(' ')).toContain('-n 2')
     })
 
     it('should inject sinceArg for valid since string', async () => {
-      mockExecSync.mockReturnValue('')
+      mockExecFile.mockImplementation((_f: unknown, _a: unknown, _o: unknown, cb: (err: null, stdout: string) => void) => cb(null, ''))
       await callHandler('git:log', '/fake/project', { since: '2024-01-01' })
-      const cmd = mockExecSync.mock.calls[0][0] as string
-      expect(cmd).toContain('--since=')
+      const args = mockExecFile.mock.calls[0][1] as string[]
+      expect(args.some((a: string) => a.startsWith('--since='))).toBe(true)
     })
 
     it('should NOT inject sinceArg for string with semicolon (injection guard)', async () => {
-      mockExecSync.mockReturnValue('')
+      mockExecFile.mockImplementation((_f: unknown, _a: unknown, _o: unknown, cb: (err: null, stdout: string) => void) => cb(null, ''))
       await callHandler('git:log', '/fake/project', { since: '2024-01-01; rm -rf /' })
-      const cmd = mockExecSync.mock.calls[0][0] as string
-      expect(cmd).not.toContain('--since=')
+      const args = mockExecFile.mock.calls[0][1] as string[]
+      expect(args.some((a: string) => a.startsWith('--since='))).toBe(false)
     })
 
     it('should parse hash, date, subject, author from output line', async () => {
       const line = `abc123${SEP}2024-01-15T10:00:00+00:00${SEP}fix: something${SEP}John`
-      mockExecSync.mockReturnValue(line + '\n')
+      mockExecFile.mockImplementation((_f: unknown, _a: unknown, _o: unknown, cb: (err: null, stdout: string) => void) => cb(null, line + '\n'))
       const result = await callHandler('git:log', '/fake/project') as Array<{ hash: string; date: string; subject: string; author: string; taskIds: number[] }>
       expect(result).toHaveLength(1)
       expect(result[0]).toMatchObject({ hash: 'abc123', date: '2024-01-15T10:00:00+00:00', subject: 'fix: something', author: 'John', taskIds: [] })
@@ -1661,14 +1661,14 @@ describe('IPC handlers — src/main/ipc.ts', () => {
 
     it('should extract multiple taskIds from subject (T123+T456)', async () => {
       const line = `def456${SEP}2024-01-16T10:00:00+00:00${SEP}feat(scope): do thing (T123 T456)${SEP}Alice`
-      mockExecSync.mockReturnValue(line + '\n')
+      mockExecFile.mockImplementation((_f: unknown, _a: unknown, _o: unknown, cb: (err: null, stdout: string) => void) => cb(null, line + '\n'))
       const result = await callHandler('git:log', '/fake/project') as Array<{ taskIds: number[] }>
       expect(result[0].taskIds).toEqual([123, 456])
     })
 
     it('should filter empty lines from output', async () => {
       const line = `abc123${SEP}2024-01-15T10:00:00+00:00${SEP}fix: x${SEP}John`
-      mockExecSync.mockReturnValue(`${line}\n\n\n`)
+      mockExecFile.mockImplementation((_f: unknown, _a: unknown, _o: unknown, cb: (err: null, stdout: string) => void) => cb(null, `${line}\n\n\n`))
       const result = await callHandler('git:log', '/fake/project') as unknown[]
       expect(result).toHaveLength(1)
     })
