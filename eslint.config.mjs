@@ -72,6 +72,7 @@ export default [
     files: [
       'src/renderer/src/components/TaskDetailModal.vue',
       'src/renderer/src/components/StreamView.vue',
+      'src/renderer/src/components/StreamToolBlock.vue',
     ],
     rules: {
       'vue/no-v-html': 'off',

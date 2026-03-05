@@ -1,221 +1,91 @@
 <script setup lang="ts">
 /**
- * StreamView — POC affichage structuré de messages CLI stream-json (ADR-009 Option B).
- *
- * Remplace xterm.js pour les sessions agents Claude en affichant les blocs
- * de messages de façon structurée (texte, tool_use, tool_result, thinking, result).
- *
- * Câblé dans App.vue pour les tabs dont viewMode === 'stream' (T597).
- *
- * @module components/StreamView
+ * StreamView — structured display of stream-json CLI messages (ADR-009 Option B).
+ * Renders agent sessions as structured blocks: text, tool_use, tool_result, thinking, result.
+ * Used in App.vue for tabs with viewMode === 'stream' (T597).
  */
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import { marked } from 'marked'
-import hljs from 'highlight.js'
-import DOMPurify from 'dompurify'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { agentFg, agentBg, agentBorder, colorVersion } from '@renderer/utils/agentColor'
+import { renderMarkdown } from '@renderer/utils/renderMarkdown'
 import HookEventBar from './HookEventBar.vue'
+import StreamToolBlock from './StreamToolBlock.vue'
+import StreamInputBar from './StreamInputBar.vue'
 
-// highlight.js dark theme — scoped to .stream-markdown
 import 'highlight.js/styles/github-dark.css'
 
-// ── Markdown renderer (T678) ──────────────────────────────────────────────────
-
-marked.use({
-  renderer: {
-    code({ text, lang }: { text: string; lang?: string }) {
-      const language = lang && hljs.getLanguage(lang) ? lang : undefined
-      const highlighted = language
-        ? hljs.highlight(text, { language }).value
-        : hljs.highlightAuto(text).value
-      return `<pre class="hljs"><code class="${language ? `language-${language}` : ''}">${highlighted}</code></pre>`
-    }
-  }
-})
-
-/**
- * Renders Markdown text to sanitized HTML (T678).
- * DOMPurify prevents XSS — content arrives from network via Claude.
- */
-function renderMarkdown(text: string): string {
-  const raw = marked.parse(text) as string
-  return DOMPurify.sanitize(raw)
-}
-
-// ── Types stream-json (ADR-009 §Types de messages JSONL) ─────────────────────
-
-export interface StreamContentBlock {
-  type: 'text' | 'tool_use' | 'tool_result' | 'thinking'
-  /** text block */
-  text?: string
-  /** tool_use block */
-  name?: string
-  input?: Record<string, unknown>
-  /** tool_result block */
-  content?: string | Array<{ type: string; text?: string }>
-  tool_use_id?: string
-  is_error?: boolean
-  /** Pre-rendered HTML for text/tool_result blocks — computed once in flushEvents() (T791) */
-  _html?: string
-}
-
-export interface StreamEvent {
-  type: 'system' | 'user' | 'assistant' | 'result' | 'error:spawn' | 'error:stderr' | 'error:exit'
-  subtype?: string
-  session_id?: string
-  message?: {
-    role: string
-    content: StreamContentBlock[]
-  }
-  cost_usd?: number
-  num_turns?: number
-  duration_ms?: number
-  /** Error message for error:spawn / error:exit events */
-  error?: string
-  /** Full stderr buffer captured on abnormal exit (error:exit only, T697) */
-  stderr?: string
-  /** Stable monotonic ID assigned on push — used as collapse key (T823). */
-  _id?: number
-}
-
-// ── Props ────────────────────────────────────────────────────────────────────
+// Re-export stream types so existing consumers keep their import paths (T816).
+export type { StreamContentBlock, StreamEvent } from '@renderer/types/stream'
+import type { StreamEvent } from '@renderer/types/stream'
 
 const props = defineProps<{
   /** Tab identifier — used to look up tab config in tabsStore. */
   terminalId: string
 }>()
 
-// ── Stores ───────────────────────────────────────────────────────────────────
-
 const tabsStore = useTabsStore()
 const tasksStore = useTasksStore()
 
-// ── State ────────────────────────────────────────────────────────────────────
-
 const events = ref<StreamEvent[]>([])
-const inputText = ref('')
 const scrollContainer = ref<HTMLElement | null>(null)
 const sessionId = ref<string | null>(null)
-/** Agent process ID returned by agentCreate — used for IPC send and kill. */
 const ptyId = ref<string | null>(null)
-
-/** Collapsible state keyed by "eventId-blockIndex" — eventId is stable (_id field, T823). */
 const collapsed = ref<Record<string, boolean>>({})
+const agentStopped = ref(false)
 
-/** Monotonic counter — assigns a unique stable _id to every event on push (T823). */
 let nextEventId = 1
 function assignEventId(e: StreamEvent): void {
   if (e._id == null) e._id = nextEventId++
 }
 
-/**
- * True once the user has clicked "Stop" (T683).
- * Used to hide the Stop button immediately after click and prevent double-kill.
- * Reset to false on each new message send so the button re-appears if agent restarts.
- */
-const agentStopped = ref(false)
+// ── Computed ──────────────────────────────────────────────────────────────────
 
-// ── Computed ─────────────────────────────────────────────────────────────────
-
-/**
- * True while the last event is an assistant message (not yet followed by a result).
- * The result event marks the end of a turn.
- */
 const isStreaming = computed(() => {
   if (events.value.length === 0) return false
-  const last = events.value[events.value.length - 1]
-  return last.type === 'assistant'
+  return events.value[events.value.length - 1].type === 'assistant'
 })
 
-// ── Live thinking display (T731) ─────────────────────────────────────────────
-
-/**
- * Text of the currently-streaming thinking block, if any.
- * Only populated when thinkingMode is active and the last assistant block is thinking.
- */
 const activeThinkingText = computed<string | null>(() => {
   if (!isStreaming.value) return null
   const tab = tabsStore.tabs.find(t => t.id === props.terminalId)
   if (!tab?.thinkingMode) return null
-  const lastEvent = events.value[events.value.length - 1]
-  if (lastEvent?.type !== 'assistant') return null
-  const blocks = lastEvent.message?.content ?? []
-  const lastBlock = blocks[blocks.length - 1]
-  if (lastBlock?.type === 'thinking' && lastBlock.text) {
-    return lastBlock.text
-  }
-  return null
+  const blocks = events.value[events.value.length - 1]?.message?.content ?? []
+  const last = blocks[blocks.length - 1]
+  return last?.type === 'thinking' && last.text ? last.text : null
 })
 
-// ── Agent color theme (T680) ──────────────────────────────────────────────────
+const agentName = computed(() => tabsStore.tabs.find(t => t.id === props.terminalId)?.agentName ?? '')
 
-/** Agent name from active tab — drives the color theme. */
-const agentName = computed(() => {
-  const tab = tabsStore.tabs.find(t => t.id === props.terminalId)
-  return tab?.agentName ?? ''
-})
+const accentFg = computed(() => { void colorVersion.value; return agentName.value ? agentFg(agentName.value) : 'hsl(270, 60%, 68%)' })
+const accentBg = computed(() => { void colorVersion.value; return agentName.value ? agentBg(agentName.value) : 'hsl(270, 30%, 18%)' })
+const accentBorder = computed(() => { void colorVersion.value; return agentName.value ? agentBorder(agentName.value) : 'hsl(270, 30%, 32%)' })
 
-/** Reactive foreground accent color for the current agent. */
-const accentFg = computed(() => {
-  void colorVersion.value
-  return agentName.value ? agentFg(agentName.value) : 'hsl(270, 60%, 68%)'
-})
-
-/** Reactive background accent color for the current agent. */
-const accentBg = computed(() => {
-  void colorVersion.value
-  return agentName.value ? agentBg(agentName.value) : 'hsl(270, 30%, 18%)'
-})
-
-/** Reactive border accent color for the current agent. */
-const accentBorder = computed(() => {
-  void colorVersion.value
-  return agentName.value ? agentBorder(agentName.value) : 'hsl(270, 30%, 32%)'
-})
-
-/**
- * Events filtered for display — suppresses empty user bubbles generated by
- * autonomous Claude reasoning (T679). A user event is hidden when all its text
- * blocks are empty or whitespace-only.
- */
+// Suppresses empty user bubbles from autonomous Claude reasoning (T679).
 const displayEvents = computed(() =>
   events.value.filter(event => {
     if (event.type !== 'user') return true
     if (!event.message) return false
-    const textContent = event.message.content
-      .filter(b => b.type === 'text')
-      .map(b => b.text ?? '')
-      .join('')
-    return textContent.trim().length > 0
+    return event.message.content.filter(b => b.type === 'text').map(b => b.text ?? '').join('').trim().length > 0
   })
 )
 
-// ── IPC ──────────────────────────────────────────────────────────────────────
+// ── Collapse helpers ──────────────────────────────────────────────────────────
 
-let unsubStreamMessage: (() => void) | null = null
-let unsubConvId: (() => void) | null = null
-let unsubExit: (() => void) | null = null
+function toggleCollapsed(key: string, defaultCollapsed = false): void {
+  collapsed.value[key] = !(collapsed.value[key] ?? defaultCollapsed)
+}
 
-async function sendMessage(): Promise<void> {
-  const text = inputText.value.trim()
-  if (!text || !sessionId.value) return
-  const msgText = text
-  inputText.value = ''
-  // Reset so the Stop button re-appears on the new agent response (T683).
+// ── IPC handlers ──────────────────────────────────────────────────────────────
+
+async function handleSend(text: string): Promise<void> {
   agentStopped.value = false
-  // Optimistic UI: display user bubble immediately
-  const userEvent: StreamEvent = { type: 'user', message: { role: 'user', content: [{ type: 'text', text: msgText }] } }
+  const userEvent: StreamEvent = { type: 'user', message: { role: 'user', content: [{ type: 'text', text }] } }
   assignEventId(userEvent)
   events.value.push(userEvent)
   scrollToBottom()
-
-  // ADR-009: agentSend writes a JSONL message to the agent's stdin — no respawn needed.
   try {
-    if (ptyId.value) {
-      await window.electronAPI.agentSend(ptyId.value, msgText)
-    }
+    if (ptyId.value) await window.electronAPI.agentSend(ptyId.value, text)
   } catch (err) {
     const errEvent: StreamEvent = { type: 'system', subtype: 'error', session_id: `Erreur agent: ${String(err)}` }
     assignEventId(errEvent)
@@ -223,61 +93,31 @@ async function sendMessage(): Promise<void> {
   }
 }
 
-function handleKeydown(e: KeyboardEvent): void {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    sendMessage()
-  }
-}
-
-/**
- * Kills the agent process immediately (T683).
- * Sets agentStopped to hide the button and prevent double-kill.
- * isStreaming stays true until an event 'result' arrives — onAgentExit resets it
- * by pushing a synthetic result event.
- */
-function stopAgent(): void {
+function handleStop(): void {
   if (!ptyId.value || agentStopped.value) return
   agentStopped.value = true
   window.electronAPI.agentKill(ptyId.value)
 }
 
-function toggleCollapsed(key: string, defaultCollapsed = false): void {
-  collapsed.value[key] = !(collapsed.value[key] ?? defaultCollapsed)
-}
+// ── Micro-batching (T676) ─────────────────────────────────────────────────────
+// Buffer IPC events in a non-reactive array, flush once per nextTick to avoid
+// 1 re-render per JSONL line at high-frequency streaming.
 
-/** Key uses stable event._id so it survives sliding-window eviction (T823). */
-function collapseKey(eventId: number, blockIdx: number): string {
-  return `${eventId}-${blockIdx}`
-}
-
-function isCollapsed(eventId: number, blockIdx: number, defaultCollapsed = false): boolean {
-  const key = collapseKey(eventId, blockIdx)
-  return collapsed.value[key] ?? defaultCollapsed
-}
-
-// ── Micro-batching (T676) ──────────────────────────────────────────────────
-// Accumulate incoming IPC events in a non-reactive buffer, then flush once per
-// nextTick — avoids 1 re-render per JSONL line at high-frequency streaming.
-
-/** Maximum events kept in memory per StreamView tab (T817). Older events are evicted. */
 const MAX_EVENTS = 500
-
 let pendingEvents: StreamEvent[] = []
 let flushPending = false
 
 function flushEvents(): void {
   if (pendingEvents.length === 0) { flushPending = false; return }
   for (const e of pendingEvents) {
-    // Assign stable ID before pushing — collapse keys rely on this (T823).
     assignEventId(e)
-    // Pre-render markdown HTML once on flush — avoids re-computing on every Vue render (T791)
     if (e.message?.content) {
       for (const block of e.message.content) {
         if (block.type === 'text' && block.text != null) {
           block._html = renderMarkdown(block.text)
         } else if (block.type === 'tool_result') {
-          block._html = renderMarkdown(toolResultText(block.content))
+          const raw = !block.content ? '' : typeof block.content === 'string' ? block.content : Array.isArray(block.content) ? block.content.map(c => c.text ?? '').join('\n') : String(block.content)
+          block._html = renderMarkdown(raw.replace(/\x1B\[[0-9;]*[mGKHF]/g, ''))
         }
       }
     }
@@ -286,58 +126,39 @@ function flushEvents(): void {
   pendingEvents = []
   flushPending = false
 
-  // Sliding window: evict oldest events beyond MAX_EVENTS (T817).
+  // Sliding window eviction — purge collapsed keys by stable _id (T823).
   if (events.value.length > MAX_EVENTS) {
     const evicted = events.value.splice(0, events.value.length - MAX_EVENTS)
-    // Purge collapsed keys for evicted events by stable ID — index-based purge was broken
-    // after splice because remaining event indices shifted (T823).
     const evictedIds = new Set(evicted.map(e => e._id))
     for (const key of Object.keys(collapsed.value)) {
-      const eventId = parseInt(key.split('-')[0], 10)
-      if (evictedIds.has(eventId)) {
-        delete collapsed.value[key]
-      }
+      if (evictedIds.has(parseInt(key.split('-')[0], 10))) delete collapsed.value[key]
     }
   }
-
   scrollToBottom()
 }
 
 function scrollToBottom(): void {
-  nextTick(() => {
-    if (scrollContainer.value) {
-      scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight
-    }
-  })
+  nextTick(() => { if (scrollContainer.value) scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight })
 }
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
+let unsubStreamMessage: (() => void) | null = null
+let unsubConvId: (() => void) | null = null
+let unsubExit: (() => void) | null = null
+
 /**
- * Lifecycle: spawns the agent process, registers all IPC subscriptions,
- * then sends the initial message if autoSend is set (T689 race condition fix).
- *
- * Subscription order is critical: onAgentStream, onAgentConvId, and onAgentExit
- * are registered BEFORE agentSend is called so that no JSONL events are lost
- * if Claude responds faster than the subscription round-trip (T689).
- *
- * For resumed sessions (convId present, no autoSend), sessionId is set
- * immediately from the known convId so the Send button is enabled without
- * waiting for the system:init IPC event (ADR-009).
+ * Spawns the agent process and registers IPC subscriptions.
+ * Subscriptions registered BEFORE agentSend to avoid race condition (T689).
+ * Resume shortcut: sets sessionId from convId immediately so Send is enabled (ADR-009).
  */
 onMounted(async () => {
   const tab = tabsStore.tabs.find(t => t.id === props.terminalId)
   if (!tab) return
 
-  // Resume shortcut: set sessionId immediately from known convId so the "Envoyer" button
-  // is enabled right away. agentCreate still spawns the process — this avoids the button
-  // being disabled while waiting for system:init from a resumed session (ADR-009).
-  if (tab.convId && !tab.autoSend) {
-    sessionId.value = tab.convId
-  }
+  if (tab.convId && !tab.autoSend) sessionId.value = tab.convId
 
   try {
-    // ADR-009: spawn agent via child_process.spawn + stdio:pipe (no PTY, no ANSI).
     const id = await window.electronAPI.agentCreate({
       projectPath: tasksStore.projectPath ?? undefined,
       wslDistro: tab.wslDistro ?? undefined,
@@ -350,145 +171,58 @@ onMounted(async () => {
     tabsStore.setPtyId(props.terminalId, id)
     tabsStore.setStreamId(props.terminalId, id)
 
-    // Subscribe to JSONL stream events BEFORE sending — avoids race condition where
-    // Claude responds before onAgentStream is registered and events are lost (T689).
-    // Events are micro-batched: buffered in pendingEvents[], flushed once per nextTick (T676).
-    unsubStreamMessage = window.electronAPI.onAgentStream(
-      id,
-      (raw: Record<string, unknown>) => {
-        pendingEvents.push(raw as StreamEvent)
-        if (!flushPending) {
-          flushPending = true
-          nextTick(flushEvents)
-        }
-      }
-    )
-
-    // Subscribe to convId channel — fired by main process on system:init
-    unsubConvId = window.electronAPI.onAgentConvId(id, (convId: string) => {
-      sessionId.value = convId
+    unsubStreamMessage = window.electronAPI.onAgentStream(id, (raw: Record<string, unknown>) => {
+      pendingEvents.push(raw as StreamEvent)
+      if (!flushPending) { flushPending = true; nextTick(flushEvents) }
     })
-
-    // Subscribe to exit — push a synthetic result event so isStreaming resets to false.
-    // Needed when the agent is killed via stopAgent() which produces no 'result' JSONL line.
+    unsubConvId = window.electronAPI.onAgentConvId(id, (convId: string) => { sessionId.value = convId })
     unsubExit = window.electronAPI.onAgentExit(id, (_exitCode: number | null) => {
-      if (isStreaming.value) {
-        const exitEvent: StreamEvent = { type: 'result' }
-        assignEventId(exitEvent)
-        events.value.push(exitEvent)
-      }
+      if (isStreaming.value) { const e: StreamEvent = { type: 'result' }; assignEventId(e); events.value.push(e) }
     })
 
-    // Push user bubble immediately, then send via stdin JSONL (no respawn needed).
-    // agentSend is called AFTER all subscriptions are registered (T689 race condition fix).
     if (tab.autoSend) {
-      const autoSendEvent: StreamEvent = { type: 'user', message: { role: 'user', content: [{ type: 'text', text: tab.autoSend }] } }
-      assignEventId(autoSendEvent)
-      events.value.push(autoSendEvent)
+      const autoEvent: StreamEvent = { type: 'user', message: { role: 'user', content: [{ type: 'text', text: tab.autoSend }] } }
+      assignEventId(autoEvent)
+      events.value.push(autoEvent)
       scrollToBottom()
       await window.electronAPI.agentSend(id, tab.autoSend)
     }
   } catch (err) {
-    const initErrEvent: StreamEvent = { type: 'system', subtype: 'init', session_id: `Erreur agent: ${String(err)}` }
-    assignEventId(initErrEvent)
-    events.value.push(initErrEvent)
+    const e: StreamEvent = { type: 'system', subtype: 'init', session_id: `Erreur agent: ${String(err)}` }
+    assignEventId(e)
+    events.value.push(e)
   }
 
-  // Attach link-click interceptor after DOM is ready (T753).
   await nextTick()
   scrollContainer.value?.addEventListener('click', handleLinkClick, true)
 })
 
-// Intercept link clicks in markdown blocks — redirect to system browser (T753).
+// Redirect markdown link clicks to system browser (T753).
 function handleLinkClick(e: MouseEvent): void {
   const target = (e.target as HTMLElement).closest('a')
   if (!target) return
   const href = target.getAttribute('href')
   if (!href || !/^https?:\/\//i.test(href)) return
-  e.preventDefault()
-  e.stopPropagation()
+  e.preventDefault(); e.stopPropagation()
   window.electronAPI.openExternal(href)
 }
 
 onUnmounted(() => {
-  unsubStreamMessage?.()
-  unsubConvId?.()
-  unsubExit?.()
+  unsubStreamMessage?.(); unsubConvId?.(); unsubExit?.()
   scrollContainer.value?.removeEventListener('click', handleLinkClick, true)
-  // Clear streamId so closeTab won't double-kill after unmount (T730).
   tabsStore.setStreamId(props.terminalId, null)
-  // Fallback kill — idempotent; primary kill is in closeTab (T730).
-  if (ptyId.value && !agentStopped.value) {
-    window.electronAPI.agentKill(ptyId.value)
-  }
-  // Release reactive memory: clear events and collapsed on unmount (T817).
-  events.value = []
-  collapsed.value = {}
-  pendingEvents = []
+  if (ptyId.value && !agentStopped.value) window.electronAPI.agentKill(ptyId.value)
+  events.value = []; collapsed.value = {}; pendingEvents = []
 })
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function toolInputPreview(input: Record<string, unknown> | undefined): string {
-  if (!input) return ''
-  try {
-    return JSON.stringify(input, null, 2)
-  } catch {
-    return String(input)
-  }
-}
-
-/** Number of lines above which a tool_result is auto-collapsed (T727). */
-const TOOL_RESULT_COLLAPSE_THRESHOLD = 15
-
-/**
- * Strip ANSI escape codes from tool output (T727).
- * Removes SGR sequences (color/style), cursor movement, and erase commands
- * so that raw CLI output renders cleanly in the browser.
- *
- * @param text - Raw string potentially containing ANSI escape sequences.
- * @returns Plain text with all ANSI codes removed.
- */
-function stripAnsi(text: string): string {
-  return text.replace(/\x1B\[[0-9;]*[mGKHF]/g, '')
-}
-
-function toolResultText(content: StreamContentBlock['content']): string {
-  if (!content) return ''
-  if (typeof content === 'string') return stripAnsi(content)
-  if (Array.isArray(content)) {
-    return stripAnsi(content.map(c => c.text ?? '').join('\n'))
-  }
-  return stripAnsi(String(content))
-}
-
-/**
- * Returns true if a tool_result content exceeds the auto-collapse threshold (T727).
- * Used to decide whether to render the block collapsed by default.
- *
- * @param content - Raw content of the tool_result block (string or array of text parts).
- * @returns `true` if the extracted text has more than {@link TOOL_RESULT_COLLAPSE_THRESHOLD} lines.
- */
-function toolResultIsLong(content: StreamContentBlock['content']): boolean {
-  return toolResultText(content).split('\n').length > TOOL_RESULT_COLLAPSE_THRESHOLD
-}
 </script>
 
 <template>
   <div class="flex flex-col h-full bg-zinc-950 text-zinc-100 font-mono text-sm">
-    <!-- ── Agent color accent header bar (T680) ──────────────────────────── -->
-    <div
-      v-if="agentName"
-      class="h-0.5 w-full shrink-0"
-      :style="{ background: accentFg }"
-    />
+    <!-- Agent color accent header bar (T680) -->
+    <div v-if="agentName" class="h-0.5 w-full shrink-0" :style="{ background: accentFg }" />
 
-    <!-- ── Messages scroll area ─────────────────────────────────────────── -->
-    <div
-      ref="scrollContainer"
-      class="flex-1 overflow-y-auto px-4 py-4 space-y-3"
-    >
-      <!-- No messages placeholder -->
+    <!-- Messages scroll area -->
+    <div ref="scrollContainer" class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
       <div
         v-if="displayEvents.length === 0 && !isStreaming"
         class="flex items-center justify-center h-full text-zinc-500 text-xs"
@@ -497,10 +231,7 @@ function toolResultIsLong(content: StreamContentBlock['content']): boolean {
         En attente de messages…
       </div>
 
-      <template
-        v-for="event in displayEvents"
-        :key="event._id"
-      >
+      <template v-for="event in displayEvents" :key="event._id">
         <!-- system:init -->
         <div
           v-if="event.type === 'system' && event.subtype === 'init'"
@@ -508,13 +239,10 @@ function toolResultIsLong(content: StreamContentBlock['content']): boolean {
           data-testid="block-system-init"
         >
           Session démarrée
-          <span
-            v-if="event.session_id"
-            class="ml-1 font-mono"
-          >· {{ event.session_id.slice(0, 8) }}…</span>
+          <span v-if="event.session_id" class="ml-1 font-mono">· {{ event.session_id.slice(0, 8) }}…</span>
         </div>
 
-        <!-- error events (error:spawn / error:exit) -->
+        <!-- error:spawn / error:exit -->
         <div
           v-if="event.type === 'error:spawn' || event.type === 'error:exit'"
           class="flex items-start gap-2 bg-red-950 border border-red-800 rounded-lg px-4 py-3 text-red-300 text-xs font-mono"
@@ -528,7 +256,7 @@ function toolResultIsLong(content: StreamContentBlock['content']): boolean {
           </div>
         </div>
 
-        <!-- user message — bulle utilisateur alignée à droite -->
+        <!-- user bubble — right-aligned (T603) -->
         <div
           v-if="event.type === 'user' && event.message"
           class="flex justify-end"
@@ -544,13 +272,10 @@ function toolResultIsLong(content: StreamContentBlock['content']): boolean {
           </div>
         </div>
 
-        <!-- assistant message blocks -->
+        <!-- assistant blocks -->
         <template v-if="event.type === 'assistant' && event.message">
-          <template
-            v-for="(block, bIdx) in event.message.content"
-            :key="`${event._id}-${bIdx}`"
-          >
-            <!-- text block — rendu Markdown DOMPurify (T678), fond couleur agent (T720) -->
+          <template v-for="(block, bIdx) in event.message.content" :key="`${event._id}-${bIdx}`">
+            <!-- text block — Markdown + DOMPurify (T678), agent color bg (T720) -->
             <div
               v-if="block.type === 'text'"
               class="stream-markdown rounded-lg px-4 py-3 border border-l-4 leading-relaxed select-text cursor-text"
@@ -559,107 +284,50 @@ function toolResultIsLong(content: StreamContentBlock['content']): boolean {
               v-html="block._html ?? ''"
             />
 
-            <!-- thinking block — collapsible grisé -->
-            <div
-              v-else-if="block.type === 'thinking'"
-              class="border border-zinc-700 rounded-lg overflow-hidden"
-              data-testid="block-thinking"
-            >
+            <!-- thinking block — collapsible (collapsed by default) -->
+            <div v-else-if="block.type === 'thinking'" class="border border-zinc-700 rounded-lg overflow-hidden" data-testid="block-thinking">
               <button
                 class="w-full flex items-center gap-2 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 transition-colors text-zinc-400 text-xs"
-                @click="toggleCollapsed(collapseKey(event._id!, bIdx), true)"
+                @click="toggleCollapsed(`${event._id}-${bIdx}`, true)"
               >
-                <span class="transition-transform duration-200" :class="isCollapsed(event._id!, bIdx, true) ? '' : 'rotate-90'">▶</span>
+                <span class="transition-transform duration-200" :class="(collapsed[`${event._id}-${bIdx}`] ?? true) ? '' : 'rotate-90'">▶</span>
                 <span>Thinking…</span>
               </button>
               <div
-                v-show="!isCollapsed(event._id!, bIdx, true)"
+                v-show="!(collapsed[`${event._id}-${bIdx}`] ?? true)"
                 class="px-4 py-3 bg-zinc-900 text-zinc-400 text-xs whitespace-pre-wrap select-text cursor-text"
-              >
-                {{ block.text }}
-              </div>
+              >{{ block.text }}</div>
             </div>
 
-            <!-- tool_use block — carte collapsible couleur agent (T680) -->
-            <div
-              v-else-if="block.type === 'tool_use'"
-              class="border rounded-lg overflow-hidden"
-              :style="{ borderColor: accentBorder }"
-              data-testid="block-tool-use"
-            >
-              <button
-                class="w-full flex items-center gap-2 px-3 py-2 transition-colors text-xs"
-                :style="{ backgroundColor: accentBg, color: accentFg }"
-                @click="toggleCollapsed(collapseKey(event._id!, bIdx), true)"
-              >
-                <span class="transition-transform duration-200" :class="isCollapsed(event._id!, bIdx, true) ? '' : 'rotate-90'">▶</span>
-                <span class="font-semibold">{{ block.name }}</span>
-                <span class="ml-auto opacity-60">outil</span>
-              </button>
-              <div
-                v-show="!isCollapsed(event._id!, bIdx, true)"
-                class="px-4 py-3 bg-zinc-900 text-xs text-zinc-300 overflow-x-auto select-text cursor-text"
-              >
-                <pre class="whitespace-pre-wrap">{{ toolInputPreview(block.input) }}</pre>
-              </div>
-            </div>
-
-            <!-- tool_result block — sortie collapsible + markdown + strip ANSI (T727/T729) -->
-            <div
-              v-else-if="block.type === 'tool_result'"
-              class="border rounded-lg overflow-hidden"
-              :class="block.is_error ? 'border-red-800 bg-red-950' : 'border-zinc-700 bg-zinc-900'"
-              data-testid="block-tool-result"
-            >
-              <button
-                class="w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors"
-                :class="block.is_error ? 'text-red-400 hover:bg-red-900' : 'text-zinc-400 hover:bg-zinc-800'"
-                @click="toggleCollapsed(collapseKey(event._id!, bIdx), !block.is_error && toolResultIsLong(block.content))"
-              >
-                <span
-                  class="transition-transform duration-200"
-                  :class="isCollapsed(event._id!, bIdx, !block.is_error && toolResultIsLong(block.content)) ? '' : 'rotate-90'"
-                >▶</span>
-                <span>{{ block.is_error ? '✗ Erreur' : '✓ Résultat' }}</span>
-                <span
-                  v-if="isCollapsed(event._id!, bIdx, !block.is_error && toolResultIsLong(block.content))"
-                  class="ml-1 opacity-60"
-                >({{ toolResultText(block.content).split('\n').length }} lignes)</span>
-              </button>
-              <div
-                v-show="!isCollapsed(event._id!, bIdx, !block.is_error && toolResultIsLong(block.content))"
-                class="stream-markdown px-4 py-2 text-xs text-zinc-300 overflow-x-auto select-text cursor-text"
-                v-html="block._html ?? ''"
-              />
-            </div>
+            <!-- tool_use / tool_result — delegated to StreamToolBlock (T816) -->
+            <StreamToolBlock
+              v-else-if="block.type === 'tool_use' || block.type === 'tool_result'"
+              :block="block"
+              :event-id="event._id!"
+              :block-idx="bIdx"
+              :collapsed="collapsed"
+              :accent-fg="accentFg"
+              :accent-bg="accentBg"
+              :accent-border="accentBorder"
+              @toggle-collapsed="toggleCollapsed"
+            />
           </template>
         </template>
 
-        <!-- result footer — coût / durée / tokens -->
+        <!-- result footer — cost / duration / turns -->
         <div
           v-if="event.type === 'result'"
           class="flex flex-wrap gap-4 text-xs text-zinc-500 border-t border-zinc-800 pt-2"
           data-testid="block-result"
         >
-          <span v-if="event.num_turns !== undefined">
-            {{ event.num_turns }} tour{{ event.num_turns > 1 ? 's' : '' }}
-          </span>
-          <span v-if="event.cost_usd !== undefined">
-            ${{ event.cost_usd.toFixed(4) }}
-          </span>
-          <span v-if="event.duration_ms !== undefined">
-            {{ (event.duration_ms / 1000).toFixed(1) }}s
-          </span>
-          <span
-            v-if="event.session_id"
-            class="ml-auto font-mono text-zinc-600"
-          >
-            {{ event.session_id.slice(0, 8) }}…
-          </span>
+          <span v-if="event.num_turns !== undefined">{{ event.num_turns }} tour{{ event.num_turns > 1 ? 's' : '' }}</span>
+          <span v-if="event.cost_usd !== undefined">${{ event.cost_usd.toFixed(4) }}</span>
+          <span v-if="event.duration_ms !== undefined">{{ (event.duration_ms / 1000).toFixed(1) }}s</span>
+          <span v-if="event.session_id" class="ml-auto font-mono text-zinc-600">{{ event.session_id.slice(0, 8) }}…</span>
         </div>
       </template>
 
-      <!-- Indicateur "en cours" — thinking live si thinkingMode actif (T731), sinon générique -->
+      <!-- Streaming indicator — thinking preview (T731) or generic dots -->
       <div
         v-if="isStreaming"
         class="flex items-center gap-2 text-xs min-w-0"
@@ -671,113 +339,23 @@ function toolResultIsLong(content: StreamContentBlock['content']): boolean {
           <span class="w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:150ms]" :style="{ backgroundColor: accentFg }" />
           <span class="w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:300ms]" :style="{ backgroundColor: accentFg }" />
         </span>
-        <span
-          v-if="activeThinkingText"
-          class="truncate italic opacity-75"
-          data-testid="thinking-preview"
-        >{{ activeThinkingText.slice(-120) }}</span>
+        <span v-if="activeThinkingText" class="truncate italic opacity-75" data-testid="thinking-preview">{{ activeThinkingText.slice(-120) }}</span>
         <span v-else>En cours…</span>
       </div>
     </div>
 
-    <!-- ── Hook events bar (T742) ──────────────────────────────────────── -->
+    <!-- Hook events bar (T742) -->
     <HookEventBar :session-id="sessionId" />
 
-    <!-- ── Input zone (T681: items-end aligne boutons sur bas textarea) ─── -->
-    <div class="border-t border-zinc-800 px-4 py-3 flex items-end gap-2">
-      <textarea
-        v-model="inputText"
-        rows="2"
-        placeholder="Envoyer un message…"
-        class="flex-1 resize-none bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 transition-colors"
-        @keydown="handleKeydown"
-      />
-      <!-- Stop button (T683) — visible only while agent is streaming and not yet stopped -->
-      <button
-        v-if="isStreaming && ptyId && !agentStopped"
-        class="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors self-end"
-        data-testid="stop-button"
-        @click="stopAgent"
-      >
-        Stop
-      </button>
-      <!-- Send button — couleur agent quand actif, zinc-700 quand disabled (T680) -->
-      <button
-        :disabled="!inputText.trim() || !sessionId"
-        class="px-4 py-2 disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-lg text-sm font-medium transition-colors self-end"
-        :style="inputText.trim() && sessionId ? { backgroundColor: accentFg } : {}"
-        data-testid="send-button"
-        @click="sendMessage"
-      >
-        Envoyer
-      </button>
-    </div>
+    <!-- Input bar — delegated to StreamInputBar (T816) -->
+    <StreamInputBar
+      :is-streaming="isStreaming"
+      :pty-id="ptyId"
+      :agent-stopped="agentStopped"
+      :session-id="sessionId"
+      :accent-fg="accentFg"
+      @send="handleSend"
+      @stop="handleStop"
+    />
   </div>
 </template>
-
-<style>
-/* Markdown prose styles for assistant text blocks (T678).
-   Scoped to .stream-markdown to avoid polluting other components.
-   No scoped attribute — these classes are injected via v-html so Vue scoped won't match. */
-.stream-markdown {
-  line-height: 1.65;
-}
-.stream-markdown p { margin: 0.5em 0; }
-.stream-markdown p:first-child { margin-top: 0; }
-.stream-markdown p:last-child { margin-bottom: 0; }
-.stream-markdown h1,
-.stream-markdown h2,
-.stream-markdown h3,
-.stream-markdown h4 {
-  font-weight: 600;
-  margin: 0.85em 0 0.35em;
-  color: #f4f4f5;
-}
-.stream-markdown h1 { font-size: 1.25em; }
-.stream-markdown h2 { font-size: 1.1em; }
-.stream-markdown h3 { font-size: 1em; }
-.stream-markdown ul,
-.stream-markdown ol { padding-left: 1.4em; margin: 0.4em 0; }
-.stream-markdown li { margin: 0.2em 0; }
-.stream-markdown code:not(pre code) {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 3px;
-  padding: 0.1em 0.35em;
-  font-size: 0.85em;
-  color: #e4e4e7;
-}
-.stream-markdown pre { margin: 0.6em 0; border-radius: 6px; overflow-x: auto; }
-.stream-markdown pre code { font-size: 0.8em; padding: 0.85em 1em; display: block; }
-.stream-markdown blockquote {
-  border-left: 3px solid rgba(255, 255, 255, 0.2);
-  padding-left: 0.8em;
-  margin: 0.4em 0;
-  color: #a1a1aa;
-}
-.stream-markdown a { color: #818cf8; text-decoration: underline; }
-.stream-markdown strong { font-weight: 600; }
-.stream-markdown em { font-style: italic; }
-.stream-markdown hr { border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 0.8em 0; }
-.stream-markdown table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 0.6em 0;
-  font-size: 0.85em;
-  overflow-x: auto;
-  display: block;
-}
-.stream-markdown th,
-.stream-markdown td {
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 0.4em 0.75em;
-  text-align: left;
-}
-.stream-markdown th {
-  background: rgba(255, 255, 255, 0.06);
-  font-weight: 600;
-  color: #e4e4e7;
-}
-.stream-markdown tr:nth-child(even) td {
-  background: rgba(255, 255, 255, 0.03);
-}
-</style>
