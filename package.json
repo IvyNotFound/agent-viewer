@@ -17,6 +17,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:mutation": "stryker run",
+    "stryker:file": "stryker run --mutate",
+    "stryker:bg": "bash scripts/stryker-run.sh",
     "test:e2e": "playwright test --config playwright.config.ts",
     "test:e2e:update": "playwright test --config playwright.config.ts --update-snapshots",
     "download-sqlite3": "node scripts/download-sqlite3.js",

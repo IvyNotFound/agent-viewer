@@ -45,11 +45,11 @@ export default {
     break: null,
   },
 
-  // Timeout per test (ms) — Electron env can be slow
-  timeoutMS: 60000,
+  // Timeout per test (ms) — keep aggressive for file-scoped runs
+  timeoutMS: 30000,
 
-  // Dry run timeout — 90 tests × env setup is slow in jsdom+node mixed env
-  dryRunTimeoutMinutes: 15,
+  // Dry run timeout — reduced for file-scoped runs
+  dryRunTimeoutMinutes: 5,
 
   // Concurrency — limit to avoid OOM on large codebase
   concurrency: 4,
