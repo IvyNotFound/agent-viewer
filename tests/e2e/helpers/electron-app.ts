@@ -43,7 +43,7 @@ export async function launchApp(): Promise<AppHandle> {
 
   const app = await electron.launch({
     executablePath: ELECTRON_BIN,
-    args: [MAIN_ENTRY],
+    args: [...(process.env.CI ? ['--no-sandbox'] : []), MAIN_ENTRY],
     env: {
       ...process.env,
       NODE_ENV: 'test',
