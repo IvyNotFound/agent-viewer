@@ -5,7 +5,23 @@
 
 Desktop interface in Trello/Jira style for real-time visualization of Claude agent tasks from a local SQLite database. The application manages agents, launches Claude sessions in external WSL terminals, and monitors activity in real time.
 
-![Board agent-viewer](https://placehold.co/800x400/18181b/white?text=agent-viewer+board)
+## Screenshots
+
+| Kanban Board | Dashboard Overview |
+|---|---|
+| ![Kanban Board](img/2026-03-06_16h08_43.png) | ![Dashboard Overview](img/2026-03-06_16h09_34.png) |
+
+| Token Stats & Cost | Agent Logs |
+|---|---|
+| ![Token Stats](img/2026-03-06_16h08_33.png) | ![Agent Logs](img/2026-03-06_16h09_58.png) |
+
+| Live Session Stream | Git Commit List |
+|---|---|
+| ![Stream View](img/2026-03-06_16h09_26.png) | ![Git View](img/2026-03-06_16h10_05.png) |
+
+| Agent OrgChart |
+|---|
+| ![OrgChart](img/2026-03-06_16h10_22.png) |
 
 ## Key Features
 

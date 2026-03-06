@@ -48,8 +48,6 @@ build/*
 tsconfig.node.tsbuildinfo
 tsconfig.web.tsbuildinfo
 
-# Screenshots / temp images
-img/
 
 # Misc
 SELECT
@@ -58,3 +56,9 @@ SELECT
 
 # Accidental tilde-expansion artefact
 ~/
+
+# Playwright E2E test artifacts (generated)
+playwright-report/
+test-results/
+.stryker-tmp/
+.strykerignore
