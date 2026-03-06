@@ -107,7 +107,7 @@ export function registerAgentSessionHandlers(): void {
           `UPDATE sessions SET claude_conv_id = ?
            WHERE id = (
              SELECT id FROM sessions
-             WHERE agent_id = ? AND statut = 'started' AND claude_conv_id IS NULL
+             WHERE agent_id = ? AND status = 'started' AND claude_conv_id IS NULL
              ORDER BY id DESC LIMIT 1
            )`,
           [convId, agentId]

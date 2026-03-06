@@ -6,7 +6,8 @@ import { useTasksStore } from '@renderer/stores/tasks'
 import { useSettingsStore } from '@renderer/stores/settings'
 import { agentFg, agentBorder } from '@renderer/utils/agentColor'
 import { useModalEscape } from '@renderer/composables/useModalEscape'
-import type { Agent, ClaudeInstance } from '@renderer/types'
+import type { Agent } from '@renderer/types'
+import type { CliType, CliInstance } from '@shared/cli-types'
 
 const props = defineProps<{ agent: Agent }>()
 const emit = defineEmits<{ close: [] }>()
@@ -18,27 +19,24 @@ const tabsStore = useTabsStore()
 const tasksStore = useTasksStore()
 const settingsStore = useSettingsStore()
 
-/** Detected Claude Code instances (WSL distros and/or native installs with claude) */
-const claudeInstances = ref<ClaudeInstance[]>([])
-const selectedInstance = ref<ClaudeInstance | null>(null)
+const selectedCli = ref<CliType>('claude')
+const selectedInstance = ref<CliInstance | null>(null)
 const loading = ref(true)
 const customPrompt = ref('')
 const launching = ref(false)
 const systemPrompt = ref<string | null>(null)
 const systemPromptSuffix = ref<string | null>(null)
 const thinkingMode = ref<'auto' | 'disabled'>('auto')
-/** Active claude-* wrapper profile within the selected instance */
+/** Active binary wrapper profile within the selected instance */
 const selectedProfile = ref<string>('claude')
-/** Claude Code conversation UUID from last session — used for --resume (task #218) */
+/** Claude Code conversation UUID from last session — used for --resume */
 const lastConvId = ref<string | null>(null)
-/** Whether to use --resume mode on next launch */
 const useResume = ref(false)
 /** Multi-instance mode: create an isolated git worktree before launching (ADR-006) */
 const multiInstance = ref(false)
 /** Error message if worktree creation fails */
 const worktreeError = ref<string | null>(null)
 
-// Compute the full system prompt (system_prompt + system_prompt_suffix)
 const fullSystemPrompt = computed(() => {
   const parts: string[] = []
   if (systemPrompt.value) parts.push(systemPrompt.value)
@@ -46,26 +44,63 @@ const fullSystemPrompt = computed(() => {
   return parts.join('\n\n')
 })
 
-// Profiles available in the selected instance (~/bin/claude* wrapper scripts)
 const activeProfiles = computed(() => selectedInstance.value?.profiles ?? ['claude'])
 
-// When the selected instance changes, reset the profile to the first available
+/** Instances detected for the currently selected CLI */
+const instancesForCli = computed(() =>
+  settingsStore.allCliInstances.filter(i => i.cli === selectedCli.value)
+)
+
+/** Show CLI selector only when multiple CLIs are enabled */
+const multiCli = computed(() => settingsStore.enabledClis.length > 1)
+
+const CLI_LABELS: Record<CliType, string> = {
+  claude:   'Claude Code',
+  codex:    'Codex',
+  gemini:   'Gemini',
+  opencode: 'OpenCode',
+  aider:    'Aider',
+  goose:    'Goose',
+}
+
+const CLI_BADGE: Record<CliType, string> = {
+  claude:   'C',
+  codex:    'X',
+  gemini:   'G',
+  opencode: 'O',
+  aider:    'A',
+  goose:    'G',
+}
+
 watch(selectedInstance, (inst) => {
   selectedProfile.value = inst?.profiles[0] ?? 'claude'
 })
 
-onMounted(async () => {
-  // Detect Claude Code instances (WSL distros and/or native installs)
-  const rawInstances = await window.electronAPI.getClaudeInstances()
-  claudeInstances.value = rawInstances as ClaudeInstance[]
+// When CLI changes, pick first detected instance for that CLI
+watch(selectedCli, () => {
+  selectedInstance.value = instancesForCli.value[0] ?? null
+})
 
-  // Auto-select: prefer stored user preference, fall back to isDefault/first
-  if (claudeInstances.value.length > 0) {
+function instanceLabel(inst: CliInstance): string {
+  if (inst.type === 'local') return 'Local'
+  return inst.distro
+}
+
+onMounted(async () => {
+  // Refresh CLI detection (tags all instances with their CLI type)
+  await settingsStore.refreshCliDetection()
+
+  // Default CLI = first enabled one (usually 'claude')
+  selectedCli.value = settingsStore.enabledClis[0] ?? 'claude'
+
+  // Auto-select instance: prefer stored preference, fall back to isDefault/first
+  const instances = instancesForCli.value
+  if (instances.length > 0) {
     const stored = settingsStore.defaultClaudeInstance
     selectedInstance.value =
-      (stored ? claudeInstances.value.find(i => i.distro === stored) : undefined)
-      ?? claudeInstances.value.find(i => i.isDefault)
-      ?? claudeInstances.value[0]
+      (stored ? instances.find(i => i.distro === stored) : undefined)
+      ?? instances.find(i => i.isDefault)
+      ?? instances[0]
       ?? null
 
     const storedProfile = settingsStore.defaultClaudeProfile
@@ -74,11 +109,9 @@ onMounted(async () => {
     }
   }
 
-  // Get the agent's system prompts and thinking mode from the DB
   if (tasksStore.dbPath) {
     const [promptResult, sessionRows] = await Promise.all([
       window.electronAPI.getAgentSystemPrompt(tasksStore.dbPath, props.agent.id),
-      // Check for a stored conversation UUID to offer --resume (task #218)
       window.electronAPI.queryDb(
         tasksStore.dbPath,
         `SELECT claude_conv_id FROM sessions
@@ -101,16 +134,10 @@ onMounted(async () => {
   loading.value = false
 })
 
-function instanceLabel(inst: ClaudeInstance): string {
-  if (inst.type === 'local') return 'Local'
-  return inst.distro
-}
-
 async function launch() {
   launching.value = true
   worktreeError.value = null
   try {
-    // Pass dbPath + agentId so the main process can inject pre-computed startup context (task #220)
     const finalPrompt = await window.electronAPI.buildAgentPrompt(
       props.agent.name,
       customPrompt.value,
@@ -135,27 +162,26 @@ async function launch() {
     }
 
     const distro = selectedInstance.value?.distro
-    // Use selected profile only if it differs from the default 'claude'
     const cmdProfile = selectedProfile.value !== 'claude' ? selectedProfile.value : undefined
     const convId = useResume.value && lastConvId.value ? lastConvId.value : undefined
+
     if (convId) {
-      // Resume mode: skip system prompt injection entirely
       tabsStore.addTerminal(
         props.agent.name, distro, undefined, undefined,
         thinkingMode.value, cmdProfile, convId,
-        true, undefined, 'stream', undefined, workDir
+        true, undefined, 'stream', selectedCli.value, workDir
       )
     } else if (fullSystemPrompt.value) {
       tabsStore.addTerminal(
         props.agent.name, distro, finalPrompt, fullSystemPrompt.value,
         thinkingMode.value, cmdProfile, undefined,
-        true, undefined, 'stream', undefined, workDir
+        true, undefined, 'stream', selectedCli.value, workDir
       )
     } else {
       tabsStore.addTerminal(
         props.agent.name, distro, finalPrompt, undefined,
         thinkingMode.value, cmdProfile, undefined,
-        true, undefined, 'stream', undefined, workDir
+        true, undefined, 'stream', selectedCli.value, workDir
       )
     }
     emit('close')
@@ -194,19 +220,45 @@ async function launch() {
         <!-- Body -->
         <div class="px-5 py-4 space-y-4">
 
-          <!-- Claude Code instance selection -->
+          <!-- CLI selector — only when multiple CLIs are enabled -->
+          <div v-if="multiCli">
+            <p class="text-sm font-medium text-content-secondary mb-2">{{ t('launch.selectCli') }}</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="cli in settingsStore.enabledClis"
+                :key="cli"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all"
+                :class="selectedCli !== cli
+                  ? 'border-edge-default bg-surface-secondary/40 text-content-muted hover:border-content-faint'
+                  : ''"
+                :style="selectedCli === cli ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
+                :disabled="settingsStore.allCliInstances.filter(i => i.cli === cli).length === 0"
+                :title="settingsStore.allCliInstances.filter(i => i.cli === cli).length === 0 ? t('launch.cliUnavailable') : undefined"
+                @click="selectedCli = cli"
+              >
+                <span class="w-4 h-4 flex items-center justify-center rounded text-[9px] font-bold bg-surface-tertiary text-content-muted shrink-0">
+                  {{ CLI_BADGE[cli] }}
+                </span>
+                {{ CLI_LABELS[cli] }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Instance selection -->
           <div>
-            <p class="text-sm font-medium text-content-secondary mb-2">{{ t('launch.claudeInstance') }}</p>
+            <p class="text-sm font-medium text-content-secondary mb-2">
+              {{ multiCli ? CLI_LABELS[selectedCli] + ' — ' + t('launch.instance') : t('launch.claudeInstance') }}
+            </p>
 
             <div v-if="loading" class="text-sm text-content-subtle animate-pulse">{{ t('common.loading') }}</div>
 
-            <div v-else-if="claudeInstances.length === 0" class="text-sm text-content-subtle italic">
+            <div v-else-if="instancesForCli.length === 0" class="text-sm text-content-subtle italic">
               {{ t('launch.noInstance') }}
             </div>
 
             <div v-else class="space-y-1.5">
               <label
-                v-for="inst in claudeInstances"
+                v-for="inst in instancesForCli"
                 :key="inst.distro"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
                 :class="selectedInstance?.distro === inst.distro
@@ -230,7 +282,7 @@ async function launch() {
             </div>
           </div>
 
-          <!-- Resume session (task #218): shown when a previous conv_id exists -->
+          <!-- Resume session: shown when a previous conv_id exists -->
           <div v-if="lastConvId">
             <p class="text-sm font-medium text-content-secondary mb-2">{{ t('launch.prevSession') }}</p>
             <label class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
@@ -269,8 +321,7 @@ async function launch() {
             </p>
           </div>
 
-
-          <!-- Profil API Claude (sélecteur masqué si aucun profil alternatif disponible) -->
+          <!-- API Profile (hidden when only default profile available) -->
           <div v-if="activeProfiles.length > 1">
             <p class="text-sm font-medium text-content-secondary mb-2">{{ t('launch.apiProfile') }}</p>
             <div class="flex flex-wrap gap-2">
@@ -290,7 +341,7 @@ async function launch() {
             </p>
           </div>
 
-          <!-- Prompt personnalisé -->
+          <!-- Custom prompt -->
           <div>
             <p class="text-sm font-medium text-content-secondary mb-2">{{ t('launch.startPrompt') }}</p>
             <textarea

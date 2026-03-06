@@ -141,7 +141,7 @@ async function buildSchema(): Promise<any> {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     type TEXT,
-    perimetre TEXT,
+    scope TEXT,
     system_prompt TEXT,
     system_prompt_suffix TEXT,
     thinking_mode TEXT,
@@ -154,15 +154,15 @@ async function buildSchema(): Promise<any> {
 
   db.run(`CREATE TABLE tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    titre TEXT,
+    title TEXT,
     description TEXT,
-    statut TEXT DEFAULT 'todo',
-    agent_createur_id INTEGER,
-    agent_assigne_id INTEGER,
-    agent_valideur_id INTEGER,
+    status TEXT DEFAULT 'todo',
+    agent_creator_id INTEGER,
+    agent_assigned_id INTEGER,
+    agent_validator_id INTEGER,
     parent_task_id INTEGER,
     session_id INTEGER,
-    perimetre TEXT,
+    scope TEXT,
     effort INTEGER,
     priority TEXT DEFAULT 'normal',
     created_at TEXT DEFAULT (datetime('now')),
@@ -178,7 +178,7 @@ async function buildSchema(): Promise<any> {
     started_at TEXT,
     ended_at TEXT,
     updated_at TEXT,
-    statut TEXT,
+    status TEXT,
     summary TEXT,
     claude_conv_id TEXT,
     tokens_in INTEGER NOT NULL DEFAULT 0,
@@ -191,7 +191,7 @@ async function buildSchema(): Promise<any> {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     task_id INTEGER,
     agent_id INTEGER,
-    contenu TEXT,
+    content TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   )`)
 
@@ -205,7 +205,7 @@ async function buildSchema(): Promise<any> {
 
   db.run(`CREATE TABLE locks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    fichier TEXT,
+    file TEXT,
     agent_id INTEGER,
     session_id INTEGER,
     created_at TEXT DEFAULT (datetime('now')),
@@ -216,10 +216,10 @@ async function buildSchema(): Promise<any> {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER,
     agent_id INTEGER,
-    niveau TEXT,
+    level TEXT,
     action TEXT,
     detail TEXT,
-    fichiers TEXT,
+    files TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   )`)
 
@@ -229,13 +229,13 @@ async function buildSchema(): Promise<any> {
     updated_at TEXT
   )`)
 
-  db.run(`CREATE TABLE perimetres (
+  db.run(`CREATE TABLE scopes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
-    dossier TEXT,
+    folder TEXT,
     techno TEXT,
     description TEXT,
-    actif INTEGER NOT NULL DEFAULT 1,
+    active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
   )`)
 
@@ -316,11 +316,11 @@ async function insertAgent(name: string): Promise<number> {
   return rows[0].id
 }
 
-async function insertTask(titre: string): Promise<number> {
+async function insertTask(title: string): Promise<number> {
   await writeDb<void>(TEST_DB_PATH, (db) => {
-    db.run('INSERT INTO tasks (titre) VALUES (?)', [titre])
+    db.run('INSERT INTO tasks (title) VALUES (?)', [title])
   })
-  const rows = await queryLive(TEST_DB_PATH, 'SELECT id FROM tasks WHERE titre = ?', [titre]) as Array<{ id: number }>
+  const rows = await queryLive(TEST_DB_PATH, 'SELECT id FROM tasks WHERE title = ?', [title]) as Array<{ id: number }>
   return rows[0].id
 }
 
@@ -335,10 +335,10 @@ async function getTaskAgents(taskId: number): Promise<Array<{ agent_id: number; 
 async function getTaskAssigneId(taskId: number): Promise<number | null> {
   const rows = await queryLive(
     TEST_DB_PATH,
-    'SELECT agent_assigne_id FROM tasks WHERE id = ?',
+    'SELECT agent_assigned_id FROM tasks WHERE id = ?',
     [taskId]
-  ) as Array<{ agent_assigne_id: number | null }>
-  return rows[0]?.agent_assigne_id ?? null
+  ) as Array<{ agent_assigned_id: number | null }>
+  return rows[0]?.agent_assigned_id ?? null
 }
 
 // ── Tests: task:setAssignees behavioural ─────────────────────────────────────
@@ -363,7 +363,7 @@ describe('task:setAssignees — behavioural (T418)', () => {
     expect(rows.map(r => r.agent_id)).toEqual(expect.arrayContaining([agentA, agentB]))
   })
 
-  it('role=primary → tasks.agent_assigne_id = primary agent_id', async () => {
+  it('role=primary → tasks.agent_assigned_id = primary agent_id', async () => {
     const agentA = await insertAgent('agent-primary')
     const agentB = await insertAgent('agent-support')
     const taskId = await insertTask('task-with-primary')
@@ -379,7 +379,7 @@ describe('task:setAssignees — behavioural (T418)', () => {
     expect(assigneId).toBe(agentA)
   })
 
-  it('no primary → tasks.agent_assigne_id = first assignee', async () => {
+  it('no primary → tasks.agent_assigned_id = first assignee', async () => {
     const agentA = await insertAgent('agent-first')
     const agentB = await insertAgent('agent-second')
     const taskId = await insertTask('task-no-primary')
@@ -395,7 +395,7 @@ describe('task:setAssignees — behavioural (T418)', () => {
     expect(assigneId).toBe(agentA)
   })
 
-  it('empty list → task_agents empty + agent_assigne_id = NULL', async () => {
+  it('empty list → task_agents empty + agent_assigned_id = NULL', async () => {
     const agentA = await insertAgent('agent-to-remove')
     const taskId = await insertTask('task-to-clear')
 
@@ -721,7 +721,7 @@ describe('delete-agent — T437', () => {
   it('agent with sessions → hasHistory=true, not deleted', async () => {
     const agentId = await insertAgent('agent-has-session')
     await writeDb<void>(TEST_DB_PATH, (db) => {
-      db.run('INSERT INTO sessions (agent_id, statut) VALUES (?, ?)', [agentId, 'completed'])
+      db.run('INSERT INTO sessions (agent_id, status) VALUES (?, ?)', [agentId, 'completed'])
     })
 
     const result = await handlers['delete-agent'](
@@ -741,7 +741,7 @@ describe('delete-agent — T437', () => {
     const agentId = await insertAgent('agent-has-tasks')
     const taskId = await insertTask('task-assigned')
     await writeDb<void>(TEST_DB_PATH, (db) => {
-      db.run('UPDATE tasks SET agent_assigne_id = ? WHERE id = ?', [agentId, taskId])
+      db.run('UPDATE tasks SET agent_assigned_id = ? WHERE id = ?', [agentId, taskId])
     })
 
     const result = await handlers['delete-agent'](
@@ -758,7 +758,7 @@ describe('delete-agent — T437', () => {
     const agentId = await insertAgent('agent-has-comments')
     const taskId = await insertTask('task-commented')
     await writeDb<void>(TEST_DB_PATH, (db) => {
-      db.run('INSERT INTO task_comments (task_id, agent_id, contenu) VALUES (?, ?, ?)', [taskId, agentId, 'comment'])
+      db.run('INSERT INTO task_comments (task_id, agent_id, content) VALUES (?, ?, ?)', [taskId, agentId, 'comment'])
     })
 
     const result = await handlers['delete-agent'](
@@ -785,7 +785,7 @@ describe('delete-agent — T437', () => {
   it('delete releases active locks for the agent', async () => {
     const agentId = await insertAgent('agent-with-locks')
     await writeDb<void>(TEST_DB_PATH, (db) => {
-      db.run('INSERT INTO locks (fichier, agent_id) VALUES (?, ?)', ['some/file.ts', agentId])
+      db.run('INSERT INTO locks (file, agent_id) VALUES (?, ?)', ['some/file.ts', agentId])
     })
 
     const result = await handlers['delete-agent'](
@@ -822,7 +822,7 @@ describe('add-perimetre — T438', () => {
 
     const rows = await queryLive(
       TEST_DB_PATH,
-      'SELECT name FROM perimetres WHERE id = ?',
+      'SELECT name FROM scopes WHERE id = ?',
       [result.id]
     ) as Array<{ name: string }>
     expect(rows[0]?.name).toBe('front-vuejs')
@@ -839,7 +839,7 @@ describe('add-perimetre — T438', () => {
 
     const rows = await queryLive(
       TEST_DB_PATH,
-      'SELECT name FROM perimetres WHERE id = ?',
+      'SELECT name FROM scopes WHERE id = ?',
       [result.id]
     ) as Array<{ name: string }>
     expect(rows[0]?.name).toBe('back-electron')
@@ -1053,7 +1053,7 @@ describe('agent:duplicate handler', () => {
     // Insert agent with all fields populated
     await writeDb<void>(TEST_DB_PATH, (db) => {
       db.run(
-        'INSERT INTO agents (name, type, perimetre, thinking_mode, system_prompt, system_prompt_suffix, allowed_tools) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO agents (name, type, scope, thinking_mode, system_prompt, system_prompt_suffix, allowed_tools) VALUES (?, ?, ?, ?, ?, ?, ?)',
         ['full-agent', 'dev', 'back-electron', 'auto', 'You are dev', 'Always respond in english', '["Bash","Read"]']
       )
     })
@@ -1068,7 +1068,7 @@ describe('agent:duplicate handler', () => {
     // Verify copied fields in DB
     const copied = await queryLive(TEST_DB_PATH, 'SELECT * FROM agents WHERE id = ?', [result.agentId]) as Array<Record<string, unknown>>
     expect(copied[0].type).toBe('dev')
-    expect(copied[0].perimetre).toBe('back-electron')
+    expect(copied[0].scope).toBe('back-electron')
     expect(copied[0].thinking_mode).toBe('auto')
     expect(copied[0].system_prompt).toBe('You are dev')
     expect(copied[0].system_prompt_suffix).toBe('Always respond in english')
@@ -1367,7 +1367,7 @@ const VALID_JSONL = [
 
 async function insertSession(agentId: number, convId?: string): Promise<number> {
   await writeDb<void>(TEST_DB_PATH, (db) => {
-    db.run('INSERT INTO sessions (agent_id, statut, claude_conv_id) VALUES (?, ?, ?)', [agentId, 'completed', convId ?? null])
+    db.run('INSERT INTO sessions (agent_id, status, claude_conv_id) VALUES (?, ?, ?)', [agentId, 'completed', convId ?? null])
   })
   const rows = await queryLive(TEST_DB_PATH, 'SELECT id FROM sessions WHERE agent_id = ? ORDER BY id DESC LIMIT 1', [agentId]) as Array<{ id: number }>
   return rows[0].id
@@ -1539,12 +1539,12 @@ describe('task:getLinks (T673)', () => {
     expect(result.links).toEqual([])
   })
 
-  it('returns link with from_titre/from_statut/to_titre/to_statut when task is from_task', async () => {
+  it('returns link with from_title/from_status/to_title/to_status when task is from_task', async () => {
     const fromId = await insertTask('task-from')
     const toId = await insertTask('task-to')
     await writeDb<void>(TEST_DB_PATH, (db) => {
       db.run(
-        "INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'bloque')",
+        "INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'blocks')",
         [fromId, toId]
       )
     })
@@ -1552,8 +1552,8 @@ describe('task:getLinks (T673)', () => {
     const result = await handlers['task:getLinks'](null, TEST_DB_PATH, fromId) as {
       success: boolean; links: Array<{
         from_task: number; to_task: number; type: string;
-        from_titre: string; from_statut: string;
-        to_titre: string; to_statut: string
+        from_title: string; from_status: string;
+        to_title: string; to_status: string
       }>
     }
     expect(result.success).toBe(true)
@@ -1561,11 +1561,11 @@ describe('task:getLinks (T673)', () => {
     const link = result.links[0]
     expect(link.from_task).toBe(fromId)
     expect(link.to_task).toBe(toId)
-    expect(link.type).toBe('bloque')
-    expect(link.from_titre).toBe('task-from')
-    expect(link.to_titre).toBe('task-to')
-    expect(link.from_statut).toBe('todo')
-    expect(link.to_statut).toBe('todo')
+    expect(link.type).toBe('blocks')
+    expect(link.from_title).toBe('task-from')
+    expect(link.to_title).toBe('task-to')
+    expect(link.from_status).toBe('todo')
+    expect(link.to_status).toBe('todo')
   })
 
   it('returns symmetric link when task is to_task', async () => {
@@ -1573,7 +1573,7 @@ describe('task:getLinks (T673)', () => {
     const toId = await insertTask('task-target')
     await writeDb<void>(TEST_DB_PATH, (db) => {
       db.run(
-        "INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'dépend_de')",
+        "INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'depends_on')",
         [fromId, toId]
       )
     })
@@ -1594,9 +1594,9 @@ describe('task:getLinks (T673)', () => {
     const dep3 = await insertTask('dep-3')
 
     await writeDb<void>(TEST_DB_PATH, (db) => {
-      db.run("INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'bloque')", [mainId, dep1])
-      db.run("INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'bloque')", [mainId, dep2])
-      db.run("INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'lié_à')", [dep3, mainId])
+      db.run("INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'blocks')", [mainId, dep1])
+      db.run("INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'blocks')", [mainId, dep2])
+      db.run("INSERT INTO task_links (from_task, to_task, type) VALUES (?, ?, 'related_to')", [dep3, mainId])
     })
 
     const result = await handlers['task:getLinks'](null, TEST_DB_PATH, mainId) as {

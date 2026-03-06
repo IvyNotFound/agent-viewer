@@ -115,7 +115,7 @@ async function buildSchema(): Promise<any> {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     type TEXT,
-    perimetre TEXT,
+    scope TEXT,
     system_prompt TEXT,
     system_prompt_suffix TEXT,
     thinking_mode TEXT,
@@ -128,15 +128,15 @@ async function buildSchema(): Promise<any> {
 
   db.run(`CREATE TABLE tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    titre TEXT,
+    title TEXT,
     description TEXT,
-    statut TEXT DEFAULT 'todo',
-    agent_createur_id INTEGER,
-    agent_assigne_id INTEGER,
-    agent_valideur_id INTEGER,
+    status TEXT DEFAULT 'todo',
+    agent_creator_id INTEGER,
+    agent_assigned_id INTEGER,
+    agent_validator_id INTEGER,
     parent_task_id INTEGER,
     session_id INTEGER,
-    perimetre TEXT,
+    scope TEXT,
     effort INTEGER,
     priority TEXT DEFAULT 'normal',
     created_at TEXT DEFAULT (datetime('now')),
@@ -152,7 +152,7 @@ async function buildSchema(): Promise<any> {
     started_at TEXT,
     ended_at TEXT,
     updated_at TEXT,
-    statut TEXT,
+    status TEXT,
     summary TEXT,
     claude_conv_id TEXT,
     cost_usd REAL,
@@ -168,7 +168,7 @@ async function buildSchema(): Promise<any> {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     task_id INTEGER,
     agent_id INTEGER,
-    contenu TEXT,
+    content TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   )`)
 
@@ -182,7 +182,7 @@ async function buildSchema(): Promise<any> {
 
   db.run(`CREATE TABLE locks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    fichier TEXT,
+    file TEXT,
     agent_id INTEGER,
     session_id INTEGER,
     created_at TEXT DEFAULT (datetime('now')),
@@ -193,10 +193,10 @@ async function buildSchema(): Promise<any> {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER,
     agent_id INTEGER,
-    niveau TEXT,
+    level TEXT,
     action TEXT,
     detail TEXT,
-    fichiers TEXT,
+    files TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   )`)
 
@@ -206,13 +206,13 @@ async function buildSchema(): Promise<any> {
     updated_at TEXT
   )`)
 
-  db.run(`CREATE TABLE perimetres (
+  db.run(`CREATE TABLE scopes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
-    dossier TEXT,
+    folder TEXT,
     techno TEXT,
     description TEXT,
-    actif INTEGER NOT NULL DEFAULT 1,
+    active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
   )`)
 
@@ -249,40 +249,40 @@ afterEach(() => {
 })
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-async function insertAgent(name: string, perimetre?: string): Promise<number> {
+async function insertAgent(name: string, scope?: string): Promise<number> {
   await writeDb<void>(TEST_DB_PATH, (db) => {
-    db.run('INSERT INTO agents (name, type, perimetre) VALUES (?, ?, ?)', [name, 'test', perimetre ?? null])
+    db.run('INSERT INTO agents (name, type, scope) VALUES (?, ?, ?)', [name, 'test', scope ?? null])
   })
   const rows = await queryLive(TEST_DB_PATH, 'SELECT id FROM agents WHERE name = ?', [name]) as Array<{ id: number }>
   return rows[0].id
 }
 
 async function insertTask(opts: {
-  titre: string
-  statut?: string
+  title: string
+  status?: string
   agentId?: number | null
-  perimetre?: string | null
+  scope?: string | null
 }): Promise<number> {
-  const { titre, statut = 'todo', agentId = null, perimetre = null } = opts
+  const { title, status = 'todo', agentId = null, scope = null } = opts
   await writeDb<void>(TEST_DB_PATH, (db) => {
     db.run(
-      'INSERT INTO tasks (titre, statut, agent_assigne_id, perimetre) VALUES (?, ?, ?, ?)',
-      [titre, statut, agentId, perimetre]
+      'INSERT INTO tasks (title, status, agent_assigned_id, scope) VALUES (?, ?, ?, ?)',
+      [title, status, agentId, scope]
     )
   })
-  const rows = await queryLive(TEST_DB_PATH, 'SELECT id FROM tasks WHERE titre = ?', [titre]) as Array<{ id: number }>
+  const rows = await queryLive(TEST_DB_PATH, 'SELECT id FROM tasks WHERE title = ?', [title]) as Array<{ id: number }>
   return rows[0].id
 }
 
 async function insertComment(opts: {
   taskId: number
   agentId: number
-  contenu: string
+  content: string
 }): Promise<void> {
   await writeDb<void>(TEST_DB_PATH, (db) => {
     db.run(
-      'INSERT INTO task_comments (task_id, agent_id, contenu) VALUES (?, ?, ?)',
-      [opts.taskId, opts.agentId, opts.contenu]
+      'INSERT INTO task_comments (task_id, agent_id, content) VALUES (?, ?, ?)',
+      [opts.taskId, opts.agentId, opts.content]
     )
   })
 }
@@ -305,7 +305,7 @@ describe('tasks:qualityStats — behavioural (T836)', () => {
     await insertAgent('agent-no-tasks')
     // insert a todo task — should not be counted
     const agentId = await insertAgent('agent-todo-only')
-    await insertTask({ titre: 'task-todo', statut: 'todo', agentId })
+    await insertTask({ title: 'task-todo', status: 'todo', agentId })
 
     const result = await handlers['tasks:qualityStats'](null, TEST_DB_PATH, {}) as {
       success: boolean
@@ -318,16 +318,16 @@ describe('tasks:qualityStats — behavioural (T836)', () => {
 
   it('returns aggregated rows with total_tasks, rejected_tasks, rejection_rate', async () => {
     const agentId = await insertAgent('agent-quality')
-    const t1 = await insertTask({ titre: 'task-done-1', statut: 'done', agentId })
-    const t2 = await insertTask({ titre: 'task-done-2', statut: 'done', agentId })
-    const t3 = await insertTask({ titre: 'task-archived', statut: 'archived', agentId })
+    const t1 = await insertTask({ title: 'task-done-1', status: 'done', agentId })
+    const t2 = await insertTask({ title: 'task-done-2', status: 'done', agentId })
+    const t3 = await insertTask({ title: 'task-archived', status: 'archived', agentId })
 
     // Reviewer agent (id=4 in source code) — insert with fixed id
     await writeDb<void>(TEST_DB_PATH, (db) => {
       db.run('INSERT INTO agents (id, name, type) VALUES (4, "reviewer", "review")')
     })
     // reject t1 via "rejet" keyword
-    await insertComment({ taskId: t1, agentId: 4, contenu: 'rejet: code trop complexe' })
+    await insertComment({ taskId: t1, agentId: 4, content: 'rejet: code trop complexe' })
 
     const result = await handlers['tasks:qualityStats'](null, TEST_DB_PATH, {}) as {
       success: boolean
@@ -344,11 +344,11 @@ describe('tasks:qualityStats — behavioural (T836)', () => {
 
   it('detects rejection via keyword "rejet"', async () => {
     const agentId = await insertAgent('agent-rejet')
-    const taskId = await insertTask({ titre: 'task-rejet', statut: 'done', agentId })
+    const taskId = await insertTask({ title: 'task-rejet', status: 'done', agentId })
     await writeDb<void>(TEST_DB_PATH, (db) => {
       db.run('INSERT OR IGNORE INTO agents (id, name, type) VALUES (4, "reviewer", "review")')
     })
-    await insertComment({ taskId, agentId: 4, contenu: 'rejet: mauvaise implémentation' })
+    await insertComment({ taskId, agentId: 4, content: 'rejet: mauvaise implémentation' })
 
     const result = await handlers['tasks:qualityStats'](null, TEST_DB_PATH, {}) as {
       success: boolean
@@ -361,11 +361,11 @@ describe('tasks:qualityStats — behavioural (T836)', () => {
 
   it('detects rejection via keyword "retour"', async () => {
     const agentId = await insertAgent('agent-retour')
-    const taskId = await insertTask({ titre: 'task-retour', statut: 'done', agentId })
+    const taskId = await insertTask({ title: 'task-retour', status: 'done', agentId })
     await writeDb<void>(TEST_DB_PATH, (db) => {
       db.run('INSERT OR IGNORE INTO agents (id, name, type) VALUES (4, "reviewer", "review")')
     })
-    await insertComment({ taskId, agentId: 4, contenu: 'retour au développeur: corriger les tests' })
+    await insertComment({ taskId, agentId: 4, content: 'retour au développeur: corriger les tests' })
 
     const result = await handlers['tasks:qualityStats'](null, TEST_DB_PATH, {}) as {
       success: boolean
@@ -378,11 +378,11 @@ describe('tasks:qualityStats — behavioural (T836)', () => {
 
   it('detects rejection via keyword "todo"', async () => {
     const agentId = await insertAgent('agent-todo-kw')
-    const taskId = await insertTask({ titre: 'task-todo-kw', statut: 'done', agentId })
+    const taskId = await insertTask({ title: 'task-todo-kw', status: 'done', agentId })
     await writeDb<void>(TEST_DB_PATH, (db) => {
       db.run('INSERT OR IGNORE INTO agents (id, name, type) VALUES (4, "reviewer", "review")')
     })
-    await insertComment({ taskId, agentId: 4, contenu: 'retour todo: à retravailler' })
+    await insertComment({ taskId, agentId: 4, content: 'retour todo: à retravailler' })
 
     const result = await handlers['tasks:qualityStats'](null, TEST_DB_PATH, {}) as {
       success: boolean
@@ -395,10 +395,10 @@ describe('tasks:qualityStats — behavioural (T836)', () => {
 
   it('does not count rejection when comment comes from another agent (agent_id != 4)', async () => {
     const agentId = await insertAgent('agent-no-reject')
-    const taskId = await insertTask({ titre: 'task-no-reject', statut: 'done', agentId })
+    const taskId = await insertTask({ title: 'task-no-reject', status: 'done', agentId })
     const otherId = await insertAgent('other-agent')
     // Comment with rejection keyword but NOT from reviewer (id=4)
-    await insertComment({ taskId, agentId: otherId, contenu: 'rejet ignoré car mauvais agent' })
+    await insertComment({ taskId, agentId: otherId, content: 'rejet ignoré car mauvais agent' })
 
     const result = await handlers['tasks:qualityStats'](null, TEST_DB_PATH, {}) as {
       success: boolean
@@ -413,8 +413,8 @@ describe('tasks:qualityStats — behavioural (T836)', () => {
   it('filters by perimetre when param perimetre is provided', async () => {
     const agentFront = await insertAgent('agent-front', 'front-vuejs')
     const agentBack = await insertAgent('agent-back', 'back-electron')
-    await insertTask({ titre: 'task-front', statut: 'done', agentId: agentFront, perimetre: 'front-vuejs' })
-    await insertTask({ titre: 'task-back', statut: 'done', agentId: agentBack, perimetre: 'back-electron' })
+    await insertTask({ title: 'task-front', status: 'done', agentId: agentFront, scope: 'front-vuejs' })
+    await insertTask({ title: 'task-back', status: 'done', agentId: agentBack, scope: 'back-electron' })
 
     const result = await handlers['tasks:qualityStats'](null, TEST_DB_PATH, { perimetre: 'front-vuejs' }) as {
       success: boolean
@@ -433,8 +433,8 @@ describe('tasks:qualityStats — behavioural (T836)', () => {
   it('returns all agents when perimetre param is null (no filter)', async () => {
     const agentA = await insertAgent('agent-all-a', 'front-vuejs')
     const agentB = await insertAgent('agent-all-b', 'back-electron')
-    await insertTask({ titre: 'task-a', statut: 'done', agentId: agentA, perimetre: 'front-vuejs' })
-    await insertTask({ titre: 'task-b', statut: 'done', agentId: agentB, perimetre: 'back-electron' })
+    await insertTask({ title: 'task-a', status: 'done', agentId: agentA, scope: 'front-vuejs' })
+    await insertTask({ title: 'task-b', status: 'done', agentId: agentB, scope: 'back-electron' })
 
     const result = await handlers['tasks:qualityStats'](null, TEST_DB_PATH, { perimetre: null }) as {
       success: boolean

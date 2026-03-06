@@ -289,7 +289,13 @@
     "promptNote": "系统提示自动应用",
     "cancel": "取消",
     "launch": "启动",
-    "launching": "启动中…"
+    "launching": "启动中…",
+    "selectCli": "CLI",
+    "instance": "instance",
+    "cliUnavailable": "Not detected on this machine",
+    "multiInstance": "Multi-instance / Isolated worktree",
+    "multiInstanceNote": "Creates a dedicated git worktree (ADR-006) — allows running multiple instances in parallel without conflicts",
+    "multiInstanceError": "Failed to create worktree: {error}"
   },
   "titleBar": {
     "searchTitle": "搜索任务（Ctrl+K）",
@@ -576,5 +582,13 @@
     "restart": "立即重启",
     "later": "稍后",
     "error": "错误：{msg}"
+  },
+  "cli": {
+    "claude": "Claude Code",
+    "codex": "Codex",
+    "gemini": "Gemini",
+    "opencode": "OpenCode",
+    "aider": "Aider",
+    "goose": "Goose"
   }
 }

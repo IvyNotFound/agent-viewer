@@ -289,7 +289,13 @@
     "promptNote": "Prompt système appliqué automatiquement",
     "cancel": "Annuler",
     "launch": "Lancer",
-    "launching": "Lancement…"
+    "launching": "Lancement…",
+    "selectCli": "CLI",
+    "instance": "instance",
+    "cliUnavailable": "Non détecté sur cette machine",
+    "multiInstance": "Multi-instance / Worktree isolé",
+    "multiInstanceNote": "Crée un git worktree dédié (ADR-006) — plusieurs instances du même agent en parallèle sans conflits",
+    "multiInstanceError": "Échec de création du worktree : {error}"
   },
   "titleBar": {
     "searchTitle": "Rechercher une tâche (Ctrl+K)",
@@ -576,5 +582,13 @@
     "restart": "Redémarrer maintenant",
     "later": "Plus tard",
     "error": "Erreur : {msg}"
+  },
+  "cli": {
+    "claude": "Claude Code",
+    "codex": "Codex",
+    "gemini": "Gemini",
+    "opencode": "OpenCode",
+    "aider": "Aider",
+    "goose": "Goose"
   }
 }

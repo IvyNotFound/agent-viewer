@@ -135,17 +135,17 @@ describe('search-tasks (T985)', () => {
     expect(result.results).toHaveLength(2)
   })
 
-  it('matches tasks by titre (LIKE fallback)', async () => {
+  it('matches tasks by title (LIKE fallback)', async () => {
     await insertTask('alpha task')
     await insertTask('beta task')
 
     const result = await handlers['search-tasks'](
       null, TEST_DB_PATH, 'alpha'
-    ) as { success: boolean; results: Array<{ titre: string }> }
+    ) as { success: boolean; results: Array<{ title: string }> }
 
     expect(result.success).toBe(true)
     expect(result.results).toHaveLength(1)
-    expect(result.results[0].titre).toBe('alpha task')
+    expect(result.results[0].title).toBe('alpha task')
   })
 
   it('matches tasks by description (LIKE fallback)', async () => {
@@ -154,10 +154,10 @@ describe('search-tasks (T985)', () => {
 
     const result = await handlers['search-tasks'](
       null, TEST_DB_PATH, 'unique-keyword-xyz'
-    ) as { success: boolean; results: Array<{ titre: string }> }
+    ) as { success: boolean; results: Array<{ title: string }> }
 
     expect(result.success).toBe(true)
-    expect(result.results.map(r => r.titre)).toContain('task-desc-search')
+    expect(result.results.map(r => r.title)).toContain('task-desc-search')
   })
 
   it('filters by statut when provided', async () => {
@@ -166,10 +166,10 @@ describe('search-tasks (T985)', () => {
 
     const result = await handlers['search-tasks'](
       null, TEST_DB_PATH, '', { statut: 'todo' }
-    ) as { success: boolean; results: Array<{ statut: string }> }
+    ) as { success: boolean; results: Array<{ status: string }> }
 
     expect(result.success).toBe(true)
-    expect(result.results.every(r => r.statut === 'todo')).toBe(true)
+    expect(result.results.every(r => r.status === 'todo')).toBe(true)
   })
 
   it('filters by perimetre when provided', async () => {
@@ -178,10 +178,10 @@ describe('search-tasks (T985)', () => {
 
     const result = await handlers['search-tasks'](
       null, TEST_DB_PATH, '', { perimetre: 'front-vuejs' }
-    ) as { success: boolean; results: Array<{ perimetre: string }> }
+    ) as { success: boolean; results: Array<{ scope: string }> }
 
     expect(result.success).toBe(true)
-    expect(result.results.every(r => r.perimetre === 'front-vuejs')).toBe(true)
+    expect(result.results.every(r => r.scope === 'front-vuejs')).toBe(true)
   })
 
   it('returns { success: false, results: [] } for unregistered dbPath', async () => {
@@ -200,7 +200,7 @@ describe('update-perimetre (T985)', () => {
   it('updates perimeter name and description', async () => {
     let perimetreId!: number
     await writeDb<void>(TEST_DB_PATH, (db) => {
-      db.run("INSERT INTO perimetres (name, description) VALUES ('front-old', 'Old desc')")
+      db.run("INSERT INTO scopes (name, description) VALUES ('front-old', 'Old desc')")
       const rows = db.exec('SELECT last_insert_rowid() as id')
       perimetreId = rows[0].values[0][0] as number
     })
@@ -213,7 +213,7 @@ describe('update-perimetre (T985)', () => {
 
     const rows = await queryLive(
       TEST_DB_PATH,
-      'SELECT name, description FROM perimetres WHERE id = ?',
+      'SELECT name, description FROM scopes WHERE id = ?',
       [perimetreId]
     ) as Array<{ name: string; description: string }>
     expect(rows[0].name).toBe('front-new')
@@ -223,7 +223,7 @@ describe('update-perimetre (T985)', () => {
   it('cascades rename to tasks.perimetre', async () => {
     let perimetreId!: number
     await writeDb<void>(TEST_DB_PATH, (db) => {
-      db.run("INSERT INTO perimetres (name) VALUES ('cascade-peri')")
+      db.run("INSERT INTO scopes (name) VALUES ('cascade-peri')")
       const rows = db.exec('SELECT last_insert_rowid() as id')
       perimetreId = rows[0].values[0][0] as number
     })
@@ -235,16 +235,16 @@ describe('update-perimetre (T985)', () => {
 
     const taskRows = await queryLive(
       TEST_DB_PATH,
-      "SELECT perimetre FROM tasks WHERE titre = 'task-in-peri'",
+      "SELECT scope FROM tasks WHERE title = 'task-in-peri'",
       []
-    ) as Array<{ perimetre: string }>
-    expect(taskRows[0].perimetre).toBe('cascade-peri-new')
+    ) as Array<{ scope: string }>
+    expect(taskRows[0].scope).toBe('cascade-peri-new')
   })
 
   it('cascades rename to agents.perimetre', async () => {
     let perimetreId!: number
     await writeDb<void>(TEST_DB_PATH, (db) => {
-      db.run("INSERT INTO perimetres (name) VALUES ('agent-peri')")
+      db.run("INSERT INTO scopes (name) VALUES ('agent-peri')")
       const rows = db.exec('SELECT last_insert_rowid() as id')
       perimetreId = rows[0].values[0][0] as number
     })
@@ -256,16 +256,16 @@ describe('update-perimetre (T985)', () => {
 
     const agentRows = await queryLive(
       TEST_DB_PATH,
-      "SELECT perimetre FROM agents WHERE name = 'agent-in-peri'",
+      "SELECT scope FROM agents WHERE name = 'agent-in-peri'",
       []
-    ) as Array<{ perimetre: string }>
-    expect(agentRows[0].perimetre).toBe('agent-peri-new')
+    ) as Array<{ scope: string }>
+    expect(agentRows[0].scope).toBe('agent-peri-new')
   })
 
   it('does not cascade when name unchanged', async () => {
     let perimetreId!: number
     await writeDb<void>(TEST_DB_PATH, (db) => {
-      db.run("INSERT INTO perimetres (name) VALUES ('no-change')")
+      db.run("INSERT INTO scopes (name) VALUES ('no-change')")
       const rows = db.exec('SELECT last_insert_rowid() as id')
       perimetreId = rows[0].values[0][0] as number
     })
@@ -277,10 +277,10 @@ describe('update-perimetre (T985)', () => {
 
     const taskRows = await queryLive(
       TEST_DB_PATH,
-      "SELECT perimetre FROM tasks WHERE titre = 'task-no-cascade'",
+      "SELECT scope FROM tasks WHERE title = 'task-no-cascade'",
       []
-    ) as Array<{ perimetre: string }>
-    expect(taskRows[0].perimetre).toBe('no-change')
+    ) as Array<{ scope: string }>
+    expect(taskRows[0].scope).toBe('no-change')
   })
 
   it('returns { success: false } for unregistered dbPath', async () => {

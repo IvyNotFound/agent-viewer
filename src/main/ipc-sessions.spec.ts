@@ -275,10 +275,10 @@ describe('close-agent-sessions (T985)', () => {
 
     const rows = await queryLive(
       TEST_DB_PATH,
-      'SELECT statut FROM sessions WHERE agent_id = ?',
+      'SELECT status FROM sessions WHERE agent_id = ?',
       [agentId]
-    ) as Array<{ statut: string }>
-    expect(rows.every(r => r.statut === 'completed')).toBe(true)
+    ) as Array<{ status: string }>
+    expect(rows.every(r => r.status === 'completed')).toBe(true)
   })
 
   it('does not affect other agents sessions', async () => {
@@ -291,10 +291,10 @@ describe('close-agent-sessions (T985)', () => {
 
     const rowsB = await queryLive(
       TEST_DB_PATH,
-      'SELECT statut FROM sessions WHERE agent_id = ?',
+      'SELECT status FROM sessions WHERE agent_id = ?',
       [agentB]
-    ) as Array<{ statut: string }>
-    expect(rowsB[0].statut).toBe('started')
+    ) as Array<{ status: string }>
+    expect(rowsB[0].status).toBe('started')
   })
 
   it('returns { success: true } when agent has no started sessions', async () => {

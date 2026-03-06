@@ -366,7 +366,7 @@ describe('IPC config/misc handlers', () => {
     const agentData = {
       name: 'my-new-agent',
       type: 'dev',
-      perimetre: 'back-electron',
+      scope: 'back-electron',
       thinkingMode: 'auto',
       systemPrompt: 'Be helpful',
       description: 'Mon agent de test'
@@ -586,14 +586,14 @@ describe('IPC config/misc handlers', () => {
 
     it('T552: should return TASK_BLOCKED when unresolved blockers exist (type bloque)', async () => {
       vi.mocked(mockedQueryLive).mockResolvedValueOnce([
-        { id: 42, titre: 'Blocker task', statut: 'in_progress' },
+        { id: 42, title: 'Blocker task', status: 'in_progress' },
       ])
       const result = await callHandler('tasks:updateStatus', '/fake/project.db', 10, 'in_progress') as {
-        success: boolean; error?: string; blockers?: Array<{ id: number; titre: string; statut: string }>
+        success: boolean; error?: string; blockers?: Array<{ id: number; title: string; status: string }>
       }
       expect(result).toMatchObject({ success: false, error: 'TASK_BLOCKED' })
       expect(result.blockers).toHaveLength(1)
-      expect(result.blockers?.[0]).toMatchObject({ id: 42, titre: 'Blocker task', statut: 'in_progress' })
+      expect(result.blockers?.[0]).toMatchObject({ id: 42, title: 'Blocker task', status: 'in_progress' })
     })
 
     it('T552: should allow in_progress when no blockers exist', async () => {
@@ -608,11 +608,11 @@ describe('IPC config/misc handlers', () => {
 
     it('T552: should return TASK_BLOCKED with multiple blockers', async () => {
       vi.mocked(mockedQueryLive).mockResolvedValueOnce([
-        { id: 10, titre: 'Dep A', statut: 'todo' },
-        { id: 11, titre: 'Dep B', statut: 'in_progress' },
+        { id: 10, title: 'Dep A', status: 'todo' },
+        { id: 11, title: 'Dep B', status: 'in_progress' },
       ])
       const result = await callHandler('tasks:updateStatus', '/fake/project.db', 20, 'in_progress') as {
-        success: boolean; error?: string; blockers?: Array<{ id: number; titre: string; statut: string }>
+        success: boolean; error?: string; blockers?: Array<{ id: number; title: string; status: string }>
       }
       expect(result).toMatchObject({ success: false, error: 'TASK_BLOCKED' })
       expect(result.blockers).toHaveLength(2)

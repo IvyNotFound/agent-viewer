@@ -289,7 +289,13 @@
     "promptNote": "El prompt del sistema se aplica automáticamente",
     "cancel": "Cancelar",
     "launch": "Iniciar",
-    "launching": "Iniciando…"
+    "launching": "Iniciando…",
+    "selectCli": "CLI",
+    "instance": "instance",
+    "cliUnavailable": "Not detected on this machine",
+    "multiInstance": "Multi-instance / Isolated worktree",
+    "multiInstanceNote": "Creates a dedicated git worktree (ADR-006) — allows running multiple instances in parallel without conflicts",
+    "multiInstanceError": "Failed to create worktree: {error}"
   },
   "titleBar": {
     "searchTitle": "Buscar una tarea (Ctrl+K)",
@@ -576,5 +582,13 @@
     "restart": "Reiniciar ahora",
     "later": "Más tarde",
     "error": "Error: {msg}"
+  },
+  "cli": {
+    "claude": "Claude Code",
+    "codex": "Codex",
+    "gemini": "Gemini",
+    "opencode": "OpenCode",
+    "aider": "Aider",
+    "goose": "Goose"
   }
 }

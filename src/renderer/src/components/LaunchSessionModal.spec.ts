@@ -64,16 +64,17 @@ describe('LaunchSessionModal', () => {
   })
 
   it('renders instance list when Claude instances are found', async () => {
-    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
-    api.getClaudeInstances.mockResolvedValue([
-      { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'] },
-    ])
-
     const wrapper = shallowMount(LaunchSessionModal, {
       props: { agent: mockAgent as never },
       global: {
         plugins: [createTestingPinia({
-          initialState: { tasks: { dbPath: '/p/.claude/db' } },
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: {
+              enabledClis: ['claude'],
+              allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'wsl' }],
+            },
+          },
         }), i18n],
         stubs: teleportStub,
       },
@@ -147,16 +148,17 @@ describe('LaunchSessionModal', () => {
   })
 
   it('shows "Local" label for local-type instances (T775)', async () => {
-    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
-    api.getClaudeInstances.mockResolvedValue([
-      { distro: 'local', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'local' },
-    ])
-
     const wrapper = shallowMount(LaunchSessionModal, {
       props: { agent: mockAgent as never },
       global: {
         plugins: [createTestingPinia({
-          initialState: { tasks: { dbPath: '/p/.claude/db' } },
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: {
+              enabledClis: ['claude'],
+              allCliInstances: [{ cli: 'claude', distro: 'local', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'local' }],
+            },
+          },
         }), i18n],
         stubs: teleportStub,
       },
@@ -166,16 +168,17 @@ describe('LaunchSessionModal', () => {
   })
 
   it('shows distro name for wsl-type instances (T775)', async () => {
-    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
-    api.getClaudeInstances.mockResolvedValue([
-      { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'wsl' },
-    ])
-
     const wrapper = shallowMount(LaunchSessionModal, {
       props: { agent: mockAgent as never },
       global: {
         plugins: [createTestingPinia({
-          initialState: { tasks: { dbPath: '/p/.claude/db' } },
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: {
+              enabledClis: ['claude'],
+              allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'wsl' }],
+            },
+          },
         }), i18n],
         stubs: teleportStub,
       },
@@ -286,7 +289,13 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
       props: { agent: mockAgent as never },
       global: {
         plugins: [createTestingPinia({
-          initialState: { tasks: { dbPath: '/p/.claude/db' } },
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: {
+              enabledClis: ['claude'],
+              allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude', 'claude-sonnet'], type: 'wsl' }],
+            },
+          },
         }), i18n],
         stubs: teleportStub,
       },
@@ -335,7 +344,13 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
 
   it('launch in resume mode calls addTerminal with convId', async () => {
     const pinia = createTestingPinia({
-      initialState: { tasks: { dbPath: '/p/.claude/db' } },
+      initialState: {
+        tasks: { dbPath: '/p/.claude/db' },
+        settings: {
+          enabledClis: ['claude'],
+          allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'wsl' }],
+        },
+      },
     })
     const wrapper = shallowMount(LaunchSessionModal, {
       props: { agent: mockAgent as never },
@@ -369,7 +384,7 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
       true,                // activate
       undefined,           // taskId
       'stream',            // viewMode
-      undefined,           // cli
+      'claude',            // cli (T1014)
       undefined,           // workDir (multiInstance off)
     )
   })

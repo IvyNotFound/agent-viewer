@@ -91,10 +91,10 @@ describe('session-closer', () => {
         expect.stringContaining('UPDATE sessions')
       )
       expect(mockDb.run).toHaveBeenCalledWith(
-        expect.stringContaining("statut = 'completed'")
+        expect.stringContaining("status = 'completed'")
       )
       expect(mockDb.run).toHaveBeenCalledWith(
-        expect.stringContaining("statut = 'done'")
+        expect.stringContaining("status = 'done'")
       )
       expect(mockDb.run).toHaveBeenCalledWith(
         expect.stringContaining("summary LIKE '%T' || CAST(t.id AS TEXT) || '[%'")

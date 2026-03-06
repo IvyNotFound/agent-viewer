@@ -289,7 +289,13 @@
     "promptNote": "Systemprompt brukes automatisk",
     "cancel": "Avbryt",
     "launch": "Start",
-    "launching": "Starter…"
+    "launching": "Starter…",
+    "selectCli": "CLI",
+    "instance": "instance",
+    "cliUnavailable": "Not detected on this machine",
+    "multiInstance": "Multi-instance / Isolated worktree",
+    "multiInstanceNote": "Creates a dedicated git worktree (ADR-006) — allows running multiple instances in parallel without conflicts",
+    "multiInstanceError": "Failed to create worktree: {error}"
   },
   "titleBar": {
     "searchTitle": "Søk etter oppgave (Ctrl+K)",
@@ -576,5 +582,13 @@
     "restart": "Start på nytt",
     "later": "Senere",
     "error": "Feil: {msg}"
+  },
+  "cli": {
+    "claude": "Claude Code",
+    "codex": "Codex",
+    "gemini": "Gemini",
+    "opencode": "OpenCode",
+    "aider": "Aider",
+    "goose": "Goose"
   }
 }

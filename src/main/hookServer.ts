@@ -477,7 +477,7 @@ async function handleStop(payload: StopPayload): Promise<void> {
       // 2. Fallback: most recent started/completed session with no tokens
       if (sessionId === null) {
         const fallback = db.prepare(
-          "SELECT id FROM sessions WHERE (tokens_in = 0 OR tokens_in IS NULL) AND statut IN ('started','completed') ORDER BY id DESC LIMIT 1"
+          "SELECT id FROM sessions WHERE (tokens_in = 0 OR tokens_in IS NULL) AND status IN ('started','completed') ORDER BY id DESC LIMIT 1"
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ) as any
         if (fallback.step()) {
@@ -497,7 +497,7 @@ async function handleStop(payload: StopPayload): Promise<void> {
         [tokens.tokensIn, tokens.tokensOut, tokens.cacheRead, tokens.cacheWrite, sessionId]
       )
       db.run(
-        "UPDATE sessions SET statut='completed', ended_at=datetime('now') WHERE id=? AND statut='started'",
+        "UPDATE sessions SET status='completed', ended_at=datetime('now') WHERE id=? AND status='started'",
         [sessionId]
       )
       console.log(`[hookServer] session ${sessionId}: in=${tokens.tokensIn} out=${tokens.tokensOut} cacheR=${tokens.cacheRead} cacheW=${tokens.cacheWrite} → completed`)
@@ -547,7 +547,7 @@ async function handleLifecycleEvent(
       if (sessionId === null || agentId === null) return
 
       db.run(
-        'INSERT INTO agent_logs (session_id, agent_id, niveau, action, detail, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))',
+        'INSERT INTO agent_logs (session_id, agent_id, level, action, detail, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))',
         [sessionId, agentId, 'info', eventName, JSON.stringify(payload)]
       )
     })

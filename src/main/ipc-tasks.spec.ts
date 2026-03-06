@@ -112,7 +112,7 @@ async function buildSchema(): Promise<any> {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     type TEXT,
-    perimetre TEXT,
+    scope TEXT,
     system_prompt TEXT,
     system_prompt_suffix TEXT,
     thinking_mode TEXT,
@@ -125,15 +125,15 @@ async function buildSchema(): Promise<any> {
 
   db.run(`CREATE TABLE tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    titre TEXT,
+    title TEXT,
     description TEXT,
-    statut TEXT DEFAULT 'todo',
-    agent_createur_id INTEGER,
-    agent_assigne_id INTEGER,
-    agent_valideur_id INTEGER,
+    status TEXT DEFAULT 'todo',
+    agent_creator_id INTEGER,
+    agent_assigned_id INTEGER,
+    agent_validator_id INTEGER,
     parent_task_id INTEGER,
     session_id INTEGER,
-    perimetre TEXT,
+    scope TEXT,
     effort INTEGER,
     priority TEXT DEFAULT 'normal',
     created_at TEXT DEFAULT (datetime('now')),
@@ -149,7 +149,7 @@ async function buildSchema(): Promise<any> {
     started_at TEXT,
     ended_at TEXT,
     updated_at TEXT,
-    statut TEXT,
+    status TEXT,
     summary TEXT,
     claude_conv_id TEXT
   )`)
@@ -158,7 +158,7 @@ async function buildSchema(): Promise<any> {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     task_id INTEGER,
     agent_id INTEGER,
-    contenu TEXT,
+    content TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   )`)
 
@@ -172,7 +172,7 @@ async function buildSchema(): Promise<any> {
 
   db.run(`CREATE TABLE locks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    fichier TEXT,
+    file TEXT,
     agent_id INTEGER,
     session_id INTEGER,
     created_at TEXT DEFAULT (datetime('now')),
@@ -183,10 +183,10 @@ async function buildSchema(): Promise<any> {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER,
     agent_id INTEGER,
-    niveau TEXT,
+    level TEXT,
     action TEXT,
     detail TEXT,
-    fichiers TEXT,
+    files TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   )`)
 
@@ -196,13 +196,13 @@ async function buildSchema(): Promise<any> {
     updated_at TEXT
   )`)
 
-  db.run(`CREATE TABLE perimetres (
+  db.run(`CREATE TABLE scopes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
-    dossier TEXT,
+    folder TEXT,
     techno TEXT,
     description TEXT,
-    actif INTEGER NOT NULL DEFAULT 1,
+    active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
   )`)
 
@@ -248,27 +248,27 @@ async function insertAgent(name: string): Promise<number> {
 }
 
 async function insertTask(opts: {
-  titre: string
+  title: string
   statut?: string
   agentId?: number
   perimetre?: string
   updatedAt?: string
 }): Promise<number> {
-  const { titre, statut = 'todo', agentId = null, perimetre = null, updatedAt = null } = opts
+  const { title, statut = 'todo', agentId = null, perimetre = null, updatedAt = null } = opts
   await writeDb<void>(TEST_DB_PATH, (db) => {
     if (updatedAt) {
       db.run(
-        'INSERT INTO tasks (titre, statut, agent_assigne_id, perimetre, updated_at) VALUES (?, ?, ?, ?, ?)',
-        [titre, statut, agentId, perimetre, updatedAt]
+        'INSERT INTO tasks (title, status, agent_assigned_id, scope, updated_at) VALUES (?, ?, ?, ?, ?)',
+        [title, statut, agentId, perimetre, updatedAt]
       )
     } else {
       db.run(
-        'INSERT INTO tasks (titre, statut, agent_assigne_id, perimetre) VALUES (?, ?, ?, ?)',
-        [titre, statut, agentId, perimetre]
+        'INSERT INTO tasks (title, status, agent_assigned_id, scope) VALUES (?, ?, ?, ?)',
+        [title, statut, agentId, perimetre]
       )
     }
   })
-  const rows = await queryLive(TEST_DB_PATH, 'SELECT id FROM tasks WHERE titre = ?', [titre]) as Array<{ id: number }>
+  const rows = await queryLive(TEST_DB_PATH, 'SELECT id FROM tasks WHERE title = ?', [title]) as Array<{ id: number }>
   return rows[0].id
 }
 
@@ -287,70 +287,70 @@ describe('tasks:getArchived — behavioural (T474)', () => {
   })
 
   it('returns only archived tasks', async () => {
-    await insertTask({ titre: 'task-todo', statut: 'todo' })
-    await insertTask({ titre: 'task-done', statut: 'done' })
-    await insertTask({ titre: 'task-archived', statut: 'archived' })
+    await insertTask({ title: 'task-todo', statut: 'todo' })
+    await insertTask({ title: 'task-done', statut: 'done' })
+    await insertTask({ title: 'task-archived', statut: 'archived' })
 
     const result = await handlers['tasks:getArchived'](
       null,
       TEST_DB_PATH,
       { page: 0, pageSize: 10 }
-    ) as { rows: Array<{ titre: string }>; total: number }
+    ) as { rows: Array<{ title: string }>; total: number }
 
     expect(result.total).toBe(1)
     expect(result.rows).toHaveLength(1)
-    expect(result.rows[0].titre).toBe('task-archived')
+    expect(result.rows[0].title).toBe('task-archived')
   })
 
   it('filters by agentId', async () => {
     const agentA = await insertAgent('agent-filter-a')
     const agentB = await insertAgent('agent-filter-b')
-    await insertTask({ titre: 'task-agent-a', statut: 'archived', agentId: agentA })
-    await insertTask({ titre: 'task-agent-b', statut: 'archived', agentId: agentB })
+    await insertTask({ title: 'task-agent-a', statut: 'archived', agentId: agentA })
+    await insertTask({ title: 'task-agent-b', statut: 'archived', agentId: agentB })
 
     const result = await handlers['tasks:getArchived'](
       null,
       TEST_DB_PATH,
       { page: 0, pageSize: 10, agentId: agentA }
-    ) as { rows: Array<{ titre: string }>; total: number }
+    ) as { rows: Array<{ title: string }>; total: number }
 
     expect(result.total).toBe(1)
-    expect(result.rows[0].titre).toBe('task-agent-a')
+    expect(result.rows[0].title).toBe('task-agent-a')
   })
 
   it('filters by perimetre', async () => {
-    await insertTask({ titre: 'task-front', statut: 'archived', perimetre: 'front-vuejs' })
-    await insertTask({ titre: 'task-back', statut: 'archived', perimetre: 'back-electron' })
+    await insertTask({ title: 'task-front', statut: 'archived', perimetre: 'front-vuejs' })
+    await insertTask({ title: 'task-back', statut: 'archived', perimetre: 'back-electron' })
 
     const result = await handlers['tasks:getArchived'](
       null,
       TEST_DB_PATH,
       { page: 0, pageSize: 10, perimetre: 'front-vuejs' }
-    ) as { rows: Array<{ titre: string }>; total: number }
+    ) as { rows: Array<{ title: string }>; total: number }
 
     expect(result.total).toBe(1)
-    expect(result.rows[0].titre).toBe('task-front')
+    expect(result.rows[0].title).toBe('task-front')
   })
 
   it('filters by agentId + perimetre combined', async () => {
     const agent = await insertAgent('agent-combo')
-    await insertTask({ titre: 'task-combo-match', statut: 'archived', agentId: agent, perimetre: 'back-electron' })
-    await insertTask({ titre: 'task-combo-wrong-agent', statut: 'archived', agentId: null, perimetre: 'back-electron' })
-    await insertTask({ titre: 'task-combo-wrong-perim', statut: 'archived', agentId: agent, perimetre: 'front-vuejs' })
+    await insertTask({ title: 'task-combo-match', statut: 'archived', agentId: agent, perimetre: 'back-electron' })
+    await insertTask({ title: 'task-combo-wrong-agent', statut: 'archived', agentId: null, perimetre: 'back-electron' })
+    await insertTask({ title: 'task-combo-wrong-perim', statut: 'archived', agentId: agent, perimetre: 'front-vuejs' })
 
     const result = await handlers['tasks:getArchived'](
       null,
       TEST_DB_PATH,
       { page: 0, pageSize: 10, agentId: agent, perimetre: 'back-electron' }
-    ) as { rows: Array<{ titre: string }>; total: number }
+    ) as { rows: Array<{ title: string }>; total: number }
 
     expect(result.total).toBe(1)
-    expect(result.rows[0].titre).toBe('task-combo-match')
+    expect(result.rows[0].title).toBe('task-combo-match')
   })
 
   it('paginates: page=0 returns first pageSize rows', async () => {
     for (let i = 1; i <= 5; i++) {
-      await insertTask({ titre: `task-page-${i}`, statut: 'archived' })
+      await insertTask({ title: `task-page-${i}`, statut: 'archived' })
     }
 
     const result = await handlers['tasks:getArchived'](
@@ -365,7 +365,7 @@ describe('tasks:getArchived — behavioural (T474)', () => {
 
   it('paginates: page=1 returns second batch', async () => {
     for (let i = 1; i <= 5; i++) {
-      await insertTask({ titre: `task-batch-${i}`, statut: 'archived' })
+      await insertTask({ title: `task-batch-${i}`, statut: 'archived' })
     }
 
     const result = await handlers['tasks:getArchived'](
@@ -379,17 +379,17 @@ describe('tasks:getArchived — behavioural (T474)', () => {
   })
 
   it('rows are sorted by updated_at DESC', async () => {
-    await insertTask({ titre: 'task-old', statut: 'archived', updatedAt: '2026-01-01 10:00:00' })
-    await insertTask({ titre: 'task-new', statut: 'archived', updatedAt: '2026-01-02 10:00:00' })
+    await insertTask({ title: 'task-old', statut: 'archived', updatedAt: '2026-01-01 10:00:00' })
+    await insertTask({ title: 'task-new', statut: 'archived', updatedAt: '2026-01-02 10:00:00' })
 
     const result = await handlers['tasks:getArchived'](
       null,
       TEST_DB_PATH,
       { page: 0, pageSize: 10 }
-    ) as { rows: Array<{ titre: string }> }
+    ) as { rows: Array<{ title: string }> }
 
-    expect(result.rows[0].titre).toBe('task-new')
-    expect(result.rows[1].titre).toBe('task-old')
+    expect(result.rows[0].title).toBe('task-new')
+    expect(result.rows[1].title).toBe('task-old')
   })
 
   it('rejects unregistered dbPath with DB_PATH_NOT_ALLOWED', async () => {
@@ -403,7 +403,7 @@ describe('tasks:getArchived — behavioural (T474)', () => {
 
 describe('tasks:updateStatus — behavioural (T474)', () => {
   it('updates statut to done → { success: true }', async () => {
-    const taskId = await insertTask({ titre: 'task-to-done', statut: 'todo' })
+    const taskId = await insertTask({ title: 'task-to-done', statut: 'todo' })
 
     const result = await handlers['tasks:updateStatus'](
       null,
@@ -414,12 +414,12 @@ describe('tasks:updateStatus — behavioural (T474)', () => {
 
     expect(result.success).toBe(true)
 
-    const rows = await queryLive(TEST_DB_PATH, 'SELECT statut FROM tasks WHERE id = ?', [taskId]) as Array<{ statut: string }>
-    expect(rows[0].statut).toBe('done')
+    const rows = await queryLive(TEST_DB_PATH, 'SELECT status FROM tasks WHERE id = ?', [taskId]) as Array<{ status: string }>
+    expect(rows[0].status).toBe('done')
   })
 
   it('updates statut to archived → { success: true }', async () => {
-    const taskId = await insertTask({ titre: 'task-to-archive', statut: 'done' })
+    const taskId = await insertTask({ title: 'task-to-archive', statut: 'done' })
 
     const result = await handlers['tasks:updateStatus'](
       null,
@@ -430,13 +430,13 @@ describe('tasks:updateStatus — behavioural (T474)', () => {
 
     expect(result.success).toBe(true)
 
-    const rows = await queryLive(TEST_DB_PATH, 'SELECT statut FROM tasks WHERE id = ?', [taskId]) as Array<{ statut: string }>
-    expect(rows[0].statut).toBe('archived')
+    const rows = await queryLive(TEST_DB_PATH, 'SELECT status FROM tasks WHERE id = ?', [taskId]) as Array<{ status: string }>
+    expect(rows[0].status).toBe('archived')
   })
 
   it('accepts all allowed statuts: todo, in_progress, done, archived', async () => {
     for (const statut of ['todo', 'in_progress', 'done', 'archived'] as const) {
-      const taskId = await insertTask({ titre: `task-statut-${statut}`, statut: 'todo' })
+      const taskId = await insertTask({ title: `task-statut-${statut}`, statut: 'todo' })
       const result = await handlers['tasks:updateStatus'](
         null,
         TEST_DB_PATH,
@@ -448,7 +448,7 @@ describe('tasks:updateStatus — behavioural (T474)', () => {
   })
 
   it('invalid statut → { success: false, error }', async () => {
-    const taskId = await insertTask({ titre: 'task-invalid-statut' })
+    const taskId = await insertTask({ title: 'task-invalid-statut' })
 
     const result = await handlers['tasks:updateStatus'](
       null,
@@ -490,7 +490,7 @@ describe('task:getLinks (T511)', () => {
   }
 
   it('returns { success: true, links: [] } for task with no links', async () => {
-    const taskId = await insertTask({ titre: 'task-no-links' })
+    const taskId = await insertTask({ title: 'task-no-links' })
 
     const result = await handlers['task:getLinks'](null, TEST_DB_PATH, taskId) as { success: boolean; links: unknown[] }
 
@@ -499,29 +499,29 @@ describe('task:getLinks (T511)', () => {
   })
 
   it('returns links where task is from_task', async () => {
-    const t1 = await insertTask({ titre: 'source', statut: 'in_progress' })
-    const t2 = await insertTask({ titre: 'target', statut: 'todo' })
-    await insertLink(t1, t2, 'bloque')
+    const t1 = await insertTask({ title: 'source', statut: 'in_progress' })
+    const t2 = await insertTask({ title: 'target', statut: 'todo' })
+    await insertLink(t1, t2, 'blocks')
 
     const result = await handlers['task:getLinks'](null, TEST_DB_PATH, t1) as {
       success: boolean
-      links: Array<{ type: string; from_task: number; to_task: number; from_titre: string; to_titre: string; from_statut: string; to_statut: string }>
+      links: Array<{ type: string; from_task: number; to_task: number; from_title: string; to_title: string; from_status: string; to_status: string }>
     }
 
     expect(result.success).toBe(true)
     expect(result.links).toHaveLength(1)
-    expect(result.links[0].type).toBe('bloque')
+    expect(result.links[0].type).toBe('blocks')
     expect(result.links[0].from_task).toBe(t1)
     expect(result.links[0].to_task).toBe(t2)
-    expect(result.links[0].from_titre).toBe('source')
-    expect(result.links[0].to_titre).toBe('target')
-    expect(result.links[0].to_statut).toBe('todo')
+    expect(result.links[0].from_title).toBe('source')
+    expect(result.links[0].to_title).toBe('target')
+    expect(result.links[0].to_status).toBe('todo')
   })
 
   it('returns links where task is to_task', async () => {
-    const t1 = await insertTask({ titre: 'blocker', statut: 'done' })
-    const t2 = await insertTask({ titre: 'blocked', statut: 'todo' })
-    await insertLink(t1, t2, 'depend_de')
+    const t1 = await insertTask({ title: 'blocker', statut: 'done' })
+    const t2 = await insertTask({ title: 'blocked', statut: 'todo' })
+    await insertLink(t1, t2, 'depends_on')
 
     const result = await handlers['task:getLinks'](null, TEST_DB_PATH, t2) as {
       success: boolean
@@ -535,11 +535,11 @@ describe('task:getLinks (T511)', () => {
   })
 
   it('returns all link types including lie_a and duplique', async () => {
-    const t1 = await insertTask({ titre: 'task-a' })
-    const t2 = await insertTask({ titre: 'task-b' })
-    const t3 = await insertTask({ titre: 'task-c' })
-    await insertLink(t1, t2, 'lie_a')
-    await insertLink(t1, t3, 'duplique')
+    const t1 = await insertTask({ title: 'task-a' })
+    const t2 = await insertTask({ title: 'task-b' })
+    const t3 = await insertTask({ title: 'task-c' })
+    await insertLink(t1, t2, 'related_to')
+    await insertLink(t1, t3, 'duplicates')
 
     const result = await handlers['task:getLinks'](null, TEST_DB_PATH, t1) as {
       success: boolean
@@ -549,7 +549,7 @@ describe('task:getLinks (T511)', () => {
     expect(result.success).toBe(true)
     expect(result.links).toHaveLength(2)
     const types = result.links.map(l => l.type).sort()
-    expect(types).toEqual(['duplique', 'lie_a'])
+    expect(types).toEqual(['duplicates', 'related_to'])
   })
 
   it('invalid taskId returns { success: false }', async () => {
