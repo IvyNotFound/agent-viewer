@@ -35,6 +35,9 @@ Thumbs.db
 .claude/*.db.bak
 .claude/*.db.tmp
 .claude/*.db.tmp.*
+.claude/*.db.backup-*
+.claude/*.dbb
+.claude/*.dbb*
 
 # Bundled binaries (downloaded at build time)
 resources/bin/*.exe
