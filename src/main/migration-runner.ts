@@ -195,13 +195,17 @@ export const CURRENT_SCHEMA_VERSION = migrations[migrations.length - 1].version
 /**
  * Apply all pending migrations to an in-memory sql.js Database.
  *
- * Reads PRAGMA user_version to determine current schema level.
- * Runs each migration with version > current in a SAVEPOINT for atomicity.
- * Bootstrap: if user_version=0 but the config table already exists (old
- * config-based system), sets cursor to v23 so only newer migrations (v24+)
- * run — does NOT return early.
+ * Reads PRAGMA user_version to determine the current schema level.
+ * Runs each pending migration (version > current) in a SAVEPOINT for atomicity.
  *
+ * Bootstrap behaviour for legacy DBs (user_version=0 but config table present):
+ * sets cursor to LEGACY_BOOTSTRAP_VERSION (23) so only migrations v24+ are
+ * executed — does NOT return early, always falls through to the migration loop.
+ *
+ * @param db - sql.js in-memory Database instance to migrate.
  * @returns Number of migrations applied.
+ * @throws If any migration's `up()` function throws; the SAVEPOINT is rolled back
+ *         and the error is re-thrown, leaving the database unchanged for that version.
  */
 export function migrateDb(db: Database): number {
   const uvResult = db.exec('PRAGMA user_version')

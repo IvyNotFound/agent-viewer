@@ -1,6 +1,6 @@
 # agent-viewer
 
-![Version](https://img.shields.io/badge/version-0.23.0-blue)
+![Version](https://img.shields.io/badge/version-0.25.0-blue)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 
 Desktop interface in Trello/Jira style for real-time visualization of Claude agent tasks from a local SQLite database. The application manages agents, launches Claude sessions in external WSL terminals, and monitors activity in real time.
@@ -87,7 +87,7 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 - **Project Popup**: Click the project button in the sidebar to open a modal showing active project name, database path, version, and quick actions (switch project, close project)
 - **Keyboard Shortcuts**: Press `Escape` to close any modal (standardised via `useModalEscape` composable)
 - **Dark / Light Mode**: Dark theme by default, light mode available
-- **Internationalization**: Interface available in French and English (vue-i18n)
+- **Internationalization**: Interface available in 18 locales via a native dropdown selector (vue-i18n): fr, en, es, pt, pt-BR, de, no, it, ar, ru, pl, sv, fi, da, tr, zh-CN, ko, ja — fallback to English for untranslated locales
 - **Spell Check**: Native spell check on prompt textareas with right-click context menu suggestions
 - **Default Claude Code Profile**: Configure a default Claude Code instance/profile per agent in Settings; stored in `localStorage` via `defaultClaudeProfile`
 
