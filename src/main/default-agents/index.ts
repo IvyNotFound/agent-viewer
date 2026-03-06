@@ -17,6 +17,7 @@ import { GENERIC_AGENTS_DE } from './agents-de'
 import { GENERIC_AGENTS_PTBR } from './agents-pt-br'
 import { GENERIC_AGENTS_IT } from './agents-it'
 import { GENERIC_AGENTS_SV } from './agents-sv'
+import { GENERIC_AGENTS_FI } from './agents-fi'
 import { GENERIC_AGENTS_RU } from './agents-ru'
 import { GENERIC_AGENTS_PL } from './agents-pl'
 import { DEFAULT_AGENTS_GLOBAL } from './agents-default'
@@ -42,7 +43,7 @@ export const GENERIC_AGENTS_BY_LANG: Record<AgentLanguage, DefaultAgent[]> = {
   ru: GENERIC_AGENTS_RU,
   pl: GENERIC_AGENTS_PL,
   sv: GENERIC_AGENTS_SV,
-  fi: GENERIC_AGENTS_EN,
+  fi: GENERIC_AGENTS_FI,
   da: GENERIC_AGENTS_EN,
   tr: GENERIC_AGENTS_EN,
   'zh-CN': GENERIC_AGENTS_EN,
