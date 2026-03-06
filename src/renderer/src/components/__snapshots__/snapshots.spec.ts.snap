@@ -63,6 +63,7 @@ exports[`TabBar — snapshots > matches snapshot: empty tab bar (no tabs) 1`] = 
       <path data-v-3c3dc65a="" fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
     </svg></button><!-- Onglets terminaux (groupés par agent, scrollable) -->
   <div data-v-3c3dc65a="" class="scroll-container flex items-stretch gap-0.5 px-1.5 flex-1 min-w-0 overflow-x-scroll">
+    <!-- Onglets fichiers -->
     <!-- Groupe agent -->
   </div><!-- Scroll right arrow --><button data-v-3c3dc65a="" class="flex items-center justify-center w-6 shrink-0 text-content-subtle hover:text-content-secondary hover:bg-surface-secondary/60 transition-colors" style="display: none;"><svg data-v-3c3dc65a="" viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
       <path data-v-3c3dc65a="" fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"></path>
@@ -90,6 +91,7 @@ exports[`TabBar — snapshots > matches snapshot: tab bar with one terminal tab 
       <path data-v-3c3dc65a="" fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"></path>
     </svg></button><!-- Onglets terminaux (groupés par agent, scrollable) -->
   <div data-v-3c3dc65a="" class="scroll-container flex items-stretch gap-0.5 px-1.5 flex-1 min-w-0 overflow-x-scroll">
+    <!-- Onglets fichiers -->
     <!-- Groupe agent -->
     <div data-v-3c3dc65a="" class="flex items-stretch gap-0.5 shrink-0">
       <!-- Onglet-agent (bouton principal du groupe) --><button data-v-3c3dc65a="" class="relative flex items-center gap-1.5 px-3 text-sm font-semibold transition-all select-none rounded-t shrink-0 cursor-pointer" style="color: rgb(235, 159, 112); background-color: rgb(66, 41, 26);">
