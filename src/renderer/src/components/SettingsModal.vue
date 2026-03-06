@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@renderer/stores/settings'
 import { useTasksStore } from '@renderer/stores/tasks'
 import ToggleSwitch from '@renderer/components/ToggleSwitch.vue'
+import CliDetectionList from '@renderer/components/CliDetectionList.vue'
 import type { ClaudeInstance } from '@renderer/types'
 import { useUpdater } from '@renderer/composables/useUpdater'
 
@@ -73,6 +74,8 @@ onMounted(async () => {
   const rawInstances = await window.electronAPI.getClaudeInstances()
   claudeInstances.value = Array.isArray(rawInstances) ? (rawInstances as ClaudeInstance[]) : []
 
+  // T1013: initial CLI detection (populates allCliInstances in store)
+  await settingsStore.refreshCliDetection()
 })
 
 function handleKeydown(e: KeyboardEvent) {
@@ -222,6 +225,19 @@ function handleKeydown(e: KeyboardEvent) {
                 @update:model-value="settingsStore.setNotificationsEnabled($event)"
               />
             </div>
+          </div>
+
+          <!-- AI Coding Assistants (T1013) -->
+          <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
+            <p class="text-[11px] text-content-subtle mb-3 uppercase tracking-wider">{{ t('settings.aiCodingAssistants') }}</p>
+            <p class="text-xs text-content-faint mb-3">{{ t('settings.aiCodingAssistantsDesc') }}</p>
+            <CliDetectionList
+              :instances="settingsStore.allCliInstances"
+              :enabled="settingsStore.enabledClis"
+              :loading="settingsStore.detectingClis"
+              @refresh="settingsStore.refreshCliDetection()"
+              @toggle="settingsStore.toggleCli($event)"
+            />
           </div>
 
           <!-- Default Claude instance (T857) -->

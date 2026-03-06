@@ -222,7 +222,14 @@
     "exportSuccess": "Export téléchargé : {path}",
     "exportError": "Erreur export : {error}",
     "defaultClaudeInstance": "Instance Claude Code par défaut",
-    "defaultClaudeProfile": "Profil Claude par défaut"
+    "defaultClaudeProfile": "Profil Claude par défaut",
+    "aiCodingAssistants": "Assistants IA",
+    "aiCodingAssistantsDesc": "Outils CLI détectés disponibles pour les sessions agents. Activer/désactiver pour afficher dans le lanceur.",
+    "cliRefresh": "Actualiser",
+    "cliRefreshing": "Détection en cours...",
+    "cliNotDetected": "Non détecté",
+    "cliEnabled": "Activé dans le lanceur",
+    "cliDisabled": "Désactivé dans le lanceur"
   },
   "setup": {
     "missingDb": "Base de données manquante",

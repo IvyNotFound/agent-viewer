@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { HookEvent } from '@renderer/stores/hookEvents'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   event: HookEvent
@@ -57,7 +60,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
           v-if="formattedPayload"
           class="text-xs font-mono text-content-secondary whitespace-pre-wrap select-text cursor-text"
         >{{ formattedPayload }}</pre>
-        <p v-else class="text-xs text-content-subtle italic">No payload data</p>
+        <p v-else class="text-xs text-content-subtle italic">{{ t('hooks.noPayload') }}</p>
       </div>
     </div>
   </div>

@@ -104,7 +104,8 @@
       "todoAssigned": "مُعيَّن للتنفيذ",
       "idle": "خامل",
       "inactive": "غير نشط"
-    }
+    },
+    "agentsTitle": "OrgChart agents"
   },
   "logs": {
     "allAgents": "جميع الوكلاء",
@@ -221,7 +222,14 @@
     "exportSuccess": "تم تنزيل التصدير: {path}",
     "exportError": "خطأ في التصدير: {error}",
     "defaultClaudeInstance": "نسخة Claude Code الافتراضية",
-    "defaultClaudeProfile": "ملف تعريف Claude الافتراضي"
+    "defaultClaudeProfile": "ملف تعريف Claude الافتراضي",
+    "aiCodingAssistants": "مساعدو البرمجة بالذكاء الاصطناعي",
+    "aiCodingAssistantsDesc": "أدوات CLI المكتشفة المتاحة لجلسات الوكلاء. بدّل لإظهار/إخفاء في المشغل.",
+    "cliRefresh": "تحديث",
+    "cliRefreshing": "جارٍ الاكتشاف...",
+    "cliNotDetected": "غير مكتشف",
+    "cliEnabled": "مُفعَّل في المشغل",
+    "cliDisabled": "معطَّل في المشغل"
   },
   "setup": {
     "missingDb": "قاعدة البيانات مفقودة",
@@ -486,11 +494,33 @@
   "hooks": {
     "noEvents": "لا توجد أحداث",
     "inProgress": "قيد التنفيذ…",
-    "filters": "المرشحات:"
+    "filters": "المرشحات:",
+    "noPayload": "No payload data"
   },
   "dashboard": {
     "overview": "نظرة عامة",
-    "gitError": "خطأ في قراءة مستودع git"
+    "gitError": "خطأ في قراءة مستودع git",
+    "activeAgents": "Active agents",
+    "sessionsStarted": "sessions started",
+    "inProgress": "In progress",
+    "activeTasks": "active tasks",
+    "todo": "To do",
+    "pendingTasks": "pending tasks",
+    "today": "Today",
+    "recentTasks": "Recent tasks",
+    "noTasks": "No tasks",
+    "recentActivity": "Recent activity",
+    "noActivity": "No activity",
+    "activity": "Activity"
+  },
+  "status": {
+    "todo": "todo",
+    "inProgress": "in progress",
+    "done": "done",
+    "archived": "archived",
+    "completed": "Completed",
+    "started": "Started",
+    "blocked": "Blocked"
   },
   "project": {
     "activeTitle": "المشروع النشط",
@@ -511,6 +541,32 @@
     "subtasks": "مهمة فرعية {n} | مهام فرعية {n}",
     "staleFor": "قيد التنفيذ منذ {duration}",
     "staleLong": "قيد التنفيذ منذ وقت طويل"
+  },
+  "telemetry": {
+    "title": "Telemetry",
+    "scanning": "Scanning…",
+    "rescan": "Rescan",
+    "noProject": "Open a project to view telemetry.",
+    "scanningProject": "Scanning project…",
+    "totalLines": "Total Lines",
+    "realCode": "Real code",
+    "totalFiles": "Total Files",
+    "testFiles": "Test files",
+    "languages": "Languages",
+    "languageBreakdown": "Language breakdown",
+    "sourceVsTests": "Source vs Tests",
+    "sourceLabel": "Source {percent}%",
+    "testsLabel": "Tests {percent}%",
+    "codeQuality": "Code quality",
+    "percentRealCode": "% Real code",
+    "percentComments": "% Comments",
+    "percentBlank": "% Blank lines",
+    "colLanguage": "Language",
+    "colLines": "Lines",
+    "colSource": "Source",
+    "colTests": "Tests",
+    "colFiles": "Files",
+    "scannedAt": "Scanned at {date}"
   },
   "update": {
     "available": "التحديث {version} متاح",

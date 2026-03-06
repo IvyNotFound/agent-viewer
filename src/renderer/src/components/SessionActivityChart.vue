@@ -153,15 +153,15 @@ function tooltip(day: DayBars): string {
       <div class="flex items-center gap-4 shrink-0 flex-wrap">
         <div class="flex items-center gap-1.5">
           <div class="w-2.5 h-2.5 rounded-sm bg-emerald-500 dark:bg-emerald-600" />
-          <span class="text-[11px] text-content-faint">Completed</span>
+          <span class="text-[11px] text-content-faint">{{ t('status.completed') }}</span>
         </div>
         <div class="flex items-center gap-1.5">
           <div class="w-2.5 h-2.5 rounded-sm bg-zinc-400 dark:bg-zinc-500" />
-          <span class="text-[11px] text-content-faint">Started</span>
+          <span class="text-[11px] text-content-faint">{{ t('status.started') }}</span>
         </div>
         <div class="flex items-center gap-1.5">
           <div class="w-2.5 h-2.5 rounded-sm bg-red-500 dark:bg-red-600" />
-          <span class="text-[11px] text-content-faint">Blocked</span>
+          <span class="text-[11px] text-content-faint">{{ t('status.blocked') }}</span>
         </div>
         <span class="ml-auto text-[11px] text-content-faint font-mono">
           {{ t('sessionActivityChart.maxPerDay', { n: maxTotal }) }}

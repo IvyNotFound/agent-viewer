@@ -222,7 +222,14 @@
     "exportSuccess": "Esportazione scaricata: {path}",
     "exportError": "Errore di esportazione: {error}",
     "defaultClaudeInstance": "Istanza Claude Code predefinita",
-    "defaultClaudeProfile": "Profilo Claude predefinito"
+    "defaultClaudeProfile": "Profilo Claude predefinito",
+    "aiCodingAssistants": "Assistenti AI",
+    "aiCodingAssistantsDesc": "Strumenti CLI rilevati disponibili per le sessioni agente. Attiva/disattiva per mostrare nel launcher.",
+    "cliRefresh": "Aggiorna",
+    "cliRefreshing": "Rilevamento...",
+    "cliNotDetected": "Non rilevato",
+    "cliEnabled": "Attivo nel launcher",
+    "cliDisabled": "Disattivo nel launcher"
   },
   "setup": {
     "missingDb": "Database mancante",

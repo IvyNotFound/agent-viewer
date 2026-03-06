@@ -8,6 +8,7 @@
  */
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { agentFg } from '@renderer/utils/agentColor'
 import ActivityHeatmap from './ActivityHeatmap.vue'
@@ -17,6 +18,7 @@ import AgentQualityPanel from './AgentQualityPanel.vue'
 
 const WorkloadView = defineAsyncComponent(() => import('./WorkloadView.vue'))
 
+const { t } = useI18n()
 const store = useTasksStore()
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -118,12 +120,12 @@ function relativeTime(dateStr: string): string {
   return `${Math.floor(h / 24)}d`
 }
 
-const STATUT_LABEL: Record<string, string> = {
-  todo: 'todo',
-  in_progress: 'in progress',
-  done: 'done',
-  archived: 'archived',
-}
+const STATUT_LABEL = computed<Record<string, string>>(() => ({
+  todo: t('status.todo'),
+  in_progress: t('status.inProgress'),
+  done: t('status.done'),
+  archived: t('status.archived'),
+}))
 
 const STATUT_CLASSES: Record<string, string> = {
   todo: 'bg-zinc-600/30 text-zinc-400 border-zinc-600/40',
@@ -145,7 +147,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
 
     <!-- No project state -->
     <div v-if="!store.dbPath" class="flex items-center justify-center h-40">
-      <p class="text-sm text-content-faint italic">No project open</p>
+      <p class="text-sm text-content-faint italic">{{ t('common.noProject') }}</p>
     </div>
 
     <template v-else>
@@ -165,8 +167,8 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div class="text-xl font-bold text-content-primary tabular-nums leading-tight">
               {{ activeAgentsCount }}
             </div>
-            <div class="text-xs text-content-secondary truncate">Active agents</div>
-            <div class="text-[11px] text-content-tertiary truncate">sessions started</div>
+            <div class="text-xs text-content-secondary truncate">{{ t('dashboard.activeAgents') }}</div>
+            <div class="text-[11px] text-content-tertiary truncate">{{ t('dashboard.sessionsStarted') }}</div>
           </div>
         </div>
 
@@ -182,8 +184,8 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div class="text-xl font-bold text-content-primary tabular-nums leading-tight">
               {{ store.stats.in_progress }}
             </div>
-            <div class="text-xs text-content-secondary truncate">In progress</div>
-            <div class="text-[11px] text-content-tertiary truncate">active tasks</div>
+            <div class="text-xs text-content-secondary truncate">{{ t('dashboard.inProgress') }}</div>
+            <div class="text-[11px] text-content-tertiary truncate">{{ t('dashboard.activeTasks') }}</div>
           </div>
         </div>
 
@@ -200,8 +202,8 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div class="text-xl font-bold text-content-primary tabular-nums leading-tight">
               {{ store.stats.todo }}
             </div>
-            <div class="text-xs text-content-secondary truncate">To do</div>
-            <div class="text-[11px] text-content-tertiary truncate">pending tasks</div>
+            <div class="text-xs text-content-secondary truncate">{{ t('dashboard.todo') }}</div>
+            <div class="text-[11px] text-content-tertiary truncate">{{ t('dashboard.pendingTasks') }}</div>
           </div>
         </div>
 
@@ -217,8 +219,8 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div class="text-xl font-bold text-content-primary tabular-nums leading-tight">
               {{ sessionsTodayCount }}
             </div>
-            <div class="text-xs text-content-secondary truncate">Today</div>
-            <div class="text-[11px] text-content-tertiary truncate">sessions started</div>
+            <div class="text-xs text-content-secondary truncate">{{ t('dashboard.today') }}</div>
+            <div class="text-[11px] text-content-tertiary truncate">{{ t('dashboard.sessionsStarted') }}</div>
           </div>
         </div>
 
@@ -230,14 +232,14 @@ const PRIORITY_CLASSES: Record<string, string> = {
         <!-- Tâches récentes -->
         <div class="flex flex-col rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
           <div class="shrink-0 px-3 py-2 border-b border-edge-subtle">
-            <span class="text-xs font-semibold uppercase tracking-wider text-content-secondary">Recent tasks</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-content-secondary">{{ t('dashboard.recentTasks') }}</span>
           </div>
           <div class="flex-1 overflow-y-auto">
             <div
               v-if="recentTasks.length === 0"
               class="flex items-center justify-center py-8"
             >
-              <span class="text-xs text-content-faint italic">No tasks</span>
+              <span class="text-xs text-content-faint italic">{{ t('dashboard.noTasks') }}</span>
             </div>
             <div
               v-for="task in recentTasks"
@@ -275,14 +277,14 @@ const PRIORITY_CLASSES: Record<string, string> = {
         <!-- Activité récente -->
         <div class="flex flex-col rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
           <div class="shrink-0 px-3 py-2 border-b border-edge-subtle">
-            <span class="text-xs font-semibold uppercase tracking-wider text-content-secondary">Recent activity</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-content-secondary">{{ t('dashboard.recentActivity') }}</span>
           </div>
           <div class="flex-1 overflow-y-auto">
             <div
               v-if="recentActivity.length === 0"
               class="flex items-center justify-center py-8"
             >
-              <span class="text-xs text-content-faint italic">No activity</span>
+              <span class="text-xs text-content-faint italic">{{ t('dashboard.noActivity') }}</span>
             </div>
             <div
               v-for="(entry, i) in recentActivity"
@@ -316,7 +318,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
       <!-- ── Heatmap (full width) ──────────────────────────────────────── -->
       <div class="rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
         <div class="shrink-0 px-3 py-2 border-b border-edge-subtle">
-          <span class="text-xs font-semibold uppercase tracking-wider text-content-secondary">Activity</span>
+          <span class="text-xs font-semibold uppercase tracking-wider text-content-secondary">{{ t('dashboard.activity') }}</span>
         </div>
         <ActivityHeatmap v-if="store.dbPath" :db-path="store.dbPath" />
       </div>
@@ -335,7 +337,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
         <WorkloadView />
         <template #fallback>
           <div class="flex items-center justify-center py-8 rounded-lg bg-surface-secondary border border-edge-default">
-            <p class="text-sm text-content-faint animate-pulse">Loading…</p>
+            <p class="text-sm text-content-faint animate-pulse">{{ t('common.loading') }}</p>
           </div>
         </template>
       </Suspense>

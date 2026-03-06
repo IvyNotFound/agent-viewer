@@ -222,7 +222,14 @@
     "exportSuccess": "Eksport lastet ned: {path}",
     "exportError": "Eksportfeil: {error}",
     "defaultClaudeInstance": "Standard Claude Code-instans",
-    "defaultClaudeProfile": "Standard Claude-profil"
+    "defaultClaudeProfile": "Standard Claude-profil",
+    "aiCodingAssistants": "AI-kodingsassistenter",
+    "aiCodingAssistantsDesc": "Oppdagede CLI-verktøy tilgjengelige for agentøkter. Aktiver/deaktiver for å vise i starteren.",
+    "cliRefresh": "Oppdater",
+    "cliRefreshing": "Registrerer...",
+    "cliNotDetected": "Ikke registrert",
+    "cliEnabled": "Aktivert i starteren",
+    "cliDisabled": "Deaktivert i starteren"
   },
   "setup": {
     "missingDb": "Manglende database",

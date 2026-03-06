@@ -1,9 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
+import { createI18n } from 'vue-i18n'
 import { nextTick } from 'vue'
+import en from '@renderer/locales/en.json'
 import TelemetryView from '@renderer/components/TelemetryView.vue'
 import { mockElectronAPI } from '../../../test/setup'
+
+const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
 
 const BASE_DATA = {
   languages: [],
@@ -51,7 +55,7 @@ describe('TelemetryView (T842)', () => {
     )
     const wrapper = mount(TelemetryView, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } }), i18n],
       },
     })
     await nextTick()
@@ -64,7 +68,7 @@ describe('TelemetryView (T842)', () => {
   it('calls telemetryScan with projectPath on mount', async () => {
     const wrapper = mount(TelemetryView, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } }), i18n],
       },
     })
     await flushPromises()
@@ -85,7 +89,7 @@ describe('TelemetryView (T842)', () => {
     })
     const wrapper = mount(TelemetryView, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } }), i18n],
       },
     })
     await flushPromises()
@@ -106,7 +110,7 @@ describe('TelemetryView (T842)', () => {
     })
     const wrapper = mount(TelemetryView, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } }), i18n],
       },
     })
     await flushPromises()
@@ -118,7 +122,7 @@ describe('TelemetryView (T842)', () => {
     ;(mockElectronAPI.telemetryScan as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Scan failed'))
     const wrapper = mount(TelemetryView, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } }), i18n],
       },
     })
     await flushPromises()
@@ -129,7 +133,7 @@ describe('TelemetryView (T842)', () => {
   it('shows "Open a project" guard when no projectPath', () => {
     const wrapper = mount(TelemetryView, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: null, dbPath: null } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: null, dbPath: null } } }), i18n],
       },
     })
     expect(wrapper.text()).toContain('Open a project')
@@ -146,7 +150,7 @@ describe('TelemetryView advanced metrics (T897)', () => {
   it('shows source/test bar when testRatio is present', async () => {
     const wrapper = mount(TelemetryView, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } }), i18n],
       },
     })
     await flushPromises()
@@ -158,26 +162,26 @@ describe('TelemetryView advanced metrics (T897)', () => {
   it('shows code quality section when advanced metrics present', async () => {
     const wrapper = mount(TelemetryView, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } }), i18n],
       },
     })
     await flushPromises()
     expect(wrapper.text()).toContain('Code quality')
-    expect(wrapper.text()).toContain('Code réel')
-    expect(wrapper.text()).toContain('Commentaires')
-    expect(wrapper.text()).toContain('Lignes vides')
+    expect(wrapper.text()).toContain('Real code')
+    expect(wrapper.text()).toContain('Comments')
+    expect(wrapper.text()).toContain('Blank lines')
     wrapper.unmount()
   })
 
   it('shows "Code réel" and "Fichiers test" stat cards with advanced data', async () => {
     const wrapper = mount(TelemetryView, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } }), i18n],
       },
     })
     await flushPromises()
     const text = wrapper.text()
-    expect(text).toContain('Fichiers test')
+    expect(text).toContain('Test files')
     // totalCodeLines=13900 → formatLines → '13.9k'
     expect(text).toContain('13.9k')
     wrapper.unmount()
@@ -186,7 +190,7 @@ describe('TelemetryView advanced metrics (T897)', () => {
   it('shows Source/Tests columns in language table when lang advanced data present', async () => {
     const wrapper = mount(TelemetryView, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } }), i18n],
       },
     })
     await flushPromises()
@@ -203,14 +207,14 @@ describe('TelemetryView advanced metrics (T897)', () => {
     ;(mockElectronAPI.telemetryScan as ReturnType<typeof vi.fn>).mockResolvedValue(BASE_DATA)
     const wrapper = mount(TelemetryView, {
       global: {
-        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } })],
+        plugins: [createTestingPinia({ initialState: { tasks: { projectPath: '/my/project', dbPath: '/my/project.db' } } }), i18n],
       },
     })
     await flushPromises()
     const text = wrapper.text()
     expect(text).not.toContain('Source vs Tests')
     expect(text).not.toContain('Code quality')
-    expect(text).not.toContain('Fichiers test')
+    expect(text).not.toContain('Test files')
     wrapper.unmount()
   })
 })

@@ -1,8 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, shallowMount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { createI18n } from 'vue-i18n'
+import en from '@renderer/locales/en.json'
 import HookEventPayloadModal from '@renderer/components/HookEventPayloadModal.vue'
 import type { HookEvent } from '@renderer/stores/hookEvents'
+
+const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
 
 describe('HookEventPayloadModal (T756)', () => {
   const makeEvent = (overrides: Partial<HookEvent> = {}): HookEvent => ({
@@ -18,6 +22,7 @@ describe('HookEventPayloadModal (T756)', () => {
     const wrapper = mount(HookEventPayloadModal, {
       props: { event: makeEvent() },
       attachTo: document.body,
+      global: { plugins: [i18n] },
     })
     expect(wrapper.text()).toContain('PreToolUse')
     wrapper.unmount()
@@ -27,6 +32,7 @@ describe('HookEventPayloadModal (T756)', () => {
     const wrapper = mount(HookEventPayloadModal, {
       props: { event: makeEvent() },
       attachTo: document.body,
+      global: { plugins: [i18n] },
     })
     expect(wrapper.text()).toContain('"tool_name"')
     expect(wrapper.text()).toContain('"Bash"')
@@ -37,6 +43,7 @@ describe('HookEventPayloadModal (T756)', () => {
     const wrapper = mount(HookEventPayloadModal, {
       props: { event: makeEvent({ payload: null }) },
       attachTo: document.body,
+      global: { plugins: [i18n] },
     })
     expect(wrapper.text()).toContain('No payload data')
     wrapper.unmount()
@@ -46,6 +53,7 @@ describe('HookEventPayloadModal (T756)', () => {
     const wrapper = mount(HookEventPayloadModal, {
       props: { event: makeEvent() },
       attachTo: document.body,
+      global: { plugins: [i18n] },
     })
     await wrapper.find('button').trigger('click')
     expect(wrapper.emitted('close')).toHaveLength(1)
@@ -56,6 +64,7 @@ describe('HookEventPayloadModal (T756)', () => {
     const wrapper = mount(HookEventPayloadModal, {
       props: { event: makeEvent() },
       attachTo: document.body,
+      global: { plugins: [i18n] },
     })
     // The outermost div is the backdrop
     await wrapper.find('div').trigger('click')
@@ -67,6 +76,7 @@ describe('HookEventPayloadModal (T756)', () => {
     const wrapper = mount(HookEventPayloadModal, {
       props: { event: makeEvent() },
       attachTo: document.body,
+      global: { plugins: [i18n] },
     })
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     await nextTick()

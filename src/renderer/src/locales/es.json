@@ -104,7 +104,8 @@
       "todoAssigned": "pendiente asignado",
       "idle": "inactivo",
       "inactive": "inactivo"
-    }
+    },
+    "agentsTitle": "OrgChart agents"
   },
   "logs": {
     "allAgents": "Todos los agentes",
@@ -221,7 +222,14 @@
     "exportSuccess": "Exportación descargada: {path}",
     "exportError": "Error al exportar: {error}",
     "defaultClaudeInstance": "Instancia de Claude Code por defecto",
-    "defaultClaudeProfile": "Perfil de Claude por defecto"
+    "defaultClaudeProfile": "Perfil de Claude por defecto",
+    "aiCodingAssistants": "Asistentes IA",
+    "aiCodingAssistantsDesc": "Herramientas CLI detectadas disponibles para sesiones de agentes. Activa/desactiva para mostrar en el launcher.",
+    "cliRefresh": "Actualizar",
+    "cliRefreshing": "Detectando...",
+    "cliNotDetected": "No detectado",
+    "cliEnabled": "Activado en el launcher",
+    "cliDisabled": "Desactivado en el launcher"
   },
   "setup": {
     "missingDb": "Base de datos faltante",
@@ -486,11 +494,33 @@
   "hooks": {
     "noEvents": "Sin eventos",
     "inProgress": "en progreso…",
-    "filters": "Filtros:"
+    "filters": "Filtros:",
+    "noPayload": "No payload data"
   },
   "dashboard": {
     "overview": "Resumen",
-    "gitError": "Error al leer el repositorio git"
+    "gitError": "Error al leer el repositorio git",
+    "activeAgents": "Active agents",
+    "sessionsStarted": "sessions started",
+    "inProgress": "In progress",
+    "activeTasks": "active tasks",
+    "todo": "To do",
+    "pendingTasks": "pending tasks",
+    "today": "Today",
+    "recentTasks": "Recent tasks",
+    "noTasks": "No tasks",
+    "recentActivity": "Recent activity",
+    "noActivity": "No activity",
+    "activity": "Activity"
+  },
+  "status": {
+    "todo": "todo",
+    "inProgress": "in progress",
+    "done": "done",
+    "archived": "archived",
+    "completed": "Completed",
+    "started": "Started",
+    "blocked": "Blocked"
   },
   "project": {
     "activeTitle": "Proyecto activo",
@@ -511,6 +541,32 @@
     "subtasks": "{n} subtarea | {n} subtareas",
     "staleFor": "En progreso desde hace {duration}",
     "staleLong": "En progreso durante mucho tiempo"
+  },
+  "telemetry": {
+    "title": "Telemetry",
+    "scanning": "Scanning…",
+    "rescan": "Rescan",
+    "noProject": "Open a project to view telemetry.",
+    "scanningProject": "Scanning project…",
+    "totalLines": "Total Lines",
+    "realCode": "Real code",
+    "totalFiles": "Total Files",
+    "testFiles": "Test files",
+    "languages": "Languages",
+    "languageBreakdown": "Language breakdown",
+    "sourceVsTests": "Source vs Tests",
+    "sourceLabel": "Source {percent}%",
+    "testsLabel": "Tests {percent}%",
+    "codeQuality": "Code quality",
+    "percentRealCode": "% Real code",
+    "percentComments": "% Comments",
+    "percentBlank": "% Blank lines",
+    "colLanguage": "Language",
+    "colLines": "Lines",
+    "colSource": "Source",
+    "colTests": "Tests",
+    "colFiles": "Files",
+    "scannedAt": "Scanned at {date}"
   },
   "update": {
     "available": "Actualización {version} disponible",

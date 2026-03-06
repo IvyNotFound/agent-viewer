@@ -104,7 +104,8 @@
       "todoAssigned": "배정됨",
       "idle": "대기 중",
       "inactive": "비활성"
-    }
+    },
+    "agentsTitle": "OrgChart agents"
   },
   "logs": {
     "allAgents": "전체 에이전트",
@@ -221,7 +222,14 @@
     "exportSuccess": "내보내기 완료: {path}",
     "exportError": "내보내기 오류: {error}",
     "defaultClaudeInstance": "기본 Claude Code 인스턴스",
-    "defaultClaudeProfile": "기본 Claude 프로필"
+    "defaultClaudeProfile": "기본 Claude 프로필",
+    "aiCodingAssistants": "AI 코딩 어시스턴트",
+    "aiCodingAssistantsDesc": "에이전트 세션에 사용 가능한 감지된 CLI 도구입니다. 런처에 표시하려면 토글하세요.",
+    "cliRefresh": "새로 고침",
+    "cliRefreshing": "감지 중...",
+    "cliNotDetected": "감지되지 않음",
+    "cliEnabled": "런처에서 활성화됨",
+    "cliDisabled": "런처에서 비활성화됨"
   },
   "setup": {
     "missingDb": "데이터베이스를 찾을 수 없습니다",
@@ -486,11 +494,33 @@
   "hooks": {
     "noEvents": "이벤트 없음",
     "inProgress": "진행 중…",
-    "filters": "필터:"
+    "filters": "필터:",
+    "noPayload": "No payload data"
   },
   "dashboard": {
     "overview": "개요",
-    "gitError": "git 저장소 읽기 오류"
+    "gitError": "git 저장소 읽기 오류",
+    "activeAgents": "Active agents",
+    "sessionsStarted": "sessions started",
+    "inProgress": "In progress",
+    "activeTasks": "active tasks",
+    "todo": "To do",
+    "pendingTasks": "pending tasks",
+    "today": "Today",
+    "recentTasks": "Recent tasks",
+    "noTasks": "No tasks",
+    "recentActivity": "Recent activity",
+    "noActivity": "No activity",
+    "activity": "Activity"
+  },
+  "status": {
+    "todo": "todo",
+    "inProgress": "in progress",
+    "done": "done",
+    "archived": "archived",
+    "completed": "Completed",
+    "started": "Started",
+    "blocked": "Blocked"
   },
   "project": {
     "activeTitle": "활성 프로젝트",
@@ -511,6 +541,32 @@
     "subtasks": "{n}개의 하위 작업 | {n}개의 하위 작업",
     "staleFor": "{duration} 동안 진행 중",
     "staleLong": "장시간 진행 중"
+  },
+  "telemetry": {
+    "title": "Telemetry",
+    "scanning": "Scanning…",
+    "rescan": "Rescan",
+    "noProject": "Open a project to view telemetry.",
+    "scanningProject": "Scanning project…",
+    "totalLines": "Total Lines",
+    "realCode": "Real code",
+    "totalFiles": "Total Files",
+    "testFiles": "Test files",
+    "languages": "Languages",
+    "languageBreakdown": "Language breakdown",
+    "sourceVsTests": "Source vs Tests",
+    "sourceLabel": "Source {percent}%",
+    "testsLabel": "Tests {percent}%",
+    "codeQuality": "Code quality",
+    "percentRealCode": "% Real code",
+    "percentComments": "% Comments",
+    "percentBlank": "% Blank lines",
+    "colLanguage": "Language",
+    "colLines": "Lines",
+    "colSource": "Source",
+    "colTests": "Tests",
+    "colFiles": "Files",
+    "scannedAt": "Scanned at {date}"
   },
   "update": {
     "available": "업데이트 {version} 사용 가능",

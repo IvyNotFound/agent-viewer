@@ -13,6 +13,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import i18n from '../plugins/i18n'
 import { setDarkMode } from '../utils/agentColor'
+import type { CliType, CliInstance } from '@shared/cli-types'
 
 export type Theme = 'dark' | 'light'
 export type Language =
@@ -174,6 +175,44 @@ export const useSettingsStore = defineStore('settings', () => {
     localStorage.setItem('maxFileLinesCount', String(clamped))
   }
 
+  // AI Coding Assistants — enabled CLIs + detection cache (T1013)
+  const enabledClis = ref<CliType[]>(
+    JSON.parse(localStorage.getItem('enabledClis') || '["claude"]') as CliType[]
+  )
+  const allCliInstances = ref<CliInstance[]>([])
+  const detectingClis = ref(false)
+
+  function toggleCli(cli: CliType) {
+    const current = enabledClis.value
+    if (current.includes(cli)) {
+      enabledClis.value = current.filter(c => c !== cli)
+    } else {
+      enabledClis.value = [...current, cli]
+    }
+    localStorage.setItem('enabledClis', JSON.stringify(enabledClis.value))
+  }
+
+  async function refreshCliDetection(): Promise<void> {
+    detectingClis.value = true
+    try {
+      // T1011: when getCliInstances is available, prefer it
+      // Fallback: getClaudeInstances — Claude only, others show as not detected
+      const raw = await window.electronAPI.getClaudeInstances()
+      allCliInstances.value = raw.map(inst => ({
+        cli: 'claude' as CliType,
+        distro: inst.distro,
+        version: inst.version,
+        isDefault: inst.isDefault,
+        profiles: inst.profiles,
+        type: (inst.type ?? 'local') as 'wsl' | 'local',
+      }))
+    } catch {
+      allCliInstances.value = []
+    } finally {
+      detectingClis.value = false
+    }
+  }
+
   // Desktop notifications (T755)
   const notificationsEnabled = ref<boolean>(localStorage.getItem('notificationsEnabled') === 'true')
 
@@ -210,6 +249,12 @@ export const useSettingsStore = defineStore('settings', () => {
     maxFileLinesCount,
     setMaxFileLinesEnabled,
     setMaxFileLinesCount,
+    // AI Coding Assistants (T1013)
+    enabledClis,
+    allCliInstances,
+    detectingClis,
+    toggleCli,
+    refreshCliDetection,
     // Desktop notifications (T755)
     notificationsEnabled,
     setNotificationsEnabled,

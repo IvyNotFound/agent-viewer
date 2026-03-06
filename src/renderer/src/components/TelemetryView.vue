@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 
+const { t } = useI18n()
 const store = useTasksStore()
 
 interface LangStat {
@@ -100,7 +102,7 @@ onMounted(scan)
   <div class="flex flex-col h-full overflow-auto bg-surface-base text-content-primary p-6 gap-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
-      <h2 class="text-xl font-semibold text-content-primary">Telemetry</h2>
+      <h2 class="text-xl font-semibold text-content-primary">{{ t('telemetry.title') }}</h2>
       <button
         class="px-4 py-1.5 rounded bg-surface-tertiary hover:bg-surface-secondary text-sm text-content-secondary transition-colors disabled:opacity-50"
         :disabled="loading || !store.projectPath"
@@ -111,15 +113,15 @@ onMounted(scan)
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
           </svg>
-          Scanning…
+          {{ t('telemetry.scanning') }}
         </span>
-        <span v-else>Rescan</span>
+        <span v-else>{{ t('telemetry.rescan') }}</span>
       </button>
     </div>
 
     <!-- No project guard -->
     <div v-if="!store.projectPath" class="flex-1 flex items-center justify-center text-content-subtle text-sm">
-      Open a project to view telemetry.
+      {{ t('telemetry.noProject') }}
     </div>
 
     <!-- Loading state -->
@@ -128,7 +130,7 @@ onMounted(scan)
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
       </svg>
-      Scanning project…
+      {{ t('telemetry.scanningProject') }}
     </div>
 
     <!-- Error state -->
@@ -141,30 +143,30 @@ onMounted(scan)
       <!-- Stat cards -->
       <div class="grid grid-cols-3 gap-4" :class="hasAdvancedMetrics ? 'lg:grid-cols-5' : ''">
         <div class="bg-surface-secondary rounded-lg p-4 flex flex-col gap-1 border border-edge-default">
-          <span class="text-xs text-content-muted uppercase tracking-wide">Total Lines</span>
+          <span class="text-xs text-content-muted uppercase tracking-wide">{{ t('telemetry.totalLines') }}</span>
           <span class="text-2xl font-bold text-content-primary">{{ formatLines(data.totalLines) }}</span>
         </div>
         <div v-if="hasAdvancedMetrics" class="bg-surface-secondary rounded-lg p-4 flex flex-col gap-1 border border-edge-default">
-          <span class="text-xs text-content-muted uppercase tracking-wide">Code réel</span>
+          <span class="text-xs text-content-muted uppercase tracking-wide">{{ t('telemetry.realCode') }}</span>
           <span class="text-2xl font-bold text-content-primary">{{ formatLines(data.totalCodeLines ?? 0) }}</span>
         </div>
         <div class="bg-surface-secondary rounded-lg p-4 flex flex-col gap-1 border border-edge-default">
-          <span class="text-xs text-content-muted uppercase tracking-wide">Total Files</span>
+          <span class="text-xs text-content-muted uppercase tracking-wide">{{ t('telemetry.totalFiles') }}</span>
           <span class="text-2xl font-bold text-content-primary">{{ data.totalFiles.toLocaleString() }}</span>
         </div>
         <div v-if="hasAdvancedMetrics" class="bg-surface-secondary rounded-lg p-4 flex flex-col gap-1 border border-edge-default">
-          <span class="text-xs text-content-muted uppercase tracking-wide">Fichiers test</span>
+          <span class="text-xs text-content-muted uppercase tracking-wide">{{ t('telemetry.testFiles') }}</span>
           <span class="text-2xl font-bold text-content-primary">{{ (data.totalTestFiles ?? 0).toLocaleString() }}</span>
         </div>
         <div class="bg-surface-secondary rounded-lg p-4 flex flex-col gap-1 border border-edge-default">
-          <span class="text-xs text-content-muted uppercase tracking-wide">Languages</span>
+          <span class="text-xs text-content-muted uppercase tracking-wide">{{ t('telemetry.languages') }}</span>
           <span class="text-2xl font-bold text-content-primary">{{ data.languages.length }}</span>
         </div>
       </div>
 
       <!-- Language bar (GitHub-style) -->
       <div class="flex flex-col gap-2">
-        <span class="text-sm font-medium text-content-tertiary">Language breakdown</span>
+        <span class="text-sm font-medium text-content-tertiary">{{ t('telemetry.languageBreakdown') }}</span>
         <div class="flex h-3 rounded-full overflow-hidden w-full">
           <div
             v-for="lang in data.languages"
@@ -191,7 +193,7 @@ onMounted(scan)
       <!-- Source / Test bar -->
       <div v-if="hasAdvancedMetrics" class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
-          <span class="text-sm font-medium text-content-tertiary">Source vs Tests</span>
+          <span class="text-sm font-medium text-content-tertiary">{{ t('telemetry.sourceVsTests') }}</span>
           <span class="text-xs text-amber-500 font-medium">{{ testPercent.toFixed(1) }}% tests</span>
         </div>
         <div class="flex h-3 rounded-full overflow-hidden w-full">
@@ -209,29 +211,29 @@ onMounted(scan)
         <div class="flex gap-4 text-xs text-content-muted">
           <span class="flex items-center gap-1.5">
             <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-green-500" />
-            Source {{ sourcePercent.toFixed(1) }}%
+            {{ t('telemetry.sourceLabel', { percent: sourcePercent.toFixed(1) }) }}
           </span>
           <span class="flex items-center gap-1.5">
             <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-amber-500" />
-            Tests {{ testPercent.toFixed(1) }}%
+            {{ t('telemetry.testsLabel', { percent: testPercent.toFixed(1) }) }}
           </span>
         </div>
       </div>
 
       <!-- Code quality section -->
       <div v-if="hasAdvancedMetrics" class="flex flex-col gap-2">
-        <span class="text-sm font-medium text-content-tertiary">Code quality</span>
+        <span class="text-sm font-medium text-content-tertiary">{{ t('telemetry.codeQuality') }}</span>
         <div class="grid grid-cols-3 gap-3">
           <div class="bg-surface-secondary rounded-lg p-3 flex flex-col gap-0.5 border border-edge-default">
-            <span class="text-xs text-content-muted uppercase tracking-wide">% Code réel</span>
+            <span class="text-xs text-content-muted uppercase tracking-wide">{{ t('telemetry.percentRealCode') }}</span>
             <span class="text-xl font-bold text-green-400">{{ codePercent.toFixed(1) }}%</span>
           </div>
           <div class="bg-surface-secondary rounded-lg p-3 flex flex-col gap-0.5 border border-edge-default">
-            <span class="text-xs text-content-muted uppercase tracking-wide">% Commentaires</span>
+            <span class="text-xs text-content-muted uppercase tracking-wide">{{ t('telemetry.percentComments') }}</span>
             <span class="text-xl font-bold text-blue-400">{{ commentPercent.toFixed(1) }}%</span>
           </div>
           <div class="bg-surface-secondary rounded-lg p-3 flex flex-col gap-0.5 border border-edge-default">
-            <span class="text-xs text-content-muted uppercase tracking-wide">% Lignes vides</span>
+            <span class="text-xs text-content-muted uppercase tracking-wide">{{ t('telemetry.percentBlank') }}</span>
             <span class="text-xl font-bold text-content-muted">{{ blankPercent.toFixed(1) }}%</span>
           </div>
         </div>
@@ -242,11 +244,11 @@ onMounted(scan)
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-edge-default text-content-muted text-xs uppercase tracking-wide">
-              <th class="text-left px-4 py-2.5">Language</th>
-              <th class="text-right px-4 py-2.5">Lines</th>
-              <th v-if="hasLangAdvanced" class="text-right px-4 py-2.5">Source</th>
-              <th v-if="hasLangAdvanced" class="text-right px-4 py-2.5">Tests</th>
-              <th class="text-right px-4 py-2.5">Files</th>
+              <th class="text-left px-4 py-2.5">{{ t('telemetry.colLanguage') }}</th>
+              <th class="text-right px-4 py-2.5">{{ t('telemetry.colLines') }}</th>
+              <th v-if="hasLangAdvanced" class="text-right px-4 py-2.5">{{ t('telemetry.colSource') }}</th>
+              <th v-if="hasLangAdvanced" class="text-right px-4 py-2.5">{{ t('telemetry.colTests') }}</th>
+              <th class="text-right px-4 py-2.5">{{ t('telemetry.colFiles') }}</th>
               <th class="text-right px-4 py-2.5">%</th>
             </tr>
           </thead>
@@ -272,7 +274,7 @@ onMounted(scan)
 
       <!-- Footer -->
       <p class="text-xs text-content-subtle">
-        Scanned at {{ formatDate(data.scannedAt) }}
+        {{ t('telemetry.scannedAt', { date: formatDate(data.scannedAt) }) }}
       </p>
     </template>
   </div>

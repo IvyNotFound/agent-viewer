@@ -104,7 +104,8 @@
       "todoAssigned": "att göra, tilldelad",
       "idle": "inaktiv",
       "inactive": "inaktiv"
-    }
+    },
+    "agentsTitle": "OrgChart agents"
   },
   "logs": {
     "allAgents": "Alla agenter",
@@ -221,7 +222,14 @@
     "exportSuccess": "Export nedladdad: {path}",
     "exportError": "Exportfel: {error}",
     "defaultClaudeInstance": "Standard Claude Code-instans",
-    "defaultClaudeProfile": "Standard Claude-profil"
+    "defaultClaudeProfile": "Standard Claude-profil",
+    "aiCodingAssistants": "AI-kodningsassistenter",
+    "aiCodingAssistantsDesc": "Identifierade CLI-verktyg tillgängliga för agentsessioner. Aktivera/inaktivera för att visa i startaren.",
+    "cliRefresh": "Uppdatera",
+    "cliRefreshing": "Identifierar...",
+    "cliNotDetected": "Ej identifierad",
+    "cliEnabled": "Aktiverad i startaren",
+    "cliDisabled": "Inaktiverad i startaren"
   },
   "setup": {
     "missingDb": "Databas saknas",
@@ -486,11 +494,33 @@
   "hooks": {
     "noEvents": "Inga händelser",
     "inProgress": "pågår…",
-    "filters": "Filter:"
+    "filters": "Filter:",
+    "noPayload": "No payload data"
   },
   "dashboard": {
     "overview": "Översikt",
-    "gitError": "Fel vid läsning av git-repo"
+    "gitError": "Fel vid läsning av git-repo",
+    "activeAgents": "Active agents",
+    "sessionsStarted": "sessions started",
+    "inProgress": "In progress",
+    "activeTasks": "active tasks",
+    "todo": "To do",
+    "pendingTasks": "pending tasks",
+    "today": "Today",
+    "recentTasks": "Recent tasks",
+    "noTasks": "No tasks",
+    "recentActivity": "Recent activity",
+    "noActivity": "No activity",
+    "activity": "Activity"
+  },
+  "status": {
+    "todo": "todo",
+    "inProgress": "in progress",
+    "done": "done",
+    "archived": "archived",
+    "completed": "Completed",
+    "started": "Started",
+    "blocked": "Blocked"
   },
   "project": {
     "activeTitle": "Aktivt projekt",
@@ -511,6 +541,32 @@
     "subtasks": "{n} underuppgift | {n} underuppgifter",
     "staleFor": "Pågår sedan {duration}",
     "staleLong": "Pågår sedan länge"
+  },
+  "telemetry": {
+    "title": "Telemetry",
+    "scanning": "Scanning…",
+    "rescan": "Rescan",
+    "noProject": "Open a project to view telemetry.",
+    "scanningProject": "Scanning project…",
+    "totalLines": "Total Lines",
+    "realCode": "Real code",
+    "totalFiles": "Total Files",
+    "testFiles": "Test files",
+    "languages": "Languages",
+    "languageBreakdown": "Language breakdown",
+    "sourceVsTests": "Source vs Tests",
+    "sourceLabel": "Source {percent}%",
+    "testsLabel": "Tests {percent}%",
+    "codeQuality": "Code quality",
+    "percentRealCode": "% Real code",
+    "percentComments": "% Comments",
+    "percentBlank": "% Blank lines",
+    "colLanguage": "Language",
+    "colLines": "Lines",
+    "colSource": "Source",
+    "colTests": "Tests",
+    "colFiles": "Files",
+    "scannedAt": "Scanned at {date}"
   },
   "update": {
     "available": "Uppdatering {version} tillgänglig",

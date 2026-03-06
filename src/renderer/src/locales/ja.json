@@ -104,7 +104,8 @@
       "todoAssigned": "割り当て済み",
       "idle": "待機中",
       "inactive": "非アクティブ"
-    }
+    },
+    "agentsTitle": "OrgChart agents"
   },
   "logs": {
     "allAgents": "全エージェント",
@@ -221,7 +222,14 @@
     "exportSuccess": "エクスポート完了: {path}",
     "exportError": "エクスポートエラー: {error}",
     "defaultClaudeInstance": "デフォルト Claude Code インスタンス",
-    "defaultClaudeProfile": "デフォルト Claude プロファイル"
+    "defaultClaudeProfile": "デフォルト Claude プロファイル",
+    "aiCodingAssistants": "AI コーディングアシスタント",
+    "aiCodingAssistantsDesc": "エージェントセッションで利用可能な検出済み CLI ツール。ランチャーで表示するには切り替えてください。",
+    "cliRefresh": "更新",
+    "cliRefreshing": "検出中...",
+    "cliNotDetected": "未検出",
+    "cliEnabled": "ランチャーで有効",
+    "cliDisabled": "ランチャーで無効"
   },
   "setup": {
     "missingDb": "データベースが見つかりません",
@@ -486,11 +494,33 @@
   "hooks": {
     "noEvents": "イベントなし",
     "inProgress": "進行中…",
-    "filters": "フィルター:"
+    "filters": "フィルター:",
+    "noPayload": "No payload data"
   },
   "dashboard": {
     "overview": "概要",
-    "gitError": "git リポジトリの読み取りエラー"
+    "gitError": "git リポジトリの読み取りエラー",
+    "activeAgents": "Active agents",
+    "sessionsStarted": "sessions started",
+    "inProgress": "In progress",
+    "activeTasks": "active tasks",
+    "todo": "To do",
+    "pendingTasks": "pending tasks",
+    "today": "Today",
+    "recentTasks": "Recent tasks",
+    "noTasks": "No tasks",
+    "recentActivity": "Recent activity",
+    "noActivity": "No activity",
+    "activity": "Activity"
+  },
+  "status": {
+    "todo": "todo",
+    "inProgress": "in progress",
+    "done": "done",
+    "archived": "archived",
+    "completed": "Completed",
+    "started": "Started",
+    "blocked": "Blocked"
   },
   "project": {
     "activeTitle": "アクティブなプロジェクト",
@@ -511,6 +541,32 @@
     "subtasks": "{n} 件のサブタスク | {n} 件のサブタスク",
     "staleFor": "{duration} 間進行中",
     "staleLong": "長時間進行中"
+  },
+  "telemetry": {
+    "title": "Telemetry",
+    "scanning": "Scanning…",
+    "rescan": "Rescan",
+    "noProject": "Open a project to view telemetry.",
+    "scanningProject": "Scanning project…",
+    "totalLines": "Total Lines",
+    "realCode": "Real code",
+    "totalFiles": "Total Files",
+    "testFiles": "Test files",
+    "languages": "Languages",
+    "languageBreakdown": "Language breakdown",
+    "sourceVsTests": "Source vs Tests",
+    "sourceLabel": "Source {percent}%",
+    "testsLabel": "Tests {percent}%",
+    "codeQuality": "Code quality",
+    "percentRealCode": "% Real code",
+    "percentComments": "% Comments",
+    "percentBlank": "% Blank lines",
+    "colLanguage": "Language",
+    "colLines": "Lines",
+    "colSource": "Source",
+    "colTests": "Tests",
+    "colFiles": "Files",
+    "scannedAt": "Scanned at {date}"
   },
   "update": {
     "available": "アップデート {version} が利用可能",

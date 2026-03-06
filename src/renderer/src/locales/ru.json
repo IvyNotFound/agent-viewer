@@ -104,7 +104,8 @@
       "todoAssigned": "назначено",
       "idle": "простаивает",
       "inactive": "неактивен"
-    }
+    },
+    "agentsTitle": "OrgChart agents"
   },
   "logs": {
     "allAgents": "Все агенты",
@@ -221,7 +222,14 @@
     "exportSuccess": "Экспорт загружен: {path}",
     "exportError": "Ошибка экспорта: {error}",
     "defaultClaudeInstance": "Экземпляр Claude Code по умолчанию",
-    "defaultClaudeProfile": "Профиль Claude по умолчанию"
+    "defaultClaudeProfile": "Профиль Claude по умолчанию",
+    "aiCodingAssistants": "ИИ-помощники по коду",
+    "aiCodingAssistantsDesc": "Обнаруженные CLI-инструменты для сессий агентов. Включите/выключите для отображения в лаунчере.",
+    "cliRefresh": "Обновить",
+    "cliRefreshing": "Обнаружение...",
+    "cliNotDetected": "Не обнаружен",
+    "cliEnabled": "Включён в лаунчере",
+    "cliDisabled": "Отключён в лаунчере"
   },
   "setup": {
     "missingDb": "База данных отсутствует",
@@ -486,11 +494,33 @@
   "hooks": {
     "noEvents": "Нет событий",
     "inProgress": "в процессе…",
-    "filters": "Фильтры:"
+    "filters": "Фильтры:",
+    "noPayload": "No payload data"
   },
   "dashboard": {
     "overview": "Обзор",
-    "gitError": "Ошибка чтения git-репозитория"
+    "gitError": "Ошибка чтения git-репозитория",
+    "activeAgents": "Active agents",
+    "sessionsStarted": "sessions started",
+    "inProgress": "In progress",
+    "activeTasks": "active tasks",
+    "todo": "To do",
+    "pendingTasks": "pending tasks",
+    "today": "Today",
+    "recentTasks": "Recent tasks",
+    "noTasks": "No tasks",
+    "recentActivity": "Recent activity",
+    "noActivity": "No activity",
+    "activity": "Activity"
+  },
+  "status": {
+    "todo": "todo",
+    "inProgress": "in progress",
+    "done": "done",
+    "archived": "archived",
+    "completed": "Completed",
+    "started": "Started",
+    "blocked": "Blocked"
   },
   "project": {
     "activeTitle": "Активный проект",
@@ -511,6 +541,32 @@
     "subtasks": "{n} подзадача | {n} подзадач",
     "staleFor": "В работе {duration}",
     "staleLong": "В работе уже долго"
+  },
+  "telemetry": {
+    "title": "Telemetry",
+    "scanning": "Scanning…",
+    "rescan": "Rescan",
+    "noProject": "Open a project to view telemetry.",
+    "scanningProject": "Scanning project…",
+    "totalLines": "Total Lines",
+    "realCode": "Real code",
+    "totalFiles": "Total Files",
+    "testFiles": "Test files",
+    "languages": "Languages",
+    "languageBreakdown": "Language breakdown",
+    "sourceVsTests": "Source vs Tests",
+    "sourceLabel": "Source {percent}%",
+    "testsLabel": "Tests {percent}%",
+    "codeQuality": "Code quality",
+    "percentRealCode": "% Real code",
+    "percentComments": "% Comments",
+    "percentBlank": "% Blank lines",
+    "colLanguage": "Language",
+    "colLines": "Lines",
+    "colSource": "Source",
+    "colTests": "Tests",
+    "colFiles": "Files",
+    "scannedAt": "Scanned at {date}"
   },
   "update": {
     "available": "Доступно обновление {version}",

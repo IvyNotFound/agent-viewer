@@ -222,7 +222,14 @@
     "exportSuccess": "Export heruntergeladen: {path}",
     "exportError": "Exportfehler: {error}",
     "defaultClaudeInstance": "Standard-Claude-Code-Instanz",
-    "defaultClaudeProfile": "Standard-Claude-Profil"
+    "defaultClaudeProfile": "Standard-Claude-Profil",
+    "aiCodingAssistants": "KI-Coding-Assistenten",
+    "aiCodingAssistantsDesc": "Erkannte CLI-Tools für Agent-Sitzungen. Ein-/ausschalten um im Launcher anzuzeigen.",
+    "cliRefresh": "Aktualisieren",
+    "cliRefreshing": "Wird erkannt...",
+    "cliNotDetected": "Nicht erkannt",
+    "cliEnabled": "Im Launcher aktiviert",
+    "cliDisabled": "Im Launcher deaktiviert"
   },
   "setup": {
     "missingDb": "Fehlende Datenbank",

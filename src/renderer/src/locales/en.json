@@ -95,6 +95,7 @@
   },
   "orgchart": {
     "tabLabel": "OrgChart",
+    "agentsTitle": "OrgChart agents",
     "noAgents": "No agents found",
     "ungrouped": "Ungrouped",
     "status": {
@@ -221,7 +222,14 @@
     "exportSuccess": "Export downloaded: {path}",
     "exportError": "Export error: {error}",
     "defaultClaudeInstance": "Default Claude Code instance",
-    "defaultClaudeProfile": "Default Claude profile"
+    "defaultClaudeProfile": "Default Claude profile",
+    "aiCodingAssistants": "AI Coding Assistants",
+    "aiCodingAssistantsDesc": "Detected CLI tools available for agent sessions. Toggle to show/hide in the launcher.",
+    "cliRefresh": "Refresh",
+    "cliRefreshing": "Detecting...",
+    "cliNotDetected": "Not detected",
+    "cliEnabled": "Enabled in launcher",
+    "cliDisabled": "Disabled in launcher"
   },
   "setup": {
     "missingDb": "Missing database",
@@ -281,7 +289,10 @@
     "promptNote": "System prompt applied automatically",
     "cancel": "Cancel",
     "launch": "Launch",
-    "launching": "Launching…"
+    "launching": "Launching…",
+    "multiInstance": "Multi-instance / Isolated worktree",
+    "multiInstanceNote": "Creates a dedicated git worktree (ADR-006) — allows running multiple instances of the same agent in parallel without conflicts",
+    "multiInstanceError": "Failed to create worktree: {error}"
   },
   "titleBar": {
     "searchTitle": "Search a task (Ctrl+K)",
@@ -486,11 +497,33 @@
   "hooks": {
     "noEvents": "No events",
     "inProgress": "in progress…",
-    "filters": "Filters:"
+    "filters": "Filters:",
+    "noPayload": "No payload data"
   },
   "dashboard": {
     "overview": "Overview",
-    "gitError": "Error reading git repository"
+    "gitError": "Error reading git repository",
+    "activeAgents": "Active agents",
+    "sessionsStarted": "sessions started",
+    "inProgress": "In progress",
+    "activeTasks": "active tasks",
+    "todo": "To do",
+    "pendingTasks": "pending tasks",
+    "today": "Today",
+    "recentTasks": "Recent tasks",
+    "noTasks": "No tasks",
+    "recentActivity": "Recent activity",
+    "noActivity": "No activity",
+    "activity": "Activity"
+  },
+  "status": {
+    "todo": "todo",
+    "inProgress": "in progress",
+    "done": "done",
+    "archived": "archived",
+    "completed": "Completed",
+    "started": "Started",
+    "blocked": "Blocked"
   },
   "project": {
     "activeTitle": "Active project",
@@ -511,6 +544,32 @@
     "subtasks": "{n} subtask | {n} subtasks",
     "staleFor": "In progress for {duration}",
     "staleLong": "In progress for a long time"
+  },
+  "telemetry": {
+    "title": "Telemetry",
+    "scanning": "Scanning…",
+    "rescan": "Rescan",
+    "noProject": "Open a project to view telemetry.",
+    "scanningProject": "Scanning project…",
+    "totalLines": "Total Lines",
+    "realCode": "Real code",
+    "totalFiles": "Total Files",
+    "testFiles": "Test files",
+    "languages": "Languages",
+    "languageBreakdown": "Language breakdown",
+    "sourceVsTests": "Source vs Tests",
+    "sourceLabel": "Source {percent}%",
+    "testsLabel": "Tests {percent}%",
+    "codeQuality": "Code quality",
+    "percentRealCode": "% Real code",
+    "percentComments": "% Comments",
+    "percentBlank": "% Blank lines",
+    "colLanguage": "Language",
+    "colLines": "Lines",
+    "colSource": "Source",
+    "colTests": "Tests",
+    "colFiles": "Files",
+    "scannedAt": "Scanned at {date}"
   },
   "update": {
     "available": "Update {version} available",

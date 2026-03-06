@@ -169,7 +169,7 @@ const layout = computed<{ groups: LayoutGroup[]; totalW: number; totalH: number 
     })
 
     for (const key of sortedKeys) {
-      const label = key === '__global__' ? 'Global' : key
+      const label = key === '__global__' ? t('topology.global') : key
       const col = buildGroupColumn(key, label, grouped.get(key)!, curX)
       groups.push(col)
       curX += col.w + GROUP_H_GAP
@@ -263,7 +263,7 @@ function connectorPath(gx: number, gw: number, gy: number, nx: number, ny: numbe
     <!-- Header -->
     <div class="shrink-0 flex items-center justify-between px-5 py-2.5 border-b border-edge-subtle bg-surface-base">
       <div class="flex items-center gap-3">
-        <h2 class="text-sm font-semibold text-content-secondary">OrgChart agents</h2>
+        <h2 class="text-sm font-semibold text-content-secondary">{{ t('orgchart.agentsTitle') }}</h2>
         <span v-if="loading" class="text-[10px] text-content-faint animate-pulse">•••</span>
       </div>
       <div class="flex items-center gap-2">

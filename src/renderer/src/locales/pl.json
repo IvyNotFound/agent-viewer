@@ -222,7 +222,14 @@
     "exportSuccess": "Eksport pobrany: {path}",
     "exportError": "Błąd eksportu: {error}",
     "defaultClaudeInstance": "Domyślna instancja Claude Code",
-    "defaultClaudeProfile": "Domyślny profil Claude"
+    "defaultClaudeProfile": "Domyślny profil Claude",
+    "aiCodingAssistants": "Asystenci AI",
+    "aiCodingAssistantsDesc": "Wykryte narzędzia CLI dostępne dla sesji agentów. Włącz/wyłącz aby pokazać w programie uruchamiającym.",
+    "cliRefresh": "Odśwież",
+    "cliRefreshing": "Wykrywanie...",
+    "cliNotDetected": "Nie wykryto",
+    "cliEnabled": "Włączony w programie uruchamiającym",
+    "cliDisabled": "Wyłączony w programie uruchamiającym"
   },
   "setup": {
     "missingDb": "Brakująca baza danych",
