@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { runTaskStatusMigration, runAddPriorityMigration, runTaskStatutI18nMigration, runAddConvIdToSessionsMigration, runAddTokensToSessionsMigration, runRemoveThinkingModeBudgetTokensMigration, runDropCommentaireColumnMigration, runSessionStatutI18nMigration, runMakeAgentAssigneNotNullMigration, runMakeCommentAgentNotNullMigration, runAddAgentGroupsMigration, runAddParentIdToAgentGroupsMigration } from './migration'
+import { runTaskStatusMigration, runAddPriorityMigration, runTaskStatutI18nMigration, runAddConvIdToSessionsMigration, runAddTokensToSessionsMigration, runRemoveThinkingModeBudgetTokensMigration, runDropCommentaireColumnMigration, runSessionStatutI18nMigration, runMakeAgentAssigneNotNullMigration, runMakeCommentAgentNotNullMigration, runAddAgentGroupsMigration, runAddParentIdToAgentGroupsMigration, migrateDb, CURRENT_SCHEMA_VERSION } from './migration'
 
 // Mock Database for sql.js
 interface MockDatabase {
@@ -1322,5 +1322,64 @@ describe('runAddParentIdToAgentGroupsMigration', () => {
     const mockDb = createParentIdMockDb(['id', 'name', 'sort_order', 'created_at'])
     runAddParentIdToAgentGroupsMigration(mockDb as unknown as import('sql.js').Database)
     expect(mockDb.run).toHaveBeenCalledTimes(1)
+  })
+})
+
+// ── migrateDb bootstrap (T958) ────────────────────────────────────────────────
+
+describe('migrateDb bootstrap (T958)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  /** Legacy DB: user_version=0, config table with schema_version, agent_groups without parent_id */
+  function createLegacyBootstrapMockDb() {
+    const agentGroupCols = ['id', 'name', 'sort_order', 'created_at']
+    const agentGroupPragmaValues = agentGroupCols.map((name, idx) => [idx, name, 'TEXT', 0, null, 0])
+    return {
+      exec: vi.fn().mockImplementation((query: string) => {
+        if (query.includes('PRAGMA user_version')) {
+          return [{ columns: ['user_version'], values: [[0]] }]
+        }
+        if (query.includes('schema_version')) {
+          return [{ columns: ['value'], values: [['23']] }]
+        }
+        if (query.includes('PRAGMA table_info(agent_groups)')) {
+          return [{ columns: ['cid', 'name', 'type', 'notnull', 'dflt_value', 'pk'], values: agentGroupPragmaValues }]
+        }
+        return []
+      }),
+      run: vi.fn(),
+    }
+  }
+
+  it('sets user_version to 23 (bootstrap cursor) for legacy DB', () => {
+    const mockDb = createLegacyBootstrapMockDb()
+    migrateDb(mockDb as unknown as import('sql.js').Database)
+    expect(mockDb.run).toHaveBeenCalledWith('PRAGMA user_version = 23')
+  })
+
+  it('runs v24 migration (ALTER TABLE agent_groups ADD COLUMN parent_id) on legacy DB', () => {
+    const mockDb = createLegacyBootstrapMockDb()
+    migrateDb(mockDb as unknown as import('sql.js').Database)
+    expect(mockDb.run).toHaveBeenCalledWith('ALTER TABLE agent_groups ADD COLUMN parent_id INTEGER')
+  })
+
+  it('returns 1 (only v24 applied) for legacy DB with cursor set to 23', () => {
+    const mockDb = createLegacyBootstrapMockDb()
+    const result = migrateDb(mockDb as unknown as import('sql.js').Database)
+    expect(result).toBe(1)
+  })
+
+  it('runs all migrations from scratch when user_version=0 and no config table', () => {
+    const mockDb = {
+      exec: vi.fn().mockImplementation((query: string) => {
+        if (query.includes('PRAGMA user_version')) return [{ columns: ['user_version'], values: [[0]] }]
+        return []  // no config table → bootstrap skipped
+      }),
+      run: vi.fn(),
+    }
+    const result = migrateDb(mockDb as unknown as import('sql.js').Database)
+    expect(result).toBe(CURRENT_SCHEMA_VERSION)
   })
 })

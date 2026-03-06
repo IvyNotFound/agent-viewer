@@ -198,23 +198,28 @@ export const CURRENT_SCHEMA_VERSION = migrations[migrations.length - 1].version
  * Reads PRAGMA user_version to determine current schema level.
  * Runs each migration with version > current in a SAVEPOINT for atomicity.
  * Bootstrap: if user_version=0 but the config table already exists (old
- * config-based system), bumps user_version to CURRENT and returns 0 — all
- * migrations were already applied by the previous system.
+ * config-based system), sets cursor to v23 so only newer migrations (v24+)
+ * run — does NOT return early.
  *
  * @returns Number of migrations applied.
  */
 export function migrateDb(db: Database): number {
   const uvResult = db.exec('PRAGMA user_version')
-  const current = uvResult.length > 0 && uvResult[0].values.length > 0
+  const rawCurrent = uvResult.length > 0 && uvResult[0].values.length > 0
     ? (uvResult[0].values[0][0] as number)
     : 0
 
-  // Bootstrap: existing DB initialized by the old config-based system
-  if (current === 0) {
+  // Bootstrap: legacy DBs (created before the numbered migration system) have
+  // user_version=0 but a config table with schema_version. All migrations through
+  // v23 are assumed applied by the old system — set cursor to 23 so only v24+
+  // will run. Do NOT return early; fall through to the migration loop.
+  const LEGACY_BOOTSTRAP_VERSION = 23
+  let current = rawCurrent
+  if (rawCurrent === 0) {
     const configResult = db.exec("SELECT value FROM config WHERE key = 'schema_version'")
     if (configResult.length > 0 && configResult[0].values.length > 0) {
-      db.run(`PRAGMA user_version = ${CURRENT_SCHEMA_VERSION}`)
-      return 0
+      db.run(`PRAGMA user_version = ${LEGACY_BOOTSTRAP_VERSION}`)
+      current = LEGACY_BOOTSTRAP_VERSION
     }
   }
 
