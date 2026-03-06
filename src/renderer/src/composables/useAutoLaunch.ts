@@ -141,6 +141,10 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     initialized = false
     previousStatuses = new Map()
     lastReviewLaunchedAt = 0
+    if (debounceId !== null) {
+      clearTimeout(debounceId)
+      debounceId = null
+    }
     for (const pending of pendingCloses.values()) {
       clearInterval(pending.intervalId)
       clearTimeout(pending.fallbackId)

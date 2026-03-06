@@ -254,6 +254,29 @@ describe('composables/useAutoLaunch', () => {
     expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(0)
   })
 
+  it('should cancel pending debounce timer when dbPath changes (T966)', async () => {
+    useAutoLaunch({ tasks, agents, dbPath })
+
+    // Seed with in_progress task
+    tasks.value = [makeTask({ id: 1, statut: 'in_progress', agent_assigne_id: 10 })]
+    await nextTick()
+
+    // Transition to done — starts 80ms debounce
+    tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
+    await nextTick()
+
+    // Project changes during the debounce window (before 80ms elapses)
+    dbPath.value = '/other/db'
+    await nextTick()
+
+    // Advance past the debounce window — timer should have been cleared
+    await vi.advanceTimersByTimeAsync(200)
+
+    const tabsStore = useTabsStore()
+    // scheduleClose should NOT have fired for the old project's task
+    expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(0)
+  })
+
   describe('settings store', () => {
     it('autoLaunchAgentSessions defaults to true', () => {
       const settingsStore = useSettingsStore()
