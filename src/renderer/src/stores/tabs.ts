@@ -12,6 +12,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import type { CliType } from '@shared/cli-types'
 
 export type TabType = 'backlog' | 'terminal' | 'explorer' | 'file' | 'dashboard' | 'hooks' | 'workload' | 'topology' | 'timeline' | 'telemetry'
 
@@ -34,6 +35,10 @@ export interface Tab {
   viewMode?: 'stream'
   /** Agent stream ID returned by agentCreate — used for explicit kill on closeTab (T730). */
   streamId?: string | null
+  /** Working directory for multi-instance worktree isolation (ADR-006). null = project root. */
+  workDir?: string | null
+  /** CLI type used to launch this terminal (T1014). null = default (claude). */
+  cli?: CliType | null
   filePath?: string
   dirty?: boolean
   logsAgentId?: number | null
@@ -135,7 +140,7 @@ export const useTabsStore = defineStore('tabs', () => {
     activeTabId.value = 'dashboard'
   }
 
-  function addTerminal(agentName?: string, wslDistro?: string, autoSend?: string, systemPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string, activate = true, taskId?: number, viewMode?: 'stream'): void {
+  function addTerminal(agentName?: string, wslDistro?: string, autoSend?: string, systemPrompt?: string, thinkingMode?: string, claudeCommand?: string, convId?: string, activate = true, taskId?: number, viewMode?: 'stream', cli?: CliType, workDir?: string): void {
     const id = `term-${Date.now()}-${++_tabCounter}`
     let title: string
     if (agentName) {
@@ -167,6 +172,8 @@ export const useTabsStore = defineStore('tabs', () => {
       convId: convId ?? null,
       taskId: taskId ?? null,
       viewMode: viewMode ?? 'stream',
+      cli: cli ?? null,
+      workDir: workDir ?? null,
     })
     if (activate) activeTabId.value = id
   }

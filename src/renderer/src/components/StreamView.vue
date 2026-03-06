@@ -245,11 +245,13 @@ onMounted(async () => {
   try {
     const id = await window.electronAPI.agentCreate({
       projectPath: tasksStore.projectPath ?? undefined,
+      workDir: tab.workDir ?? undefined,
       wslDistro: tab.wslDistro ?? undefined,
       systemPrompt: tab.systemPrompt ?? undefined,
       thinkingMode: tab.thinkingMode ?? undefined,
       claudeCommand: tab.claudeCommand ?? undefined,
       convId: tab.convId ?? undefined,
+      cli: tab.cli ?? undefined,
     })
     ptyId.value = id
     tabsStore.setPtyId(props.terminalId, id)

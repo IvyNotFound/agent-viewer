@@ -33,6 +33,10 @@ const selectedProfile = ref<string>('claude')
 const lastConvId = ref<string | null>(null)
 /** Whether to use --resume mode on next launch */
 const useResume = ref(false)
+/** Multi-instance mode: create an isolated git worktree before launching (ADR-006) */
+const multiInstance = ref(false)
+/** Error message if worktree creation fails */
+const worktreeError = ref<string | null>(null)
 
 // Compute the full system prompt (system_prompt + system_prompt_suffix)
 const fullSystemPrompt = computed(() => {
@@ -104,6 +108,7 @@ function instanceLabel(inst: ClaudeInstance): string {
 
 async function launch() {
   launching.value = true
+  worktreeError.value = null
   try {
     // Pass dbPath + agentId so the main process can inject pre-computed startup context (task #220)
     const finalPrompt = await window.electronAPI.buildAgentPrompt(
@@ -113,6 +118,22 @@ async function launch() {
       props.agent.id
     )
 
+    // Multi-instance: create a git worktree before launching (ADR-006)
+    let workDir: string | undefined
+    if (multiInstance.value && tasksStore.projectPath) {
+      const sessionNonce = Date.now().toString()
+      const result = await window.electronAPI.worktreeCreate(
+        tasksStore.projectPath,
+        sessionNonce,
+        props.agent.name
+      )
+      if (!result.success) {
+        worktreeError.value = result.error ?? 'unknown error'
+        return
+      }
+      workDir = result.workDir
+    }
+
     const distro = selectedInstance.value?.distro
     // Use selected profile only if it differs from the default 'claude'
     const cmdProfile = selectedProfile.value !== 'claude' ? selectedProfile.value : undefined
@@ -120,31 +141,21 @@ async function launch() {
     if (convId) {
       // Resume mode: skip system prompt injection entirely
       tabsStore.addTerminal(
-        props.agent.name,
-        distro,
-        undefined,
-        undefined,
-        thinkingMode.value,
-        cmdProfile,
-        convId
+        props.agent.name, distro, undefined, undefined,
+        thinkingMode.value, cmdProfile, convId,
+        true, undefined, 'stream', undefined, workDir
       )
     } else if (fullSystemPrompt.value) {
       tabsStore.addTerminal(
-        props.agent.name,
-        distro,
-        finalPrompt,
-        fullSystemPrompt.value,
-        thinkingMode.value,
-        cmdProfile
+        props.agent.name, distro, finalPrompt, fullSystemPrompt.value,
+        thinkingMode.value, cmdProfile, undefined,
+        true, undefined, 'stream', undefined, workDir
       )
     } else {
       tabsStore.addTerminal(
-        props.agent.name,
-        distro,
-        finalPrompt,
-        undefined,
-        thinkingMode.value,
-        cmdProfile
+        props.agent.name, distro, finalPrompt, undefined,
+        thinkingMode.value, cmdProfile, undefined,
+        true, undefined, 'stream', undefined, workDir
       )
     }
     emit('close')
@@ -297,6 +308,21 @@ async function launch() {
               </svg>
               <span class="text-[10px] text-content-faint">{{ t('launch.promptNote') }}</span>
             </div>
+          </div>
+
+          <!-- Multi-instance toggle (ADR-006) -->
+          <div>
+            <label class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
+              :class="multiInstance ? '' : 'border-edge-default bg-surface-secondary/40 hover:border-content-faint'"
+              :style="multiInstance ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '15' } : {}"
+            >
+              <input v-model="multiInstance" type="checkbox" :style="{ accentColor: agentFg(agent.name) }" />
+              <span class="text-sm text-content-secondary">{{ t('launch.multiInstance') }}</span>
+            </label>
+            <p class="text-[10px] text-content-faint mt-1">{{ t('launch.multiInstanceNote') }}</p>
+            <p v-if="worktreeError" class="text-[10px] text-red-400 mt-1">
+              {{ t('launch.multiInstanceError', { error: worktreeError }) }}
+            </p>
           </div>
         </div>
 

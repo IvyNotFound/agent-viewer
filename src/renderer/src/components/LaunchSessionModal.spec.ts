@@ -366,6 +366,11 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
       'auto',              // thinkingMode
       undefined,           // profile (default 'claude' → undefined)
       'conv-abc-123',      // convId for --resume
+      true,                // activate
+      undefined,           // taskId
+      'stream',            // viewMode
+      undefined,           // cli
+      undefined,           // workDir (multiInstance off)
     )
   })
 })

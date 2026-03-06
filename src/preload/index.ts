@@ -174,6 +174,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getClaudeInstances: (): Promise<unknown[]> =>
     ipcRenderer.invoke('wsl:getClaudeInstances'),
 
+  // Multi-CLI detection — detect all supported CLIs local + WSL (T1011)
+  getCliInstances: (clis?: string[]): Promise<unknown[]> =>
+    ipcRenderer.invoke('wsl:get-cli-instances', { clis }),
+
   // Search tasks
   searchTasks: (
     dbPath: string,
@@ -250,6 +254,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     permissionMode?: string
     dbPath?: string
     sessionId?: number
+    cli?: string
   }): Promise<string> =>
     ipcRenderer.invoke('agent:create', opts ?? {}),
 
@@ -302,6 +307,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   /** Get git log for the given project path. Returns parsed commits with task mentions. */
   gitLog: (projectPath: string, options?: { limit?: number; since?: string }): Promise<Array<{ hash: string; date: string; subject: string; author: string; taskIds: number[] }>> =>
     ipcRenderer.invoke('git:log', projectPath, options),
+
+  /** Create a git worktree for multi-instance isolation (ADR-006). */
+  worktreeCreate: (projectPath: string, sessionId: string, agentName: string): Promise<{ success: boolean; workDir?: string; error?: string }> =>
+    ipcRenderer.invoke('git:worktree-create', projectPath, sessionId, agentName),
 
   /** Persist cost_usd, duration_ms, num_turns from the Claude result event into the session row. */
   sessionUpdateResult: (dbPath: string, sessionId: number, data: { cost_usd?: number | null; duration_ms?: number | null; num_turns?: number | null }): Promise<{ success: boolean; error?: string }> =>

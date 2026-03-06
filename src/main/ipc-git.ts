@@ -12,6 +12,42 @@ import { assertProjectPathAllowed } from './db'
 /** Register git IPC handlers. */
 export function registerGitHandlers(): void {
   /**
+   * Create a git worktree for multi-instance isolation (ADR-006).
+   * Branch: agent/<agentName>/s<sessionId> — Worktree: .claude/worktrees/s<sessionId>
+   * Idempotent: returns success if worktree already exists.
+   * @param projectPath - Registered project root (validated via allowlist)
+   * @param sessionId   - Unique session nonce (alphanumeric + hyphens only)
+   * @param agentName   - Agent name (alphanumeric + hyphens only, sanitized)
+   */
+  ipcMain.handle('git:worktree-create', async (_event, projectPath: string, sessionId: string, agentName: string) => {
+    assertProjectPathAllowed(projectPath)
+    if (!/^[\w-]+$/.test(sessionId)) return { success: false, error: 'Invalid sessionId' }
+    if (!/^[\w-]+$/.test(agentName)) return { success: false, error: 'Invalid agentName' }
+
+    const { join } = await import('path')
+    const { execFile } = await import('child_process')
+    const workDir = join(projectPath, '.claude', 'worktrees', `s${sessionId}`)
+    const branch = `agent/${agentName}/s${sessionId}`
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        execFile('git', ['worktree', 'add', workDir, '-b', branch], { cwd: projectPath }, (err) => {
+          if (err) reject(err)
+          else resolve()
+        })
+      })
+      return { success: true, workDir }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      // Idempotent: already exists is not an error
+      if (msg.includes('already exists') || msg.includes('already linked') || msg.includes('already checked out')) {
+        return { success: true, workDir }
+      }
+      return { success: false, error: msg }
+    }
+  })
+
+  /**
    * Execute `git log` on the registered project path and return parsed commits.
    * @param projectPath - Registered project root (validated via allowlist)
    * @param options - { limit?: number (1-500, default 100), since?: string (date string) }

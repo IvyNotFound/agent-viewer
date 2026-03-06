@@ -60,7 +60,7 @@ declare global {
       // Detect Claude Code instances (WSL distros and/or native installs) (T721/T775)
       getClaudeInstances(): Promise<Array<{ distro: string; version: string; isDefault: boolean; profiles: string[]; type?: 'wsl' | 'local' }>>
       // Agent stream (ADR-009: child_process.spawn + stdio:pipe — T647/T648)
-      agentCreate(opts?: { projectPath?: string; workDir?: string; wslDistro?: string; systemPrompt?: string; thinkingMode?: string; claudeCommand?: string; convId?: string; permissionMode?: string }): Promise<string>
+      agentCreate(opts?: { projectPath?: string; workDir?: string; wslDistro?: string; systemPrompt?: string; thinkingMode?: string; claudeCommand?: string; convId?: string; permissionMode?: string; cli?: string }): Promise<string>
       agentSend(id: string, text: string): Promise<void>
       agentKill(id: string): Promise<void>
       onAgentStream(id: string, cb: (event: Record<string, unknown>) => void): () => void
@@ -71,6 +71,8 @@ declare global {
       openExternal(url: string): Promise<void>
       /** Git log with task ID extraction (T760/T761). Returns [] when not a git repo. */
       gitLog(projectPath: string, options?: { limit?: number; since?: string }): Promise<Array<{ hash: string; date: string; subject: string; author: string; taskIds: number[] }>>
+      /** Create a git worktree for multi-instance isolation (ADR-006). */
+      worktreeCreate(projectPath: string, sessionId: string, agentName: string): Promise<{ success: boolean; workDir?: string; error?: string }>
       /** Subscribe to Claude Code hook events (SessionStart, SubagentStart/Stop, PreToolUse, PostToolUse). Returns unsubscribe fn. */
       onHookEvent(callback: (event: { event: string; payload: unknown; ts: number }) => void): () => void
       /** Quality stats per agent: total tasks, rejections, rejection rate (T770). Heuristic-based. */
