@@ -1,0 +1,163 @@
+/**
+ * Shared types for multi-CLI support in agent-viewer.
+ *
+ * Defines the CliAdapter contract, CliInstance shape, and all CLI-specific types.
+ * Used by both the main process (adapters, ipc-wsl) and the renderer (LaunchSessionModal).
+ *
+ * Architecture: ADR-010 — each CLI has a dedicated CliAdapter in main/adapters/<cli>.ts.
+ * Spawn is done directly via Node.js child_process — no third-party CLI wrapper.
+ *
+ * @module shared/cli-types
+ */
+
+// ── CLI identity ───────────────────────────────────────────────────────────────
+
+/**
+ * Identifiers for supported coding agent CLIs (phase 1).
+ *
+ * Excluded: `gh copilot` (no true agent mode), `cursor` (IDE only — no CLI agent).
+ */
+export type CliType =
+  | 'claude'    // Anthropic Claude Code — stream-json, OAuth or API key
+  | 'codex'     // OpenAI Codex CLI — full-auto approval mode
+  | 'gemini'    // Google Gemini CLI — headless mode
+  | 'opencode'  // SST OpenCode — terminal agent
+  | 'aider'     // Paul Gauthier Aider — multi-LLM, headless
+  | 'goose'     // Block Goose — CLI + ACP protocol
+
+// ── CLI instance ───────────────────────────────────────────────────────────────
+
+/**
+ * Represents a detected CLI installation on a given environment (WSL distro or local).
+ *
+ * @property cli       - Which coding agent CLI this instance represents.
+ * @property distro    - WSL distribution name (e.g. `"Ubuntu"`) or `"local"` for native installs.
+ * @property version   - CLI version string as reported by `<cli> --version`.
+ * @property isDefault - Whether this distro is marked as default in `wsl.exe -l`.
+ * @property profiles  - Available binary wrappers found in `~/bin/`; always includes the bare
+ *                       binary name as first entry (e.g. `["claude", "claude-pro2"]`).
+ * @property type      - `"wsl"` for WSL distro instances, `"local"` for native installs.
+ */
+export interface CliInstance {
+  cli: CliType
+  distro: string
+  version: string
+  isDefault: boolean
+  profiles: string[]
+  type: 'wsl' | 'local'
+}
+
+/**
+ * Backward-compatible alias.
+ * All existing code using `ClaudeInstance` continues to work — no import changes required.
+ */
+export type ClaudeInstance = CliInstance
+
+// ── Adapter contract ───────────────────────────────────────────────────────────
+
+/**
+ * Options forwarded from agent:create to each adapter's buildCommand.
+ */
+export interface LaunchOpts {
+  /** Validated conversation UUID to resume via --resume (or equivalent). */
+  convId?: string
+  /** `'disabled'` → inject alwaysThinkingEnabled:false (Claude only). */
+  thinkingMode?: string
+  /** `'auto'` → inject --dangerously-skip-permissions (Claude only). */
+  permissionMode?: string
+  /** Absolute path to temp file containing the raw system prompt text. */
+  systemPromptFile?: string
+  /** Custom binary name (e.g. `"claude-pro2"`). Validated by caller. */
+  binaryName?: string
+}
+
+/**
+ * Spawn specification returned by CliAdapter.buildCommand.
+ * The caller (agent-stream.ts) is responsible for wrapping in wsl.exe if needed.
+ */
+export interface SpawnSpec {
+  /** Executable to spawn (e.g. `"bash"`, `"powershell.exe"`, `"wsl.exe"`). */
+  command: string
+  /** Arguments array passed to spawn. */
+  args: string[]
+  /** Additional environment variables to merge into the spawn env. */
+  env?: Record<string, string>
+}
+
+/**
+ * Result of CliAdapter.prepareSystemPrompt — temp file + cleanup callback.
+ */
+export interface SystemPromptResult {
+  /** Absolute path to the temp file written with the system prompt. */
+  filePath: string
+  /** Remove the temp file. Called after spawn confirms the file was read. */
+  cleanup: () => Promise<void>
+}
+
+/**
+ * A parsed event emitted from the CLI stdout stream.
+ * Shape varies by CLI; Claude uses JSONL (ADR-009), others emit plain text lines.
+ */
+export interface StreamEvent {
+  /** Event type — normalized across adapters. */
+  type: 'system' | 'user' | 'assistant' | 'result' | 'text' | 'error'
+  subtype?: string
+  /** Conversation ID (extracted by extractConvId). */
+  session_id?: string
+  message?: {
+    role: string
+    content: Array<{ type: string; text?: string }>
+  }
+  /** Plain-text output line (non-JSONL CLIs). */
+  text?: string
+  cost_usd?: number
+  num_turns?: number
+}
+
+/**
+ * Contract that every CLI adapter must implement.
+ *
+ * Each adapter lives in `src/main/adapters/<cli>.ts` and is imported
+ * by ipc-wsl.ts (detection) and agent-stream.ts (spawn).
+ *
+ * Implementation rules:
+ * - buildCommand must never shell-inject: use args arrays, not strings
+ * - prepareSystemPrompt writes a temp file; caller triggers cleanup after spawn
+ * - parseLine returns null for lines that are not meaningful events (e.g. blank lines)
+ * - extractConvId is optional; only Claude exposes a stable conversation UUID
+ */
+export interface CliAdapter {
+  /** CLI identifier — must match the CliType value. */
+  cli: CliType
+
+  /**
+   * Known binary names for this CLI (used for detection via `which`/`where`).
+   * First entry is the canonical binary name.
+   */
+  binaries: string[]
+
+  /**
+   * Build the spawn spec for launching this CLI in headless/agent mode.
+   * Returned SpawnSpec is wrapped in wsl.exe by the caller for WSL environments.
+   */
+  buildCommand(opts: LaunchOpts): SpawnSpec
+
+  /**
+   * Write the system prompt to a temp file and return the path + cleanup callback.
+   * @param prompt  - Raw system prompt string.
+   * @param tempDir - Directory for temp file (typically os.tmpdir()).
+   */
+  prepareSystemPrompt(prompt: string, tempDir: string): Promise<SystemPromptResult>
+
+  /**
+   * Parse a single stdout line into a StreamEvent.
+   * Returns null if the line carries no meaningful event (blank, debug noise, etc.).
+   */
+  parseLine(line: string): StreamEvent | null
+
+  /**
+   * Extract the stable conversation/session ID from a stream event.
+   * Only implemented for CLIs that support session resume (currently Claude only).
+   */
+  extractConvId?(event: StreamEvent): string | null
+}
