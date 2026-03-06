@@ -88,7 +88,7 @@ function tooltip(day: DayBars): string {
 </script>
 
 <template>
-  <div class="flex flex-col h-full min-h-0 px-4 py-3 gap-3 overflow-y-auto">
+  <div class="flex flex-col h-full min-h-0 px-4 py-3 gap-3 overflow-y-auto rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
     <h3 class="shrink-0 text-xs font-semibold text-content-secondary">
       {{ t('sessionActivityChart.title') }}
     </h3>
@@ -153,17 +153,17 @@ function tooltip(day: DayBars): string {
       <div class="flex items-center gap-4 shrink-0 flex-wrap">
         <div class="flex items-center gap-1.5">
           <div class="w-2.5 h-2.5 rounded-sm bg-emerald-500 dark:bg-emerald-600" />
-          <span class="text-[11px] text-content-faint">{{ t('status.completed') }}</span>
+          <span class="text-[11px] text-content-tertiary">{{ t('status.completed') }}</span>
         </div>
         <div class="flex items-center gap-1.5">
           <div class="w-2.5 h-2.5 rounded-sm bg-zinc-400 dark:bg-zinc-500" />
-          <span class="text-[11px] text-content-faint">{{ t('status.started') }}</span>
+          <span class="text-[11px] text-content-tertiary">{{ t('status.started') }}</span>
         </div>
         <div class="flex items-center gap-1.5">
           <div class="w-2.5 h-2.5 rounded-sm bg-red-500 dark:bg-red-600" />
-          <span class="text-[11px] text-content-faint">{{ t('status.blocked') }}</span>
+          <span class="text-[11px] text-content-tertiary">{{ t('status.blocked') }}</span>
         </div>
-        <span class="ml-auto text-[11px] text-content-faint font-mono">
+        <span class="ml-auto text-[11px] text-content-tertiary font-mono">
           {{ t('sessionActivityChart.maxPerDay', { n: maxTotal }) }}
         </span>
       </div>

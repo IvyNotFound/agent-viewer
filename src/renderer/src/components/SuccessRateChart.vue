@@ -111,7 +111,7 @@ function tooltip(day: DayRate): string {
 </script>
 
 <template>
-  <div class="flex flex-col h-full min-h-0 px-4 py-3 gap-3 overflow-y-auto">
+  <div class="flex flex-col h-full min-h-0 px-4 py-3 gap-3 overflow-y-auto rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
     <!-- Title with avg rate -->
     <div class="shrink-0 flex items-center gap-2">
       <h3 class="text-xs font-semibold text-content-secondary">
@@ -179,15 +179,15 @@ function tooltip(day: DayRate): string {
       <div class="flex items-center gap-4 shrink-0 flex-wrap">
         <div class="flex items-center gap-1.5">
           <div class="w-2.5 h-2.5 rounded-sm bg-emerald-500 dark:bg-emerald-600" />
-          <span class="text-[11px] text-content-faint">≥ 80%</span>
+          <span class="text-[11px] text-content-tertiary">≥ 80%</span>
         </div>
         <div class="flex items-center gap-1.5">
           <div class="w-2.5 h-2.5 rounded-sm bg-amber-400 dark:bg-amber-500" />
-          <span class="text-[11px] text-content-faint">≥ 50%</span>
+          <span class="text-[11px] text-content-tertiary">≥ 50%</span>
         </div>
         <div class="flex items-center gap-1.5">
           <div class="w-2.5 h-2.5 rounded-sm bg-red-500 dark:bg-red-600" />
-          <span class="text-[11px] text-content-faint">< 50%</span>
+          <span class="text-[11px] text-content-tertiary">< 50%</span>
         </div>
       </div>
     </template>
