@@ -165,8 +165,8 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div class="text-xl font-bold text-content-primary tabular-nums leading-tight">
               {{ activeAgentsCount }}
             </div>
-            <div class="text-[11px] text-content-faint truncate">Active agents</div>
-            <div class="text-[10px] text-content-muted truncate">sessions started</div>
+            <div class="text-xs text-content-secondary truncate">Active agents</div>
+            <div class="text-[11px] text-content-tertiary truncate">sessions started</div>
           </div>
         </div>
 
@@ -182,8 +182,8 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div class="text-xl font-bold text-content-primary tabular-nums leading-tight">
               {{ store.stats.in_progress }}
             </div>
-            <div class="text-[11px] text-content-faint truncate">In progress</div>
-            <div class="text-[10px] text-content-muted truncate">active tasks</div>
+            <div class="text-xs text-content-secondary truncate">In progress</div>
+            <div class="text-[11px] text-content-tertiary truncate">active tasks</div>
           </div>
         </div>
 
@@ -200,8 +200,8 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div class="text-xl font-bold text-content-primary tabular-nums leading-tight">
               {{ store.stats.todo }}
             </div>
-            <div class="text-[11px] text-content-faint truncate">To do</div>
-            <div class="text-[10px] text-content-muted truncate">pending tasks</div>
+            <div class="text-xs text-content-secondary truncate">To do</div>
+            <div class="text-[11px] text-content-tertiary truncate">pending tasks</div>
           </div>
         </div>
 
@@ -217,8 +217,8 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div class="text-xl font-bold text-content-primary tabular-nums leading-tight">
               {{ sessionsTodayCount }}
             </div>
-            <div class="text-[11px] text-content-faint truncate">Today</div>
-            <div class="text-[10px] text-content-muted truncate">sessions started</div>
+            <div class="text-xs text-content-secondary truncate">Today</div>
+            <div class="text-[11px] text-content-tertiary truncate">sessions started</div>
           </div>
         </div>
 
@@ -230,7 +230,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
         <!-- Tâches récentes -->
         <div class="flex flex-col rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
           <div class="shrink-0 px-3 py-2 border-b border-edge-subtle">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-content-faint">Recent tasks</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-content-secondary">Recent tasks</span>
           </div>
           <div class="flex-1 overflow-y-auto">
             <div
@@ -247,25 +247,25 @@ const PRIORITY_CLASSES: Record<string, string> = {
             >
               <!-- Statut badge -->
               <span
-                class="shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border"
+                class="shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium border"
                 :class="STATUT_CLASSES[task.statut] ?? STATUT_CLASSES.todo"
               >{{ STATUT_LABEL[task.statut] ?? task.statut }}</span>
 
               <!-- Title + meta -->
               <div class="flex-1 min-w-0">
-                <p class="text-xs text-content-secondary truncate leading-tight">{{ task.titre }}</p>
+                <p class="text-xs text-content-primary truncate leading-tight">{{ task.titre }}</p>
                 <div class="flex items-center gap-1.5 mt-0.5">
                   <span
                     v-if="task.agent_name"
-                    class="text-[10px] font-medium truncate"
+                    class="text-[11px] font-medium truncate"
                     :style="{ color: agentFg(task.agent_name) }"
                   >{{ task.agent_name }}</span>
-                  <span v-if="task.priority && task.priority !== 'normal'" class="text-[10px]" :class="PRIORITY_CLASSES[task.priority]">{{ task.priority }}</span>
+                  <span v-if="task.priority && task.priority !== 'normal'" class="text-[11px]" :class="PRIORITY_CLASSES[task.priority]">{{ task.priority }}</span>
                 </div>
               </div>
 
               <!-- Time -->
-              <span class="shrink-0 text-[10px] text-content-muted tabular-nums">
+              <span class="shrink-0 text-[11px] text-content-faint tabular-nums">
                 {{ relativeTime(task.updated_at) }}
               </span>
             </div>
@@ -275,7 +275,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
         <!-- Activité récente -->
         <div class="flex flex-col rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
           <div class="shrink-0 px-3 py-2 border-b border-edge-subtle">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-content-faint">Recent activity</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-content-secondary">Recent activity</span>
           </div>
           <div class="flex-1 overflow-y-auto">
             <div
@@ -292,19 +292,19 @@ const PRIORITY_CLASSES: Record<string, string> = {
               <!-- Agent badge -->
               <span
                 v-if="entry.agent_name"
-                class="shrink-0 text-[10px] font-medium font-mono mt-0.5"
+                class="shrink-0 text-[11px] font-medium font-mono mt-0.5"
                 :style="{ color: agentFg(entry.agent_name) }"
               >{{ entry.agent_name }}</span>
-              <span v-else class="shrink-0 text-[10px] text-content-faint mt-0.5">—</span>
+              <span v-else class="shrink-0 text-[11px] text-content-faint mt-0.5">—</span>
 
               <!-- Action + detail -->
               <div class="flex-1 min-w-0">
-                <p class="text-[11px] text-content-secondary font-mono">{{ entry.action }}</p>
-                <p v-if="entry.detail" class="text-[10px] text-content-faint truncate mt-0.5">{{ entry.detail }}</p>
+                <p class="text-xs text-content-primary font-mono">{{ entry.action }}</p>
+                <p v-if="entry.detail" class="text-[11px] text-content-secondary truncate mt-0.5">{{ entry.detail }}</p>
               </div>
 
               <!-- Time -->
-              <span class="shrink-0 text-[10px] text-content-muted tabular-nums">
+              <span class="shrink-0 text-[11px] text-content-faint tabular-nums">
                 {{ relativeTime(entry.created_at) }}
               </span>
             </div>
