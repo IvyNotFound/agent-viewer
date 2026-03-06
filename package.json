@@ -17,6 +17,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:mutation": "stryker run",
+    "test:mutation:renderer": "stryker run stryker.renderer.config.mjs",
+    "test:mutation:main": "stryker run stryker.main.config.mjs",
     "stryker:file": "stryker run --mutate",
     "stryker:bg": "bash scripts/stryker-run.sh",
     "test:e2e": "playwright test --config playwright.config.ts",

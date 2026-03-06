@@ -1,0 +1,51 @@
+name: Mutation Testing
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly on Monday at 03:00 UTC
+
+jobs:
+  mutation-renderer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Stryker (renderer)
+        run: npm run test:mutation:renderer
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-report-renderer
+          path: reports/mutation/renderer/
+
+  mutation-main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Stryker (main)
+        run: npm run test:mutation:main
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-report-main
+          path: reports/mutation/main/
