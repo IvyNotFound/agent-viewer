@@ -152,12 +152,16 @@ async function buildExtensions(): Promise<Extension[]> {
   return exts
 }
 
+// Holds content fetched before the editor is ready (race condition guard)
+let pendingContent: string | null = null
+
 async function initEditor(): Promise<void> {
   if (!editorEl.value) return
   view = new EditorView({
-    state: EditorState.create({ doc: '', extensions: await buildExtensions() }),
+    state: EditorState.create({ doc: pendingContent ?? '', extensions: await buildExtensions() }),
     parent: editorEl.value,
   })
+  pendingContent = null
 }
 
 async function load(): Promise<void> {
@@ -174,9 +178,14 @@ async function load(): Promise<void> {
     const result = await window.electronAPI.fsReadFile(props.filePath, tasksStore.projectPath)
     if (result.success) {
       originalContent.value = result.content ?? ''
-      view?.dispatch({
-        changes: { from: 0, to: view.state.doc.length, insert: originalContent.value }
-      })
+      if (view) {
+        view.dispatch({
+          changes: { from: 0, to: view.state.doc.length, insert: originalContent.value }
+        })
+      } else {
+        // Editor not ready yet — store content for initEditor to pick up
+        pendingContent = originalContent.value
+      }
     } else {
       error.value = result.error ?? 'Erreur de lecture'
     }

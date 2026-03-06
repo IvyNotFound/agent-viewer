@@ -16,7 +16,8 @@ async function openWslTerminal(): Promise<void> {
   await window.electronAPI.openWslTerminal()
 }
 
-const terminalTabs = computed(() => store.tabs.filter(t => !t.permanent))
+const terminalTabs = computed(() => store.tabs.filter(t => !t.permanent && t.type === 'terminal'))
+const fileTabs = computed(() => store.tabs.filter(t => t.type === 'file'))
 
 // ── Groupement par agent ──────────────────────────────────────────────────────
 interface TabGroup {
@@ -150,7 +151,7 @@ onMounted(() => {
   }
 })
 onUnmounted(() => { resizeObs?.disconnect() })
-watch(() => terminalTabs.value.map(t => t.id).join(), () => nextTick(updateScrollState))
+watch(() => [...terminalTabs.value, ...fileTabs.value].map(t => t.id).join(), () => nextTick(updateScrollState))
 watch(collapsedAgents, () => nextTick(updateScrollState), { deep: true })
 
 
@@ -329,6 +330,40 @@ function openGroupMenu(event: MouseEvent, group: TabGroup): void {
       @wheel="onWheel"
       @scroll="updateScrollState"
     >
+      <!-- Onglets fichiers -->
+      <button
+        v-for="tab in fileTabs"
+        :key="tab.id"
+        :class="[
+          'relative flex items-center gap-1.5 px-3 text-sm font-medium transition-all select-none rounded-t shrink-0 cursor-pointer mr-0.5',
+          store.activeTabId === tab.id
+            ? 'text-content-primary bg-surface-secondary'
+            : 'text-content-muted hover:text-content-secondary hover:bg-surface-secondary/50'
+        ]"
+        :title="tab.title"
+        :aria-label="t('explorer.files') + ': ' + tab.title"
+        @click="store.setActive(tab.id)"
+        @mousedown="onMiddleClick($event, tab)"
+      >
+        <!-- Icône fichier -->
+        <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5 shrink-0 text-content-subtle">
+          <path d="M4 0h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm5.5 1.5v2a1 1 0 0 0 1 1h2L9.5 1.5z"/>
+        </svg>
+        <span class="truncate max-w-[120px] font-mono text-xs">{{ tab.title }}</span>
+        <span v-if="tab.dirty" class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" :title="t('tabBar.unsaved')" />
+        <!-- Fermer -->
+        <span
+          class="flex items-center justify-center w-4 h-4 rounded opacity-40 hover:opacity-100 hover:text-red-400 hover:bg-black/20 transition-all text-xs cursor-pointer ml-auto"
+          :title="t('tabBar.closeTab')"
+          @click.stop="handleCloseTab(tab)"
+        >✕</span>
+        <!-- Indicateur actif -->
+        <span
+          v-if="store.activeTabId === tab.id"
+          class="absolute bottom-0 left-0 right-0 h-[2px] bg-content-faint"
+        ></span>
+      </button>
+
       <!-- Groupe agent -->
       <div
         v-for="(group, groupIdx) in groupedTerminalTabs"
