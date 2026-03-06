@@ -11,6 +11,19 @@
 import { createI18n } from 'vue-i18n'
 import fr from '../locales/fr.json'
 import en from '../locales/en.json'
+import es from '../locales/es.json'
+import pt from '../locales/pt.json'
+import ar from '../locales/ar.json'
+import ja from '../locales/ja.json'
+import ptBR from '../locales/pt-BR.json'
+import pl from '../locales/pl.json'
+import no from '../locales/no.json'
+import da from '../locales/da.json'
+import ru from '../locales/ru.json'
+import fi from '../locales/fi.json'
+import sv from '../locales/sv.json'
+import de from '../locales/de.json'
+import it from '../locales/it.json'
 
 export type AppLocale =
   | 'fr'
@@ -41,6 +54,19 @@ const i18n = createI18n({
   messages: {
     fr,
     en,
+    pt,
+    es,
+    ar,
+    ja,
+    'pt-BR': ptBR,
+    pl,
+    no,
+    da,
+    ru,
+    fi,
+    sv,
+    de,
+    it,
   },
 })
 
