@@ -1,9 +1,9 @@
 /**
  * Vue I18n plugin setup for agent-viewer.
  *
- * Supports: 'fr' (default), 'en', and additional locales.
+ * Supports 18 locales: fr (default), en, es, pt, pt-BR, de, no, it, ar, ru, pl, sv, fi, da, tr, zh-CN, ko, ja.
  * Language is persisted in localStorage under the key 'language'.
- * Fallback locale: 'en'.
+ * Fallback locale: 'en'. Arabic (ar) is loaded but full RTL layout support is deferred.
  *
  * @module plugins/i18n
  */

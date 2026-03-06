@@ -1,6 +1,6 @@
 # agent-viewer
 
-![Version](https://img.shields.io/badge/version-0.25.0-blue)
+![Version](https://img.shields.io/badge/version-0.26.0-blue)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 
 Desktop interface in Trello/Jira style for real-time visualization of Claude agent tasks from a local SQLite database. The application manages agents, launches Claude sessions in external WSL terminals, and monitors activity in real time.

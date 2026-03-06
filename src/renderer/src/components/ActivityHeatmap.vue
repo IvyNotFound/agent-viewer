@@ -1,4 +1,13 @@
 <script setup lang="ts">
+/**
+ * ActivityHeatmap — GitHub-style contribution heatmap of agent activity.
+ *
+ * Renders a 52×7 grid covering the past 365 days. Each cell represents one day;
+ * colour intensity (0–4) reflects the number of tasks completed (`done`/`archived`)
+ * on that day. An agent filter bar lets the user restrict the view to a single agent.
+ *
+ * @prop {string} dbPath - Absolute path to the active project SQLite database.
+ */
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
