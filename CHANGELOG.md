@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.25.0] - 2026-03-06
+
+### Changes
+- chore(devops): add project skills config + code-telemetry script + coverage gitignore (7cee450)
+- chore(devops): add scoped Stryker npm scripts + CI mutation workflow (T993) (26d6265)
+- chore(devops): add stryker background runner scripts for WSL (T992) (cf76c86)
+- docs: update README and JSDoc for v0.25.0 (ba3313b)
+- fix(front-vuejs): split StreamView.spec.ts to fix 400-line limit (T962) (1ec94de)
+- test(back-electron): split ipc-integration.spec.ts into modules ≤400 lines (T985) (4fb4d8a)
+- test: configure stryker mutation testing (T987) (440e372)
+- test(front-vuejs): add unit tests for SidebarGroupNode, SuccessRateChart, UpdateNotification (T983) (e8ad95c)
+- fix(front-vuejs): evict _html events on hidden tabs to free RAM (T962) (0536295)
+- fix(front-vuejs): add stubActions:false to StreamView mountStream pinia (T963) (0183b0b)
+- test(back-electron): integration tests IPC handlers + SQLite (T985) (5f03011)
+- fix(front-vuejs): memoize activeToolForSession() via _activeToolComputeds Map (T967) (a58fc6a)
+- fix(front-vuejs): clear debounceId in watch(dbPath) to prevent stale timer on project change (T966) (9056287)
+- fix(back-electron): auto-close started sessions when task passes to done (T990) (b236220)
+- fix(front-vuejs): pass parentId in createAgentGroup delegate (T959) (cd7d320)
+- fix(front-vuejs): clear boardAssignees in closeProject() to prevent inter-project leak (T965) (6c71c99)
+- test(front-vuejs): mettre en place les tests E2E avec Playwright + Electron (T986) (31cc844)
+- chore(git): document commit 3cda7ee T961/T987 scope anomaly in ADRS.md (T991) (3d1a543)
+- chore(devops): move renderer-only deps to devDependencies (T957) (9ac7824)
+- docs(global): add screenshots to README and untrack img/ from .gitignore (cb084ff)
+- fix(back-electron): bootstrap skips v24 migration on legacy DBs (T958) (64e748c)
+- test: configure stryker mutation testing (T987) (3cda7ee)
+- fix(front-vuejs): dashboard visual cohesion — fix empty spaces and layout after tab merge (T960) (4b89145)
+- fix(back-electron): include stdout context in error:exit for code 1 crashes (T954) (fd53288)
+- ux(front-vuejs): improve DashboardOverview readability — larger fonts, better contrast (T956) (6e3d274)
 ## [0.24.0] - 2026-03-05
 
 ### Changes
