@@ -294,6 +294,7 @@ export const useTasksStore = defineStore('tasks', () => {
     locks.value = []
     agentGroups.value = []
     perimetresData.value = []
+    boardAssignees.value.clear()
     stats.value = { todo: 0, in_progress: 0, done: 0, archived: 0 }
     selectedTask.value = null
     taskComments.value = []
