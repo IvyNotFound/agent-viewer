@@ -20,6 +20,7 @@ import { GENERIC_AGENTS_SV } from './agents-sv'
 import { GENERIC_AGENTS_FI } from './agents-fi'
 import { GENERIC_AGENTS_RU } from './agents-ru'
 import { GENERIC_AGENTS_PL } from './agents-pl'
+import { GENERIC_AGENTS_ZH_CN } from './agents-zh-cn'
 import { DEFAULT_AGENTS_GLOBAL } from './agents-default'
 import { DEFAULT_AGENTS_SCOPED } from './agents-default-scoped'
 
@@ -46,7 +47,7 @@ export const GENERIC_AGENTS_BY_LANG: Record<AgentLanguage, DefaultAgent[]> = {
   fi: GENERIC_AGENTS_FI,
   da: GENERIC_AGENTS_EN,
   tr: GENERIC_AGENTS_EN,
-  'zh-CN': GENERIC_AGENTS_EN,
+  'zh-CN': GENERIC_AGENTS_ZH_CN,
   ko: GENERIC_AGENTS_EN,
   ja: GENERIC_AGENTS_JA,
 }
