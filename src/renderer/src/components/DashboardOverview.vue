@@ -314,7 +314,12 @@ const PRIORITY_CLASSES: Record<string, string> = {
       </div>
 
       <!-- ── Heatmap (full width) ──────────────────────────────────────── -->
-      <ActivityHeatmap v-if="store.dbPath" :db-path="store.dbPath" class="w-full" />
+      <div class="rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
+        <div class="shrink-0 px-3 py-2 border-b border-edge-subtle">
+          <span class="text-xs font-semibold uppercase tracking-wider text-content-secondary">Activity</span>
+        </div>
+        <ActivityHeatmap v-if="store.dbPath" :db-path="store.dbPath" />
+      </div>
 
       <!-- ── Charts 14d (2 columns) ────────────────────────────────────── -->
       <div class="grid grid-cols-2 gap-3">

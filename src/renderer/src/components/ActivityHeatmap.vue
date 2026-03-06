@@ -119,7 +119,7 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
 </script>
 
 <template>
-  <div class="flex flex-col h-full min-h-0 overflow-y-auto px-4 py-3 gap-3">
+  <div class="flex flex-col px-4 py-3 gap-3">
     <!-- Filters -->
     <div class="flex items-center gap-3 shrink-0 flex-wrap">
       <span class="text-xs text-content-faint font-semibold">{{ t('heatmap.agentLabel') }}</span>
