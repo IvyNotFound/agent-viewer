@@ -32,23 +32,23 @@ declare global {
       searchTasks(
         dbPath: string,
         query: string,
-        filters?: { statut?: string; agent_id?: number; perimetre?: string }
+        filters?: { status?: string; agent_id?: number; scope?: string }
       ): Promise<{ success: boolean; results: unknown[]; error?: string }>
       // Config DB
       getConfigValue(dbPath: string, key: string): Promise<{ success: boolean; value: string | null; error?: string }>
       setConfigValue(dbPath: string, key: string, value: string): Promise<{ success: boolean; error?: string }>
       // Agents
-      updateAgent(dbPath: string, agentId: number, updates: { name?: string; type?: string; perimetre?: string | null; thinkingMode?: string | null; allowedTools?: string | null; systemPrompt?: string | null; systemPromptSuffix?: string | null; autoLaunch?: boolean; permissionMode?: 'default' | 'auto' | null; maxSessions?: number }): Promise<{ success: boolean; error?: string }>
-      createAgent(dbPath: string, projectPath: string, data: { name: string; type: string; perimetre: string | null; thinkingMode: string | null; systemPrompt: string | null; description: string }): Promise<{ success: boolean; agentId?: number; claudeMdUpdated?: boolean; error?: string }>
+      updateAgent(dbPath: string, agentId: number, updates: { name?: string; type?: string; scope?: string | null; thinkingMode?: string | null; allowedTools?: string | null; systemPrompt?: string | null; systemPromptSuffix?: string | null; autoLaunch?: boolean; permissionMode?: 'default' | 'auto' | null; maxSessions?: number }): Promise<{ success: boolean; error?: string }>
+      createAgent(dbPath: string, projectPath: string, data: { name: string; type: string; scope: string | null; thinkingMode: string | null; systemPrompt: string | null; description: string }): Promise<{ success: boolean; agentId?: number; claudeMdUpdated?: boolean; error?: string }>
       // Task assignees (multi-agent — ADR-008)
       getTaskAssignees(dbPath: string, taskId: number): Promise<{ success: boolean; assignees: Array<{ agent_id: number; agent_name: string; role: string | null; assigned_at: string }>; error?: string }>
       setTaskAssignees(dbPath: string, taskId: number, assignees: Array<{ agentId: number; role?: string | null }>): Promise<{ success: boolean; error?: string }>
-      tasksGetArchived(dbPath: string, params: { page: number; pageSize: number; agentId?: number | null; perimetre?: string | null }): Promise<{ rows: unknown[]; total: number }>
+      tasksGetArchived(dbPath: string, params: { page: number; pageSize: number; agentId?: number | null; scope?: string | null }): Promise<{ rows: unknown[]; total: number }>
       deleteAgent(dbPath: string, agentId: number): Promise<{ success: boolean; hasHistory?: boolean; error?: string }>
       addPerimetre(dbPath: string, name: string): Promise<{ success: boolean; id?: number; error?: string }>
-      tasksUpdateStatus(dbPath: string, taskId: number, statut: string): Promise<{ success: boolean; error?: string }>
+      tasksUpdateStatus(dbPath: string, taskId: number, status: string): Promise<{ success: boolean; error?: string }>
       duplicateAgent(dbPath: string, agentId: number): Promise<{ success: boolean; agentId?: number; name?: string; error?: string }>
-      getTaskLinks(dbPath: string, taskId: number): Promise<{ success: boolean; links: Array<{ id: number; type: string; from_task: number; to_task: number; from_titre: string; from_statut: string; to_titre: string; to_statut: string }>; error?: string }>
+      getTaskLinks(dbPath: string, taskId: number): Promise<{ success: boolean; links: Array<{ id: number; type: string; from_task: number; to_task: number; from_title: string; from_status: string; to_title: string; to_status: string }>; error?: string }>
       // Agent groups (T556/T557/T945/T946)
       agentGroupsList(dbPath: string): Promise<{ success: boolean; groups: AgentGroup[]; error?: string }>
       agentGroupsCreate(dbPath: string, name: string, parentId?: number | null): Promise<{ success: boolean; group?: { id: number; name: string; sort_order: number; parent_id: number | null; created_at: string }; error?: string }>
@@ -76,7 +76,7 @@ declare global {
       /** Subscribe to Claude Code hook events (SessionStart, SubagentStart/Stop, PreToolUse, PostToolUse). Returns unsubscribe fn. */
       onHookEvent(callback: (event: { event: string; payload: unknown; ts: number }) => void): () => void
       /** Quality stats per agent: total tasks, rejections, rejection rate (T770). Heuristic-based. */
-      tasksQualityStats(dbPath: string, params?: { perimetre?: string | null }): Promise<{ success: boolean; rows: unknown[]; error?: string }>
+      tasksQualityStats(dbPath: string, params?: { scope?: string | null }): Promise<{ success: boolean; rows: unknown[]; error?: string }>
       /** Export project.db as ZIP to ~/Downloads (T771/T833). */
       projectExportZip(dbPath: string): Promise<{ success: boolean; path?: string; error?: string }>
       /** Auto-updater (T862/T864): check, download, install, events. */

@@ -25,7 +25,7 @@ interface SessionTokenRow {
   agent_name: string
   started_at: string
   ended_at: string | null
-  statut: string
+  status: string
   tokens_in: number
   tokens_out: number
   tokens_cache_read: number
@@ -170,7 +170,7 @@ async function fetchStats(): Promise<void> {
         store.dbPath,
         `SELECT s.id, s.agent_id,
                 a.name as agent_name,
-                s.started_at, s.ended_at, s.statut,
+                s.started_at, s.ended_at, s.status,
                 COALESCE(s.tokens_in, 0) as tokens_in,
                 COALESCE(s.tokens_out, 0) as tokens_out,
                 COALESCE(s.tokens_cache_read, 0) as tokens_cache_read,

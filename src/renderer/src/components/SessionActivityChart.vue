@@ -5,7 +5,7 @@ import { useTasksStore } from '@renderer/stores/tasks'
 
 interface DayRow {
   day: string
-  statut: string
+  status: string
   count: number
 }
 
@@ -29,11 +29,11 @@ async function fetchData(): Promise<void> {
   loading.value = true
   try {
     const result = await window.electronAPI.queryDb(store.dbPath, `
-      SELECT date(started_at) as day, statut, COUNT(*) as count
+      SELECT date(started_at) as day, status, COUNT(*) as count
       FROM sessions
       WHERE started_at >= date('now', '-14 days')
         AND started_at IS NOT NULL
-      GROUP BY day, statut
+      GROUP BY day, status
       ORDER BY day
     `)
     rows.value = result as DayRow[]
@@ -63,9 +63,9 @@ const days = computed<string[]>(() => last14Days())
 const grouped = computed<DayBars[]>(() =>
   days.value.map(day => {
     const dayRows = rows.value.filter(r => r.day === day)
-    const completed = dayRows.find(r => r.statut === 'completed')?.count ?? 0
-    const blocked = dayRows.find(r => r.statut === 'blocked')?.count ?? 0
-    const started = dayRows.find(r => r.statut === 'started')?.count ?? 0
+    const completed = dayRows.find(r => r.status === 'completed')?.count ?? 0
+    const blocked = dayRows.find(r => r.status === 'blocked')?.count ?? 0
+    const started = dayRows.find(r => r.status === 'started')?.count ?? 0
     return { date: day, completed, blocked, started, total: completed + blocked + started }
   })
 )

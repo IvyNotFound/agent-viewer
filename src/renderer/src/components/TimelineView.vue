@@ -9,8 +9,8 @@ const store = useTasksStore()
 
 interface TimelineTask {
   id: number
-  titre: string
-  statut: string
+  title: string
+  status: string
   created_at: string
   started_at: string | null
   completed_at: string | null
@@ -50,10 +50,10 @@ async function fetchTasks(): Promise<void> {
     const cutoff = new Date(Date.now() - daysBack.value * 86_400_000).toISOString().replace('T', ' ').slice(0, 19)
     const result = await window.electronAPI.queryDb(
       store.dbPath,
-      `SELECT t.id, t.titre, t.statut, t.created_at, t.started_at, t.completed_at,
+      `SELECT t.id, t.title, t.status, t.created_at, t.started_at, t.completed_at,
               t.effort, a.name as agentName, a.id as agentId
        FROM tasks t
-       LEFT JOIN agents a ON t.agent_assigne_id = a.id
+       LEFT JOIN agents a ON t.agent_assigned_id = a.id
        WHERE t.created_at >= ?
        ORDER BY a.name, t.created_at`,
       [cutoff]
@@ -101,7 +101,7 @@ function taskStartMs(task: TimelineTask): number {
 }
 
 function taskEndMs(task: TimelineTask): number {
-  if (task.statut === 'in_progress') return now.value
+  if (task.status === 'in_progress') return now.value
   if (task.completed_at) return new Date(task.completed_at).getTime()
   // For tasks with no end date, show at least 30 min
   return taskStartMs(task) + 1_800_000
@@ -162,8 +162,8 @@ function barWidth(task: TimelineTask): string {
   return w.toFixed(3) + '%'
 }
 
-function statusColorClass(statut: string): string {
-  switch (statut) {
+function statusColorClass(status: string): string {
+  switch (status) {
     case 'in_progress': return 'bg-blue-500'
     case 'done': return 'bg-green-600'
     case 'archived': return 'bg-zinc-600'
@@ -182,7 +182,7 @@ function formatDate(d: string | null): string {
 
 function taskDurationLabel(task: TimelineTask): string {
   const start = taskStartMs(task)
-  const end = task.statut === 'in_progress' ? now.value : taskEndMs(task)
+  const end = task.status === 'in_progress' ? now.value : taskEndMs(task)
   const ms = end - start
   if (ms < 0) return '—'
   if (ms < 3_600_000) return `${Math.round(ms / 60_000)}min`
@@ -207,10 +207,10 @@ function hideTooltip(): void {
 }
 
 const legendItems = computed(() => [
-  { statut: 'todo', label: t('columns.todo') },
-  { statut: 'in_progress', label: t('columns.in_progress') },
-  { statut: 'done', label: t('columns.done') },
-  { statut: 'archived', label: t('columns.archived') },
+  { status: 'todo', label: t('columns.todo') },
+  { status: 'in_progress', label: t('columns.in_progress') },
+  { status: 'done', label: t('columns.done') },
+  { status: 'archived', label: t('columns.archived') },
 ])
 </script>
 
@@ -313,7 +313,7 @@ const legendItems = computed(() => [
               v-for="task in group.tasks"
               :key="task.id"
               class="absolute top-2 h-6 rounded cursor-pointer hover:opacity-80 transition-opacity"
-              :class="[statusColorClass(task.statut), task.statut === 'in_progress' ? 'animate-pulse' : '']"
+              :class="[statusColorClass(task.status), task.status === 'in_progress' ? 'animate-pulse' : '']"
               :style="{ left: barLeft(task), width: barWidth(task), minWidth: '4px' }"
               @mouseenter="showTooltip($event, task)"
               @mouseleave="hideTooltip"
@@ -326,10 +326,10 @@ const legendItems = computed(() => [
           <span class="text-xs text-content-muted">{{ t('timeline.legend') }}</span>
           <div
             v-for="item in legendItems"
-            :key="item.statut"
+            :key="item.status"
             class="flex items-center gap-1.5"
           >
-            <div class="w-3 h-3 rounded-sm" :class="statusColorClass(item.statut)" />
+            <div class="w-3 h-3 rounded-sm" :class="statusColorClass(item.status)" />
             <span class="text-xs text-content-muted">{{ item.label }}</span>
           </div>
         </div>
@@ -343,17 +343,17 @@ const legendItems = computed(() => [
         class="fixed z-50 bg-surface-primary border border-edge-default rounded-lg shadow-xl p-3 text-xs pointer-events-none"
         :style="{ left: (tooltip.x + 14) + 'px', top: (tooltip.y - 14) + 'px', maxWidth: '280px' }"
       >
-        <div class="font-semibold text-content-primary mb-1.5 leading-snug">{{ tooltip.task.titre }}</div>
+        <div class="font-semibold text-content-primary mb-1.5 leading-snug">{{ tooltip.task.title }}</div>
         <div class="space-y-0.5 text-content-muted">
           <div>
             {{ t('timeline.tooltipStatus') }}:
             <span
               :class="{
-                'text-blue-400': tooltip.task.statut === 'in_progress',
-                'text-green-400': tooltip.task.statut === 'done',
-                'text-content-tertiary': tooltip.task.statut === 'todo',
+                'text-blue-400': tooltip.task.status === 'in_progress',
+                'text-green-400': tooltip.task.status === 'done',
+                'text-content-tertiary': tooltip.task.status === 'todo',
               }"
-            >{{ tooltip.task.statut }}</span>
+            >{{ tooltip.task.status }}</span>
           </div>
           <div>{{ t('timeline.tooltipStart') }}: {{ formatDate(tooltip.task.started_at ?? tooltip.task.created_at) }}</div>
           <div v-if="tooltip.task.completed_at">

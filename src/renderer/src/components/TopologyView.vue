@@ -13,8 +13,8 @@ interface TopologyRow {
   id: number
   name: string
   type: string
-  perimetre: string | null
-  session_statut: string | null
+  scope: string | null
+  session_status: string | null
   session_tokens: number | null
   current_task: string | null
 }
@@ -28,18 +28,18 @@ async function fetchTopology(): Promise<void> {
   try {
     const result = await window.electronAPI.queryDb(
       store.dbPath,
-      `SELECT a.id, a.name, a.type, a.perimetre,
-              s.statut as session_statut,
+      `SELECT a.id, a.name, a.type, a.scope,
+              s.status as session_status,
               s.tokens_in + s.tokens_out as session_tokens,
-              t.titre as current_task
+              t.title as current_task
        FROM agents a
        LEFT JOIN sessions s ON s.id = (
          SELECT s2.id FROM sessions s2
-         WHERE s2.agent_id = a.id AND s2.statut = 'started'
+         WHERE s2.agent_id = a.id AND s2.status = 'started'
          ORDER BY s2.started_at DESC LIMIT 1
        )
-       LEFT JOIN tasks t ON t.agent_assigne_id = a.id AND t.statut = 'in_progress'
-       ORDER BY a.perimetre, a.type, a.name`,
+       LEFT JOIN tasks t ON t.agent_assigned_id = a.id AND t.status = 'in_progress'
+       ORDER BY a.scope, a.type, a.name`,
       []
     ) as TopologyRow[]
     rows.value = result
@@ -53,16 +53,16 @@ async function fetchTopology(): Promise<void> {
 type AgentStatus = 'active' | 'blocked' | 'idle'
 
 function agentStatus(row: TopologyRow): AgentStatus {
-  if (!row.session_statut) return 'idle'
-  if (row.session_statut === 'blocked') return 'blocked'
+  if (!row.session_status) return 'idle'
+  if (row.session_status === 'blocked') return 'blocked'
   return 'active'
 }
 
-// Group rows by perimetre — null perimetre goes into a dedicated "global" bucket
+// Group rows by scope — null scope goes into a dedicated "global" bucket
 const grouped = computed(() => {
   const groups = new Map<string, TopologyRow[]>()
   for (const row of rows.value) {
-    const key = row.perimetre ?? '__global__'
+    const key = row.scope ?? '__global__'
     if (!groups.has(key)) groups.set(key, [])
     groups.get(key)!.push(row)
   }

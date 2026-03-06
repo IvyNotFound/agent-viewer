@@ -15,8 +15,8 @@ interface AgentRow {
   id: number
   name: string
   type: string
-  perimetre: string | null
-  session_statut: string | null
+  scope: string | null
+  session_status: string | null
   tasks_in_progress: number
   tasks_todo: number
 }
@@ -53,10 +53,10 @@ async function fetchData(): Promise<void> {
     const [result] = await Promise.all([
       window.electronAPI.queryDb(
         store.dbPath,
-        `SELECT a.id, a.name, a.type, a.perimetre,
-                s.statut as session_statut,
-                (SELECT COUNT(*) FROM tasks WHERE agent_assigne_id = a.id AND statut = 'in_progress') as tasks_in_progress,
-                (SELECT COUNT(*) FROM tasks WHERE agent_assigne_id = a.id AND statut = 'todo') as tasks_todo
+        `SELECT a.id, a.name, a.type, a.scope,
+                s.status as session_status,
+                (SELECT COUNT(*) FROM tasks WHERE agent_assigned_id = a.id AND status = 'in_progress') as tasks_in_progress,
+                (SELECT COUNT(*) FROM tasks WHERE agent_assigned_id = a.id AND status = 'todo') as tasks_todo
          FROM agents a
          LEFT JOIN sessions s ON s.id = (
            SELECT s2.id FROM sessions s2 WHERE s2.agent_id = a.id
@@ -78,11 +78,11 @@ async function fetchData(): Promise<void> {
 // ── Status ────────────────────────────────────────────────────────────────────
 
 function dotStatus(agent: AgentRow): DotStatus {
-  if (agent.session_statut === 'blocked') return 'red'
-  if (agent.session_statut === 'started') return 'cyan'
+  if (agent.session_status === 'blocked') return 'red'
+  if (agent.session_status === 'started') return 'cyan'
   if (agent.tasks_todo > 0) return 'green'
   if (agent.tasks_in_progress > 0) return 'cyan'
-  if (!agent.session_statut) return 'gray'
+  if (!agent.session_status) return 'gray'
   return 'yellow'
 }
 
@@ -154,10 +154,10 @@ const layout = computed<{ groups: LayoutGroup[]; totalW: number; totalH: number 
       curX += col.w + GROUP_H_GAP
     }
   } else {
-    // Fallback: group by perimetre
+    // Fallback: group by scope
     const grouped = new Map<string, AgentRow[]>()
     for (const a of agents.value) {
-      const key = a.perimetre ?? '__global__'
+      const key = a.scope ?? '__global__'
       if (!grouped.has(key)) grouped.set(key, [])
       grouped.get(key)!.push(a)
     }

@@ -35,17 +35,17 @@ function onDragStart(e: DragEvent): void {
 const contextMenu = ref<{ x: number; y: number } | null>(null)
 
 function onContextMenu(event: MouseEvent): void {
-  if (props.task.statut !== 'in_progress') return
+  if (props.task.status !== 'in_progress') return
   event.preventDefault()
   contextMenu.value = { x: event.clientX, y: event.clientY }
 }
 
 async function handleRelaunch(): Promise<void> {
-  if (!props.task.agent_assigne_id) {
+  if (!props.task.agent_assigned_id) {
     toast.push(t('board.noAgentAssigned'), 'warn')
     return
   }
-  const agent = store.agents.find(a => a.id === props.task.agent_assigne_id)
+  const agent = store.agents.find(a => a.id === props.task.agent_assigned_id)
   if (!agent) {
     toast.push(t('board.agentNotFound'), 'error')
     return
@@ -62,7 +62,7 @@ async function handleRelaunch(): Promise<void> {
 }
 
 const contextMenuItems = computed<ContextMenuItem[]>(() => {
-  if (props.task.statut !== 'in_progress') return []
+  if (props.task.status !== 'in_progress') return []
   const alreadyOpen = tabsStore.tabs.some(
     tab => tab.type === 'terminal' && tab.taskId === props.task.id
   )
@@ -88,7 +88,7 @@ const formattedCreatedAt = computed(() => formatDate(props.task.created_at))
 const formattedUpdatedAt = computed(() => formatDate(props.task.updated_at))
 
 const isStaleTask = computed(() =>
-  props.task.statut === 'in_progress' && isStale(props.task.started_at, store.staleThresholdMinutes)
+  props.task.status === 'in_progress' && isStale(props.task.started_at, store.staleThresholdMinutes)
 )
 const staleTooltip = computed(() => {
   const d = staleDuration(props.task.started_at)
@@ -119,7 +119,7 @@ const PRIORITY_LABEL: Record<string, string> = {
 <template>
   <div
     class="bg-surface-secondary border border-edge-default rounded-lg p-3 hover:border-content-faint transition-colors cursor-pointer min-h-[120px] flex flex-col"
-    :draggable="task.statut === 'todo' || task.statut === 'in_progress'"
+    :draggable="task.status === 'todo' || task.status === 'in_progress'"
     @click="store.openTask(task)"
     @dragstart="onDragStart"
     @contextmenu="onContextMenu"
@@ -128,12 +128,12 @@ const PRIORITY_LABEL: Record<string, string> = {
     <div class="flex items-start justify-between gap-2 mb-2">
       <div class="flex items-start gap-1.5 flex-1 min-w-0">
         <span
-          v-if="task.statut === 'in_progress'"
+          v-if="task.status === 'in_progress'"
           class="mt-1 shrink-0 w-2 h-2 rounded-full bg-cyan-400 animate-pulse"
           :title="t('task.running')"
           :aria-label="t('task.running')"
         />
-        <p class="text-sm text-content-primary font-medium leading-snug min-w-0 break-words">{{ task.titre }}</p>
+        <p class="text-sm text-content-primary font-medium leading-snug min-w-0 break-words">{{ task.title }}</p>
       </div>
       <div class="flex items-center gap-1 shrink-0">
         <span
@@ -153,16 +153,16 @@ const PRIORITY_LABEL: Record<string, string> = {
     </div>
 
     <!-- Badges: perimeter + agent avatars -->
-    <div v-if="task.perimetre || task.agent_name || assigneeAvatars.length > 0" class="flex flex-wrap gap-1 mb-2">
+    <div v-if="task.scope || task.agent_name || assigneeAvatars.length > 0" class="flex flex-wrap gap-1 mb-2">
       <span
-        v-if="task.perimetre"
+        v-if="task.scope"
         class="text-xs px-1.5 py-0.5 rounded font-mono border"
         :style="{
-          color: perimeterFg(task.perimetre),
-          backgroundColor: perimeterBg(task.perimetre),
-          borderColor: perimeterBorder(task.perimetre),
+          color: perimeterFg(task.scope),
+          backgroundColor: perimeterBg(task.scope),
+          borderColor: perimeterBorder(task.scope),
         }"
-      >{{ task.perimetre }}</span>
+      >{{ task.scope }}</span>
       <!-- Multi-agent avatars (≤3 + overflow badge) -->
       <div v-if="assigneeAvatars.length > 0" class="flex items-center gap-0.5">
         <div
@@ -178,11 +178,11 @@ const PRIORITY_LABEL: Record<string, string> = {
         >+{{ overflowCount }}</div>
       </div>
       <!-- Fallback: single agent badge when no task_agents rows -->
-      <AgentBadge v-else-if="task.agent_name" :name="task.agent_name" :perimetre="task.agent_perimetre" />
+      <AgentBadge v-else-if="task.agent_name" :name="task.agent_name" :perimetre="task.agent_scope" />
     </div>
 
     <!-- Footer: dates left, #id right -->
-    <div :class="['flex items-end justify-between gap-2 mt-auto pt-2', (task.perimetre || task.agent_name) && 'border-t border-edge-default/50']">
+    <div :class="['flex items-end justify-between gap-2 mt-auto pt-2', (task.scope || task.agent_name) && 'border-t border-edge-default/50']">
       <div class="flex flex-col gap-0.5">
         <p class="text-xs text-content-subtle">
           <span class="text-content-muted">{{ t('taskDetail.created') }}</span> {{ formattedCreatedAt }}

@@ -128,7 +128,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateAgent: (dbPath: string, agentId: number, updates: {
     name?: string
     type?: string
-    perimetre?: string | null
+    scope?: string | null
     thinkingMode?: string | null
     allowedTools?: string | null
     systemPrompt?: string | null
@@ -155,7 +155,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   createAgent: (
     dbPath: string,
     projectPath: string,
-    data: { name: string; type: string; perimetre: string | null; thinkingMode: string | null; systemPrompt: string | null; description: string }
+    data: { name: string; type: string; scope: string | null; thinkingMode: string | null; systemPrompt: string | null; description: string }
   ): Promise<{ success: boolean; agentId?: number; claudeMdUpdated?: boolean; error?: string }> =>
     ipcRenderer.invoke('create-agent', dbPath, projectPath, data),
 
@@ -182,7 +182,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   searchTasks: (
     dbPath: string,
     query: string,
-    filters?: { statut?: string; agent_id?: number; perimetre?: string }
+    filters?: { status?: string; agent_id?: number; scope?: string }
   ): Promise<{ success: boolean; results: unknown[]; error?: string }> =>
     ipcRenderer.invoke('search-tasks', dbPath, query, filters),
 
@@ -191,20 +191,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
     page: number
     pageSize: number
     agentId?: number | null
-    perimetre?: string | null
+    scope?: string | null
   }): Promise<{ rows: unknown[]; total: number }> =>
     ipcRenderer.invoke('tasks:getArchived', dbPath, params),
 
   // Update task status (drag & drop, etc.)
-  tasksUpdateStatus: (dbPath: string, taskId: number, statut: string): Promise<{ success: boolean; error?: string }> =>
-    ipcRenderer.invoke('tasks:updateStatus', dbPath, taskId, statut),
+  tasksUpdateStatus: (dbPath: string, taskId: number, status: string): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('tasks:updateStatus', dbPath, taskId, status),
 
   // Duplicate an agent (copies all fields, generates unique name <name>-copy)
   duplicateAgent: (dbPath: string, agentId: number): Promise<{ success: boolean; agentId?: number; name?: string; error?: string }> =>
     ipcRenderer.invoke('agent:duplicate', dbPath, agentId),
 
   // Task dependency links
-  getTaskLinks: (dbPath: string, taskId: number): Promise<{ success: boolean; links: Array<{ id: number; type: string; from_task: number; to_task: number; from_titre: string; from_statut: string; to_titre: string; to_statut: string }>; error?: string }> =>
+  getTaskLinks: (dbPath: string, taskId: number): Promise<{ success: boolean; links: Array<{ id: number; type: string; from_task: number; to_task: number; from_title: string; from_status: string; to_title: string; to_status: string }>; error?: string }> =>
     ipcRenderer.invoke('task:getLinks', dbPath, taskId),
 
   // T518: Collect token stats from JSONL for the latest completed session
@@ -325,7 +325,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('project:exportZip', dbPath),
 
   /** Quality stats per agent: total tasks, rejections, rejection rate. */
-  tasksQualityStats: (dbPath: string, params?: { perimetre?: string | null }): Promise<{ success: boolean; rows: unknown[]; error?: string }> =>
+  tasksQualityStats: (dbPath: string, params?: { scope?: string | null }): Promise<{ success: boolean; rows: unknown[]; error?: string }> =>
     ipcRenderer.invoke('tasks:qualityStats', dbPath, params),
 
   /** Scan project source files and return LOC stats per language. */

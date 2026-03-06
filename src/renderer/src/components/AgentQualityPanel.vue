@@ -15,13 +15,13 @@ const filterPerimetre = ref<string | null>(null)
 
 const perimetres = computed<string[]>(() => {
   const set = new Set<string>()
-  rows.value.forEach(r => { if (r.agent_perimetre) set.add(r.agent_perimetre) })
+  rows.value.forEach(r => { if (r.agent_scope) set.add(r.agent_scope) })
   return Array.from(set).sort()
 })
 
 const filteredRows = computed(() =>
   filterPerimetre.value
-    ? rows.value.filter(r => r.agent_perimetre === filterPerimetre.value)
+    ? rows.value.filter(r => r.agent_scope === filterPerimetre.value)
     : rows.value
 )
 

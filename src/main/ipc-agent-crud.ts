@@ -135,6 +135,7 @@ export function registerAgentCrudHandlers(): void {
   ipcMain.handle('update-agent', async (_event, dbPath: string, agentId: number, updates: {
     name?: string
     type?: string
+    scope?: string | null
     perimetre?: string | null
     thinkingMode?: string | null
     allowedTools?: string | null
@@ -156,7 +157,7 @@ export function registerAgentCrudHandlers(): void {
         const vals: (string | number | null)[] = []
         if (updates.name !== undefined) { cols.push('name = ?'); vals.push(updates.name) }
         if (updates.type !== undefined) { cols.push('type = ?'); vals.push(updates.type) }
-        if (updates.perimetre !== undefined) { cols.push('scope = ?'); vals.push(updates.perimetre || null) }
+        if ((updates.scope ?? updates.perimetre) !== undefined) { cols.push('scope = ?'); vals.push(updates.scope ?? updates.perimetre ?? null) }
         if (updates.thinkingMode !== undefined) { cols.push('thinking_mode = ?'); vals.push(updates.thinkingMode || null) }
         if (updates.allowedTools !== undefined) { cols.push('allowed_tools = ?'); vals.push(updates.allowedTools || null) }
         if (updates.systemPrompt !== undefined) { cols.push('system_prompt = ?'); vals.push(updates.systemPrompt || null) }

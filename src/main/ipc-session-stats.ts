@@ -123,8 +123,8 @@ export function registerSessionStatsHandlers(): void {
     const where = conditions.join(' AND ')
     const [rows, countRows] = await Promise.all([
       queryLive(dbPath, `
-        SELECT t.*, a.name as agent_name, a.scope as agent_perimetre,
-          c.name as agent_createur_name
+        SELECT t.*, a.name as agent_name, a.scope as agent_scope,
+          c.name as agent_creator_name
         FROM tasks t
         LEFT JOIN agents a ON a.id = t.agent_assigned_id
         LEFT JOIN agents c ON c.id = t.agent_creator_id
@@ -163,7 +163,7 @@ export function registerSessionStatsHandlers(): void {
         SELECT
           a.id as agent_id,
           a.name as agent_name,
-          a.scope as agent_perimetre,
+          a.scope as agent_scope,
           COUNT(DISTINCT t.id) as total_tasks,
           COUNT(DISTINCT CASE WHEN tc.id IS NOT NULL THEN t.id END) as rejected_tasks,
           ROUND(

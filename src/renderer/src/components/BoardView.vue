@@ -70,15 +70,15 @@ function formatDate(iso: string): string {
 async function onTaskDropped(taskId: number, targetStatut: string): Promise<void> {
   const task = store.tasks.find(t => t.id === taskId)
   if (!task) return
-  if (task.statut === 'in_progress') return
+  if (task.status === 'in_progress') return
 
   if (targetStatut === 'in_progress') {
-    if (!task.agent_assigne_id) {
+    if (!task.agent_assigned_id) {
       toast.push(t('board.noAgentAssigned'), 'warn')
       return
     }
 
-    const agent = store.agents.find(a => a.id === task.agent_assigne_id)
+    const agent = store.agents.find(a => a.id === task.agent_assigned_id)
     if (!agent) {
       toast.push(t('board.agentNotFound'), 'error')
       return
@@ -96,8 +96,8 @@ async function onTaskDropped(taskId: number, targetStatut: string): Promise<void
       await store.setTaskStatut(taskId, 'in_progress')
     } catch (err) {
       if (err instanceof Error && err.message === 'TASK_BLOCKED') {
-        const blockers = (err as Error & { blockers: Array<{ id: number; titre: string; statut: string }> }).blockers
-        const blockerList = blockers.map(b => `#${b.id} ${b.titre} (${b.statut})`).join(', ')
+        const blockers = (err as Error & { blockers: Array<{ id: number; title: string; status: string }> }).blockers
+        const blockerList = blockers.map(b => `#${b.id} ${b.title} (${b.status})`).join(', ')
         toast.push(t('board.taskBlocked', { blockers: blockerList }), 'warn')
       }
       return
@@ -212,7 +212,7 @@ const archivedGroupsSorted = computed(() => {
             :key="task.id"
             class="ml-2 text-xs text-orange-200/80 cursor-pointer hover:text-orange-200 transition-colors"
             @click="store.openTask(task)"
-          >#{{ task.id }} {{ task.titre }}</span>
+          >#{{ task.id }} {{ task.title }}</span>
         </div>
       </div>
 
@@ -272,8 +272,8 @@ const archivedGroupsSorted = computed(() => {
                 >
                   <div class="flex items-start justify-between gap-3">
                     <div class="flex-1 min-w-0">
-                      <p class="text-sm text-content-tertiary group-hover:text-content-primary truncate transition-colors">{{ task.titre }}</p>
-                      <span v-if="task.perimetre" class="text-[10px] font-mono text-content-subtle mt-1 block">{{ task.perimetre }}</span>
+                      <p class="text-sm text-content-tertiary group-hover:text-content-primary truncate transition-colors">{{ task.title }}</p>
+                      <span v-if="task.scope" class="text-[10px] font-mono text-content-subtle mt-1 block">{{ task.scope }}</span>
                     </div>
                     <div class="shrink-0 text-right space-y-0.5">
                       <p class="text-[10px] text-content-muted font-mono tabular-nums">{{ formatDate(task.updated_at) }}</p>

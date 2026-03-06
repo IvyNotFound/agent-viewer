@@ -50,7 +50,7 @@ export function useArchivedPagination() {
         page: p,
         pageSize: PAGE_SIZE,
         agentId: store.selectedAgentId ?? null,
-        perimetre: store.selectedPerimetre ?? null,
+        scope: store.selectedPerimetre ?? null,
       })
       archivedTasks.value = (result.rows as Task[]).map(normalizeRow)
       total.value = result.total

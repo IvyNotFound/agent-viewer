@@ -78,7 +78,7 @@ onMounted(async () => {
     const a = props.agent
     name.value = a.name
     type.value = ALL_TYPES.includes(a.type) ? a.type : 'dev'
-    perimetre.value = a.perimetre ?? ''
+    perimetre.value = a.scope ?? ''
     thinkingMode.value = a.thinking_mode === 'disabled' ? 'disabled' : 'auto'
     maxSessions.value = a.max_sessions === -1 ? '' : String(a.max_sessions ?? 3)
     // Load system_prompt and system_prompt_suffix from DB (may be more up-to-date than agent prop)
@@ -109,7 +109,7 @@ async function submit() {
       const result = await window.electronAPI.updateAgent(store.dbPath, props.agent.id, {
         name: trimmed,
         type: type.value,
-        perimetre: isScoped.value && perimetre.value.trim() ? perimetre.value.trim() : null,
+        scope: isScoped.value && perimetre.value.trim() ? perimetre.value.trim() : null,
         thinkingMode: thinkingMode.value,
         systemPrompt: systemPrompt.value.trim() || null,
         systemPromptSuffix: systemPromptSuffix.value.trim() || null,
@@ -130,7 +130,7 @@ async function submit() {
     const result = await window.electronAPI.createAgent(store.dbPath, store.projectPath, {
       name: trimmed,
       type: type.value,
-      perimetre: isScoped.value && perimetre.value.trim() ? perimetre.value.trim() : null,
+      scope: isScoped.value && perimetre.value.trim() ? perimetre.value.trim() : null,
       thinkingMode: thinkingMode.value,
       systemPrompt: systemPrompt.value.trim() || null,
       description: description.value.trim() || defaultDescription(type.value),

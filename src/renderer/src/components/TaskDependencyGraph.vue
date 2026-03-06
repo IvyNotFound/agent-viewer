@@ -14,14 +14,14 @@ const emit = defineEmits<{
   (e: 'navigate', taskId: number): void
 }>()
 
-/** Link type values as stored in the DB (with accents). */
-type LinkType = 'bloque' | 'dépend_de' | 'lié_à' | 'duplique'
+/** Link type values as stored in the DB. */
+type LinkType = 'blocks' | 'depends_on' | 'related_to' | 'duplicates'
 
 const LINK_TYPE_COLOR: Record<string, string> = {
-  'bloque':    'bg-red-500/20 text-red-400 border-red-500/30',
-  'dépend_de': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  'lié_à':     'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  'duplique':  'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
+  'blocks':     'bg-red-500/20 text-red-400 border-red-500/30',
+  'depends_on': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  'related_to': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  'duplicates': 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -34,23 +34,23 @@ const STATUS_COLOR: Record<string, string> = {
 /** Tasks this task blocks or that this task depends on (outgoing) */
 const outgoing = computed(() =>
   props.links.filter(l =>
-    (l.type === 'bloque' && l.from_task === props.taskId) ||
-    (l.type === 'dépend_de' && l.to_task === props.taskId)
+    (l.type === 'blocks' && l.from_task === props.taskId) ||
+    (l.type === 'depends_on' && l.to_task === props.taskId)
   )
 )
 
 /** Tasks that block this task or that this task depends on (incoming) */
 const incoming = computed(() =>
   props.links.filter(l =>
-    (l.type === 'bloque' && l.to_task === props.taskId) ||
-    (l.type === 'dépend_de' && l.from_task === props.taskId)
+    (l.type === 'blocks' && l.to_task === props.taskId) ||
+    (l.type === 'depends_on' && l.from_task === props.taskId)
   )
 )
 
-/** Symmetric links: lié_à, duplique */
+/** Symmetric links: related_to, duplicates */
 const related = computed(() =>
   props.links.filter(l =>
-    (l.type === 'lié_à' || l.type === 'duplique') &&
+    (l.type === 'related_to' || l.type === 'duplicates') &&
     (l.from_task === props.taskId || l.to_task === props.taskId)
   )
 )
@@ -64,20 +64,20 @@ function linkedTaskId(link: TaskLink): number {
 }
 
 function linkedTaskTitle(link: TaskLink): string {
-  return link.from_task === props.taskId ? link.to_titre : link.from_titre
+  return link.from_task === props.taskId ? link.to_title : link.from_title
 }
 
-function linkedTaskStatut(link: TaskLink): string {
-  return link.from_task === props.taskId ? link.to_statut : link.from_statut
+function linkedTaskStatus(link: TaskLink): string {
+  return link.from_task === props.taskId ? link.to_status : link.from_status
 }
 
 function typeBadgeLabel(link: TaskLink): string {
   const type = link.type as LinkType
   const isSource = link.from_task === props.taskId
-  if (type === 'bloque') return isSource ? t('taskDetail.blocks') : t('taskDetail.blockedBy')
-  if (type === 'dépend_de') return isSource ? t('taskDetail.blockedBy') : t('taskDetail.blocks')
-  if (type === 'lié_à') return t('taskDetail.relatedTo')
-  if (type === 'duplique') return 'duplique'
+  if (type === 'blocks') return isSource ? t('taskDetail.blocks') : t('taskDetail.blockedBy')
+  if (type === 'depends_on') return isSource ? t('taskDetail.blockedBy') : t('taskDetail.blocks')
+  if (type === 'related_to') return t('taskDetail.relatedTo')
+  if (type === 'duplicates') return 'duplicates'
   return type
 }
 </script>
@@ -100,11 +100,11 @@ function typeBadgeLabel(link: TaskLink): string {
             class="w-full flex items-center gap-1.5 text-left hover:bg-surface-secondary rounded px-1 py-0.5 transition-colors group"
             @click="emit('navigate', linkedTaskId(link))"
           >
-            <span :class="['text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0', LINK_TYPE_COLOR[link.type] ?? LINK_TYPE_COLOR['lié_à']]">
+            <span :class="['text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0', LINK_TYPE_COLOR[link.type] ?? LINK_TYPE_COLOR['related_to']]">
               {{ typeBadgeLabel(link) }}
             </span>
-            <span :class="['text-[9px] px-1 py-0.5 rounded border font-mono shrink-0', STATUS_COLOR[linkedTaskStatut(link)] ?? STATUS_COLOR.todo]">
-              {{ linkedTaskStatut(link) }}
+            <span :class="['text-[9px] px-1 py-0.5 rounded border font-mono shrink-0', STATUS_COLOR[linkedTaskStatus(link)] ?? STATUS_COLOR.todo]">
+              {{ linkedTaskStatus(link) }}
             </span>
             <span class="text-xs text-content-secondary truncate group-hover:text-content-primary transition-colors">
               #{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}
@@ -123,11 +123,11 @@ function typeBadgeLabel(link: TaskLink): string {
             class="w-full flex items-center gap-1.5 text-left hover:bg-surface-secondary rounded px-1 py-0.5 transition-colors group"
             @click="emit('navigate', linkedTaskId(link))"
           >
-            <span :class="['text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0', LINK_TYPE_COLOR[link.type] ?? LINK_TYPE_COLOR['lié_à']]">
+            <span :class="['text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0', LINK_TYPE_COLOR[link.type] ?? LINK_TYPE_COLOR['related_to']]">
               {{ typeBadgeLabel(link) }}
             </span>
-            <span :class="['text-[9px] px-1 py-0.5 rounded border font-mono shrink-0', STATUS_COLOR[linkedTaskStatut(link)] ?? STATUS_COLOR.todo]">
-              {{ linkedTaskStatut(link) }}
+            <span :class="['text-[9px] px-1 py-0.5 rounded border font-mono shrink-0', STATUS_COLOR[linkedTaskStatus(link)] ?? STATUS_COLOR.todo]">
+              {{ linkedTaskStatus(link) }}
             </span>
             <span class="text-xs text-content-secondary truncate group-hover:text-content-primary transition-colors">
               #{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}
@@ -136,7 +136,7 @@ function typeBadgeLabel(link: TaskLink): string {
         </div>
       </div>
 
-      <!-- Related: lié_à, duplique -->
+      <!-- Related: related_to, duplicates -->
       <div v-if="related.length > 0">
         <p class="text-[10px] text-content-faint mb-1">{{ t('taskDetail.relatedTo') }}</p>
         <div class="space-y-1">
@@ -146,11 +146,11 @@ function typeBadgeLabel(link: TaskLink): string {
             class="w-full flex items-center gap-1.5 text-left hover:bg-surface-secondary rounded px-1 py-0.5 transition-colors group"
             @click="emit('navigate', linkedTaskId(link))"
           >
-            <span :class="['text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0', LINK_TYPE_COLOR[link.type] ?? LINK_TYPE_COLOR['lié_à']]">
+            <span :class="['text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0', LINK_TYPE_COLOR[link.type] ?? LINK_TYPE_COLOR['related_to']]">
               {{ link.type }}
             </span>
-            <span :class="['text-[9px] px-1 py-0.5 rounded border font-mono shrink-0', STATUS_COLOR[linkedTaskStatut(link)] ?? STATUS_COLOR.todo]">
-              {{ linkedTaskStatut(link) }}
+            <span :class="['text-[9px] px-1 py-0.5 rounded border font-mono shrink-0', STATUS_COLOR[linkedTaskStatus(link)] ?? STATUS_COLOR.todo]">
+              {{ linkedTaskStatus(link) }}
             </span>
             <span class="text-xs text-content-secondary truncate group-hover:text-content-primary transition-colors">
               #{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}

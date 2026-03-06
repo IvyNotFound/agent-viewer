@@ -6,7 +6,7 @@ import { normalizeRow } from '@renderer/utils/db'
 
 export const AGENT_CTE_SQL = `
   WITH latest_sessions AS (
-    SELECT agent_id, statut, started_at,
+    SELECT agent_id, status, started_at,
            ROW_NUMBER() OVER (PARTITION BY agent_id ORDER BY started_at DESC) as rn
     FROM sessions
   ),
@@ -18,13 +18,13 @@ export const AGENT_CTE_SQL = `
     SELECT a.id,
       CASE WHEN (
         EXISTS (SELECT 1 FROM sessions WHERE agent_id = a.id) OR
-        EXISTS (SELECT 1 FROM tasks WHERE agent_assigne_id = a.id) OR
+        EXISTS (SELECT 1 FROM tasks WHERE agent_assigned_id = a.id) OR
         EXISTS (SELECT 1 FROM task_comments WHERE agent_id = a.id) OR
         EXISTS (SELECT 1 FROM agent_logs WHERE agent_id = a.id)
       ) THEN 1 ELSE 0 END as has_history
     FROM agents a
   )
-  SELECT a.*, ls.statut as session_statut, ls.started_at as session_started_at, ml.last_log_at, ah.has_history
+  SELECT a.*, ls.status as session_status, ls.started_at as session_started_at, ml.last_log_at, ah.has_history
   FROM agents a
   LEFT JOIN latest_sessions ls ON ls.agent_id = a.id AND ls.rn = 1
   LEFT JOIN max_logs ml ON ml.agent_id = a.id

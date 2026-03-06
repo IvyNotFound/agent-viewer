@@ -79,7 +79,7 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     if (!dbPath.value) return
 
     if (!initialized) {
-      previousStatuses = new Map(newTasks.map(t => [t.id, t.statut]))
+      previousStatuses = new Map(newTasks.map(t => [t.id, t.status]))
       initialized = true
       // Check threshold on initial load — tasks already done before app restart must trigger review
       if (settingsStore.autoReviewEnabled) {
@@ -98,8 +98,8 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
       if (settingsStore.autoLaunchAgentSessions) {
         for (const task of current) {
           const prevStatus = previousStatuses.get(task.id)
-          if (prevStatus && prevStatus !== 'done' && task.statut === 'done' && task.agent_assigne_id) {
-            const agent = agents.value.find(a => a.id === task.agent_assigne_id)
+          if (prevStatus && prevStatus !== 'done' && task.status === 'done' && task.agent_assigned_id) {
+            const agent = agents.value.find(a => a.id === task.agent_assigned_id)
             if (agent && agent.auto_launch !== 0 && tabsStore.hasAgentTerminal(agent.name)) {
               scheduleClose(agent.name, agent.id)
             }
@@ -117,8 +117,8 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
           if (pendingCloses.has(agent.name)) continue // already scheduled
           const hasActiveTasks = current.some(
             t =>
-              t.agent_assigne_id === agent.id &&
-              (t.statut === 'todo' || t.statut === 'in_progress')
+              t.agent_assigned_id === agent.id &&
+              (t.status === 'todo' || t.status === 'in_progress')
           )
           if (!hasActiveTasks) {
             scheduleClose(agent.name, agent.id, FALLBACK_CLOSE_NOTASK_MS)
@@ -132,7 +132,7 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
       }
 
       // Update tracking state
-      previousStatuses = new Map(current.map(t => [t.id, t.statut]))
+      previousStatuses = new Map(current.map(t => [t.id, t.status]))
     }, 80)
   }, { deep: false })
 
@@ -155,7 +155,7 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
   function checkReviewThreshold(currentTasks: Task[]): void {
     // Fast O(N) count without array allocation — filter only when threshold is met (T533)
     let doneCount = 0
-    for (const t of currentTasks) if (t.statut === 'done') doneCount++
+    for (const t of currentTasks) if (t.status === 'done') doneCount++
     if (doneCount < settingsStore.autoReviewThreshold) return
 
     if (Date.now() - lastReviewLaunchedAt < REVIEW_COOLDOWN_MS) return
@@ -166,7 +166,7 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     if (tabsStore.hasAgentTerminal(reviewAgent.name)) return
 
     lastReviewLaunchedAt = Date.now()
-    launchReviewSession(reviewAgent, currentTasks.filter(t => t.statut === 'done'))
+    launchReviewSession(reviewAgent, currentTasks.filter(t => t.status === 'done'))
   }
 
   function doClose(agentName: string): void {

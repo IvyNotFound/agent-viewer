@@ -32,7 +32,7 @@ interface ActivityRow {
 
 // ── Metric: active agents ────────────────────────────────────────────────────
 const activeAgentsCount = computed(() =>
-  store.agents.filter(a => a.session_statut === 'started').length
+  store.agents.filter(a => a.session_status === 'started').length
 )
 
 // ── Metric: sessions today ────────────────────────────────────────────────────
@@ -250,12 +250,12 @@ const PRIORITY_CLASSES: Record<string, string> = {
               <!-- Statut badge -->
               <span
                 class="shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium border"
-                :class="STATUT_CLASSES[task.statut] ?? STATUT_CLASSES.todo"
-              >{{ STATUT_LABEL[task.statut] ?? task.statut }}</span>
+                :class="STATUT_CLASSES[task.status] ?? STATUT_CLASSES.todo"
+              >{{ STATUT_LABEL[task.status] ?? task.status }}</span>
 
               <!-- Title + meta -->
               <div class="flex-1 min-w-0">
-                <p class="text-xs text-content-primary truncate leading-tight">{{ task.titre }}</p>
+                <p class="text-xs text-content-primary truncate leading-tight">{{ task.title }}</p>
                 <div class="flex items-center gap-1.5 mt-0.5">
                   <span
                     v-if="task.agent_name"

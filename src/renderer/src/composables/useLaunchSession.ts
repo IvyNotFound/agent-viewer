@@ -144,7 +144,7 @@ export function useLaunchSession() {
       const promptResult = await window.electronAPI.getAgentSystemPrompt(dbPath, agent.id)
       if (!promptResult.success) return false
 
-      const taskList = doneTasks.map(t => `T${t.id} ${t.titre}`).join(', ')
+      const taskList = doneTasks.map(t => `T${t.id} ${t.title}`).join(', ')
       const userPrompt = `Audit les tâches terminées : ${taskList}. Valide ou rejette chacune.`
       const finalPrompt = await window.electronAPI.buildAgentPrompt(
         agent.name,

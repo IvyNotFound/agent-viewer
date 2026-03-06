@@ -40,7 +40,7 @@ const STATUTS = computed(() => [
 const searchIndex = computed<Map<number, string>>(() => {
   const map = new Map<number, string>()
   for (const t of tasksStore.tasks) {
-    map.set(t.id, (t.titre + ' ' + (t.description ?? '')).toLowerCase())
+    map.set(t.id, (t.title + ' ' + (t.description ?? '')).toLowerCase())
   }
   return map
 })
@@ -48,9 +48,9 @@ const searchIndex = computed<Map<number, string>>(() => {
 const filteredTasks = computed<Task[]>(() => {
   const q = debouncedQuery.value.toLowerCase().trim()
   return tasksStore.tasks.filter(t => {
-    if (filterStatut.value && t.statut !== filterStatut.value) return false
-    if (filterAgentId.value !== null && Number(t.agent_assigne_id) !== Number(filterAgentId.value)) return false
-    if (filterPerimetre.value && t.perimetre !== filterPerimetre.value) return false
+    if (filterStatut.value && t.status !== filterStatut.value) return false
+    if (filterAgentId.value !== null && Number(t.agent_assigned_id) !== Number(filterAgentId.value)) return false
+    if (filterPerimetre.value && t.scope !== filterPerimetre.value) return false
     if (!q) return true
     if (String(t.id) === q) return true
     return searchIndex.value.get(t.id)?.includes(q) ?? false
@@ -261,13 +261,13 @@ function statutDot(statut: string): string {
                 @mouseenter="selectedIndex = index"
               >
                 <!-- Status dot -->
-                <span class="w-2 h-2 rounded-full shrink-0 mt-0.5" :class="statutDot(task.statut)" />
+                <span class="w-2 h-2 rounded-full shrink-0 mt-0.5" :class="statutDot(task.status)" />
 
                 <!-- Content -->
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
                     <span class="text-xs font-mono text-content-faint shrink-0">#{{ task.id }}</span>
-                    <span class="text-sm text-content-primary truncate font-medium">{{ task.titre }}</span>
+                    <span class="text-sm text-content-primary truncate font-medium">{{ task.title }}</span>
                   </div>
                   <div class="flex items-center gap-2 mt-0.5">
                     <span
@@ -276,10 +276,10 @@ function statutDot(statut: string): string {
                       :style="{ color: agentFg(task.agent_name) }"
                     >{{ task.agent_name }}</span>
                     <span
-                      v-if="task.perimetre"
+                      v-if="task.scope"
                       class="text-[10px] font-mono px-1 py-0.5 rounded shrink-0"
-                      :style="{ color: agentFg(task.perimetre), backgroundColor: agentBg(task.perimetre) }"
-                    >{{ task.perimetre }}</span>
+                      :style="{ color: agentFg(task.scope), backgroundColor: agentBg(task.scope) }"
+                    >{{ task.scope }}</span>
                   </div>
                 </div>
 

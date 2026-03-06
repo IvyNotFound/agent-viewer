@@ -20,7 +20,7 @@ const task = computed(() => store.selectedTask)
 
 // ── Agents lookup ─────────────────────────────────────────────────────────────
 const valideurAgent = computed(() =>
-  store.agents.find(a => a.id === task.value?.agent_valideur_id) ?? null
+  store.agents.find(a => a.id === task.value?.agent_validator_id) ?? null
 )
 
 const statusLabel = (key: string) => ({
@@ -72,7 +72,7 @@ const renderedDescription = computed(() => {
 
 // Memoized rendered comments — avoids re-parsing markdown on every render
 const renderedComments = computed(() =>
-  store.taskComments.map(c => ({ ...c, _html: renderMarkdown(c.contenu) }))
+  store.taskComments.map(c => ({ ...c, _html: renderMarkdown(c.content) }))
 )
 
 function relativeTime(iso: string): string {
@@ -107,16 +107,16 @@ const blockedByLinks = computed<TaskLink[]>(() => {
   if (!task.value) return []
   const id = task.value.id
   return store.taskLinks.filter(l =>
-    (l.type === 'bloque' && l.to_task === id) ||
-    (l.type === 'dépend_de' && l.from_task === id)
+    (l.type === 'blocks' && l.to_task === id) ||
+    (l.type === 'depends_on' && l.from_task === id)
   )
 })
 
 const unresolvedBlockers = computed(() => {
-  if (!task.value || task.value.statut !== 'todo') return []
+  if (!task.value || task.value.status !== 'todo') return []
   return blockedByLinks.value.filter(link => {
-    const blockerStatut = link.from_task === task.value!.id ? link.to_statut : link.from_statut
-    return blockerStatut !== 'done' && blockerStatut !== 'archived'
+    const blockerStatus = link.from_task === task.value!.id ? link.to_status : link.from_status
+    return blockerStatus !== 'done' && blockerStatus !== 'archived'
   })
 })
 
@@ -183,20 +183,20 @@ onUnmounted(() => {
         <!-- Header -->
         <div class="flex items-start justify-between gap-3 px-5 py-4 border-b border-edge-subtle shrink-0">
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-content-primary leading-snug mb-2">{{ task.titre }}</p>
+            <p class="text-sm font-semibold text-content-primary leading-snug mb-2">{{ task.title }}</p>
             <div class="flex flex-wrap gap-1.5">
-              <span :class="['text-xs px-2 py-0.5 rounded-full border font-medium', STATUS_COLORS[task.statut]]">
-                {{ statusLabel(task.statut) }}
+              <span :class="['text-xs px-2 py-0.5 rounded-full border font-medium', STATUS_COLORS[task.status]]">
+                {{ statusLabel(task.status) }}
               </span>
               <span
-                v-if="task.perimetre"
+                v-if="task.scope"
                 class="text-xs px-1.5 py-0.5 rounded font-mono border"
                 :style="{
-                  color: perimeterFg(task.perimetre),
-                  backgroundColor: perimeterBg(task.perimetre),
-                  borderColor: perimeterBorder(task.perimetre),
+                  color: perimeterFg(task.scope),
+                  backgroundColor: perimeterBg(task.scope),
+                  borderColor: perimeterBorder(task.scope),
                 }"
-              >{{ task.perimetre }}</span>
+              >{{ task.scope }}</span>
               <span
                 v-if="task.effort"
                 :class="['text-xs font-bold px-2 py-0.5 rounded font-mono border', EFFORT_BADGE[task.effort]]"
@@ -250,9 +250,9 @@ onUnmounted(() => {
             <div class="px-4 py-3 border-b border-edge-subtle shrink-0">
               <p class="text-[10px] font-semibold text-content-subtle uppercase tracking-wider mb-2">{{ t('taskDetail.agents') }}</p>
               <div class="space-y-1.5">
-                <div v-if="task.agent_createur_name" class="flex items-center gap-2">
+                <div v-if="task.agent_creator_name" class="flex items-center gap-2">
                   <span class="text-[10px] text-content-faint w-14 shrink-0">{{ t('taskDetail.creator') }}</span>
-                  <AgentBadge :name="task.agent_createur_name" />
+                  <AgentBadge :name="task.agent_creator_name" />
                 </div>
                 <div v-if="task.agent_name" class="flex items-center gap-2">
                   <span class="text-[10px] text-content-faint w-14 shrink-0">{{ t('taskDetail.assigned') }}</span>

@@ -23,8 +23,8 @@ const savingPerimetre = ref(false)
 const taskCountByPerimetre = computed(() => {
   const map = new Map<string, number>()
   for (const task of store.tasks) {
-    if (task.statut !== 'archived' && task.perimetre) {
-      map.set(task.perimetre, (map.get(task.perimetre) ?? 0) + 1)
+    if (task.status !== 'archived' && task.scope) {
+      map.set(task.scope, (map.get(task.scope) ?? 0) + 1)
     }
   }
   return map
@@ -33,8 +33,8 @@ const taskCountByPerimetre = computed(() => {
 const agentCountByPerimetre = computed(() => {
   const map = new Map<string, number>()
   for (const a of store.agents) {
-    if (a.perimetre) {
-      map.set(a.perimetre, (map.get(a.perimetre) ?? 0) + 1)
+    if (a.scope) {
+      map.set(a.scope, (map.get(a.scope) ?? 0) + 1)
     }
   }
   return map

@@ -39,22 +39,22 @@ async function fetchData(): Promise<void> {
     const [heatData, agentData] = await Promise.all([
       window.electronAPI.queryDb(props.dbPath, `
         SELECT date(t.completed_at) as day,
-               t.agent_assigne_id as agentId,
+               t.agent_assigned_id as agentId,
                a.name as agentName,
                COUNT(*) as count
         FROM tasks t
-        LEFT JOIN agents a ON t.agent_assigne_id = a.id
-        WHERE t.statut IN ('done', 'archived')
+        LEFT JOIN agents a ON t.agent_assigned_id = a.id
+        WHERE t.status IN ('done', 'archived')
           AND t.completed_at IS NOT NULL
           AND t.completed_at >= date('now', '-365 days')
-        GROUP BY day, t.agent_assigne_id
+        GROUP BY day, t.agent_assigned_id
         ORDER BY day
       `),
       window.electronAPI.queryDb(props.dbPath, `
         SELECT DISTINCT a.id, a.name
         FROM agents a
-        JOIN tasks t ON t.agent_assigne_id = a.id
-        WHERE t.statut IN ('done', 'archived')
+        JOIN tasks t ON t.agent_assigned_id = a.id
+        WHERE t.status IN ('done', 'archived')
           AND t.completed_at IS NOT NULL
           AND t.completed_at >= date('now', '-365 days')
         ORDER BY a.name

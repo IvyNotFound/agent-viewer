@@ -78,14 +78,14 @@ export const useTasksStore = defineStore('tasks', () => {
   // P3-B: single O(N) pass over tasks — Set deduplicates, Array.from+sort at the end only
   const perimetres = computed((): string[] => {
     const seen = new Set<string>()
-    for (const t of tasks.value) if (t.perimetre) seen.add(t.perimetre)
+    for (const t of tasks.value) if (t.scope) seen.add(t.scope)
     return Array.from(seen).sort()
   })
 
   const filteredTasks = computed(() =>
     tasks.value.filter(t => {
-      if (selectedAgentId.value !== null && Number(t.agent_assigne_id) !== Number(selectedAgentId.value)) return false
-      if (selectedPerimetre.value !== null && t.perimetre !== selectedPerimetre.value) return false
+      if (selectedAgentId.value !== null && Number(t.agent_assigned_id) !== Number(selectedAgentId.value)) return false
+      if (selectedPerimetre.value !== null && t.scope !== selectedPerimetre.value) return false
       return true
     })
   )
@@ -96,7 +96,7 @@ export const useTasksStore = defineStore('tasks', () => {
       todo: [], in_progress: [], done: [], archived: [],
     }
     for (const t of filteredTasks.value) {
-      if (t.statut in groups) groups[t.statut as keyof typeof groups].push(t)
+      if (t.status in groups) groups[t.status as keyof typeof groups].push(t)
     }
     return groups
   })
@@ -120,32 +120,32 @@ export const useTasksStore = defineStore('tasks', () => {
       // Split tasks query: load all active tasks + cap done tasks to avoid memory bloat (T819)
       const [rawLiveTasks, rawDoneTasks, rawAgents, rawLocks, rawStats, rawPerimetres, rawBoardAssignees] = await Promise.all([
         query<Task>(`
-          SELECT t.*, a.name as agent_name, a.perimetre as agent_perimetre,
-            c.name as agent_createur_name
+          SELECT t.*, a.name as agent_name, a.scope as agent_scope,
+            c.name as agent_creator_name
           FROM tasks t
-          LEFT JOIN agents a ON a.id = t.agent_assigne_id
-          LEFT JOIN agents c ON c.id = t.agent_createur_id
-          WHERE t.statut IN ('todo', 'in_progress')
+          LEFT JOIN agents a ON a.id = t.agent_assigned_id
+          LEFT JOIN agents c ON c.id = t.agent_creator_id
+          WHERE t.status IN ('todo', 'in_progress')
           ORDER BY t.updated_at DESC
         `),
         query<Task>(`
-          SELECT t.*, a.name as agent_name, a.perimetre as agent_perimetre,
-            c.name as agent_createur_name
+          SELECT t.*, a.name as agent_name, a.scope as agent_scope,
+            c.name as agent_creator_name
           FROM tasks t
-          LEFT JOIN agents a ON a.id = t.agent_assigne_id
-          LEFT JOIN agents c ON c.id = t.agent_createur_id
-          WHERE t.statut = 'done'
+          LEFT JOIN agents a ON a.id = t.agent_assigned_id
+          LEFT JOIN agents c ON c.id = t.agent_creator_id
+          WHERE t.status = 'done'
           ORDER BY t.updated_at DESC
           LIMIT ${DONE_TASKS_LIMIT}
         `),
         query<Agent>(AGENT_CTE_SQL),
         query<Lock>(LOCKS_SQL),
-        query<{ statut: string; count: number }>(`
-          SELECT statut, COUNT(*) as count FROM tasks GROUP BY statut
+        query<{ status: string; count: number }>(`
+          SELECT status, COUNT(*) as count FROM tasks GROUP BY status
         `),
         query<Perimetre>(`
-          SELECT id, name, dossier, techno, description, actif
-          FROM perimetres WHERE actif = 1 ORDER BY name
+          SELECT id, name, folder, techno, description, active
+          FROM scopes WHERE active = 1 ORDER BY name
         `),
         // Batch load all board assignees in one query — eliminates N per-card IPC calls (T787)
         query<{ task_id: number; agent_id: number; agent_name: string; role: string | null }>(`
@@ -153,25 +153,25 @@ export const useTasksStore = defineStore('tasks', () => {
           FROM task_agents ta
           JOIN agents a ON a.id = ta.agent_id
           JOIN tasks t ON t.id = ta.task_id
-          WHERE t.statut != 'archived'
+          WHERE t.status != 'archived'
         `)
       ])
       const rawTasks = [...rawLiveTasks, ...rawDoneTasks]
       doneTasksLimited.value = rawDoneTasks.length === DONE_TASKS_LIMIT
 
       const newTasks = rawTasks.map(normalizeRow) as Task[]
-      // Desktop notifications — detect statut transitions (T755)
+      // Desktop notifications — detect status transitions (T755)
       if (settingsStore.notificationsEnabled && Notification.permission === 'granted' && tasks.value.length > 0) {
-        const prevMap = new Map(tasks.value.map(t => [t.id, t.statut]))
+        const prevMap = new Map(tasks.value.map(t => [t.id, t.status]))
         const now = Date.now()
         for (const t of newTasks) {
           const prev = prevMap.get(t.id)
-          if (prev && prev !== t.statut && ['in_progress', 'done'].includes(t.statut)) {
+          if (prev && prev !== t.status && ['in_progress', 'done'].includes(t.status)) {
             // Debounce: skip if notified for this task in last 5s
             if (now - (_lastNotifTs[t.id] ?? 0) < 5000) continue
             _lastNotifTs[t.id] = now
-            new Notification(`Tâche ${t.statut === 'done' ? 'terminée' : 'démarrée'}`, {
-              body: `${t.titre} — ${(t as Task & { agent_name?: string }).agent_name ?? '?'}`,
+            new Notification(`Task ${t.status === 'done' ? 'completed' : 'started'}`, {
+              body: `${t.title} — ${(t as Task & { agent_name?: string }).agent_name ?? '?'}`,
               silent: false,
             })
           }
@@ -201,8 +201,8 @@ export const useTasksStore = defineStore('tasks', () => {
 
       const s: Stats = { todo: 0, in_progress: 0, done: 0, archived: 0 }
       for (const row of rawStats) {
-        if (row.statut in s) {
-          s[row.statut as keyof Stats] = row.count
+        if (row.status in s) {
+          s[row.status as keyof Stats] = row.count
         }
       }
       stats.value = s
@@ -407,17 +407,17 @@ export const useTasksStore = defineStore('tasks', () => {
     if (!dbPath.value) return
     // Optimistic update — move card instantly, rollback on failure
     const task = tasks.value.find(t => t.id === taskId)
-    const previousStatut = task?.statut
-    if (task) task.statut = statut
-    let res: { success: boolean; error?: string; blockers?: Array<{ id: number; titre: string; statut: string }> }
+    const previousStatus = task?.status
+    if (task) task.status = statut
+    let res: { success: boolean; error?: string; blockers?: Array<{ id: number; title: string; status: string }> }
     try {
       res = await window.electronAPI.tasksUpdateStatus(dbPath.value, taskId, statut) as typeof res
     } catch (err) {
-      if (task && previousStatut !== undefined) task.statut = previousStatut
+      if (task && previousStatus !== undefined) task.status = previousStatus
       throw err
     }
     if (!res.success) {
-      if (task && previousStatut !== undefined) task.statut = previousStatut
+      if (task && previousStatus !== undefined) task.status = previousStatus
       throw Object.assign(new Error(res.error ?? 'UPDATE_FAILED'), { blockers: res.blockers ?? [] })
     }
   }

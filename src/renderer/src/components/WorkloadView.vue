@@ -31,9 +31,9 @@ async function fetchWorkload(): Promise<void> {
       `SELECT a.id as agentId, a.name as agentName,
               COUNT(t.id) as taskCount,
               COALESCE(SUM(t.effort), 0) as totalEffort,
-              MAX(CASE WHEN t.statut = 'in_progress' THEN t.titre ELSE NULL END) as currentTask
+              MAX(CASE WHEN t.status = 'in_progress' THEN t.title ELSE NULL END) as currentTask
        FROM agents a
-       LEFT JOIN tasks t ON t.agent_assigne_id = a.id AND t.statut IN ('todo','in_progress')
+       LEFT JOIN tasks t ON t.agent_assigned_id = a.id AND t.status IN ('todo','in_progress')
        GROUP BY a.id, a.name
        ORDER BY totalEffort DESC, taskCount DESC, a.name ASC`,
       []

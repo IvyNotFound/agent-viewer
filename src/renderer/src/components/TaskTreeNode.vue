@@ -67,7 +67,7 @@ const EFFORT_BADGE: Record<number, string> = {
         <!-- Title row -->
         <div class="flex items-start gap-2">
           <p class="text-sm text-content-primary font-medium leading-snug flex-1 min-w-0 break-words group-hover/node:text-content-primary transition-colors">
-            {{ node.titre }}
+            {{ node.title }}
           </p>
           <!-- Badges -->
           <div class="flex items-center gap-1 shrink-0">
@@ -82,15 +82,15 @@ const EFFORT_BADGE: Record<number, string> = {
         <!-- Meta: perimetre + agent + date -->
         <div class="flex items-center gap-1.5 flex-wrap">
           <span
-            v-if="node.perimetre"
+            v-if="node.scope"
             class="text-[10px] px-1 py-0 rounded font-mono border"
             :style="{
-              color: perimeterFg(node.perimetre),
-              backgroundColor: perimeterBg(node.perimetre),
-              borderColor: perimeterBorder(node.perimetre),
+              color: perimeterFg(node.scope),
+              backgroundColor: perimeterBg(node.scope),
+              borderColor: perimeterBorder(node.scope),
             }"
-          >{{ node.perimetre }}</span>
-          <AgentBadge v-if="node.agent_name" :name="node.agent_name" :perimetre="node.agent_perimetre" class="text-[10px]" />
+          >{{ node.scope }}</span>
+          <AgentBadge v-if="node.agent_name" :name="node.agent_name" :perimetre="node.agent_scope" class="text-[10px]" />
           <span class="text-[10px] text-content-muted font-mono ml-auto">{{ formatDate(node.updated_at) }}</span>
         </div>
 
