@@ -45,6 +45,9 @@ echo "=== Pre-release Checks ==="
 echo "Running npm install..."
 npm install --silent 2>/dev/null
 
+echo "Checking i18n completeness..."
+node scripts/check-i18n.js || { echo "ERROR: i18n check failed. Fix missing keys before releasing."; exit 1; }
+
 # Bump version
 echo ""
 echo "=== Bumping Version ==="
