@@ -104,7 +104,8 @@
       "todoAssigned": "przypisane do zrobienia",
       "idle": "bezczynny",
       "inactive": "nieaktywny"
-    }
+    },
+    "agentsTitle": "OrgChart agents"
   },
   "logs": {
     "allAgents": "Wszyscy agenci",
@@ -250,7 +251,7 @@
   "commandPalette": {
     "placeholder": "Szukaj zadania po tytule, opisie, #id…",
     "resetFilters": "resetuj filtry",
-    "status": "Status",
+    "status": "Stan",
     "agent": "Agent",
     "perimeter": "Obwód",
     "noResults": "Brak wyników",
@@ -469,7 +470,7 @@
     "noData": "Brak zadań w tym okresie",
     "unassigned": "Nieprzypisane",
     "legend": "Legenda",
-    "tooltipStatus": "Status",
+    "tooltipStatus": "Stan",
     "tooltipStart": "Początek",
     "tooltipEnd": "Koniec",
     "tooltipDuration": "Czas trwania",
@@ -486,11 +487,33 @@
   "hooks": {
     "noEvents": "Brak zdarzeń",
     "inProgress": "w toku…",
-    "filters": "Filtry:"
+    "filters": "Filtry:",
+    "noPayload": "No payload data"
   },
   "dashboard": {
     "overview": "Przegląd",
-    "gitError": "Błąd odczytu repozytorium git"
+    "gitError": "Błąd odczytu repozytorium git",
+    "activeAgents": "Active agents",
+    "sessionsStarted": "sessions started",
+    "inProgress": "In progress",
+    "activeTasks": "active tasks",
+    "todo": "To do",
+    "pendingTasks": "pending tasks",
+    "today": "Today",
+    "recentTasks": "Recent tasks",
+    "noTasks": "No tasks",
+    "recentActivity": "Recent activity",
+    "noActivity": "No activity",
+    "activity": "Activity"
+  },
+  "status": {
+    "todo": "todo",
+    "inProgress": "in progress",
+    "done": "done",
+    "archived": "archived",
+    "completed": "Completed",
+    "started": "Started",
+    "blocked": "Blocked"
   },
   "project": {
     "activeTitle": "Aktywny projekt",
@@ -511,6 +534,32 @@
     "subtasks": "{n} podzadanie | {n} podzadania",
     "staleFor": "W toku od {duration}",
     "staleLong": "W toku od długiego czasu"
+  },
+  "telemetry": {
+    "title": "Telemetry",
+    "scanning": "Scanning…",
+    "rescan": "Rescan",
+    "noProject": "Open a project to view telemetry.",
+    "scanningProject": "Scanning project…",
+    "totalLines": "Total Lines",
+    "realCode": "Real code",
+    "totalFiles": "Total Files",
+    "testFiles": "Test files",
+    "languages": "Languages",
+    "languageBreakdown": "Language breakdown",
+    "sourceVsTests": "Source vs Tests",
+    "sourceLabel": "Source {percent}%",
+    "testsLabel": "Tests {percent}%",
+    "codeQuality": "Code quality",
+    "percentRealCode": "% Real code",
+    "percentComments": "% Comments",
+    "percentBlank": "% Blank lines",
+    "colLanguage": "Language",
+    "colLines": "Lines",
+    "colSource": "Source",
+    "colTests": "Tests",
+    "colFiles": "Files",
+    "scannedAt": "Scanned at {date}"
   },
   "update": {
     "available": "Dostępna aktualizacja {version}",

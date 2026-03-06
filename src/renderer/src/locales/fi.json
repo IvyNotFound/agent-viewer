@@ -104,7 +104,8 @@
       "todoAssigned": "määritetty tehtäväksi",
       "idle": "jouten",
       "inactive": "ei aktiivinen"
-    }
+    },
+    "agentsTitle": "OrgChart agents"
   },
   "logs": {
     "allAgents": "Kaikki agentit",
@@ -167,8 +168,8 @@
       "label": "Jakso",
       "1h": "1h",
       "24h": "24h",
-      "7d": "7d",
-      "30d": "30d",
+      "7d": "7pv",
+      "30d": "30pv",
       "all": "∞"
     }
   },
@@ -210,7 +211,7 @@
     "aboutDesc": "Työpöytäliittymä Claude-agenttitehtävien tarkasteluun",
     "database": "Tietokanta",
     "fermer": "Sulje",
-    "exportData": "Data",
+    "exportData": "Tiedot",
     "exportBtn": "Vie data (ZIP)",
     "exportConfirmTitle": "Vie data",
     "exportConfirmMsg": "Vie project.db kansioon ~/Downloads?",
@@ -486,11 +487,33 @@
   "hooks": {
     "noEvents": "Ei tapahtumia",
     "inProgress": "käynnissä…",
-    "filters": "Suodattimet:"
+    "filters": "Suodattimet:",
+    "noPayload": "No payload data"
   },
   "dashboard": {
     "overview": "Yleiskatsaus",
-    "gitError": "Virhe git-hakemiston lukemisessa"
+    "gitError": "Virhe git-hakemiston lukemisessa",
+    "activeAgents": "Active agents",
+    "sessionsStarted": "sessions started",
+    "inProgress": "In progress",
+    "activeTasks": "active tasks",
+    "todo": "To do",
+    "pendingTasks": "pending tasks",
+    "today": "Today",
+    "recentTasks": "Recent tasks",
+    "noTasks": "No tasks",
+    "recentActivity": "Recent activity",
+    "noActivity": "No activity",
+    "activity": "Activity"
+  },
+  "status": {
+    "todo": "todo",
+    "inProgress": "in progress",
+    "done": "done",
+    "archived": "archived",
+    "completed": "Completed",
+    "started": "Started",
+    "blocked": "Blocked"
   },
   "project": {
     "activeTitle": "Aktiivinen projekti",
@@ -511,6 +534,32 @@
     "subtasks": "{n} alitehtävä | {n} alitehtävää",
     "staleFor": "Käynnissä {duration} ajan",
     "staleLong": "Käynnissä pitkään"
+  },
+  "telemetry": {
+    "title": "Telemetry",
+    "scanning": "Scanning…",
+    "rescan": "Rescan",
+    "noProject": "Open a project to view telemetry.",
+    "scanningProject": "Scanning project…",
+    "totalLines": "Total Lines",
+    "realCode": "Real code",
+    "totalFiles": "Total Files",
+    "testFiles": "Test files",
+    "languages": "Languages",
+    "languageBreakdown": "Language breakdown",
+    "sourceVsTests": "Source vs Tests",
+    "sourceLabel": "Source {percent}%",
+    "testsLabel": "Tests {percent}%",
+    "codeQuality": "Code quality",
+    "percentRealCode": "% Real code",
+    "percentComments": "% Comments",
+    "percentBlank": "% Blank lines",
+    "colLanguage": "Language",
+    "colLines": "Lines",
+    "colSource": "Source",
+    "colTests": "Tests",
+    "colFiles": "Files",
+    "scannedAt": "Scanned at {date}"
   },
   "update": {
     "available": "Päivitys {version} saatavilla",
