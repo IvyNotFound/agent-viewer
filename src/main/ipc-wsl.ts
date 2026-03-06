@@ -29,7 +29,7 @@ let pathEnriched = false
  * buildWindowsPS1Script in agent-stream-helpers.ts) then prepends known
  * install locations as a fallback.
  */
-async function enrichWindowsPath(): Promise<void> {
+export async function enrichWindowsPath(): Promise<void> {
   if (pathEnriched) return
   pathEnriched = true
 
@@ -135,6 +135,29 @@ export async function detectLocalInstance(): Promise<ClaudeInstance | null> {
 }
 
 /**
+ * List WSL distros (non-docker) by parsing `wsl.exe -l --verbose`.
+ * Exported for reuse by ipc-cli-detect.ts.
+ *
+ * @returns Array of { distro, isDefault } entries, or [] if wsl.exe fails
+ */
+export async function getWslDistros(): Promise<{ distro: string; isDefault: boolean }[]> {
+  const listResult = await execPromise('wsl.exe', ['-l', '--verbose'])
+  const listOutput = listResult.stdout.replace(/\0/g, '')
+  const lines = listOutput.split('\n').map(l => l.trim().replace(/\r/g, ''))
+  const entries: { distro: string; isDefault: boolean }[] = []
+  for (const line of lines) {
+    if (!line || /^NAME\s+STATE/i.test(line)) continue
+    const isDefault = line.startsWith('*')
+    const cleaned = line.replace(/^\*\s*/, '')
+    const distro = cleaned.split(/\s+/)[0]
+    if (distro && !distro.toLowerCase().includes('docker')) {
+      entries.push({ distro, isDefault })
+    }
+  }
+  return entries
+}
+
+/**
  * Detect all WSL distros that have Claude Code installed.
  *
  * Detection strategy:
@@ -148,23 +171,7 @@ export async function detectLocalInstance(): Promise<ClaudeInstance | null> {
  */
 async function detectWslInstances(): Promise<ClaudeInstance[]> {
   // Step 1: get list of distros and find which one is the default
-  const listResult = await execPromise('wsl.exe', ['-l', '--verbose'])
-  // Strip UTF-16 null bytes (wsl.exe output is UTF-16LE → node reads as UTF-8 + nulls)
-  const listOutput = listResult.stdout.replace(/\0/g, '')
-  const lines = listOutput.split('\n').map(l => l.trim().replace(/\r/g, ''))
-
-  // Parse distro names and detect the default (marked with *)
-  // Header line is "NAME STATE VERSION" — skip it
-  const distroEntries: { distro: string; isDefault: boolean }[] = []
-  for (const line of lines) {
-    if (!line || /^NAME\s+STATE/i.test(line)) continue
-    const isDefault = line.startsWith('*')
-    const cleaned = line.replace(/^\*\s*/, '')
-    const distro = cleaned.split(/\s+/)[0]
-    if (distro && !distro.toLowerCase().includes('docker')) {
-      distroEntries.push({ distro, isDefault })
-    }
-  }
+  const distroEntries = await getWslDistros()
 
   if (distroEntries.length === 0) return []
 
