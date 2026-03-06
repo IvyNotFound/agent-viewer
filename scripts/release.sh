@@ -48,6 +48,32 @@ npm install --silent 2>/dev/null
 echo "Checking i18n completeness..."
 node scripts/check-i18n.js || { echo "ERROR: i18n check failed. Fix missing keys before releasing."; exit 1; }
 
+echo "Checking CI status on HEAD..."
+HEAD_SHA=$(git rev-parse HEAD)
+CI_STATUS=$(gh run list --workflow=e2e.yml --branch=main --limit=5 --json headSha,conclusion,status \
+  --jq "[.[] | select(.headSha == \"$HEAD_SHA\")] | if length == 0 then \"not_found\" elif any(.[]; .status == \"in_progress\" or .status == \"queued\") then \"pending\" elif all(.[]; .conclusion == \"success\") then \"success\" else \"failure\" end")
+
+case "$CI_STATUS" in
+  success)
+    echo "CI E2E tests passed on HEAD."
+    ;;
+  pending)
+    echo "ERROR: CI E2E tests are still running on HEAD ($HEAD_SHA). Wait for completion."
+    exit 1
+    ;;
+  not_found)
+    echo "WARNING: No CI E2E run found for HEAD ($HEAD_SHA)."
+    read -p "No CI run found — release anyway? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then exit 1; fi
+    ;;
+  *)
+    echo "ERROR: CI E2E tests FAILED on HEAD ($HEAD_SHA). Fix tests before releasing."
+    gh run list --workflow=e2e.yml --branch=main --limit=3
+    exit 1
+    ;;
+esac
+
 # Bump version
 echo ""
 echo "=== Bumping Version ==="

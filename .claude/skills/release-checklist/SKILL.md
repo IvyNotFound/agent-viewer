@@ -41,10 +41,15 @@ node scripts/dbq.js "SELECT COUNT(*) FROM tasks WHERE statut IN ('todo', 'in_pro
 
 # 3. Build must pass
 npm run build
+
+# 4. CI E2E tests must pass on HEAD
+gh run list --workflow=e2e.yml --branch=main --limit=3 --json headSha,conclusion,status,displayTitle
+# Verify the run for current HEAD has conclusion=success
+# (release.sh will check this automatically — step is here for manual verification)
 ```
 
 > ⚠ If any prérequis fails → stop, comment the ticket, set statut=blocked.
-> Never release with open tickets or a broken build.
+> Never release with open tickets, a broken build, or failing/pending E2E tests on HEAD.
 
 ## Step 2 — Version Bump
 
@@ -117,6 +122,7 @@ SQL
 - Never release with `todo` or `in_progress` tickets open
 - Never release from a branch other than `main`
 - Staged file by file — never `git add -A` without inspection
+- **Never release if E2E CI tests are failing or pending on HEAD** — `release.sh` enforces this automatically
 
 ## Blocked States
 
