@@ -255,6 +255,7 @@ async function buildSchema(): Promise<any> {
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     name       TEXT NOT NULL,
     sort_order INTEGER NOT NULL DEFAULT 0,
+    parent_id  INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`)
 

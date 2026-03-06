@@ -17,8 +17,8 @@ const store = useHookEventsStore()
 const expanded = ref(false)
 const selectedEvent = ref<HookEvent | null>(null)
 
-// Access state directly (not actions) so createTestingPinia doesn't stub these
-const events = computed(() => store.events.filter(e => e.sessionId === props.sessionId))
+// Use memoized store computed — one shared computed per sessionId across all mounted instances (T963)
+const events = store.eventsForSession(props.sessionId)
 // Pre-reversed in a computed — avoids spread+reverse allocation on every template render (T793)
 const reversedEvents = computed(() => {
   const evts = events.value

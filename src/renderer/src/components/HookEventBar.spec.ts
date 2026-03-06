@@ -13,6 +13,7 @@ describe('HookEventBar', () => {
 
   it('does not render when there are no events and no active tool', () => {
     const pinia = createTestingPinia({
+      stubActions: false,
       initialState: {
         hookEvents: { events: [], activeTools: {} },
       },
@@ -27,6 +28,7 @@ describe('HookEventBar', () => {
 
   it('renders when there are events for the given sessionId', () => {
     const pinia = createTestingPinia({
+      stubActions: false,
       initialState: {
         hookEvents: {
           events: [
@@ -46,6 +48,7 @@ describe('HookEventBar', () => {
 
   it('does not render when events belong to a different sessionId', () => {
     const pinia = createTestingPinia({
+      stubActions: false,
       initialState: {
         hookEvents: {
           events: [
@@ -65,6 +68,7 @@ describe('HookEventBar', () => {
 
   it('renders when activeTool is set for the sessionId', () => {
     const pinia = createTestingPinia({
+      stubActions: false,
       initialState: {
         hookEvents: {
           events: [],
@@ -82,6 +86,7 @@ describe('HookEventBar', () => {
 
   it('shows active tool name when activeTool is set', () => {
     const pinia = createTestingPinia({
+      stubActions: false,
       initialState: {
         hookEvents: {
           events: [],
@@ -99,6 +104,7 @@ describe('HookEventBar', () => {
 
   it('toggles expanded state on header click', async () => {
     const pinia = createTestingPinia({
+      stubActions: false,
       initialState: {
         hookEvents: {
           events: [
@@ -123,6 +129,7 @@ describe('HookEventBar', () => {
   it('shows event list in reversed order when expanded', async () => {
     const now = Date.now()
     const pinia = createTestingPinia({
+      stubActions: false,
       initialState: {
         hookEvents: {
           events: [
@@ -146,6 +153,7 @@ describe('HookEventBar', () => {
 
   it('opens HookEventPayloadModal on event click when expanded', async () => {
     const pinia = createTestingPinia({
+      stubActions: false,
       initialState: {
         hookEvents: {
           events: [
