@@ -18,6 +18,7 @@ const initSqlJs = require('sql.js')
 const fs = require('fs')
 const path = require('path')
 const { randomUUID } = require('node:crypto')
+const { execSync } = require('child_process')
 const { acquireLock, releaseLock, cleanupOrphanTmp } = require('./dblock')
 
 const agent = process.argv[2]
@@ -240,6 +241,13 @@ initSqlJs().then((SQL) => {
   }
 
   db.close()
+
+  // Non-fatal: prune orphan worktrees on startup (ADR-006)
+  try {
+    execSync('git worktree prune', { cwd: process.cwd(), stdio: 'pipe' })
+  } catch (e) {
+    console.warn('[dbstart] git worktree prune failed:', e.message)
+  }
   } finally {
     releaseLock(lockPath)
   }
