@@ -33,6 +33,7 @@ import {
   getActiveTasksLine,
 } from './agent-stream-helpers'
 import { getAdapter } from './adapters/index'
+import { createWorktree, removeWorktree, type WorktreeInfo } from './worktree-manager'
 
 // ── Process registry ──────────────────────────────────────────────────────────
 
@@ -107,6 +108,7 @@ export function registerAgentStreamHandlers(): void {
     dbPath?: string
     sessionId?: number
     claudeBinaryPath?: string
+    worktree?: boolean
   } = {}) => {
     // Resolve adapter — defaults to Claude for backward compat
     const adapter = getAdapter(opts.cli ?? 'claude')
@@ -162,6 +164,18 @@ export function registerAgentStreamHandlers(): void {
       writeFileSync(spTempFile, effectiveSystemPrompt, 'utf-8')
     }
 
+    // ── Worktree isolation ─────────────────────────────────────────────────────
+    let worktreeInfo: WorktreeInfo | undefined
+    if (opts.worktree !== false && opts.projectPath && Number.isInteger(opts.sessionId) && opts.sessionId! > 0) {
+      try {
+        worktreeInfo = await createWorktree(opts.projectPath, opts.sessionId!)
+        logDebug(`worktree created: ${worktreeInfo.path} (branch ${worktreeInfo.branch})`)
+      } catch (err) {
+        // Non-fatal: log and fall back to projectPath
+        console.warn('[agent-stream] worktree creation failed, falling back to projectPath:', err)
+      }
+    }
+
     // ── Spawn: local Windows vs WSL / Linux / macOS ────────────────────────────
     const isLocalWindows = process.platform === 'win32' && opts.wslDistro === 'local'
     let scriptTempFile: string | undefined
@@ -190,7 +204,7 @@ export function registerAgentStreamHandlers(): void {
         ], {
           stdio: ['pipe', 'pipe', 'pipe'],
           env: buildEnv(),
-          cwd: opts.workDir ?? opts.projectPath ?? undefined,
+          cwd: worktreeInfo?.path ?? opts.workDir ?? opts.projectPath ?? undefined,
         })
       } else {
         // Non-Claude local Windows: spawn the CLI binary directly.
@@ -205,14 +219,14 @@ export function registerAgentStreamHandlers(): void {
         proc = spawn(spec.command, spec.args, {
           stdio: ['pipe', 'pipe', 'pipe'],
           env: { ...buildEnv(), ...spec.env },
-          cwd: opts.workDir ?? opts.projectPath ?? undefined,
+          cwd: worktreeInfo?.path ?? opts.workDir ?? opts.projectPath ?? undefined,
         })
       }
     } else {
       // WSL / Linux / macOS path
       const wslArgs: string[] = []
       if (opts.wslDistro && opts.wslDistro !== 'local') wslArgs.push('-d', opts.wslDistro)
-      const effectiveCwd = opts.workDir ?? opts.projectPath
+      const effectiveCwd = worktreeInfo?.path ?? opts.workDir ?? opts.projectPath
       if (effectiveCwd) wslArgs.push('--cd', toWslPath(effectiveCwd))
 
       // Resolve wsl.exe via absolute path to avoid ENOENT in packaged app (Fix T692).
@@ -327,6 +341,9 @@ export function registerAgentStreamHandlers(): void {
       webContentsAgents.get(wcId)?.delete(id)
       if (spTempFile) try { unlinkSync(spTempFile) } catch { /* cleanup best-effort */ }
       if (scriptTempFile) try { unlinkSync(scriptTempFile) } catch { /* cleanup best-effort */ }
+      if (worktreeInfo && opts.projectPath) {
+        removeWorktree(opts.projectPath, opts.sessionId!).catch(() => { /* best-effort */ })
+      }
 
       logDebug(`close id=${id}: exitCode=${exitCode} eventsReceived=${eventsReceived} stderr=${stderrBuffer.slice(0, 200)} stdout_error=${stdoutErrorBuffer.slice(0, 200)}`)
 

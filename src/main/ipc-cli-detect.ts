@@ -83,7 +83,6 @@ export async function detectLocalClis(filterClis?: CliType[]): Promise<CliInstan
           distro: 'local',
           version: parseVersion(raw),
           isDefault: true,
-          profiles: [binary],
           type: 'local',
         })
       } catch { /* binary not in PATH */ }
@@ -109,7 +108,6 @@ export async function detectLocalClis(filterClis?: CliType[]): Promise<CliInstan
         distro: 'local',
         version,
         isDefault: true,
-        profiles: [CLI_REGISTRY[cli].binary],
         type: 'local',
       })
     }
@@ -152,7 +150,6 @@ export async function detectWslClis(
         distro,
         version,
         isDefault,
-        profiles: [CLI_REGISTRY[cli].binary],
         type: 'wsl',
       })
     }

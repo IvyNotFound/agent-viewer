@@ -34,8 +34,6 @@ export type CliType =
  * @property distro    - WSL distribution name (e.g. `"Ubuntu"`) or `"local"` for native installs.
  * @property version   - CLI version string as reported by `<cli> --version`.
  * @property isDefault - Whether this distro is marked as default in `wsl.exe -l`.
- * @property profiles  - Available binary wrappers found in `~/bin/`; always includes the bare
- *                       binary name as first entry (e.g. `["claude", "claude-pro2"]`).
  * @property type      - `"wsl"` for WSL distro instances, `"local"` for native installs.
  */
 export interface CliInstance {
@@ -43,7 +41,6 @@ export interface CliInstance {
   distro: string
   version: string
   isDefault: boolean
-  profiles: string[]
   type: 'wsl' | 'local'
 }
 
@@ -54,6 +51,25 @@ export interface CliInstance {
 export type ClaudeInstance = CliInstance
 
 // ── Adapter contract ───────────────────────────────────────────────────────────
+
+/**
+ * Declares what a CLI supports — used by LaunchSessionModal to show/hide options.
+ *
+ * R2 mitigation (T1036): defined here so the renderer can use a static map
+ * while T1012 (adapter-level capabilities) is not yet shipped.
+ */
+export interface CliCapabilities {
+  /** Git worktree isolation (T1031) — true for every CLI. */
+  worktree: boolean
+  /** Multi-instance / profile selection (Claude only). */
+  profileSelection: boolean
+  /** System prompt injection via --append-system-prompt (or equivalent). */
+  systemPrompt: boolean
+  /** Thinking mode toggle — --settings alwaysThinkingEnabled (Claude only). */
+  thinkingMode: boolean
+  /** Session resume via --resume / conversation ID (Claude only). */
+  convResume: boolean
+}
 
 /**
  * Options forwarded from agent:create to each adapter's buildCommand.

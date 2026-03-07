@@ -125,10 +125,9 @@ describe('wsl:getClaudeInstances — Windows/WSL', () => {
       .mockRejectedValueOnce(new Error('not found')) // where claude (local)
       .mockResolvedValueOnce({ stdout: wslListOutput([{ name: 'Ubuntu', isDefault: true }]), stderr: '' })
       .mockResolvedValueOnce({ stdout: claudeVersionOutput('2.1.58'), stderr: '' })
-      .mockResolvedValueOnce({ stdout: '', stderr: '' })
     const result = await callHandler()
     expect(result).toEqual([
-      { distro: 'Ubuntu', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'wsl' }
+      { distro: 'Ubuntu', version: '2.1.58', isDefault: true, type: 'wsl' }
     ])
   })
 
@@ -139,14 +138,12 @@ describe('wsl:getClaudeInstances — Windows/WSL', () => {
       .mockRejectedValueOnce(new Error('not found')) // where claude (local)
       .mockResolvedValueOnce({ stdout: rawWithNulls, stderr: '' })
       .mockResolvedValueOnce({ stdout: claudeVersionOutput(), stderr: '' })
-      .mockResolvedValueOnce({ stdout: '', stderr: '' })
     const result = await callHandler() as Array<{ distro: string }>
     expect(result[0].distro).toBe('Ubuntu')
   })
 
   it('sorts default distro first', async () => {
     // With CONCURRENCY=2, both distros are processed in the same batch via Promise.all.
-    // Execution order: [Debian-version, Ubuntu-version] (parallel), then [Debian-bin, Ubuntu-bin].
     execFileMock
       .mockRejectedValueOnce(new Error('not found')) // where claude (local)
       .mockResolvedValueOnce({
@@ -158,32 +155,10 @@ describe('wsl:getClaudeInstances — Windows/WSL', () => {
       })
       .mockResolvedValueOnce({ stdout: claudeVersionOutput('2.0.0'), stderr: '' }) // Debian version
       .mockResolvedValueOnce({ stdout: claudeVersionOutput('2.1.58'), stderr: '' }) // Ubuntu version
-      .mockResolvedValueOnce({ stdout: '', stderr: '' }) // Debian bin
-      .mockResolvedValueOnce({ stdout: '', stderr: '' }) // Ubuntu bin
     const result = await callHandler() as Array<{ distro: string; isDefault: boolean }>
     expect(result[0].distro).toBe('Ubuntu')
     expect(result[0].isDefault).toBe(true)
     expect(result[1].distro).toBe('Debian')
-  })
-
-  it('includes ~/bin/ profiles when present', async () => {
-    execFileMock
-      .mockRejectedValueOnce(new Error('not found')) // where claude (local)
-      .mockResolvedValueOnce({ stdout: wslListOutput([{ name: 'Ubuntu', isDefault: true }]), stderr: '' })
-      .mockResolvedValueOnce({ stdout: claudeVersionOutput(), stderr: '' })
-      .mockResolvedValueOnce({ stdout: 'claude\nclaude-dev\nclaude-review\nsome-other-tool\n', stderr: '' })
-    const result = await callHandler() as Array<{ profiles: string[] }>
-    expect(result[0].profiles).toEqual(['claude', 'claude-dev', 'claude-review'])
-  })
-
-  it('falls back to default profile when ~/bin/ scan fails', async () => {
-    execFileMock
-      .mockRejectedValueOnce(new Error('not found')) // where claude (local)
-      .mockResolvedValueOnce({ stdout: wslListOutput([{ name: 'Ubuntu', isDefault: true }]), stderr: '' })
-      .mockResolvedValueOnce({ stdout: claudeVersionOutput(), stderr: '' })
-      .mockRejectedValueOnce(new Error('ls failed'))
-    const result = await callHandler() as Array<{ profiles: string[] }>
-    expect(result[0].profiles).toEqual(['claude'])
   })
 
   it('returns empty array when claude version call times out', async () => {
@@ -196,13 +171,11 @@ describe('wsl:getClaudeInstances — Windows/WSL', () => {
   })
 
   it('prepends local instance before WSL distros on Windows', async () => {
-    // On win32, detectLocalInstance skips ~/bin scan — no bash call
     execFileMock
       .mockResolvedValueOnce({ stdout: 'C:\\Users\\User\\claude.cmd\n', stderr: '' }) // where claude
       .mockResolvedValueOnce({ stdout: claudeVersionOutput('3.0.0'), stderr: '' }) // claude --version (local, shell:true)
       .mockResolvedValueOnce({ stdout: wslListOutput([{ name: 'Ubuntu', isDefault: true }]), stderr: '' })
       .mockResolvedValueOnce({ stdout: claudeVersionOutput('2.1.58'), stderr: '' }) // Ubuntu version
-      .mockResolvedValueOnce({ stdout: '', stderr: '' }) // Ubuntu bin
     const result = await callHandler() as Array<{ type: string; distro: string }>
     expect(result[0]).toMatchObject({ type: 'local', distro: 'local' })
     expect(result[1]).toMatchObject({ type: 'wsl', distro: 'Ubuntu' })
@@ -229,10 +202,9 @@ describe('wsl:getClaudeInstances — Linux/macOS', () => {
     execFileMock
       .mockResolvedValueOnce({ stdout: '/usr/bin/claude\n', stderr: '' }) // which claude
       .mockResolvedValueOnce({ stdout: claudeVersionOutput('2.1.58'), stderr: '' }) // claude --version
-      .mockResolvedValueOnce({ stdout: '', stderr: '' }) // bash -lc ls ~/bin
     const result = await callHandler()
     expect(result).toEqual([
-      { distro: 'local', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'local' }
+      { distro: 'local', version: '2.1.58', isDefault: true, type: 'local' }
     ])
   })
 
@@ -270,13 +242,11 @@ describe('detectLocalInstance', () => {
     execFileMock
       .mockResolvedValueOnce({ stdout: '/usr/bin/claude\n', stderr: '' }) // which claude
       .mockResolvedValueOnce({ stdout: '2.1.58 (Claude Code)\n', stderr: '' }) // claude --version
-      .mockResolvedValueOnce({ stdout: 'claude\nclaude-dev\n', stderr: '' }) // ls ~/bin
     const result = await detectLocalInstance()
     expect(result).toEqual({
       distro: 'local',
       version: '2.1.58',
       isDefault: true,
-      profiles: ['claude', 'claude-dev'],
       type: 'local',
     })
   })
@@ -293,15 +263,6 @@ describe('detectLocalInstance', () => {
       .mockResolvedValueOnce({ stdout: '', stderr: '' }) // empty version
     const result = await detectLocalInstance()
     expect(result).toBeNull()
-  })
-
-  it('falls back to ["claude"] when ~/bin/ scan fails', async () => {
-    execFileMock
-      .mockResolvedValueOnce({ stdout: '/usr/bin/claude\n', stderr: '' })
-      .mockResolvedValueOnce({ stdout: '2.0.0\n', stderr: '' })
-      .mockRejectedValueOnce(new Error('ls failed'))
-    const result = await detectLocalInstance()
-    expect(result?.profiles).toEqual(['claude'])
   })
 
   it('uses where on win32 (not which)', async () => {

@@ -69,15 +69,12 @@ export async function enrichWindowsPath(): Promise<void> {
  * @property distro    - WSL distribution name (e.g. `Ubuntu`, `Debian`) or `"local"` for native installs
  * @property version   - Claude Code version string (e.g. `2.1.58`)
  * @property isDefault - Whether this distro is marked as default in `wsl.exe -l`
- * @property profiles  - Available claude wrapper scripts: always includes `"claude"`,
- *                       plus any `claude-*` scripts found in `~/bin/`
  * @property type      - `"wsl"` for WSL distro instances, `"local"` for native installs (T774)
  */
 export interface ClaudeInstance {
   distro: string
   version: string
   isDefault: boolean
-  profiles: string[]
   type: 'wsl' | 'local'
 }
 
@@ -85,7 +82,6 @@ export interface ClaudeInstance {
  * Detect a locally-installed Claude Code instance (Linux, macOS, or Windows native).
  *
  * - Uses `which claude` on Linux/macOS, `where claude` on Windows
- * - Scans `~/bin/` for `claude-*` wrapper scripts on Unix
  * - Returns null if Claude Code is not found in PATH
  *
  * @returns ClaudeInstance with type `"local"`, or null if not found
@@ -110,25 +106,7 @@ export async function detectLocalInstance(): Promise<ClaudeInstance | null> {
     if (!rawVersion) return null
     const version = rawVersion.split(' ')[0]
 
-    // Scan ~/bin/ for claude-* wrapper scripts (Unix only)
-    let profiles: string[] = ['claude']
-    if (platform !== 'win32') {
-      try {
-        const binResult = await execPromise(
-          'bash',
-          ['-lc', 'ls ~/bin/ 2>/dev/null'],
-          { timeout: LOCAL_TIMEOUT }
-        )
-        const scripts = binResult.stdout
-          .split('\n')
-          .map(f => f.trim())
-          .filter(f => /^claude(-[a-z0-9-]+)?$/.test(f))
-          .sort()
-        profiles = ['claude', ...scripts.filter(s => s !== 'claude')]
-      } catch { /* ~/bin/ may not exist — default profile only */ }
-    }
-
-    return { distro: 'local', version, isDefault: true, profiles, type: 'local' }
+    return { distro: 'local', version, isDefault: true, type: 'local' }
   } catch {
     return null
   }
@@ -163,7 +141,6 @@ export async function getWslDistros(): Promise<{ distro: string; isDefault: bool
  * Detection strategy:
  * 1. List distros via `wsl.exe -l --verbose` (marks default with `*`)
  * 2. For each non-docker distro, run `bash -lc 'claude --version'` to check availability
- * 3. Also scan ~/bin/ for claude-* wrapper scripts (custom profiles)
  *
  * Note: wsl.exe outputs UTF-16LE on Windows — null bytes must be stripped.
  *
@@ -191,24 +168,7 @@ async function detectWslInstances(): Promise<ClaudeInstance[]> {
         // Parse "2.1.58 (Claude Code)" → "2.1.58"
         const version = rawVersion.split(' ')[0]
 
-        // Step 3: scan ~/bin/ for claude-* wrapper scripts
-        let profiles: string[] = ['claude']
-        try {
-          const binResult = await execPromise(
-            'wsl.exe',
-            ['-d', distro, '--', 'bash', '-lc', 'ls ~/bin/ 2>/dev/null'],
-            { timeout: WSL_TIMEOUT }
-          )
-          const scripts = binResult.stdout
-            .replace(/\0/g, '')
-            .split('\n')
-            .map(f => f.trim())
-            .filter(f => /^claude(-[a-z0-9-]+)?$/.test(f))
-            .sort()
-          profiles = ['claude', ...scripts.filter(s => s !== 'claude')]
-        } catch { /* ~/bin/ may not exist — default profile only */ }
-
-        return { distro, version, isDefault, profiles, type: 'wsl' as const }
+        return { distro, version, isDefault, type: 'wsl' as const }
       } catch {
         // Claude not installed in this distro, or timed out
         return null

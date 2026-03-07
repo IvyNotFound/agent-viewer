@@ -122,11 +122,6 @@ describe('detectLocalClis — Linux/macOS', () => {
     expect(result[0].version).toBe('0.1.2')
   })
 
-  it('sets profiles to [binary]', async () => {
-    execFileMock.mockResolvedValueOnce({ stdout: 'aider:0.50.0\n', stderr: '' })
-    const result = await detectLocalClis(['aider'])
-    expect(result[0].profiles).toEqual(['aider'])
-  })
 })
 
 // ── detectLocalClis — Windows ─────────────────────────────────────────────────
