@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.28.0] - 2026-03-07
+
+### Changes
+- chore(global): supprimer les références aux file-locks dans skills et WORKFLOW.md (T1049) (7b63e2c)
+- docs: mettre à jour README et JSDoc pour v0.28.0 (T1039) (0bd04e0)
+- fix(back-electron): cross-process .wlock in writeDb + migrateDb (T1053) (aac80bf)
+- fix(tests): migrate renderer specs FR→EN after T1016 schema rename (T1052) (7f624f1)
+- fix(back-electron): atomic write in migrateDb — tmp+rename prevents corruption (T1046-followup) (0aed1e9)
+- feat(front-vuejs): widget télémétrie code + fix heatmap zones creuses (T1050) (ddb42a7)
+- fix(scripts): retirer le guard dbw/dbstart — tmp+rename gère la concurrence (8a01993)
+- guard(scripts): bloquer dbw.js et dbstart.js si project.db inaccessible depuis WSL (ed36365)
+- fix(front-vuejs): supprimer la sélection de profil CLI (T1034) (b4d8e6b)
+- feat(front-vuejs): panneau télémétrie tokens dans DashboardOverview (T1047) (3091b0e)
+- refactor(back-electron): supprimer canal IPC get-locks et locks dans dbstart (T1046) (2a5a56f)
+- test(front-vuejs): remplacer les anciens termes DB français dans les specs (T1038) (c62e8b5)
+- ux(front-vuejs): restructurer SettingsModal avec navigation latérale par thématique (T1042) (7dce392)
+- feat(front-vuejs): orgchart — layout hiérarchique groupes de groupes (T1041) (215fd78)
+- fix(back-electron): session-closer — use agent_id instead of summary LIKE (T1045) (e527ca3)
+- fix(front-vuejs): corriger requête SQL statut→status dans useAutoLaunch (T1043) (bc579e9)
+- fix(front-vuejs): remove legacy defaultClaudeInstance on write (T1044) (a882d3c)
+- fix(front-vuejs): adapt LaunchSessionModal to settings store rename (T1036) (ab571a2)
+- test(back-electron): remplacer termes DB français dans les specs backend (T1037) (51208c6)
+- feat(front-vuejs): LaunchSessionModal options dynamiques selon capacités CLI (T1036) (9168ea2)
+- fix(front-vuejs): renommer defaultClaudeInstance → defaultCliInstance (T1032) (af59fc1)
+- feat(back-electron): worktree isolé par défaut pour tous les CLIs (T1031) (0f82dec)
+- fix(back-electron): add HKLM system PATH + claudeBinaryPath setting (T1029) (de650be)
+- fix(front-vuejs): uniformiser blocs de fond widgets charts + lisibilité légendes (T1030) (24ce416)
 ## [0.27.1] - 2026-03-07
 
 ### Bug Fixes
