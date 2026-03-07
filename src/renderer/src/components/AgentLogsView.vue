@@ -58,7 +58,7 @@ async function fetchLogs(): Promise<void> {
     const conditions: string[] = []
     const params: unknown[] = []
     if (filterLevel.value !== 'all') {
-      conditions.push('l.niveau = ?')
+      conditions.push('l.level = ?')
       params.push(filterLevel.value)
     }
     if (filterAgentId.value !== null) {
@@ -78,7 +78,7 @@ async function fetchLogs(): Promise<void> {
       window.electronAPI.queryDb(
         store.dbPath,
         `SELECT l.id, l.session_id, l.agent_id, a.name as agent_name, a.type as agent_type,
-                l.niveau, l.action, l.detail, l.fichiers, l.created_at
+                l.level, l.action, l.detail, l.files, l.created_at
          FROM agent_logs l
          LEFT JOIN agents a ON a.id = l.agent_id
          ${whereClause}
@@ -182,7 +182,7 @@ type EnrichedLog = AgentLog & { parsedFiles: string[] }
 const enrichedLogs = computed<EnrichedLog[]>(() =>
   paginatedLogs.value.map(log => ({
     ...log,
-    parsedFiles: parseFichiers(log.fichiers),
+    parsedFiles: parseFichiers(log.files),
   }))
 )
 
@@ -314,17 +314,17 @@ watch(() => props.initialAgentId, (v) => {
 
           <!-- Dot niveau -->
           <span
-            :class="['shrink-0 w-2 h-2 rounded-full', levelCfg(log.niveau).dot]"
+            :class="['shrink-0 w-2 h-2 rounded-full', levelCfg(log.level).dot]"
           />
 
           <!-- Badge niveau -->
           <span
             :class="[
               'shrink-0 text-xs font-mono font-semibold px-1.5 py-0.5 rounded',
-              levelCfg(log.niveau).text,
-              levelCfg(log.niveau).bg
+              levelCfg(log.level).text,
+              levelCfg(log.level).bg
             ]"
-          >{{ levelCfg(log.niveau).label }}</span>
+          >{{ levelCfg(log.level).label }}</span>
 
           <!-- Timestamp -->
           <span
