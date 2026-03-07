@@ -89,7 +89,7 @@ defineExpose({
           </template>
           <!-- File tabs -->
           <template v-else-if="tabsStore.activeTab.type === 'file'">
-            <FileView :file-path="tabsStore.activeTab.filePath!" :tab-id="tabsStore.activeTab.id" class="flex-1" />
+            <FileView :key="tabsStore.activeTab.id" :file-path="tabsStore.activeTab.filePath!" :tab-id="tabsStore.activeTab.id" class="flex-1" />
           </template>
           <!-- Dashboard tab (sous-onglets analytiques) -->
           <template v-else-if="tabsStore.activeTab.type === 'dashboard'">
