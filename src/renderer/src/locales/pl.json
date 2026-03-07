@@ -222,14 +222,21 @@
     "exportSuccess": "Eksport pobrany: {path}",
     "exportError": "Błąd eksportu: {error}",
     "defaultCliInstance": "Domyślna instancja Claude Code",
-    "defaultClaudeProfile": "Domyślny profil Claude",
     "aiCodingAssistants": "Asystenci AI",
     "aiCodingAssistantsDesc": "Wykryte narzędzia CLI dostępne dla sesji agentów. Włącz/wyłącz aby pokazać w programie uruchamiającym.",
     "cliRefresh": "Odśwież",
     "cliRefreshing": "Wykrywanie...",
     "cliNotDetected": "Nie wykryto",
     "cliEnabled": "Włączony w programie uruchamiającym",
-    "cliDisabled": "Wyłączony w programie uruchamiającym"
+    "cliDisabled": "Wyłączony w programie uruchamiającym",
+    "sections": {
+      "appearance": "Wygląd",
+      "automation": "Automatyzacja",
+      "editor": "Edytor",
+      "cli": "CLI & Agenci",
+      "notifications": "Powiadomienia",
+      "application": "Aplikacja"
+    }
   },
   "setup": {
     "missingDb": "Brakująca baza danych",
@@ -282,8 +289,6 @@
     "auto": "Automatyczny",
     "disabled": "Wyłączony",
     "thinkingNote": "Wyłączony zalecany dla agentów devops, doc, test",
-    "apiProfile": "Profil API",
-    "profileNote": "Profile dostępne w ~/bin/ — patrz ADR-003",
     "startPrompt": "Monit startowy",
     "startPromptPlaceholder": "Pozostaw puste dla domyślnego komunikatu startowego…",
     "promptNote": "Systemowy monit stosowany automatycznie",

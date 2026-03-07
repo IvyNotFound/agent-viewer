@@ -222,14 +222,21 @@
     "exportSuccess": "Export heruntergeladen: {path}",
     "exportError": "Exportfehler: {error}",
     "defaultCliInstance": "Standard-Claude-Code-Instanz",
-    "defaultClaudeProfile": "Standard-Claude-Profil",
     "aiCodingAssistants": "KI-Coding-Assistenten",
     "aiCodingAssistantsDesc": "Erkannte CLI-Tools für Agent-Sitzungen. Ein-/ausschalten um im Launcher anzuzeigen.",
     "cliRefresh": "Aktualisieren",
     "cliRefreshing": "Wird erkannt...",
     "cliNotDetected": "Nicht erkannt",
     "cliEnabled": "Im Launcher aktiviert",
-    "cliDisabled": "Im Launcher deaktiviert"
+    "cliDisabled": "Im Launcher deaktiviert",
+    "sections": {
+      "appearance": "Aussehen",
+      "automation": "Automatisierung",
+      "editor": "Editor",
+      "cli": "CLI & Agenten",
+      "notifications": "Benachrichtigungen",
+      "application": "Anwendung"
+    }
   },
   "setup": {
     "missingDb": "Fehlende Datenbank",
@@ -282,8 +289,6 @@
     "auto": "Automatisch",
     "disabled": "Deaktiviert",
     "thinkingNote": "Deaktiviert empfohlen für devops-, doc-, test-Agenten",
-    "apiProfile": "API-Profil",
-    "profileNote": "Profile in ~/bin/ verfügbar — siehe ADR-003",
     "startPrompt": "Startprompt",
     "startPromptPlaceholder": "Für Standard-Startnachricht leer lassen…",
     "promptNote": "System-Prompt wird automatisch angewendet",

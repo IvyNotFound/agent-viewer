@@ -222,14 +222,21 @@
     "exportSuccess": "Экспорт загружен: {path}",
     "exportError": "Ошибка экспорта: {error}",
     "defaultCliInstance": "Экземпляр Claude Code по умолчанию",
-    "defaultClaudeProfile": "Профиль Claude по умолчанию",
     "aiCodingAssistants": "ИИ-помощники по коду",
     "aiCodingAssistantsDesc": "Обнаруженные CLI-инструменты для сессий агентов. Включите/выключите для отображения в лаунчере.",
     "cliRefresh": "Обновить",
     "cliRefreshing": "Обнаружение...",
     "cliNotDetected": "Не обнаружен",
     "cliEnabled": "Включён в лаунчере",
-    "cliDisabled": "Отключён в лаунчере"
+    "cliDisabled": "Отключён в лаунчере",
+    "sections": {
+      "appearance": "Внешний вид",
+      "automation": "Автоматизация",
+      "editor": "Редактор",
+      "cli": "CLI и агенты",
+      "notifications": "Уведомления",
+      "application": "Приложение"
+    }
   },
   "setup": {
     "missingDb": "База данных отсутствует",
@@ -282,8 +289,6 @@
     "auto": "Авто",
     "disabled": "Выключен",
     "thinkingNote": "Выключен рекомендуется для агентов devops, doc, test",
-    "apiProfile": "Профиль API",
-    "profileNote": "Профили в ~/bin/ — см. ADR-003",
     "startPrompt": "Начальный промпт",
     "startPromptPlaceholder": "Оставьте пустым для сообщения запуска по умолчанию…",
     "promptNote": "Системный промпт применяется автоматически",

@@ -222,14 +222,21 @@
     "exportSuccess": "Vienti ladattu: {path}",
     "exportError": "Vientivirhe: {error}",
     "defaultCliInstance": "Oletusarvoinen Claude Code -instanssi",
-    "defaultClaudeProfile": "Oletusarvoinen Claude-profiili",
     "aiCodingAssistants": "Tekoälykoodausapurit",
     "aiCodingAssistantsDesc": "Havaitut CLI-työkalut agenttiistuntoihin. Ota käyttöön/poista käytöstä näyttääksesi käynnistysohjelmassa.",
     "cliRefresh": "Päivitä",
     "cliRefreshing": "Havaitaan...",
     "cliNotDetected": "Ei havaittu",
     "cliEnabled": "Käytössä käynnistysohjelmassa",
-    "cliDisabled": "Poissa käytöstä"
+    "cliDisabled": "Poissa käytöstä",
+    "sections": {
+      "appearance": "Ulkoasu",
+      "automation": "Automaatio",
+      "editor": "Editori",
+      "cli": "CLI & Agentit",
+      "notifications": "Ilmoitukset",
+      "application": "Sovellus"
+    }
   },
   "setup": {
     "missingDb": "Tietokanta puuttuu",
@@ -282,8 +289,6 @@
     "auto": "Automaattinen",
     "disabled": "Pois käytöstä",
     "thinkingNote": "Pois käytöstä suositellaan devops-, doc- ja test-agenteille",
-    "apiProfile": "API-profiili",
-    "profileNote": "Profiilit saatavilla hakemistossa ~/bin/ — katso ADR-003",
     "startPrompt": "Aloituskehotus",
     "startPromptPlaceholder": "Jätä tyhjäksi oletusaloitusviestille…",
     "promptNote": "Järjestelmäkehotus lisätään automaattisesti",

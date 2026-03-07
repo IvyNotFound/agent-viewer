@@ -222,14 +222,21 @@
     "exportSuccess": "エクスポート完了: {path}",
     "exportError": "エクスポートエラー: {error}",
     "defaultCliInstance": "デフォルト Claude Code インスタンス",
-    "defaultClaudeProfile": "デフォルト Claude プロファイル",
     "aiCodingAssistants": "AI コーディングアシスタント",
     "aiCodingAssistantsDesc": "エージェントセッションで利用可能な検出済み CLI ツール。ランチャーで表示するには切り替えてください。",
     "cliRefresh": "更新",
     "cliRefreshing": "検出中...",
     "cliNotDetected": "未検出",
     "cliEnabled": "ランチャーで有効",
-    "cliDisabled": "ランチャーで無効"
+    "cliDisabled": "ランチャーで無効",
+    "sections": {
+      "appearance": "外観",
+      "automation": "自動化",
+      "editor": "エディタ",
+      "cli": "CLI & エージェント",
+      "notifications": "通知",
+      "application": "アプリケーション"
+    }
   },
   "setup": {
     "missingDb": "データベースが見つかりません",
@@ -282,8 +289,6 @@
     "auto": "自動",
     "disabled": "無効",
     "thinkingNote": "devops、doc、test エージェントには無効を推奨",
-    "apiProfile": "API プロファイル",
-    "profileNote": "~/bin/ で利用可能なプロファイル — ADR-003 を参照",
     "startPrompt": "スタートプロンプト",
     "startPromptPlaceholder": "デフォルトのスタートアップメッセージを使う場合は空欄のままにしてください…",
     "promptNote": "システムプロンプトは自動的に適用されます",

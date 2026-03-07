@@ -222,14 +222,21 @@
     "exportSuccess": "Exportación descargada: {path}",
     "exportError": "Error al exportar: {error}",
     "defaultCliInstance": "Instancia de Claude Code por defecto",
-    "defaultClaudeProfile": "Perfil de Claude por defecto",
     "aiCodingAssistants": "Asistentes IA",
     "aiCodingAssistantsDesc": "Herramientas CLI detectadas disponibles para sesiones de agentes. Activa/desactiva para mostrar en el launcher.",
     "cliRefresh": "Actualizar",
     "cliRefreshing": "Detectando...",
     "cliNotDetected": "No detectado",
     "cliEnabled": "Activado en el launcher",
-    "cliDisabled": "Desactivado en el launcher"
+    "cliDisabled": "Desactivado en el launcher",
+    "sections": {
+      "appearance": "Apariencia",
+      "automation": "Automatización",
+      "editor": "Editor",
+      "cli": "CLI & Agentes",
+      "notifications": "Notificaciones",
+      "application": "Aplicación"
+    }
   },
   "setup": {
     "missingDb": "Base de datos faltante",
@@ -282,8 +289,6 @@
     "auto": "Auto",
     "disabled": "Desactivado",
     "thinkingNote": "Desactivado recomendado para agentes devops, doc, test",
-    "apiProfile": "Perfil de API",
-    "profileNote": "Perfiles disponibles en ~/bin/ — ver ADR-003",
     "startPrompt": "Prompt inicial",
     "startPromptPlaceholder": "Dejar vacío para el mensaje de inicio por defecto…",
     "promptNote": "El prompt del sistema se aplica automáticamente",

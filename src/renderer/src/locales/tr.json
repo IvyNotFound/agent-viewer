@@ -222,14 +222,21 @@
     "exportSuccess": "Dışa aktarma tamamlandı: {path}",
     "exportError": "Dışa aktarma hatası: {error}",
     "defaultCliInstance": "Varsayılan Claude Code örneği",
-    "defaultClaudeProfile": "Varsayılan Claude profili",
     "aiCodingAssistants": "AI Kodlama Asistanları",
     "aiCodingAssistantsDesc": "Ajan oturumları için mevcut tespit edilen CLI araçları. Başlatıcıda göstermek için geçiş yapın.",
     "cliRefresh": "Yenile",
     "cliRefreshing": "Tespit ediliyor...",
     "cliNotDetected": "Tespit edilmedi",
     "cliEnabled": "Başlatıcıda etkin",
-    "cliDisabled": "Başlatıcıda devre dışı"
+    "cliDisabled": "Başlatıcıda devre dışı",
+    "sections": {
+      "appearance": "Görünüm",
+      "automation": "Otomasyon",
+      "editor": "Düzenleyici",
+      "cli": "CLI & Ajanlar",
+      "notifications": "Bildirimler",
+      "application": "Uygulama"
+    }
   },
   "setup": {
     "missingDb": "Veritabanı bulunamadı",
@@ -282,8 +289,6 @@
     "auto": "Otomatik",
     "disabled": "Devre dışı",
     "thinkingNote": "devops, doc, test ajanları için devre dışı önerilir",
-    "apiProfile": "API profili",
-    "profileNote": "~/bin/ içindeki profiller — ADR-003'e bakın",
     "startPrompt": "Başlangıç istemi",
     "startPromptPlaceholder": "Varsayılan başlangıç mesajını kullanmak için boş bırakın…",
     "promptNote": "Sistem istemi otomatik olarak uygulanır",

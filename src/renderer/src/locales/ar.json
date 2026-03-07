@@ -222,14 +222,21 @@
     "exportSuccess": "تم تنزيل التصدير: {path}",
     "exportError": "خطأ في التصدير: {error}",
     "defaultCliInstance": "نسخة Claude Code الافتراضية",
-    "defaultClaudeProfile": "ملف تعريف Claude الافتراضي",
     "aiCodingAssistants": "مساعدو البرمجة بالذكاء الاصطناعي",
     "aiCodingAssistantsDesc": "أدوات CLI المكتشفة المتاحة لجلسات الوكلاء. بدّل لإظهار/إخفاء في المشغل.",
     "cliRefresh": "تحديث",
     "cliRefreshing": "جارٍ الاكتشاف...",
     "cliNotDetected": "غير مكتشف",
     "cliEnabled": "مُفعَّل في المشغل",
-    "cliDisabled": "معطَّل في المشغل"
+    "cliDisabled": "معطَّل في المشغل",
+    "sections": {
+      "appearance": "المظهر",
+      "automation": "الأتمتة",
+      "editor": "المحرر",
+      "cli": "CLI والوكلاء",
+      "notifications": "الإشعارات",
+      "application": "التطبيق"
+    }
   },
   "setup": {
     "missingDb": "قاعدة البيانات مفقودة",
@@ -282,8 +289,6 @@
     "auto": "تلقائي",
     "disabled": "معطَّل",
     "thinkingNote": "يُنصح بتعطيل وضع التفكير لوكلاء devops وdoc وtest",
-    "apiProfile": "ملف تعريف API",
-    "profileNote": "الملفات الشخصية متاحة في ~/bin/ — انظر ADR-003",
     "startPrompt": "موجه البداية",
     "startPromptPlaceholder": "اتركه فارغاً للرسالة الافتراضية عند البدء…",
     "promptNote": "موجه النظام يُطبَّق تلقائياً",

@@ -222,14 +222,21 @@
     "exportSuccess": "导出完成：{path}",
     "exportError": "导出错误：{error}",
     "defaultCliInstance": "默认 Claude Code 实例",
-    "defaultClaudeProfile": "默认 Claude 配置文件",
     "aiCodingAssistants": "AI 编码助手",
     "aiCodingAssistantsDesc": "检测到的可用于代理会话的 CLI 工具。切换以在启动器中显示/隐藏。",
     "cliRefresh": "刷新",
     "cliRefreshing": "检测中...",
     "cliNotDetected": "未检测到",
     "cliEnabled": "在启动器中启用",
-    "cliDisabled": "在启动器中禁用"
+    "cliDisabled": "在启动器中禁用",
+    "sections": {
+      "appearance": "外观",
+      "automation": "自动化",
+      "editor": "编辑器",
+      "cli": "CLI & 代理",
+      "notifications": "通知",
+      "application": "应用程序"
+    }
   },
   "setup": {
     "missingDb": "未找到数据库",
@@ -282,8 +289,6 @@
     "auto": "自动",
     "disabled": "禁用",
     "thinkingNote": "devops、doc、test Agent 建议禁用",
-    "apiProfile": "API 配置文件",
-    "profileNote": "~/bin/ 中可用的配置文件 — 参见 ADR-003",
     "startPrompt": "启动提示",
     "startPromptPlaceholder": "留空以使用默认启动消息…",
     "promptNote": "系统提示自动应用",

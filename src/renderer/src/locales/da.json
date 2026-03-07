@@ -222,14 +222,21 @@
     "exportSuccess": "Eksport downloadet: {path}",
     "exportError": "Eksportfejl: {error}",
     "defaultCliInstance": "Standard Claude Code-instans",
-    "defaultClaudeProfile": "Standard Claude-profil",
     "aiCodingAssistants": "AI-kodningsassistenter",
     "aiCodingAssistantsDesc": "Opdagede CLI-værktøjer tilgængelige for agentsessioner. Slå til/fra for at vise i starteren.",
     "cliRefresh": "Opdater",
     "cliRefreshing": "Registrerer...",
     "cliNotDetected": "Ikke registreret",
     "cliEnabled": "Aktiveret i starteren",
-    "cliDisabled": "Deaktiveret i starteren"
+    "cliDisabled": "Deaktiveret i starteren",
+    "sections": {
+      "appearance": "Udseende",
+      "automation": "Automatisering",
+      "editor": "Editor",
+      "cli": "CLI & Agenter",
+      "notifications": "Notifikationer",
+      "application": "Applikation"
+    }
   },
   "setup": {
     "missingDb": "Manglende database",
@@ -282,8 +289,6 @@
     "auto": "Automatisk",
     "disabled": "Deaktiveret",
     "thinkingNote": "Deaktiveret anbefales til devops-, doc- og testagenter",
-    "apiProfile": "API-profil",
-    "profileNote": "Profiler tilgængelige i ~/bin/ — se ADR-003",
     "startPrompt": "Startprompt",
     "startPromptPlaceholder": "Lad stå tom for standardopstartsbesked…",
     "promptNote": "Systemprompt anvendes automatisk",

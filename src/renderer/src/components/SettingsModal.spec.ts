@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { nextTick } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
-import { mount, shallowMount, flushPromises } from '@vue/test-utils'
+import { shallowMount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import SettingsModal from '@renderer/components/SettingsModal.vue'
 import i18n from '@renderer/plugins/i18n'
@@ -63,7 +64,7 @@ describe('SettingsModal', () => {
     const { useSettingsStore } = await import('@renderer/stores/settings')
     const settingsStore = useSettingsStore()
 
-    // Find the theme buttons — look for Dark/Sombre or Light/Clair
+    // Find the theme buttons — look for Dark/Sombre or Light/Clair (appearance section is default)
     const themeButtons = wrapper.findAll('button')
     const darkBtn = themeButtons.find(b => b.text().includes('Dark') || b.text().includes('Sombre'))
     expect(darkBtn).toBeDefined()
@@ -83,7 +84,7 @@ describe('SettingsModal', () => {
     const { useSettingsStore } = await import('@renderer/stores/settings')
     const settingsStore = useSettingsStore()
 
-    // Find the language select and trigger a change
+    // Find the language select (appearance section is default)
     const langSelect = wrapper.find('select')
     expect(langSelect.exists()).toBe(true)
     await langSelect.setValue('en')
@@ -103,6 +104,9 @@ describe('SettingsModal', () => {
       },
     })
     await flushPromises()
+    // Navigate to editor section
+    await wrapper.find('[data-testid="nav-editor"]').trigger('click')
+    await nextTick()
     // No number input should be visible for maxFileLinesCount
     const inputs = wrapper.findAll('input[type="number"]')
     const maxInput = inputs.find(i => Number(i.attributes('min')) === 50)
@@ -122,6 +126,9 @@ describe('SettingsModal', () => {
       },
     })
     await flushPromises()
+    // Navigate to editor section
+    await wrapper.find('[data-testid="nav-editor"]').trigger('click')
+    await nextTick()
     const inputs = wrapper.findAll('input[type="number"]')
     const maxInput = inputs.find(i => Number(i.attributes('min')) === 50)
     expect(maxInput).toBeDefined()
@@ -140,6 +147,9 @@ describe('SettingsModal', () => {
       },
     })
     await flushPromises()
+    // Navigate to application section
+    await wrapper.find('[data-testid="nav-application"]').trigger('click')
+    await nextTick()
     expect(wrapper.text()).toContain('0.4.0')
   })
 })
