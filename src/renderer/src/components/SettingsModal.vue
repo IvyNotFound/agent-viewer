@@ -124,7 +124,7 @@ function handleKeydown(e: KeyboardEvent) {
         <div class="flex flex-1 min-h-0">
 
           <!-- Sidebar navigation -->
-          <nav class="w-44 shrink-0 border-r border-edge-subtle py-2 flex flex-col gap-0.5 overflow-y-auto">
+          <nav class="w-44 shrink-0 border-r border-edge-subtle py-2 flex flex-col gap-0.5">
             <button
               v-for="s in sections"
               :key="s.id"
