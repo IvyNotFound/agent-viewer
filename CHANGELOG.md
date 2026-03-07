@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.29.0] - 2026-03-07
+
+### Changes
+- chore(deps): update package-lock.json (bcf3ccc)
+- chore: add mutation/ to gitignore (stryker output) (8b13244)
+- fix(front-vuejs): translate missing i18n keys in 16 non-EN/FR locales (T1079) (ee1755b)
+- fix(front-vuejs): fix obsolete SQL columns niveau/fichiers in AgentLogsView (T1078) (23d8f10)
+- docs: mettre à jour README et JSDoc pour v0.28.4 (T1060) (ca1d8eb)
+- fix(front-vuejs): add :key on FileView to prevent race condition on tab switch (T1080) (07ef268)
+- fix(front-vuejs): remove overflow-y-auto on SettingsModal sidebar nav (T1081) (913cda5)
+- test(front-vuejs): kill mutation survivors in useAutoLaunch.ts — cooldown, debounce, prevStatus, hasActiveTasks, filter (T1065) (43437a3)
+- fix(front-vuejs): remove T1065 out-of-scope describes from useAutoLaunch.spec (T1062) (acb5120)
+- test(front-vuejs): kill mutation survivors in tasks.ts — scope filter, DONE_TASKS_LIMIT, setTaskStatut, projectPath, notifications (T1063) (7941a0e)
+- test(back-electron): convId validation, worktree guard, taskkill, sessionId guard (T1068) (5b4404e)
+- test(front-vuejs): agentColor + settings mutation-killing tests (T1076) (a9443b7)
+- test(front-vuejs): improve tabs store mutation coverage — regex, throttle, params, guards (T1069) (9072cda)
+- test(renderer): useLaunchSession — cache TTL, prompt parts, WSL selection (T1067) (f85817e)
+- test(front-vuejs): mutation-killing tests for useHookEventDisplay + parseDate (T1074) (617f52a)
+- test(front-vuejs): add orgChartLayout.ts coverage — positions, dimensions, dotStatus (T1071) (50f3fa5)
+- test(back-electron): add ipc-project ZIP/dialog/agentLang coverage (T1077) (6670ad4)
+- test(back-electron): add migration-runner.spec.ts — bootstrap, idempotence, v2/v3/v25 guards (T1064) (f9e4138)
+- test(back-electron): kill mutation survivors in hookServer.ts (T1066) (182fd31)
+- test(back-electron): UUID_REGEX, buildEnv, getActiveTasksLine (T1075) (28228fe)
+- test(back-electron): add parseVersion, cache, parseDetectionOutput tests (T1072) (5003620)
+- test(back-electron): add ipc-wsl.spec.ts — getWslExe, enrichWindowsPath, getWslDistros, wsl:openTerminal (T1073) (418672b)
+- test(back-electron): deep mutation tests for aider/opencode/gemini/goose adapters (T1070) (6177f36)
+- feat(front-vuejs): migrate SettingsModal CLI picker to getCliInstances (T1062) (8101d4c)
+- chore(back-electron): remove wsl:getClaudeInstances handler (T1059) (e0440d7)
+- perf(back-electron): warm up CLI detection at app startup (T1058) (d219340)
+- fix(back-electron): improve CLI spawn on Windows local and WSL for non-Claude adapters (T1057) (52bffc2)
 ## [0.28.3] - 2026-03-07
 
 ### Bug Fixes
