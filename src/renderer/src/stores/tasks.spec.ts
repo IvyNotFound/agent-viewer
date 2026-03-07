@@ -43,8 +43,8 @@ describe('stores/tasks', () => {
     it('should return all tasks when no filter selected', () => {
       const store = useTasksStore()
       store.tasks = [
-        { id: 1, titre: 'Task 1', agent_assigne_id: 1, perimetre: 'front-vuejs', statut: 'todo' },
-        { id: 2, titre: 'Task 2', agent_assigne_id: 2, perimetre: 'back-electron', statut: 'todo' },
+        { id: 1, title: 'Task 1', agent_assigned_id: 1, scope: 'front-vuejs', status: 'todo' },
+        { id: 2, title: 'Task 2', agent_assigned_id: 2, scope: 'back-electron', status: 'todo' },
       ] as never
 
       const filtered = store.filteredTasks
@@ -54,8 +54,8 @@ describe('stores/tasks', () => {
     it('should filter by agent_id', () => {
       const store = useTasksStore()
       store.tasks = [
-        { id: 1, titre: 'Task 1', agent_assigne_id: 1, perimetre: 'front-vuejs', statut: 'todo' },
-        { id: 2, titre: 'Task 2', agent_assigne_id: 2, perimetre: 'back-electron', statut: 'todo' },
+        { id: 1, title: 'Task 1', agent_assigned_id: 1, scope: 'front-vuejs', status: 'todo' },
+        { id: 2, title: 'Task 2', agent_assigned_id: 2, scope: 'back-electron', status: 'todo' },
       ] as never
 
       store.selectedAgentId = 1
@@ -65,26 +65,26 @@ describe('stores/tasks', () => {
       expect(filtered[0].id).toBe(1)
     })
 
-    it('should filter by perimetre', () => {
+    it('should filter by scope', () => {
       const store = useTasksStore()
       store.tasks = [
-        { id: 1, titre: 'Task 1', agent_assigne_id: 1, perimetre: 'front-vuejs', statut: 'todo' },
-        { id: 2, titre: 'Task 2', agent_assigne_id: 2, perimetre: 'back-electron', statut: 'todo' },
+        { id: 1, title: 'Task 1', agent_assigned_id: 1, scope: 'front-vuejs', status: 'todo' },
+        { id: 2, title: 'Task 2', agent_assigned_id: 2, scope: 'back-electron', status: 'todo' },
       ] as never
 
       store.selectedPerimetre = 'front-vuejs'
       const filtered = store.filteredTasks
 
       expect(filtered).toHaveLength(1)
-      expect(filtered[0].perimetre).toBe('front-vuejs')
+      expect(filtered[0].scope).toBe('front-vuejs')
     })
 
-    it('should filter by both agent_id and perimetre', () => {
+    it('should filter by both agent_id and scope', () => {
       const store = useTasksStore()
       store.tasks = [
-        { id: 1, titre: 'Task 1', agent_assigne_id: 1, perimetre: 'front-vuejs', statut: 'todo' },
-        { id: 2, titre: 'Task 2', agent_assigne_id: 2, perimetre: 'back-electron', statut: 'todo' },
-        { id: 3, titre: 'Task 3', agent_assigne_id: 1, perimetre: 'back-electron', statut: 'todo' },
+        { id: 1, title: 'Task 1', agent_assigned_id: 1, scope: 'front-vuejs', status: 'todo' },
+        { id: 2, title: 'Task 2', agent_assigned_id: 2, scope: 'back-electron', status: 'todo' },
+        { id: 3, title: 'Task 3', agent_assigned_id: 1, scope: 'back-electron', status: 'todo' },
       ] as never
 
       store.selectedAgentId = 1
@@ -100,12 +100,12 @@ describe('stores/tasks', () => {
     it('should group tasks by status', () => {
       const store = useTasksStore()
       store.tasks = [
-        { id: 1, titre: 'Task 1', agent_assigne_id: 1, perimetre: 'front', statut: 'todo' },
-        { id: 2, titre: 'Task 2', agent_assigne_id: 1, perimetre: 'front', statut: 'todo' },
-        { id: 3, titre: 'Task 3', agent_assigne_id: 1, perimetre: 'front', statut: 'in_progress' },
-        { id: 4, titre: 'Task 4', agent_assigne_id: 1, perimetre: 'front', statut: 'done' },
-        { id: 5, titre: 'Task 5', agent_assigne_id: 1, perimetre: 'front', statut: 'archived' },
-        { id: 6, titre: 'Task 6', agent_assigne_id: 1, perimetre: 'front', statut: 'archived' }, // legacy, should count as archivé
+        { id: 1, title: 'Task 1', agent_assigned_id: 1, scope: 'front', status: 'todo' },
+        { id: 2, title: 'Task 2', agent_assigned_id: 1, scope: 'front', status: 'todo' },
+        { id: 3, title: 'Task 3', agent_assigned_id: 1, scope: 'front', status: 'in_progress' },
+        { id: 4, title: 'Task 4', agent_assigned_id: 1, scope: 'front', status: 'done' },
+        { id: 5, title: 'Task 5', agent_assigned_id: 1, scope: 'front', status: 'archived' },
+        { id: 6, title: 'Task 6', agent_assigned_id: 1, scope: 'front', status: 'archived' },
       ] as never
 
       const byStatus = store.tasksByStatus
@@ -147,7 +147,7 @@ describe('stores/tasks', () => {
   })
 
   describe('togglePerimetreFilter', () => {
-    it('should toggle perimetre filter on', () => {
+    it('should toggle scope filter on', () => {
       const store = useTasksStore()
       store.selectedPerimetre = null
 
@@ -156,7 +156,7 @@ describe('stores/tasks', () => {
       expect(store.selectedPerimetre).toBe('front-vuejs')
     })
 
-    it('should toggle perimetre filter off when same perimetre selected', () => {
+    it('should toggle scope filter off when same scope selected', () => {
       const store = useTasksStore()
       store.selectedPerimetre = 'front-vuejs'
 
@@ -174,18 +174,18 @@ describe('stores/tasks', () => {
       // Simulate queryDb returning proper rows
       // Order: live tasks (todo/in_progress), done tasks (capped), agents, locks, stats, perimetres
       mockElectronAPI.queryDb
-        .mockResolvedValueOnce([{ id: 1, titre: 'Task One', statut: 'todo', agent_assigne_id: null }]) // live tasks
+        .mockResolvedValueOnce([{ id: 1, title: 'Task One', status: 'todo', agent_assigned_id: null }]) // live tasks
         .mockResolvedValueOnce([]) // done tasks (capped)
-        .mockResolvedValueOnce([{ id: 10, name: 'dev-front', type: 'scoped', perimetre: 'front-vuejs' }]) // agents
+        .mockResolvedValueOnce([{ id: 10, name: 'dev-front', type: 'scoped', scope: 'front-vuejs' }]) // agents
         .mockResolvedValueOnce([]) // locks
-        .mockResolvedValueOnce([{ statut: 'todo', count: 1 }]) // stats
+        .mockResolvedValueOnce([{ status: 'todo', count: 1 }]) // stats
         .mockResolvedValueOnce([]) // perimetres
 
       await store.refresh()
 
       expect(store.tasks).toHaveLength(1)
-      expect(store.tasks[0].titre).toBe('Task One')
-      expect(store.tasks[0].statut).toBe('todo')
+      expect(store.tasks[0].title).toBe('Task One')
+      expect(store.tasks[0].status).toBe('todo')
       expect(store.agents).toHaveLength(1)
       expect(store.agents[0].name).toBe('dev-front')
       expect(store.stats.todo).toBe(1)
@@ -196,7 +196,7 @@ describe('stores/tasks', () => {
       store.dbPath = '/test/db'
 
       mockElectronAPI.queryDb
-        .mockResolvedValueOnce([{ id: 42, titre: 'Already string', statut: 'done', description: 'Some desc' }])
+        .mockResolvedValueOnce([{ id: 42, title: 'Already string', status: 'done', description: 'Some desc' }])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([])
@@ -205,7 +205,7 @@ describe('stores/tasks', () => {
       await store.refresh()
 
       expect(store.tasks).toHaveLength(1)
-      expect(store.tasks[0].titre).toBe('Already string')
+      expect(store.tasks[0].title).toBe('Already string')
       expect(store.tasks[0].description).toBe('Some desc')
     })
   })
@@ -299,8 +299,8 @@ describe('stores/tasks — project lifecycle', () => {
 
     it('should clear selectedTask and taskComments on close', async () => {
       const store = useTasksStore()
-      store.tasks = [{ id: 1, titre: 'Task 1' }] as never
-      await store.openTask({ id: 1, titre: 'Task 1' } as never)
+      store.tasks = [{ id: 1, title: 'Task 1' }] as never
+      await store.openTask({ id: 1, title: 'Task 1' } as never)
 
       store.closeProject()
 
@@ -398,7 +398,7 @@ describe('stores/tasks — project lifecycle', () => {
     it('should set selectedTask when openTask is called', async () => {
       const store = useTasksStore()
       await store.setProject('/p', '/p/.claude/db')
-      const task = { id: 42, titre: 'My task' }
+      const task = { id: 42, title: 'My task' }
       mockElectronAPI.queryDb.mockResolvedValue([])
 
       await store.openTask(task as never)
@@ -409,12 +409,12 @@ describe('stores/tasks — project lifecycle', () => {
     it('should load task comments from DB', async () => {
       const store = useTasksStore()
       await store.setProject('/p', '/p/.claude/db')
-      const mockComments = [{ id: 1, contenu: 'Commentaire', agent_name: 'review' }]
+      const mockComments = [{ id: 1, content: 'Commentaire', agent_name: 'review' }]
       // After setProject, we need to mock the comments query specifically
       // Use mockReturn return commentsValue to for the openTask call
       mockElectronAPI.queryDb.mockResolvedValueOnce(mockComments)
 
-      await store.openTask({ id: 42, titre: 'task' } as never)
+      await store.openTask({ id: 42, title: 'task' } as never)
 
       expect(store.taskComments).toHaveLength(1)
     })
@@ -424,8 +424,8 @@ describe('stores/tasks — project lifecycle', () => {
       await store.setProject('/p', '/p/.claude/db')
       mockElectronAPI.queryDb.mockResolvedValue([])
 
-      await store.openTask({ id: 1, titre: 'first task' } as never)
-      await store.openTask({ id: 2, titre: 'second task' } as never)
+      await store.openTask({ id: 1, title: 'first task' } as never)
+      await store.openTask({ id: 2, title: 'second task' } as never)
 
       // selectedTask should be the second task
       expect(store.selectedTask?.id).toBe(2)
@@ -604,7 +604,7 @@ describe('stores/tasks — agentRefresh', () => {
     await store.setProject('/p', '/p/.claude/db')
     mockElectronAPI.queryDb.mockClear()
     const agentData = [{ id: 1, name: 'review', type: 'global' }]
-    const lockData = [{ id: 1, fichier: 'test.ts', agent_name: 'review' }]
+    const lockData = [{ id: 1, file: 'test.ts', agent_name: 'review' }]
     mockElectronAPI.queryDb
       .mockResolvedValueOnce(agentData)
       .mockResolvedValueOnce(lockData)
@@ -823,8 +823,8 @@ describe('stores/tasks — closeTask', () => {
 
   it('should set selectedTask to null', () => {
     const store = useTasksStore()
-    store.selectedTask = { id: 1, titre: 'Task 1' } as never
-    store.taskComments = [{ id: 1, contenu: 'comment' }] as never
+    store.selectedTask = { id: 1, title: 'Task 1' } as never
+    store.taskComments = [{ id: 1, content: 'comment' }] as never
 
     store.closeTask()
 
@@ -833,8 +833,8 @@ describe('stores/tasks — closeTask', () => {
 
   it('should clear taskComments', () => {
     const store = useTasksStore()
-    store.selectedTask = { id: 1, titre: 'Task 1' } as never
-    store.taskComments = [{ id: 1, contenu: 'c1' }, { id: 2, contenu: 'c2' }] as never
+    store.selectedTask = { id: 1, title: 'Task 1' } as never
+    store.taskComments = [{ id: 1, content: 'c1' }, { id: 2, content: 'c2' }] as never
 
     store.closeTask()
 
@@ -865,12 +865,12 @@ describe('stores/tasks — perimetres computed', () => {
     mockElectronAPI.onDbChanged.mockReturnValue(() => {})
   })
 
-  it('should deduplicate perimetres from tasks', () => {
+  it('should deduplicate scopes from tasks', () => {
     const store = useTasksStore()
     store.tasks = [
-      { id: 1, perimetre: 'front-vuejs', statut: 'todo' },
-      { id: 2, perimetre: 'back-electron', statut: 'todo' },
-      { id: 3, perimetre: 'front-vuejs', statut: 'done' },
+      { id: 1, scope: 'front-vuejs', status: 'todo' },
+      { id: 2, scope: 'back-electron', status: 'todo' },
+      { id: 3, scope: 'front-vuejs', status: 'done' },
     ] as never
 
     expect(store.perimetres).toEqual(['back-electron', 'front-vuejs'])
@@ -879,20 +879,20 @@ describe('stores/tasks — perimetres computed', () => {
   it('should return sorted array', () => {
     const store = useTasksStore()
     store.tasks = [
-      { id: 1, perimetre: 'zzz', statut: 'todo' },
-      { id: 2, perimetre: 'aaa', statut: 'todo' },
-      { id: 3, perimetre: 'mmm', statut: 'todo' },
+      { id: 1, scope: 'zzz', status: 'todo' },
+      { id: 2, scope: 'aaa', status: 'todo' },
+      { id: 3, scope: 'mmm', status: 'todo' },
     ] as never
 
     expect(store.perimetres).toEqual(['aaa', 'mmm', 'zzz'])
   })
 
-  it('should skip tasks with null/undefined perimetre', () => {
+  it('should skip tasks with null/undefined scope', () => {
     const store = useTasksStore()
     store.tasks = [
-      { id: 1, perimetre: null, statut: 'todo' },
-      { id: 2, perimetre: undefined, statut: 'todo' },
-      { id: 3, perimetre: 'front-vuejs', statut: 'todo' },
+      { id: 1, scope: null, status: 'todo' },
+      { id: 2, scope: undefined, status: 'todo' },
+      { id: 3, scope: 'front-vuejs', status: 'todo' },
     ] as never
 
     expect(store.perimetres).toEqual(['front-vuejs'])
@@ -921,15 +921,15 @@ describe('stores/tasks — watch(agents) auto-clear filter', () => {
   it('should clear selectedAgentId when filtered agent disappears from agents list', async () => {
     const store = useTasksStore()
     store.agents = [
-      { id: 10, name: 'dev-front', type: 'dev', perimetre: 'front-vuejs' },
-      { id: 20, name: 'dev-back', type: 'dev', perimetre: 'back-electron' },
+      { id: 10, name: 'dev-front', type: 'dev', scope: 'front-vuejs' },
+      { id: 20, name: 'dev-back', type: 'dev', scope: 'back-electron' },
     ] as never
     store.selectedAgentId = 10
     await nextTick()
 
     // Agent 10 disappears (e.g. project switch refreshed agents)
     store.agents = [
-      { id: 20, name: 'dev-back', type: 'dev', perimetre: 'back-electron' },
+      { id: 20, name: 'dev-back', type: 'dev', scope: 'back-electron' },
     ] as never
     await nextTick()
 
@@ -939,15 +939,15 @@ describe('stores/tasks — watch(agents) auto-clear filter', () => {
   it('should keep selectedAgentId when filtered agent still exists', async () => {
     const store = useTasksStore()
     store.agents = [
-      { id: 10, name: 'dev-front', type: 'dev', perimetre: 'front-vuejs' },
+      { id: 10, name: 'dev-front', type: 'dev', scope: 'front-vuejs' },
     ] as never
     store.selectedAgentId = 10
     await nextTick()
 
     // Agents refreshed but agent 10 still present
     store.agents = [
-      { id: 10, name: 'dev-front', type: 'dev', perimetre: 'front-vuejs' },
-      { id: 20, name: 'dev-back', type: 'dev', perimetre: 'back-electron' },
+      { id: 10, name: 'dev-front', type: 'dev', scope: 'front-vuejs' },
+      { id: 20, name: 'dev-back', type: 'dev', scope: 'back-electron' },
     ] as never
     await nextTick()
 
@@ -1084,27 +1084,27 @@ describe('stores/tasks — setTaskStatut TASK_BLOCKED', () => {
   })
 
   it('throws TASK_BLOCKED error when IPC returns TASK_BLOCKED (T553)', async () => {
-    const blockers = [{ id: 5, titre: 'Blocker', statut: 'in_progress' }]
+    const blockers = [{ id: 5, title: 'Blocker', status: 'in_progress' }]
     ;(mockElectronAPI as Record<string, ReturnType<typeof vi.fn>>).tasksUpdateStatus =
       vi.fn().mockResolvedValue({ success: false, error: 'TASK_BLOCKED', blockers })
 
     const store = useTasksStore()
-    store.$patch({ dbPath: '/p/db', tasks: [{ id: 1, statut: 'todo', titre: 'T' } as never] })
+    store.$patch({ dbPath: '/p/db', tasks: [{ id: 1, status: 'todo', title: 'T' } as never] })
 
     await expect(store.setTaskStatut(1, 'in_progress')).rejects.toThrow('TASK_BLOCKED')
   })
 
   it('rolls back optimistic update on TASK_BLOCKED (T553)', async () => {
-    const blockers = [{ id: 5, titre: 'Blocker', statut: 'in_progress' }]
+    const blockers = [{ id: 5, title: 'Blocker', status: 'in_progress' }]
     ;(mockElectronAPI as Record<string, ReturnType<typeof vi.fn>>).tasksUpdateStatus =
       vi.fn().mockResolvedValue({ success: false, error: 'TASK_BLOCKED', blockers })
 
     const store = useTasksStore()
-    store.$patch({ dbPath: '/p/db', tasks: [{ id: 1, statut: 'todo', titre: 'T' } as never] })
+    store.$patch({ dbPath: '/p/db', tasks: [{ id: 1, status: 'todo', title: 'T' } as never] })
 
     try { await store.setTaskStatut(1, 'in_progress') } catch { /* expected */ }
 
-    expect(store.tasks.find(t => t.id === 1)?.statut).toBe('todo')
+    expect(store.tasks.find(t => t.id === 1)?.status).toBe('todo')
   })
 })
 
@@ -1306,4 +1306,3 @@ describe('stores/tasks — agentGroups actions', () => {
     })
   })
 })
-

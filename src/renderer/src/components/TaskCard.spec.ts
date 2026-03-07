@@ -10,16 +10,18 @@ import i18n from '@renderer/plugins/i18n'
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
     id: 1,
-    titre: 'Fix login bug',
+    title: 'Fix login bug',
     description: 'Users cannot login with special chars',
-    statut: 'todo',
-    perimetre: 'front-vuejs',
+    status: 'todo',
+    scope: 'front-vuejs',
     effort: 2,
-    agent_assigne_id: 1,
+    agent_assigned_id: 1,
     agent_name: 'dev-front',
-    agent_createur_id: null,
-    agent_createur_name: null,
-    agent_perimetre: null,
+    agent_creator_id: null,
+    agent_creator_name: null,
+    agent_scope: null,
+    agent_validator_id: null,
+    priority: 'normal',
     parent_task_id: null,
     session_id: null,
     created_at: '2026-01-01T00:00:00Z',
@@ -41,7 +43,7 @@ describe('TaskCard', () => {
 
   it('renders the task title', () => {
     const wrapper = shallowMount(TaskCard, {
-      props: { task: makeTask({ titre: 'My important task' }) },
+      props: { task: makeTask({ title: 'My important task' }) },
       global: { plugins: [i18n] },
     })
     expect(wrapper.text()).toContain('My important task')
@@ -100,9 +102,9 @@ describe('TaskCard', () => {
     expect(badges.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('shows perimetre badge when task has perimetre', () => {
+  it('shows scope badge when task has scope', () => {
     const wrapper = shallowMount(TaskCard, {
-      props: { task: makeTask({ perimetre: 'front-vuejs' }) },
+      props: { task: makeTask({ scope: 'front-vuejs' }) },
       global: { plugins: [i18n] },
     })
     expect(wrapper.text()).toContain('front-vuejs')
@@ -144,7 +146,7 @@ describe('TaskCard', () => {
 
   // ── T575: context menu on in_progress tasks ──
   it('shows ContextMenu on right-click when task is in_progress (T575)', async () => {
-    const task = makeTask({ statut: 'in_progress' })
+    const task = makeTask({ status: 'in_progress' })
     const pinia = createTestingPinia({
       initialState: { tasks: { agents: [], dbPath: '/p/db' }, tabs: { tabs: [] } },
     })
@@ -162,7 +164,7 @@ describe('TaskCard', () => {
   })
 
   it('does not show ContextMenu on right-click when task is todo (T575)', async () => {
-    const task = makeTask({ statut: 'todo' })
+    const task = makeTask({ status: 'todo' })
     const pinia = createTestingPinia({
       initialState: { tasks: { agents: [], dbPath: '/p/db' }, tabs: { tabs: [] } },
     })
@@ -176,7 +178,7 @@ describe('TaskCard', () => {
   })
 
   it('closes ContextMenu when @close is emitted (T575)', async () => {
-    const task = makeTask({ statut: 'in_progress' })
+    const task = makeTask({ status: 'in_progress' })
     const pinia = createTestingPinia({
       initialState: { tasks: { agents: [], dbPath: '/p/db' }, tabs: { tabs: [] } },
     })
@@ -194,7 +196,7 @@ describe('TaskCard', () => {
   })
 
   it('shows "Session already active" label when tab already open for task (T575)', async () => {
-    const task = makeTask({ statut: 'in_progress', id: 42 })
+    const task = makeTask({ status: 'in_progress', id: 42 })
     const pinia = createTestingPinia({
       initialState: {
         tasks: { agents: [], dbPath: '/p/db' },
