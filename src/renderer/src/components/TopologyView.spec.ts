@@ -13,8 +13,8 @@ describe('TopologyView (T750)', () => {
   it('renders agent cards grouped by perimetre (T750)', async () => {
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.queryDb.mockResolvedValue([
-      { id: 1, name: 'dev-front', type: 'dev', perimetre: 'front-vuejs', session_statut: 'started', session_tokens: 1200, current_task: 'Build UI' },
-      { id: 2, name: 'dev-back', type: 'dev', perimetre: 'back-electron', session_statut: null, session_tokens: null, current_task: null },
+      { id: 1, name: 'dev-front', type: 'dev', scope: 'front-vuejs', session_status: 'started', session_tokens: 1200, current_task: 'Build UI' },
+      { id: 2, name: 'dev-back', type: 'dev', scope: 'back-electron', session_status: null, session_tokens: null, current_task: null },
     ])
 
     const wrapper = mount(TopologyView, {
@@ -52,7 +52,7 @@ describe('TopologyView (T750)', () => {
   it('groups agents with null perimetre into global column (T750)', async () => {
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.queryDb.mockResolvedValue([
-      { id: 3, name: 'arch', type: 'arch', perimetre: null, session_statut: null, session_tokens: null, current_task: null },
+      { id: 3, name: 'arch', type: 'arch', scope: null, session_status: null, session_tokens: null, current_task: null },
     ])
 
     const wrapper = mount(TopologyView, {
@@ -73,7 +73,7 @@ describe('TopologyView (T750)', () => {
   it('sets selectedAgentId on agent card click (T750)', async () => {
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.queryDb.mockResolvedValue([
-      { id: 1, name: 'dev-front', type: 'dev', perimetre: 'front', session_statut: null, session_tokens: null, current_task: null },
+      { id: 1, name: 'dev-front', type: 'dev', scope: 'front', session_status: null, session_tokens: null, current_task: null },
     ])
 
     const pinia = createTestingPinia({

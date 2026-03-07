@@ -10,16 +10,16 @@ import i18n from '@renderer/plugins/i18n'
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
     id: 1,
-    titre: 'Fix login bug',
+    title: 'Fix login bug',
     description: 'Users cannot login with special chars',
-    statut: 'todo',
-    perimetre: 'front-vuejs',
+    status: 'todo',
+    scope: 'front-vuejs',
     effort: 2,
-    agent_assigne_id: 1,
+    agent_assigned_id: 1,
     agent_name: 'dev-front',
-    agent_createur_id: null,
-    agent_createur_name: null,
-    agent_perimetre: null,
+    agent_creator_id: null,
+    agent_creator_name: null,
+    agent_scope: null,
     parent_task_id: null,
     session_id: null,
     created_at: '2026-01-01T00:00:00Z',
@@ -65,7 +65,7 @@ describe('TaskDetailModal', () => {
   })
 
   it('displays the task title when a task is selected', async () => {
-    const task = makeTask({ titre: 'Implement dark mode' })
+    const task = makeTask({ title: 'Implement dark mode' })
     const wrapper = shallowMount(TaskDetailModal, {
       global: {
         plugins: [createTestingPinia({ initialState: { tasks: { selectedTask: task } } }), i18n],
@@ -166,10 +166,10 @@ describe('TaskDetailModal — internal logic (T353)', () => {
     expect(html).toContain('<code>')
   })
 
-  it('renderedComments maps comment contenu to _html', async () => {
+  it('renderedComments maps comment content to _html', async () => {
     const task = makeTask()
     const comments = [
-      { id: 1, contenu: '**done**', agent_name: 'dev-front', created_at: new Date().toISOString() },
+      { id: 1, content: '**done**', agent_name: 'dev-front', created_at: new Date().toISOString() },
     ]
     const wrapper = shallowMount(TaskDetailModal, {
       global: {
@@ -274,10 +274,10 @@ describe('TaskDetailModal — multi-agents', () => {
 
   // ── T520: valideurAgent computed ──────────────────────────────────────────
   it('affiche le badge valideurAgent quand agent_valideur_id est renseigné (T520)', async () => {
-    const valideurAgent = { id: 99, name: 'review-master', type: 'review', perimetre: null,
+    const valideurAgent = { id: 99, name: 'review-master', type: 'review', scope: null,
       system_prompt: null, system_prompt_suffix: null, thinking_mode: null as null,
       allowed_tools: null, auto_launch: 0, permission_mode: null, max_sessions: 1, created_at: '2026-01-01' }
-    const task = makeTask({ id: 10, agent_valideur_id: 99 })
+    const task = makeTask({ id: 10, agent_validator_id: 99 })
     const pinia = createTestingPinia({
       initialState: { tasks: { selectedTask: null, agents: [valideurAgent], dbPath: '/p/db', taskComments: [], taskAssignees: [] } },
     })
@@ -296,7 +296,7 @@ describe('TaskDetailModal — multi-agents', () => {
   })
 
   it("n'affiche pas la section valideur quand agent_valideur_id est null (T520)", async () => {
-    const task = makeTask({ id: 11, agent_valideur_id: null })
+    const task = makeTask({ id: 11, agent_validator_id: null })
     const pinia = createTestingPinia({
       initialState: { tasks: { selectedTask: null, agents: [], dbPath: '/p/db', taskComments: [], taskAssignees: [] } },
     })
@@ -314,12 +314,12 @@ describe('TaskDetailModal — multi-agents', () => {
 
   // ── T553: blocked indicator ───────────────────────────────────────────────
   it('shows blocked indicator when task is todo with unresolved blocker (T553)', async () => {
-    const task = makeTask({ id: 1, statut: 'todo' })
+    const task = makeTask({ id: 1, status: 'todo' })
     const blockingLink = {
-      id: 1, type: 'bloque',
+      id: 1, type: 'blocks',
       from_task: 99, to_task: 1,
-      from_titre: 'Blocking task', from_statut: 'in_progress',
-      to_titre: 'task 1', to_statut: 'todo',
+      from_title: 'Blocking task', from_status: 'in_progress',
+      to_title: 'task 1', to_status: 'todo',
     }
     const pinia = createTestingPinia({
       initialState: { tasks: { selectedTask: task, agents: [], dbPath: '/p/db', taskComments: [], taskAssignees: [], taskLinks: [blockingLink] } },
@@ -333,12 +333,12 @@ describe('TaskDetailModal — multi-agents', () => {
   })
 
   it('does not show blocked indicator when all blockers are done (T553)', async () => {
-    const task = makeTask({ id: 1, statut: 'todo' })
+    const task = makeTask({ id: 1, status: 'todo' })
     const resolvedLink = {
-      id: 1, type: 'bloque',
+      id: 1, type: 'blocks',
       from_task: 99, to_task: 1,
-      from_titre: 'Done task', from_statut: 'done',
-      to_titre: 'task 1', to_statut: 'todo',
+      from_title: 'Done task', from_status: 'done',
+      to_title: 'task 1', to_status: 'todo',
     }
     const pinia = createTestingPinia({
       initialState: { tasks: { selectedTask: task, agents: [], dbPath: '/p/db', taskComments: [], taskAssignees: [], taskLinks: [resolvedLink] } },
@@ -351,12 +351,12 @@ describe('TaskDetailModal — multi-agents', () => {
   })
 
   it('does not show blocked indicator when task is in_progress (T553)', async () => {
-    const task = makeTask({ id: 1, statut: 'in_progress' })
+    const task = makeTask({ id: 1, status: 'in_progress' })
     const link = {
-      id: 1, type: 'bloque',
+      id: 1, type: 'blocks',
       from_task: 99, to_task: 1,
-      from_titre: 'Other task', from_statut: 'todo',
-      to_titre: 'task 1', to_statut: 'in_progress',
+      from_title: 'Other task', from_status: 'todo',
+      to_title: 'task 1', to_status: 'in_progress',
     }
     const pinia = createTestingPinia({
       initialState: { tasks: { selectedTask: task, agents: [], dbPath: '/p/db', taskComments: [], taskAssignees: [], taskLinks: [link] } },

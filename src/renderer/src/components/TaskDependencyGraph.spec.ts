@@ -9,13 +9,13 @@ import type { TaskLink } from '@renderer/types'
 function makeLink(overrides: Partial<TaskLink> = {}): TaskLink {
   return {
     id: 1,
-    type: 'bloque',
+    type: 'blocks',
     from_task: 1,
     to_task: 2,
-    from_titre: 'Task A',
-    from_statut: 'todo',
-    to_titre: 'Task B',
-    to_statut: 'in_progress',
+    from_title: 'Task A',
+    from_status: 'todo',
+    to_title: 'Task B',
+    to_status: 'in_progress',
     ...overrides,
   }
 }
@@ -35,8 +35,8 @@ describe('TaskDependencyGraph', () => {
     wrapper.unmount()
   })
 
-  it('outgoing: includes links where this task blocks another (from_task=taskId, type=bloque)', () => {
-    const links = [makeLink({ type: 'bloque', from_task: 1, to_task: 2 })]
+  it('outgoing: includes links where this task blocks another (from_task=taskId, type=blocks)', () => {
+    const links = [makeLink({ type: 'blocks', from_task: 1, to_task: 2 })]
     const wrapper = shallowMount(TaskDependencyGraph, {
       props: { taskId: 1, links },
       global: { plugins: [createTestingPinia(), i18n] },
@@ -46,8 +46,8 @@ describe('TaskDependencyGraph', () => {
     wrapper.unmount()
   })
 
-  it('outgoing: includes links where this task depends on another (to_task=taskId, type=dépend_de)', () => {
-    const links = [makeLink({ type: 'dépend_de', from_task: 2, to_task: 1, from_titre: 'Task B', to_titre: 'Task A' })]
+  it('outgoing: includes links where this task depends on another (to_task=taskId, type=depends_on)', () => {
+    const links = [makeLink({ type: 'depends_on', from_task: 2, to_task: 1, from_title: 'Task B', to_title: 'Task A' })]
     const wrapper = shallowMount(TaskDependencyGraph, {
       props: { taskId: 1, links },
       global: { plugins: [createTestingPinia(), i18n] },
@@ -57,8 +57,8 @@ describe('TaskDependencyGraph', () => {
     wrapper.unmount()
   })
 
-  it('incoming: includes links where another task blocks this one (to_task=taskId, type=bloque)', () => {
-    const links = [makeLink({ type: 'bloque', from_task: 3, to_task: 1, from_titre: 'Task C', to_titre: 'Task A', from_statut: 'in_progress', to_statut: 'todo' })]
+  it('incoming: includes links where another task blocks this one (to_task=taskId, type=blocks)', () => {
+    const links = [makeLink({ type: 'blocks', from_task: 3, to_task: 1, from_title: 'Task C', to_title: 'Task A', from_status: 'in_progress', to_status: 'todo' })]
     const wrapper = shallowMount(TaskDependencyGraph, {
       props: { taskId: 1, links },
       global: { plugins: [createTestingPinia(), i18n] },
@@ -68,8 +68,8 @@ describe('TaskDependencyGraph', () => {
     wrapper.unmount()
   })
 
-  it('incoming: includes links where this task has from_task=taskId and type=dépend_de', () => {
-    const links = [makeLink({ type: 'dépend_de', from_task: 1, to_task: 4, to_titre: 'Task D', to_statut: 'done' })]
+  it('incoming: includes links where this task has from_task=taskId and type=depends_on', () => {
+    const links = [makeLink({ type: 'depends_on', from_task: 1, to_task: 4, to_title: 'Task D', to_status: 'done' })]
     const wrapper = shallowMount(TaskDependencyGraph, {
       props: { taskId: 1, links },
       global: { plugins: [createTestingPinia(), i18n] },
@@ -79,8 +79,8 @@ describe('TaskDependencyGraph', () => {
     wrapper.unmount()
   })
 
-  it('related: includes lié_à links involving this task', () => {
-    const links = [makeLink({ type: 'lié_à', from_task: 1, to_task: 5, to_titre: 'Task E', to_statut: 'todo' })]
+  it('related: includes related_to links involving this task', () => {
+    const links = [makeLink({ type: 'related_to', from_task: 1, to_task: 5, to_title: 'Task E', to_status: 'todo' })]
     const wrapper = shallowMount(TaskDependencyGraph, {
       props: { taskId: 1, links },
       global: { plugins: [createTestingPinia(), i18n] },
@@ -89,8 +89,8 @@ describe('TaskDependencyGraph', () => {
     wrapper.unmount()
   })
 
-  it('related: includes duplique links involving this task', () => {
-    const links = [makeLink({ type: 'duplique', from_task: 6, to_task: 1, from_titre: 'Task F', from_statut: 'todo', to_titre: 'Task A', to_statut: 'todo' })]
+  it('related: includes duplicates links involving this task', () => {
+    const links = [makeLink({ type: 'duplicates', from_task: 6, to_task: 1, from_title: 'Task F', from_status: 'todo', to_title: 'Task A', to_status: 'todo' })]
     const wrapper = shallowMount(TaskDependencyGraph, {
       props: { taskId: 1, links },
       global: { plugins: [createTestingPinia(), i18n] },
@@ -100,7 +100,7 @@ describe('TaskDependencyGraph', () => {
   })
 
   it('emits navigate event when a link button is clicked', async () => {
-    const links = [makeLink({ type: 'bloque', from_task: 1, to_task: 7, to_titre: 'Task G', to_statut: 'todo' })]
+    const links = [makeLink({ type: 'blocks', from_task: 1, to_task: 7, to_title: 'Task G', to_status: 'todo' })]
     const wrapper = shallowMount(TaskDependencyGraph, {
       props: { taskId: 1, links },
       global: { plugins: [createTestingPinia(), i18n] },
@@ -115,7 +115,7 @@ describe('TaskDependencyGraph', () => {
   })
 
   it('linkedTaskId returns to_task when from_task equals taskId', () => {
-    const links = [makeLink({ type: 'bloque', from_task: 1, to_task: 99 })]
+    const links = [makeLink({ type: 'blocks', from_task: 1, to_task: 99 })]
     const wrapper = shallowMount(TaskDependencyGraph, {
       props: { taskId: 1, links },
       global: { plugins: [createTestingPinia(), i18n] },
@@ -125,7 +125,7 @@ describe('TaskDependencyGraph', () => {
   })
 
   it('linkedTaskId returns from_task when to_task equals taskId', () => {
-    const links = [makeLink({ type: 'bloque', from_task: 88, to_task: 1, from_titre: 'Task 88', from_statut: 'todo', to_titre: 'Task A', to_statut: 'todo' })]
+    const links = [makeLink({ type: 'blocks', from_task: 88, to_task: 1, from_title: 'Task 88', from_status: 'todo', to_title: 'Task A', to_status: 'todo' })]
     const wrapper = shallowMount(TaskDependencyGraph, {
       props: { taskId: 1, links },
       global: { plugins: [createTestingPinia(), i18n] },

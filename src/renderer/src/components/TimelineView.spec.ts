@@ -13,7 +13,7 @@ describe('TimelineView (T842)', () => {
 
   it('displays groups by agent when tasks present', async () => {
     ;(mockElectronAPI.queryDb as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { id: 1, titre: 'Task A', statut: 'done', created_at: '2026-01-01T10:00:00', started_at: '2026-01-01T10:00:00', completed_at: '2026-01-01T11:00:00', effort: 2, agentName: 'dev-agent', agentId: 1 },
+      { id: 1, title: 'Task A', status: 'done', created_at: '2026-01-01T10:00:00', started_at: '2026-01-01T10:00:00', completed_at: '2026-01-01T11:00:00', effort: 2, agentName: 'dev-agent', agentId: 1 },
     ])
     const wrapper = mount(TimelineView, {
       global: {
@@ -45,7 +45,7 @@ describe('TimelineView (T842)', () => {
 
   it('shows animate-pulse for in_progress tasks', async () => {
     ;(mockElectronAPI.queryDb as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { id: 2, titre: 'WIP Task', statut: 'in_progress', created_at: '2026-01-01T09:00:00', started_at: '2026-01-01T09:00:00', completed_at: null, effort: 1, agentName: 'dev-agent', agentId: 1 },
+      { id: 2, title: 'WIP Task', status: 'in_progress', created_at: '2026-01-01T09:00:00', started_at: '2026-01-01T09:00:00', completed_at: null, effort: 1, agentName: 'dev-agent', agentId: 1 },
     ])
     const wrapper = mount(TimelineView, {
       global: {

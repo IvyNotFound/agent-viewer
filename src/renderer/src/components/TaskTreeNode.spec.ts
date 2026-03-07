@@ -9,17 +9,17 @@ import type { TaskNode } from '@renderer/utils/taskTree'
 function makeNode(overrides: Partial<TaskNode> = {}): TaskNode {
   return {
     id: 1,
-    titre: 'Root Task',
+    title: 'Root Task',
     description: null,
-    statut: 'todo',
-    perimetre: 'front-vuejs',
+    status: 'todo',
+    scope: 'front-vuejs',
     effort: 2,
-    agent_assigne_id: 1,
+    agent_assigned_id: 1,
     agent_name: 'dev-front',
-    agent_perimetre: 'front-vuejs',
-    agent_createur_id: null,
-    agent_createur_name: null,
-    agent_valideur_id: null,
+    agent_scope: 'front-vuejs',
+    agent_creator_id: null,
+    agent_creator_name: null,
+    agent_validator_id: null,
     parent_task_id: null,
     session_id: null,
     priority: 'normal',
@@ -41,7 +41,7 @@ describe('TaskTreeNode', () => {
   })
 
   it('renders task title', () => {
-    const node = makeNode({ titre: 'My Task Title' })
+    const node = makeNode({ title: 'My Task Title' })
     const wrapper = shallowMount(TaskTreeNode, {
       props: { node },
       global: { plugins: [createTestingPinia(), i18n] },
@@ -74,7 +74,7 @@ describe('TaskTreeNode', () => {
   })
 
   it('shows expand button for nodes with children', () => {
-    const child = makeNode({ id: 2, titre: 'Child Task', depth: 1, children: [] })
+    const child = makeNode({ id: 2, title: 'Child Task', depth: 1, children: [] })
     const node = makeNode({ id: 1, children: [child] })
     const wrapper = shallowMount(TaskTreeNode, {
       props: { node },
@@ -86,7 +86,7 @@ describe('TaskTreeNode', () => {
   })
 
   it('toggles expanded state when expand button is clicked', async () => {
-    const child = makeNode({ id: 2, titre: 'Child Task', depth: 1, children: [] })
+    const child = makeNode({ id: 2, title: 'Child Task', depth: 1, children: [] })
     const node = makeNode({ id: 1, children: [child] })
     const wrapper = shallowMount(TaskTreeNode, {
       props: { node },
@@ -102,8 +102,8 @@ describe('TaskTreeNode', () => {
 
   it('shows children count hint when collapsed and has children', async () => {
     const children = [
-      makeNode({ id: 2, titre: 'Child 1', depth: 1, children: [] }),
-      makeNode({ id: 3, titre: 'Child 2', depth: 1, children: [] }),
+      makeNode({ id: 2, title: 'Child 1', depth: 1, children: [] }),
+      makeNode({ id: 3, title: 'Child 2', depth: 1, children: [] }),
     ]
     const node = makeNode({ id: 1, children })
     const wrapper = shallowMount(TaskTreeNode, {

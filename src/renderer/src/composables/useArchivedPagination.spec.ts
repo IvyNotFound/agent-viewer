@@ -61,7 +61,7 @@ describe('composables/useArchivedPagination', () => {
       page: 0,
       pageSize: PAGE_SIZE,
       agentId: null,
-      perimetre: null,
+      scope: null,
     })
   })
 
@@ -77,7 +77,7 @@ describe('composables/useArchivedPagination', () => {
       page: 0,
       pageSize: PAGE_SIZE,
       agentId: 5,
-      perimetre: 'front-vuejs',
+      scope: 'front-vuejs',
     })
   })
 
@@ -187,7 +187,7 @@ describe('composables/useArchivedPagination', () => {
 
     expect(api.tasksGetArchived).toHaveBeenCalledWith(
       '/project/.claude/project.db',
-      expect.objectContaining({ page: 0, perimetre: 'back-electron' })
+      expect.objectContaining({ page: 0, scope: 'back-electron' })
     )
   })
 

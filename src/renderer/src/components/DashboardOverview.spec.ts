@@ -81,22 +81,22 @@ describe('DashboardOverview (T923)', () => {
     wrapper.unmount()
   })
 
-  it('counts active agents (session_statut = started)', async () => {
+  it('counts active agents (session_status = started)', async () => {
     const { wrapper } = mountWithState({
       tasks: {
         dbPath: '/tmp/test.db',
         tasks: [],
         agents: [
-          { id: 1, name: 'agent-a', session_statut: 'started' },
-          { id: 2, name: 'agent-b', session_statut: 'completed' },
-          { id: 3, name: 'agent-c', session_statut: 'started' },
+          { id: 1, name: 'agent-a', session_status: 'started' },
+          { id: 2, name: 'agent-b', session_status: 'completed' },
+          { id: 3, name: 'agent-c', session_status: 'started' },
         ],
         stats: { todo: 0, in_progress: 0, done: 0, archived: 0 },
       },
     })
     await flushPromises()
     const metricValues = wrapper.findAll('.tabular-nums')
-    // 2 agents with session_statut='started'
+    // 2 agents with session_status='started'
     expect(metricValues.some(el => el.text() === '2')).toBe(true)
     wrapper.unmount()
   })
@@ -120,8 +120,8 @@ describe('DashboardOverview (T923)', () => {
       tasks: {
         dbPath: '/tmp/test.db',
         tasks: [
-          { id: 1, titre: 'Task Alpha', statut: 'todo', updated_at: '2026-01-01T10:00:00', priority: 'normal', agent_name: null },
-          { id: 2, titre: 'Task Beta', statut: 'in_progress', updated_at: '2026-01-02T10:00:00', priority: 'high', agent_name: 'agent-x' },
+          { id: 1, title: 'Task Alpha', status: 'todo', updated_at: '2026-01-01T10:00:00', priority: 'normal', agent_name: null },
+          { id: 2, title: 'Task Beta', status: 'in_progress', updated_at: '2026-01-02T10:00:00', priority: 'high', agent_name: 'agent-x' },
         ],
         agents: [],
         stats: { todo: 1, in_progress: 1, done: 0, archived: 0 },

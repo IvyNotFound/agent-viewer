@@ -8,16 +8,16 @@ import i18n from '@renderer/plugins/i18n'
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
     id: 1,
-    titre: 'Fix login bug',
+    title: 'Fix login bug',
     description: 'Users cannot login with special chars',
-    statut: 'todo',
-    perimetre: 'front-vuejs',
+    status: 'todo',
+    scope: 'front-vuejs',
     effort: 2,
-    agent_assigne_id: 1,
+    agent_assigned_id: 1,
     agent_name: 'dev-front',
-    agent_createur_id: null,
-    agent_createur_name: null,
-    agent_perimetre: null,
+    agent_creator_id: null,
+    agent_creator_name: null,
+    agent_scope: null,
     parent_task_id: null,
     session_id: null,
     created_at: '2026-01-01T00:00:00Z',
@@ -96,7 +96,7 @@ describe('CommandPalette', () => {
   })
 
   it('displays tasks from store when tasks are present', () => {
-    const tasks = [makeTask({ id: 1, titre: 'Fix login bug' }), makeTask({ id: 2, titre: 'Add dark mode' })]
+    const tasks = [makeTask({ id: 1, title: 'Fix login bug' }), makeTask({ id: 2, title: 'Add dark mode' })]
     const wrapper = shallowMount(CommandPalette, {
       props: { modelValue: true },
       global: {

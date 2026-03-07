@@ -51,8 +51,8 @@ describe('SuccessRateChart', () => {
     const dayStr = today.toISOString().slice(0, 10)
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.queryDb.mockResolvedValue([
-      { day: dayStr, statut: 'completed', count: 8 },
-      { day: dayStr, statut: 'blocked', count: 2 },
+      { day: dayStr, status: 'completed', count: 8 },
+      { day: dayStr, status: 'blocked', count: 2 },
     ])
 
     const wrapper = mount(SuccessRateChart, {
@@ -74,8 +74,8 @@ describe('SuccessRateChart', () => {
     const dayStr = today.toISOString().slice(0, 10)
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.queryDb.mockResolvedValue([
-      { day: dayStr, statut: 'completed', count: 9 },
-      { day: dayStr, statut: 'blocked', count: 1 },
+      { day: dayStr, status: 'completed', count: 9 },
+      { day: dayStr, status: 'blocked', count: 1 },
     ])
 
     const wrapper = mount(SuccessRateChart, {
@@ -98,8 +98,8 @@ describe('SuccessRateChart', () => {
     const dayStr = today.toISOString().slice(0, 10)
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.queryDb.mockResolvedValue([
-      { day: dayStr, statut: 'completed', count: 6 },
-      { day: dayStr, statut: 'blocked', count: 4 },
+      { day: dayStr, status: 'completed', count: 6 },
+      { day: dayStr, status: 'blocked', count: 4 },
     ])
 
     const wrapper = mount(SuccessRateChart, {
@@ -122,8 +122,8 @@ describe('SuccessRateChart', () => {
     const dayStr = today.toISOString().slice(0, 10)
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.queryDb.mockResolvedValue([
-      { day: dayStr, statut: 'completed', count: 5 },
-      { day: dayStr, statut: 'blocked', count: 5 },
+      { day: dayStr, status: 'completed', count: 5 },
+      { day: dayStr, status: 'blocked', count: 5 },
     ])
 
     const wrapper = mount(SuccessRateChart, {

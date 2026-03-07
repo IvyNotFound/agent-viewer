@@ -63,17 +63,17 @@ import type { Task } from '@renderer/types'
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
     id: 1,
-    titre: 'Fix login bug',
+    title: 'Fix login bug',
     description: 'Description',
-    statut: 'todo',
-    perimetre: 'front-vuejs',
+    status: 'todo',
+    scope: 'front-vuejs',
     effort: 2,
     priority: 'normal',
-    agent_assigne_id: 1,
+    agent_assigned_id: 1,
     agent_name: 'dev-front',
-    agent_createur_id: null,
-    agent_createur_name: null,
-    agent_perimetre: null,
+    agent_creator_id: null,
+    agent_creator_name: null,
+    agent_scope: null,
     parent_task_id: null,
     session_id: null,
     created_at: '2026-01-01T00:00:00Z',
@@ -109,8 +109,8 @@ describe('StatusColumn — snapshots', () => {
 
   it('matches snapshot: column with 2 tasks', () => {
     const tasks = [
-      makeTask({ id: 1, titre: 'Task Alpha', statut: 'todo' }),
-      makeTask({ id: 2, titre: 'Task Beta', statut: 'todo', priority: 'high' }),
+      makeTask({ id: 1, title: 'Task Alpha', status: 'todo' }),
+      makeTask({ id: 2, title: 'Task Beta', status: 'todo', priority: 'high' }),
     ]
     const wrapper = shallowMount(StatusColumn, {
       props: {
@@ -129,7 +129,7 @@ describe('StatusColumn — snapshots', () => {
   })
 
   it('matches snapshot: in_progress column (drop target)', () => {
-    const tasks = [makeTask({ id: 3, titre: 'Active Task', statut: 'in_progress', effort: 3 })]
+    const tasks = [makeTask({ id: 3, title: 'Active Task', status: 'in_progress', effort: 3 })]
     const wrapper = shallowMount(StatusColumn, {
       props: {
         title: 'In Progress',
@@ -160,7 +160,7 @@ describe('TaskCard — snapshots', () => {
   it('matches snapshot: minimal todo task', () => {
     const wrapper = shallowMount(TaskCard, {
       props: {
-        task: makeTask({ id: 10, titre: 'Simple Task', statut: 'todo', effort: 1 }),
+        task: makeTask({ id: 10, title: 'Simple Task', status: 'todo', effort: 1 }),
       },
       global: {
         plugins: [createTestingPinia({
@@ -177,11 +177,11 @@ describe('TaskCard — snapshots', () => {
       props: {
         task: makeTask({
           id: 42,
-          titre: 'Urgent Fix',
-          statut: 'in_progress',
+          title: 'Urgent Fix',
+          status: 'in_progress',
           effort: 3,
           priority: 'critical',
-          perimetre: 'back-electron',
+          scope: 'back-electron',
           agent_name: 'dev-back',
           started_at: null,
         }),
@@ -200,11 +200,11 @@ describe('TaskCard — snapshots', () => {
       props: {
         task: makeTask({
           id: 99,
-          titre: 'Completed Task',
-          statut: 'done',
+          title: 'Completed Task',
+          status: 'done',
           effort: undefined as unknown as number,
           priority: undefined as unknown as string,
-          perimetre: null as unknown as string,
+          scope: null as unknown as string,
           agent_name: null as unknown as string,
           completed_at: '2026-01-02T00:00:00Z',
         }),

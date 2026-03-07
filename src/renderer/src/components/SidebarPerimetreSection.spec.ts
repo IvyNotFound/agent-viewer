@@ -10,17 +10,17 @@ import type { Task, Perimetre } from '@renderer/types'
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
     id: 1,
-    titre: 'Task A',
+    title: 'Task A',
     description: null,
-    statut: 'todo',
-    perimetre: 'front-vuejs',
+    status: 'todo',
+    scope: 'front-vuejs',
     effort: 1,
-    agent_assigne_id: 1,
+    agent_assigned_id: 1,
     agent_name: null,
-    agent_createur_id: null,
-    agent_createur_name: null,
-    agent_valideur_id: null,
-    agent_perimetre: null,
+    agent_creator_id: null,
+    agent_creator_name: null,
+    agent_validator_id: null,
+    agent_scope: null,
     parent_task_id: null,
     session_id: null,
     priority: 'normal',
@@ -37,10 +37,10 @@ function makePerimetre(overrides: Partial<Perimetre> = {}): Perimetre {
   return {
     id: 1,
     name: 'front-vuejs',
-    dossier: 'renderer/',
+    folder: 'renderer/',
     techno: 'Vue 3',
     description: 'Frontend Vue 3',
-    actif: 1,
+    active: 1,
     ...overrides,
   }
 }
@@ -85,10 +85,10 @@ describe('SidebarPerimetreSection', () => {
 
   it('taskCountByPerimetre counts non-archived tasks per perimetre', () => {
     const tasks = [
-      makeTask({ id: 1, perimetre: 'front-vuejs', statut: 'todo' }),
-      makeTask({ id: 2, perimetre: 'front-vuejs', statut: 'in_progress' }),
-      makeTask({ id: 3, perimetre: 'front-vuejs', statut: 'archived' }), // should be excluded
-      makeTask({ id: 4, perimetre: 'back-electron', statut: 'todo' }),
+      makeTask({ id: 1, scope: 'front-vuejs', status: 'todo' }),
+      makeTask({ id: 2, scope: 'front-vuejs', status: 'in_progress' }),
+      makeTask({ id: 3, scope: 'front-vuejs', status: 'archived' }), // should be excluded
+      makeTask({ id: 4, scope: 'back-electron', status: 'todo' }),
     ]
     const pinia = createTestingPinia({
       initialState: {
