@@ -18,7 +18,6 @@ interface ClaudeInstance {
   distro: string
   version: string
   isDefault: boolean
-  profiles: string[]
 }
 
 const CACHE_TTL_MS = 5 * 60 * 1000
@@ -72,11 +71,6 @@ export function useLaunchSession() {
         ?? instances.find(i => i.isDefault)
         ?? instances[0]
 
-      const storedProfile = settingsStore.defaultClaudeProfile
-      const cmdProfile = (storedProfile && storedProfile !== 'claude' && instance.profiles.includes(storedProfile))
-        ? storedProfile
-        : undefined
-
       const promptResult = await window.electronAPI.getAgentSystemPrompt(dbPath, agent.id)
       if (!promptResult.success) return 'error'
 
@@ -104,7 +98,7 @@ export function useLaunchSession() {
         finalPrompt,
         fullSystemPrompt,
         thinkingMode,
-        cmdProfile,
+        undefined,
         undefined,
         false,
         task.id
@@ -136,11 +130,6 @@ export function useLaunchSession() {
         ?? instances.find(i => i.isDefault)
         ?? instances[0]
 
-      const storedProfile = settingsStore.defaultClaudeProfile
-      const cmdProfile = (storedProfile && storedProfile !== 'claude' && instance.profiles.includes(storedProfile))
-        ? storedProfile
-        : undefined
-
       const promptResult = await window.electronAPI.getAgentSystemPrompt(dbPath, agent.id)
       if (!promptResult.success) return false
 
@@ -171,7 +160,7 @@ export function useLaunchSession() {
         finalPrompt,
         fullSystemPrompt,
         thinkingMode,
-        cmdProfile,
+        undefined,
         undefined,
         false
       )

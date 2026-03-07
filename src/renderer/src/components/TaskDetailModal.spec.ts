@@ -187,7 +187,7 @@ describe('TaskDetailModal — internal logic (T353)', () => {
   })
 })
 
-// ── LaunchSessionModal — useResume / selectedProfile / fullSystemPrompt / thinkingMode (T353) ──
+// ── TaskDetailModal — multi-agent behavior (T353) ──
 
 describe('TaskDetailModal — multi-agents', () => {
   beforeEach(() => {

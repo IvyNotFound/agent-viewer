@@ -72,7 +72,7 @@ describe('LaunchSessionModal', () => {
             tasks: { dbPath: '/p/.claude/db' },
             settings: {
               enabledClis: ['claude'],
-              allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'wsl' }],
+              allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, type: 'wsl' }],
             },
           },
         }), i18n],
@@ -121,7 +121,7 @@ describe('LaunchSessionModal', () => {
   it('calls addTerminal on launch', async () => {
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.getClaudeInstances.mockResolvedValue([
-      { distro: 'Ubuntu', version: '2.1', isDefault: true, profiles: ['claude'] },
+      { distro: 'Ubuntu', version: '2.1', isDefault: true },
     ])
 
     const pinia = createTestingPinia({
@@ -156,7 +156,7 @@ describe('LaunchSessionModal', () => {
             tasks: { dbPath: '/p/.claude/db' },
             settings: {
               enabledClis: ['claude'],
-              allCliInstances: [{ cli: 'claude', distro: 'local', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'local' }],
+              allCliInstances: [{ cli: 'claude', distro: 'local', version: '2.1.58', isDefault: true, type: 'local' }],
             },
           },
         }), i18n],
@@ -176,7 +176,7 @@ describe('LaunchSessionModal', () => {
             tasks: { dbPath: '/p/.claude/db' },
             settings: {
               enabledClis: ['claude'],
-              allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'wsl' }],
+              allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, type: 'wsl' }],
             },
           },
         }), i18n],
@@ -214,7 +214,7 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
     vi.clearAllMocks()
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.getClaudeInstances.mockResolvedValue([
-      { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude', 'claude-sonnet'] },
+      { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true },
     ])
     api.getAgentSystemPrompt.mockResolvedValue({
       success: true,
@@ -284,29 +284,6 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
     }
   })
 
-  it('shows multiple profiles when instance has them', async () => {
-    const wrapper = shallowMount(LaunchSessionModal, {
-      props: { agent: mockAgent as never },
-      global: {
-        plugins: [createTestingPinia({
-          initialState: {
-            tasks: { dbPath: '/p/.claude/db' },
-            settings: {
-              enabledClis: ['claude'],
-              allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude', 'claude-sonnet'], type: 'wsl' }],
-            },
-          },
-        }), i18n],
-        stubs: teleportStub,
-      },
-    })
-    await flushPromises()
-
-    // Profile selector should show both profiles
-    const text = wrapper.text()
-    expect(text).toContain('claude-sonnet')
-  })
-
   it('thinkingMode toggle between auto and disabled', async () => {
     const wrapper = shallowMount(LaunchSessionModal, {
       props: { agent: mockAgent as never },
@@ -348,7 +325,7 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
         tasks: { dbPath: '/p/.claude/db' },
         settings: {
           enabledClis: ['claude'],
-          allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'], type: 'wsl' }],
+          allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, type: 'wsl' }],
         },
       },
     })
@@ -428,7 +405,7 @@ describe('LaunchSessionModal — capabilities (T1036)', () => {
             tasks: { dbPath: '/p/.claude/db' },
             settings: {
               enabledClis: ['claude'],
-              allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.0', isDefault: true, profiles: ['claude'], type: 'wsl' }],
+              allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.0', isDefault: true, type: 'wsl' }],
             },
           },
         }), i18n],
@@ -448,7 +425,7 @@ describe('LaunchSessionModal — capabilities (T1036)', () => {
             tasks: { dbPath: '/p/.claude/db' },
             settings: {
               enabledClis: ['codex'],
-              allCliInstances: [{ cli: 'codex', distro: 'Ubuntu-24.04', version: '1.0.0', isDefault: true, profiles: ['codex'], type: 'wsl' }],
+              allCliInstances: [{ cli: 'codex', distro: 'Ubuntu-24.04', version: '1.0.0', isDefault: true, type: 'wsl' }],
             },
           },
         }), i18n],
@@ -549,7 +526,7 @@ describe('LaunchSessionModal — capabilities (T1036)', () => {
     await flushPromises()
 
     const call = (tabsStore.addTerminal as ReturnType<typeof vi.fn>).mock.calls[0]
-    // distro (arg[1]) should be undefined — codex has no profileSelection
+    // distro (arg[1]) should be undefined — no instances detected for codex
     expect(call[1]).toBeUndefined()
     // thinkingMode (arg[4]) should be undefined — codex has no thinkingMode
     expect(call[4]).toBeUndefined()

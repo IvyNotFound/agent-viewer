@@ -48,19 +48,14 @@ describe('stores/agents — agentRefresh() (T838)', () => {
     expect(mockElectronAPI.queryDb).not.toHaveBeenCalled()
   })
 
-  it('populates agents and locks from queryDb', async () => {
+  it('populates agents from queryDb', async () => {
     localStorage.setItem('dbPath', '/test/project.db')
     const mockAgents = [{ id: 1, name: 'agent-a', type: 'dev' }]
-    const mockLocks = [{ id: 1, fichier: 'foo.ts', agent_id: 1, agent_name: 'agent-a' }]
-    mockElectronAPI.queryDb
-      .mockResolvedValueOnce(mockAgents)
-      .mockResolvedValueOnce(mockLocks)
+    mockElectronAPI.queryDb.mockResolvedValueOnce(mockAgents)
     const store = useAgentsStore()
     await store.agentRefresh()
     expect(store.agents).toHaveLength(1)
     expect(store.agents[0].name).toBe('agent-a')
-    expect(store.locks).toHaveLength(1)
-    expect(store.locks[0].fichier).toBe('foo.ts')
   })
 
   it.skip('skips when document is hidden (jsdom does not support configurable visibilityState override)', async () => {

@@ -22,7 +22,6 @@ const api = {
   onDbChanged: vi.fn().mockReturnValue(() => {}),
   findProjectDb: vi.fn().mockResolvedValue(null),
   selectProjectDir: vi.fn().mockResolvedValue(null),
-  getLocks: vi.fn().mockResolvedValue([]),
   tasksGetArchived: vi.fn().mockResolvedValue({ rows: [], total: 0 }),
 }
 

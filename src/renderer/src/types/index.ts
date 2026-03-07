@@ -92,17 +92,6 @@ export interface TaskLink {
   to_status: string
 }
 
-/** File lock record from the `locks` table. */
-export interface Lock {
-  id: number
-  file: string
-  agent_id: number
-  agent_name: string
-  session_id: number | null
-  created_at: string
-  released_at: string | null
-}
-
 /** Task count statistics grouped by status. */
 export interface Stats {
   todo: number
@@ -140,8 +129,6 @@ export interface ClaudeInstance {
   version: string
   /** Whether this is the default WSL distro */
   isDefault: boolean
-  /** Wrapper scripts in ~/bin/ matching claude(-[a-z0-9-]+)? */
-  profiles: string[]
   /** Instance type: "wsl" for WSL distros, "local" for native installs. Optional for backward compat. */
   type?: 'wsl' | 'local'
 }

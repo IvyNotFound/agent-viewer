@@ -38,8 +38,6 @@ const launching = ref(false)
 const systemPrompt = ref<string | null>(null)
 const systemPromptSuffix = ref<string | null>(null)
 const thinkingMode = ref<'auto' | 'disabled'>('auto')
-/** Active binary wrapper profile within the selected instance (Claude only) */
-const selectedProfile = ref<string>('claude')
 /** Claude Code conversation UUID from last session — used for --resume */
 const lastConvId = ref<string | null>(null)
 const useResume = ref(false)
@@ -57,13 +55,6 @@ const fullSystemPrompt = computed(() => {
 
 /** Capabilities of the currently selected CLI — drives conditional sections (T1036) */
 const caps = computed<CliCapabilities>(() => CLI_CAPABILITIES[selectedCli.value])
-
-// profiles is Claude-specific; access via type cast (T1031 removed it from CliInstance)
-const activeProfiles = computed(() =>
-  caps.value.profileSelection
-    ? ((selectedInstance.value as Record<string, unknown>)?.profiles as string[] | undefined) ?? ['claude']
-    : ['claude']
-)
 
 /** Instances detected for the currently selected CLI */
 const instancesForCli = computed(() =>
@@ -90,11 +81,6 @@ const CLI_BADGE: Record<CliType, string> = {
   aider:    'A',
   goose:    'G',
 }
-
-watch(selectedInstance, (inst) => {
-  const profiles = (inst as Record<string, unknown> | null)?.profiles as string[] | undefined
-  selectedProfile.value = profiles?.[0] ?? 'claude'
-})
 
 // When CLI changes, pick first detected instance for that CLI
 watch(selectedCli, () => {
@@ -123,13 +109,6 @@ onMounted(async () => {
       ?? instances[0]
       ?? null
 
-    // Profile preference — only for profileSelection CLIs (Claude)
-    if (caps.value.profileSelection) {
-      const instProfiles = (selectedInstance.value as Record<string, unknown> | null)?.profiles as string[] | undefined
-      if (instProfiles && instProfiles.length > 0) {
-        selectedProfile.value = instProfiles[0]
-      }
-    }
   }
 
   if (tasksStore.dbPath) {
@@ -184,8 +163,7 @@ async function launch() {
       workDir = result.workDir
     }
 
-    const distro = caps.value.profileSelection ? selectedInstance.value?.distro : undefined
-    const cmdProfile = caps.value.profileSelection && selectedProfile.value !== 'claude' ? selectedProfile.value : undefined
+    const distro = selectedInstance.value?.distro
     const convId = caps.value.convResume && useResume.value && lastConvId.value ? lastConvId.value : undefined
     const activeThinking = caps.value.thinkingMode ? thinkingMode.value : undefined
     const activeSystemPrompt = caps.value.systemPrompt ? fullSystemPrompt.value : undefined
@@ -193,19 +171,19 @@ async function launch() {
     if (convId) {
       tabsStore.addTerminal(
         props.agent.name, distro, undefined, undefined,
-        activeThinking, cmdProfile, convId,
+        activeThinking, undefined,convId,
         true, undefined, 'stream', selectedCli.value, workDir
       )
     } else if (activeSystemPrompt) {
       tabsStore.addTerminal(
         props.agent.name, distro, finalPrompt, activeSystemPrompt,
-        activeThinking, cmdProfile, undefined,
+        activeThinking, undefined,undefined,
         true, undefined, 'stream', selectedCli.value, workDir
       )
     } else {
       tabsStore.addTerminal(
         props.agent.name, distro, finalPrompt, undefined,
-        activeThinking, cmdProfile, undefined,
+        activeThinking, undefined,undefined,
         true, undefined, 'stream', selectedCli.value, workDir
       )
     }
@@ -372,26 +350,6 @@ async function launch() {
               </p>
             </div>
           </Transition>
-
-          <!-- API Profile (hidden when only default profile available, Claude only) -->
-          <div v-if="caps.profileSelection && activeProfiles.length > 1">
-            <p class="text-sm font-medium text-content-secondary mb-2">{{ t('launch.apiProfile') }}</p>
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="profile in activeProfiles"
-                :key="profile"
-                class="px-3 py-2 rounded-lg border text-xs font-medium transition-all"
-                :class="selectedProfile !== profile ? 'border-edge-default bg-surface-secondary/40 text-content-muted hover:border-content-faint' : ''"
-                :style="selectedProfile === profile ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
-                @click="selectedProfile = profile"
-              >
-                {{ profile }}
-              </button>
-            </div>
-            <p class="text-[10px] text-content-faint mt-1.5">
-              {{ t('launch.profileNote') }}
-            </p>
-          </div>
 
           <!-- Custom prompt -->
           <div>

@@ -16,7 +16,6 @@ declare global {
       initNewProject(projectPath: string): Promise<{ success: boolean; error?: string }>
       findProjectDb(projectPath: string): Promise<string | null>
       migrateDb(dbPath: string): Promise<{ success: boolean; error?: string }>
-      getLocks(dbPath: string): Promise<unknown[]>
       // File system
       fsListDir(dirPath: string): Promise<FileNode[]>
       fsReadFile(filePath: string): Promise<{ success: boolean; content?: string; error?: string }>

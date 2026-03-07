@@ -3,7 +3,7 @@
  *
  * Manages:
  * - Project connection (dbPath, projectPath) — delegated to useProjectStore
- * - Agents list, locks, groups — delegated to useAgentsStore
+ * - Agents list, groups — delegated to useAgentsStore
  * - Tasks CRUD and filtering
  * - Real-time polling and file watching
  *
@@ -14,9 +14,9 @@
 
 import { defineStore, storeToRefs } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { Task, Agent, Lock, Stats, TaskComment, TaskLink, Perimetre, TaskAssignee } from '@renderer/types'
+import type { Task, Agent, Stats, TaskComment, TaskLink, Perimetre, TaskAssignee } from '@renderer/types'
 import { useProjectStore } from '@renderer/stores/project'
-import { useAgentsStore, AGENT_CTE_SQL, LOCKS_SQL } from '@renderer/stores/agents'
+import { useAgentsStore, AGENT_CTE_SQL } from '@renderer/stores/agents'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useSettingsStore } from '@renderer/stores/settings'
 import { useToast } from '@renderer/composables/useToast'
@@ -38,7 +38,7 @@ export const useTasksStore = defineStore('tasks', () => {
 
   // Reactive refs delegated from sub-stores (storeToRefs gives back the original refs — mutations propagate)
   const { projectPath, dbPath, setupWizardTarget } = storeToRefs(projectStore)
-  const { agents, locks, agentGroups, agentGroupsTree } = storeToRefs(agentsStore)
+  const { agents, agentGroups, agentGroupsTree } = storeToRefs(agentsStore)
 
   // Local tasks state
   const tasks = ref<Task[]>([])
@@ -118,7 +118,7 @@ export const useTasksStore = defineStore('tasks', () => {
     error.value = null
     try {
       // Split tasks query: load all active tasks + cap done tasks to avoid memory bloat (T819)
-      const [rawLiveTasks, rawDoneTasks, rawAgents, rawLocks, rawStats, rawPerimetres, rawBoardAssignees] = await Promise.all([
+      const [rawLiveTasks, rawDoneTasks, rawAgents, rawStats, rawPerimetres, rawBoardAssignees] = await Promise.all([
         query<Task>(`
           SELECT t.*, a.name as agent_name, a.scope as agent_scope,
             c.name as agent_creator_name
@@ -139,7 +139,6 @@ export const useTasksStore = defineStore('tasks', () => {
           LIMIT ${DONE_TASKS_LIMIT}
         `),
         query<Agent>(AGENT_CTE_SQL),
-        query<Lock>(LOCKS_SQL),
         query<{ status: string; count: number }>(`
           SELECT status, COUNT(*) as count FROM tasks GROUP BY status
         `),
@@ -196,7 +195,6 @@ export const useTasksStore = defineStore('tasks', () => {
       }
       // Update agentsStore state via storeToRefs refs — mutations propagate to the sub-store
       agents.value = rawAgents.map(normalizeRow)
-      locks.value = rawLocks.map(normalizeRow)
       perimetresData.value = rawPerimetres.map(normalizeRow)
 
       const s: Stats = { todo: 0, in_progress: 0, done: 0, archived: 0 }
@@ -291,7 +289,6 @@ export const useTasksStore = defineStore('tasks', () => {
     localStorage.removeItem('dbPath')
     tasks.value = []
     agents.value = []
-    locks.value = []
     agentGroups.value = []
     perimetresData.value = []
     boardAssignees.value.clear()
@@ -481,7 +478,7 @@ export const useTasksStore = defineStore('tasks', () => {
     projectPath, dbPath, setupWizardTarget,
     setProjectPathOnly, closeWizard,
     // Agents state (via agentsStore)
-    agents, locks, agentGroups, agentGroupsTree,
+    agents, agentGroups, agentGroupsTree,
     agentRefresh, fetchAgentGroups,
     createAgentGroup, renameAgentGroup, deleteAgentGroup, setAgentGroup, setGroupParent,
     // Tasks state

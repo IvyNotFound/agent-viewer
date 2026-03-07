@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Agent, Lock, AgentGroup } from '@renderer/types'
+import type { Agent, AgentGroup } from '@renderer/types'
 import { useProjectStore } from '@renderer/stores/project'
 import { normalizeRow } from '@renderer/utils/db'
 
@@ -30,12 +30,6 @@ export const AGENT_CTE_SQL = `
   LEFT JOIN max_logs ml ON ml.agent_id = a.id
   LEFT JOIN agent_history ah ON ah.id = a.id
   WHERE a.type != 'setup' ORDER BY a.name
-`
-
-export const LOCKS_SQL = `
-  SELECT l.*, a.name as agent_name FROM locks l
-  JOIN agents a ON a.id = l.agent_id
-  WHERE l.released_at IS NULL
 `
 
 /**
@@ -68,7 +62,6 @@ export const useAgentsStore = defineStore('agents', () => {
   const projectStore = useProjectStore()
 
   const agents = ref<Agent[]>([])
-  const locks = ref<Lock[]>([])
   const agentGroups = ref<AgentGroup[]>([])
   const agentGroupsTree = computed(() => buildGroupTree(agentGroups.value))
 
@@ -87,12 +80,8 @@ export const useAgentsStore = defineStore('agents', () => {
     if (!projectStore.dbPath) return
     if (document.visibilityState === 'hidden') return
     try {
-      const [rawAgents, rawLocks] = await Promise.all([
-        query<Agent>(AGENT_CTE_SQL),
-        query<Lock>(LOCKS_SQL),
-      ])
+      const rawAgents = await query<Agent>(AGENT_CTE_SQL)
       agents.value = rawAgents.map(normalizeRow)
-      locks.value = rawLocks.map(normalizeRow)
     } catch {
       // silent: main refresh handles error display
     }
@@ -175,10 +164,10 @@ export const useAgentsStore = defineStore('agents', () => {
   }
 
   return {
-    agents, locks, agentGroups, agentGroupsTree,
+    agents, agentGroups, agentGroupsTree,
     agentRefresh, fetchAgentGroups,
     createAgentGroup, renameAgentGroup, deleteAgentGroup, setAgentGroup, setGroupParent,
     // Expose SQL constants and query helper for use by useTasksStore
-    AGENT_CTE_SQL, LOCKS_SQL, query,
+    AGENT_CTE_SQL, query,
   }
 })

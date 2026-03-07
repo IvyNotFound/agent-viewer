@@ -9,7 +9,7 @@ import type { Task, Agent } from '@renderer/types'
 // Mock window.electronAPI
 const api = {
   getClaudeInstances: vi.fn().mockResolvedValue([
-    { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'] }
+    { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true }
   ]),
   getAgentSystemPrompt: vi.fn().mockResolvedValue({
     success: true, systemPrompt: 'You are dev-front', systemPromptSuffix: null, thinkingMode: 'auto'
@@ -61,7 +61,7 @@ describe('composables/useLaunchSession', () => {
 
     // Reset mock implementations
     api.getClaudeInstances.mockResolvedValue([
-      { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'] }
+      { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true }
     ])
     api.getAgentSystemPrompt.mockResolvedValue({
       success: true, systemPrompt: 'You are dev-front', systemPromptSuffix: null, thinkingMode: 'auto'
@@ -163,8 +163,8 @@ describe('composables/useLaunchSession', () => {
 
     it('should use stored defaultCliInstance from settings (T879)', async () => {
       api.getClaudeInstances.mockResolvedValueOnce([
-        { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'] },
-        { distro: 'Debian', version: '2.1.58', isDefault: false, profiles: ['claude'] },
+        { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true },
+        { distro: 'Debian', version: '2.1.58', isDefault: false },
       ])
       const settingsStore = useSettingsStore()
       settingsStore.setDefaultCliInstance('Debian')
@@ -179,7 +179,7 @@ describe('composables/useLaunchSession', () => {
 
     it('should fallback to isDefault instance when stored distro not found (T879)', async () => {
       api.getClaudeInstances.mockResolvedValueOnce([
-        { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'] },
+        { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true },
       ])
       const settingsStore = useSettingsStore()
       settingsStore.setDefaultCliInstance('NonExistent')
@@ -192,50 +192,6 @@ describe('composables/useLaunchSession', () => {
       expect(terminal?.wslDistro).toBe('Ubuntu-24.04')
     })
 
-    it('should use stored defaultClaudeProfile when available in instance profiles (T879)', async () => {
-      api.getClaudeInstances.mockResolvedValueOnce([
-        { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude', 'claude-work'] },
-      ])
-      const settingsStore = useSettingsStore()
-      settingsStore.setDefaultClaudeProfile('claude-work')
-
-      const { launchAgentTerminal } = useLaunchSession()
-      await launchAgentTerminal(makeAgent(), makeTask())
-
-      const tabsStore = useTabsStore()
-      const terminal = tabsStore.tabs.find(t => t.type === 'terminal') as Tab | undefined
-      expect(terminal?.claudeCommand).toBe('claude-work')
-    })
-
-    it('should not set cmdProfile when defaultClaudeProfile is "claude" (T879)', async () => {
-      api.getClaudeInstances.mockResolvedValueOnce([
-        { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude', 'claude-work'] },
-      ])
-      const settingsStore = useSettingsStore()
-      settingsStore.setDefaultClaudeProfile('claude')
-
-      const { launchAgentTerminal } = useLaunchSession()
-      await launchAgentTerminal(makeAgent(), makeTask())
-
-      const tabsStore = useTabsStore()
-      const terminal = tabsStore.tabs.find(t => t.type === 'terminal') as Tab | undefined
-      expect(terminal?.claudeCommand).toBeNull()
-    })
-
-    it('should not set cmdProfile when stored profile not in instance profiles (T879)', async () => {
-      api.getClaudeInstances.mockResolvedValueOnce([
-        { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'] },
-      ])
-      const settingsStore = useSettingsStore()
-      settingsStore.setDefaultClaudeProfile('claude-nonexistent')
-
-      const { launchAgentTerminal } = useLaunchSession()
-      await launchAgentTerminal(makeAgent(), makeTask())
-
-      const tabsStore = useTabsStore()
-      const terminal = tabsStore.tabs.find(t => t.type === 'terminal') as Tab | undefined
-      expect(terminal?.claudeCommand).toBeNull()
-    })
   })
 
   describe('canLaunchSession', () => {

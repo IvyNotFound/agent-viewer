@@ -172,12 +172,11 @@ describe('stores/tasks', () => {
       store.dbPath = '/test/db'
 
       // Simulate queryDb returning proper rows
-      // Order: live tasks (todo/in_progress), done tasks (capped), agents, locks, stats, perimetres
+      // Order: live tasks (todo/in_progress), done tasks (capped), agents, stats, perimetres
       mockElectronAPI.queryDb
         .mockResolvedValueOnce([{ id: 1, title: 'Task One', status: 'todo', agent_assigned_id: null }]) // live tasks
         .mockResolvedValueOnce([]) // done tasks (capped)
         .mockResolvedValueOnce([{ id: 10, name: 'dev-front', type: 'scoped', scope: 'front-vuejs' }]) // agents
-        .mockResolvedValueOnce([]) // locks
         .mockResolvedValueOnce([{ status: 'todo', count: 1 }]) // stats
         .mockResolvedValueOnce([]) // perimetres
 
@@ -599,21 +598,17 @@ describe('stores/tasks — agentRefresh', () => {
     expect(mockElectronAPI.queryDb).not.toHaveBeenCalled()
   })
 
-  it('should call queryDb for agents and locks when dbPath is valid', async () => {
+  it('should call queryDb for agents when dbPath is valid', async () => {
     const store = useTasksStore()
     await store.setProject('/p', '/p/.claude/db')
     mockElectronAPI.queryDb.mockClear()
     const agentData = [{ id: 1, name: 'review', type: 'global' }]
-    const lockData = [{ id: 1, file: 'test.ts', agent_name: 'review' }]
-    mockElectronAPI.queryDb
-      .mockResolvedValueOnce(agentData)
-      .mockResolvedValueOnce(lockData)
+    mockElectronAPI.queryDb.mockResolvedValueOnce(agentData)
 
     await store.agentRefresh()
 
-    expect(mockElectronAPI.queryDb).toHaveBeenCalledTimes(2)
+    expect(mockElectronAPI.queryDb).toHaveBeenCalledTimes(1)
     expect(store.agents).toEqual(agentData)
-    expect(store.locks).toEqual(lockData)
   })
 
   it('should not throw when queryDb fails (silent catch)', async () => {
