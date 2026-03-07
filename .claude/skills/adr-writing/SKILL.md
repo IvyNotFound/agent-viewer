@@ -86,5 +86,4 @@ After writing the ADR, add a line to `.claude/ADRS.md`:
 - Be specific — vague ADRs are useless 6 months later
 - Always list at least 2 rejected alternatives
 - "Conséquences négatives" is mandatory — no decision is perfect
-- Lock `.claude/ADRS-*.md` and `.claude/ADRS.md` before writing
 - One ADR per structural decision — don't bundle unrelated choices

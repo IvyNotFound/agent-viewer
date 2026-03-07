@@ -129,4 +129,4 @@ it('is idempotent', () => {
 - [ ] SQLite limitations noted in JSDoc if relevant
 - [ ] Registered in `migration-runner.ts`
 - [ ] Tests written (both apply + idempotency)
-- [ ] Lock `src/main/migrations/` and `src/main/migration-runner.ts` before modifying
+

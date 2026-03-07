@@ -62,7 +62,7 @@ node scripts/dbw.js <<'SQL'
 INSERT INTO task_comments (task_id, agent_id, content) VALUES (1, 2, 'texte');
 SQL
 ```
-Démarrage session : `node scripts/dbstart.js <agent-name>` — crée session, affiche tâches, vérifie locks.
+Démarrage session : `node scripts/dbstart.js <agent-name>` — crée session, affiche tâches.
 
 ---
 

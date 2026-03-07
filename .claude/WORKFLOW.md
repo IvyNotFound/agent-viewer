@@ -15,7 +15,6 @@ sessions        (id PK, agent_id→agents, started_at, ended_at, updated_at, sta
 tasks           (id PK, title, description, status, agent_creator_id→agents, agent_assigned_id→agents, agent_validator_id→agents, parent_task_id→tasks, session_id→sessions, scope, effort, priority, created_at, updated_at, started_at, completed_at, validated_at)
 task_comments   (id PK, task_id→tasks, agent_id→agents, content, created_at)
 task_links      (id PK, from_task→tasks, to_task→tasks, type CHECK(type IN ('blocks','depends_on','related_to','duplicates')), created_at)
-locks           (id PK, file, agent_id→agents, session_id→sessions, created_at, released_at)
 agent_logs      (id PK, session_id→sessions, agent_id→agents, level, action, detail, files, created_at)
 scopes          (id PK, name, folder, techno, description, active, created_at)
 config          (key PK, value, updated_at)
@@ -53,12 +52,6 @@ node scripts/dbw.js "<SQL>"   # write
 -- Add a comment to a ticket
 INSERT INTO task_comments (task_id, agent_id, content) VALUES (:task_id, :agent_id, '<content>');
 
--- Lock a file (BEFORE modification)
-INSERT OR REPLACE INTO locks (file, agent_id, session_id) VALUES ('<file>', :agent_id, :session_id);
-
--- Release all locks
-UPDATE locks SET released_at = CURRENT_TIMESTAMP WHERE agent_id = :agent_id AND session_id = :session_id AND released_at IS NULL;
-
 -- Log (optional, omit if context is limited)
 INSERT INTO agent_logs (session_id, agent_id, level, action, detail) VALUES (:session_id, :agent_id, 'info', '<action>', '<detail>');
 ```
@@ -85,7 +78,7 @@ VALUES ('<title>', '<full description: context, symptoms, acceptance criteria>',
 node scripts/dbstart.js <agent> [type] [scope]
 ```
 
-> Does everything in one call: registers the agent, creates the session, displays `agent_id` + `session_id`, previous session, assigned tasks, active locks.
+> Does everything in one call: registers the agent, creates the session, displays `agent_id` + `session_id`, previous session, assigned tasks.
 > Tasks found → start immediately. Questions only if no tasks AND type cannot be inferred.
 
 > **⚠ Parallel session limit**: max 3 active sessions per agent — enforced by `dbstart.js` (exit code 2 if limit reached).
@@ -125,19 +118,6 @@ node scripts/dbq.js "SELECT session_id FROM tasks WHERE id=<TASK_ID> AND status=
 
 > The `writeFileSync` in `dbw.js` serializes concurrent writes at OS level. The post-write verify detects any race loss: if another instance wrote after, its `session_id` will be present. (ADR-006)
 
-**Lock files before modification:**
-
-```sql
--- Before touching a file: check for an active lock from another session
-SELECT l.file, a.name, l.session_id
-FROM locks l JOIN agents a ON a.id = l.agent_id
-WHERE l.file = '<file>' AND l.released_at IS NULL AND l.session_id != <MY_SESSION>;
--- Non-empty → DO NOT modify, pick another file or wait
--- Empty → place the lock via primitive (INSERT OR REPLACE INTO locks ...)
-```
-
-> Lock must be placed **before** any modification.
-
 ### 4. Agent completes the ticket
 
 > **⚠ Mandatory order: comment FIRST, then `done`.**
@@ -150,10 +130,9 @@ INSERT INTO task_comments (task_id, agent_id, content)
   VALUES (:task_id, :agent_id, 'files:lines · done · choices · remaining · to validate');
 UPDATE tasks SET status = 'done', completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :task_id;
 SQL
-# + release locks via primitive
 ```
 
-> After `done` → check backlog. Remaining tasks → **chain without closing the session** (`/clear` + PTY reset, then take the next one). Only close the session (step 5) **if**: no remaining tasks, or task is blocked (dependency, lock, waiting for review).
+> After `done` → check backlog. Remaining tasks → **chain without closing the session** (`/clear` + PTY reset, then take the next one). Only close the session (step 5) **if**: no remaining tasks, or task is blocked (dependency, waiting for review).
 
 ### 5. Agent closes their session
 
@@ -163,8 +142,7 @@ SQL
 --    Line "Tokens: X in, Y cache_read, Z cache_write, W out"
 UPDATE sessions SET tokens_in=X, tokens_out=Y, tokens_cache_read=Z, tokens_cache_write=W WHERE id=:session_id;
 
--- 2. Release locks via primitive
--- 3. Close the session
+-- 2. Close the session
 UPDATE sessions SET status = 'completed', ended_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
   summary = 'Done:<accomplished>. Pending:<tickets>. Next:<action>.' WHERE id = :session_id;
 ```
@@ -179,8 +157,6 @@ git worktree remove .claude/worktrees/s<session_id>
 > `summary` must be self-contained (max 200 chars) — an agent resuming without context must know where things stand.
 >
 > **⚠ Tokens required**: record tokens BEFORE closing (`tokens_in`, `tokens_out`, `tokens_cache_read`, `tokens_cache_write`). Values are displayed by Claude Code at the end of each conversation. If the value is unknown (interrupted session), set to 0.
->
-> **⚠ Locks required**: release **all** locks before ending the session. `dbstart.js` automatically releases orphaned locks from completed sessions at startup, but agents must release their own locks in step 5.
 
 ### 6. Review validates or rejects
 

@@ -1,6 +1,6 @@
 ---
 name: agent-session-starting
-description: Start an agent session correctly in agent-viewer. Activates when an agent needs to begin work, when user says "start a session", "launch agent X", "démarrer une session", or when an agent role is invoked and no active session exists. Ensures correct startup sequence: dbstart → read tasks → lock files → begin work.
+description: Start an agent session correctly in agent-viewer. Activates when an agent needs to begin work, when user says "start a session", "launch agent X", "démarrer une session", or when an agent role is invoked and no active session exists. Ensures correct startup sequence: dbstart → read tasks → begin work.
 ---
 
 # Agent Session Starting Skill
@@ -24,8 +24,7 @@ This single call:
 - Registers the agent if not yet in DB
 - Creates a new session row (status: started)
 - Displays agent_id + session_id — save both for all subsequent SQL
-- Shows assigned tasks (status: todo) and active locks
-- Releases orphaned locks from completed sessions automatically
+- Shows assigned tasks (status: todo)
 - Exits with code 2 if the 3-session parallel limit is reached
 
 If exit code is 2: stop. Do not start work. Report the limit to the user.
@@ -54,13 +53,6 @@ If no tasks → ask the user what to work on, or wait for review to create ticke
 
   UPDATE tasks SET status = 'in_progress', started_at = CURRENT_TIMESTAMP,
     updated_at = CURRENT_TIMESTAMP WHERE id = :task_id;
-
-### Step 5 — Lock Files Before Touching Them
-
-  INSERT OR REPLACE INTO locks (file, agent_id, session_id)
-  VALUES ('<file>', :agent_id, :session_id);
-
-Lock MUST be placed before any modification. One row per file.
 
 ## Agent Roles Reference
 

@@ -1,6 +1,6 @@
 ---
 name: ticket-completing
-description: Complete a task ticket in agent-viewer following the mandatory order. Activates when an agent finishes work on a task, when user says "mark as done", "ticket terminé", "fermer le ticket", "close task". Enforces comment-first then done order, lock release, session closure, and backlog check.
+description: Complete a task ticket in agent-viewer following the mandatory order. Activates when an agent finishes work on a task, when user says "mark as done", "ticket terminé", "fermer le ticket", "close task". Enforces comment-first then done order, session closure, and backlog check.
 ---
 
 # Ticket Completing Skill
@@ -38,14 +38,7 @@ Use a single heredoc to atomically write comment + status in one call:
 Be specific and self-contained. Example:
   src/main/ipc-agents.ts:45-67 · Added getAgentGroups handler · Used LEFT JOIN for nullable parent_id · No migration needed · Validate: call from renderer returns nested groups correctly
 
-### Step 2 — Release Locks
-
-  node scripts/dbw.js <<SQL
-  UPDATE locks SET released_at = CURRENT_TIMESTAMP
-  WHERE agent_id = :agent_id AND session_id = :session_id AND released_at IS NULL;
-  SQL
-
-### Step 3 — Check the Backlog
+### Step 2 — Check the Backlog
 
   SELECT id, title, priority FROM tasks
   WHERE agent_assigned_id = :agent_id AND status = 'todo'
@@ -53,13 +46,13 @@ Be specific and self-contained. Example:
 
 If remaining tasks exist:
 → Chain immediately without closing the session
-→ /clear + PTY reset, then take the next ticket (see agent-session-starting skill for steps 3-5)
+→ /clear + PTY reset, then take the next ticket (see agent-session-starting skill for steps 3-4)
 → Do NOT close the session yet
 
 If no remaining tasks:
 → Proceed to Step 4
 
-### Step 4 — Close the Session (only if no tasks remain or blocked)
+### Step 3 — Close the Session (only if no tasks remain or blocked)
 
   node scripts/dbw.js <<SQL
   UPDATE sessions SET
@@ -88,8 +81,8 @@ Done:T912 IPC handler for agent groups. Pending:none. Next:review to validate ne
   -- agent re-reads the rejection comment, fixes, and re-completes using this skill
   SELECT tc.content FROM task_comments tc WHERE tc.task_id = :task_id ORDER BY tc.created_at DESC LIMIT 3;
 
-### Session blocked (dependency, lock conflict)
+### Session blocked (dependency)
   UPDATE sessions SET status = 'blocked', updated_at = CURRENT_TIMESTAMP,
     summary = 'Blocked:<reason>. Waiting:<what>.' WHERE id = :session_id;
 
-Then release locks and stop. Do not mark the task as done.
+Then stop. Do not mark the task as done.
