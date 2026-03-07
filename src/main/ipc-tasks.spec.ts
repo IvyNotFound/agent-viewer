@@ -99,6 +99,11 @@ vi.mock('./claude-md', () => ({
   insertAgentIntoClaudeMd: vi.fn((content: string) => content),
 }))
 
+vi.mock('./db-lock', () => ({
+  acquireWriteLock: vi.fn().mockResolvedValue('/mock.wlock'),
+  releaseWriteLock: vi.fn().mockResolvedValue(undefined),
+}))
+
 // ── Import after mocks ────────────────────────────────────────────────────────
 import { getSqlJs, registerDbPath, clearDbCacheEntry, queryLive, writeDb } from './db'
 import { registerIpcHandlers } from './ipc'

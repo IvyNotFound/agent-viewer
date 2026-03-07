@@ -13,6 +13,14 @@ import { resolve } from 'path'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
+const mockAcquireWriteLock = vi.fn().mockResolvedValue('/test/project.db.wlock')
+const mockReleaseWriteLock = vi.fn().mockResolvedValue(undefined)
+
+vi.mock('./db-lock', () => ({
+  acquireWriteLock: (...args: unknown[]) => mockAcquireWriteLock(...args),
+  releaseWriteLock: (...args: unknown[]) => mockReleaseWriteLock(...args),
+}))
+
 const mockStat = vi.fn()
 const mockReadFile = vi.fn()
 const mockWriteFile = vi.fn().mockResolvedValue(undefined)
@@ -314,6 +322,8 @@ describe('writeDb (T313)', () => {
     clearDbCacheEntry(dbPath)
     mockStat.mockResolvedValue({ mtimeMs: 1000 })
     mockReadFile.mockResolvedValue(fakeBuffer)
+    mockAcquireWriteLock.mockResolvedValue(dbPath + '.wlock')
+    mockReleaseWriteLock.mockResolvedValue(undefined)
   })
 
   it('should call fn with a db instance and write result to disk', async () => {
@@ -322,6 +332,9 @@ describe('writeDb (T313)', () => {
 
     expect(fn).toHaveBeenCalledTimes(1)
     expect(result).toBe('result-value')
+    // Should acquire cross-process lock before write
+    expect(mockAcquireWriteLock).toHaveBeenCalledWith(dbPath)
+    expect(mockReleaseWriteLock).toHaveBeenCalledWith(dbPath + '.wlock')
     // Should write tmp file then rename
     expect(mockWriteFile).toHaveBeenCalledWith(
       dbPath + '.tmp',
@@ -454,6 +467,8 @@ describe('migrateDb', () => {
     vi.clearAllMocks()
     clearDbCacheEntry(dbPath)
     mockApplyMigrations.mockReturnValue(0)
+    mockAcquireWriteLock.mockResolvedValue(dbPath + '.wlock')
+    mockReleaseWriteLock.mockResolvedValue(undefined)
   })
 
   /** Build a minimal SQLite DB buffer (real sql.js, no tables needed for these tests) */
@@ -483,6 +498,7 @@ describe('migrateDb', () => {
 
     await migrateDb(dbPath)
 
+    expect(mockAcquireWriteLock).toHaveBeenCalledWith(dbPath)
     expect(mockCopyFile).toHaveBeenCalledWith(dbPath, `${dbPath}.bak`)
   })
 
@@ -525,10 +541,11 @@ describe('migrateDb', () => {
 
     const result = await migrateDb(dbPath)
 
-    // Fast-path: returns immediately without backup or any migration
+    // Fast-path: returns immediately without backup, migration, or lock
     expect(result).toEqual({ migrated: 0 })
     expect(mockCopyFile).not.toHaveBeenCalled()
     expect(mockApplyMigrations).not.toHaveBeenCalled()
+    expect(mockAcquireWriteLock).not.toHaveBeenCalled()
   })
 })
 

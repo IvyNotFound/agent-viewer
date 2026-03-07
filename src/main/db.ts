@@ -10,6 +10,7 @@
 import { readFile, writeFile, rename, stat, copyFile, unlink } from 'fs/promises'
 import { join, dirname, resolve } from 'path'
 import { migrateDb as applyMigrations, CURRENT_SCHEMA_VERSION } from './migration'
+import { acquireWriteLock, releaseWriteLock } from './db-lock'
 
 // ── T282: Registry of allowed DB paths ────────────────────────────────────────
 const allowedDbPaths = new Set<string>()
@@ -171,42 +172,48 @@ export async function writeDb<T = void>(dbPath: string, fn: (db: any) => T): Pro
 
   try {
     await prev
-    const sqlJs = await getSqlJs()
-    const buf = await getDbBuffer(dbPath)
-    const db = new sqlJs.Database(buf)
+    // Acquire cross-process advisory lock (.wlock) — same protocol as scripts/dblock.js
+    const lockPath = await acquireWriteLock(dbPath)
     try {
-      const result = fn(db)
-      const exported = db.export()
-      const newBuf = Buffer.from(exported)
-      const tmpPath = dbPath + '.tmp'
-      await writeFile(tmpPath, newBuf)
-      // On Windows, rename over a locked file throws EPERM — fall back to copyFile + unlink
+      const sqlJs = await getSqlJs()
+      const buf = await getDbBuffer(dbPath)
+      const db = new sqlJs.Database(buf)
       try {
-        await rename(tmpPath, dbPath)
-      } catch (err: unknown) {
-        if ((err as NodeJS.ErrnoException).code === 'EPERM') {
-          await copyFile(tmpPath, dbPath)
-          await unlink(tmpPath)
-        } else {
-          throw err
+        const result = fn(db)
+        const exported = db.export()
+        const newBuf = Buffer.from(exported)
+        const tmpPath = dbPath + '.tmp'
+        await writeFile(tmpPath, newBuf)
+        // On Windows, rename over a locked file throws EPERM — fall back to copyFile + unlink
+        try {
+          await rename(tmpPath, dbPath)
+        } catch (err: unknown) {
+          if ((err as NodeJS.ErrnoException).code === 'EPERM') {
+            await copyFile(tmpPath, dbPath)
+            await unlink(tmpPath)
+          } else {
+            throw err
+          }
         }
+        // Update cache: refresh buffer, invalidate DB instance (lazy recreation on next queryLive)
+        // Avoids creating a second WASM Database instance per write — WASM heap never shrinks (T908)
+        const statResult = await stat(dbPath)
+        const entry = dbCache.get(dbPath)
+        if (entry?.db) { try { entry.db.close() } catch { /* ignore */ } }
+        if (entry) {
+          entry.buf = newBuf
+          entry.mtime = statResult.mtimeMs
+          entry.lastAccess = Date.now()
+          entry.db = null
+        } else {
+          dbCache.set(dbPath, { buf: newBuf, mtime: statResult.mtimeMs, lastAccess: Date.now(), db: null, dbCreatedAt: 0 })
+        }
+        return result
+      } finally {
+        db.close()
       }
-      // Update cache: refresh buffer, invalidate DB instance (lazy recreation on next queryLive)
-      // Avoids creating a second WASM Database instance per write — WASM heap never shrinks (T908)
-      const statResult = await stat(dbPath)
-      const entry = dbCache.get(dbPath)
-      if (entry?.db) { try { entry.db.close() } catch { /* ignore */ } }
-      if (entry) {
-        entry.buf = newBuf
-        entry.mtime = statResult.mtimeMs
-        entry.lastAccess = Date.now()
-        entry.db = null
-      } else {
-        dbCache.set(dbPath, { buf: newBuf, mtime: statResult.mtimeMs, lastAccess: Date.now(), db: null, dbCreatedAt: 0 })
-      }
-      return result
     } finally {
-      db.close()
+      await releaseWriteLock(lockPath)
     }
   } finally {
     release!()
@@ -299,42 +306,48 @@ export async function migrateDb(dbPath: string): Promise<{ migrated: number }> {
     }
   } catch { /* DB unreadable — proceed to full migration */ }
 
-  const backupPath = `${dbPath}.bak`
-  await copyFile(dbPath, backupPath)
-
-  const buf = await readFile(dbPath)
-  const db = new sqlJs.Database(buf)
-
+  // Migration needed — acquire cross-process lock before backup + write
+  const lockPath = await acquireWriteLock(dbPath)
   try {
-    const migrated = applyMigrations(db)
+    const backupPath = `${dbPath}.bak`
+    await copyFile(dbPath, backupPath)
 
-    if (migrated > 0) {
-      const exported = db.export()
-      const tmpPath = `${dbPath}.migrate.tmp`
-      await writeFile(tmpPath, Buffer.from(exported))
-      try {
-        await rename(tmpPath, dbPath)
-      } catch (err) {
-        if ((err as NodeJS.ErrnoException).code === 'EPERM') {
-          await copyFile(tmpPath, dbPath)
-          await unlink(tmpPath)
-        } else {
-          throw err
+    const buf = await readFile(dbPath)
+    const db = new sqlJs.Database(buf)
+
+    try {
+      const migrated = applyMigrations(db)
+
+      if (migrated > 0) {
+        const exported = db.export()
+        const tmpPath = `${dbPath}.migrate.tmp`
+        await writeFile(tmpPath, Buffer.from(exported))
+        try {
+          await rename(tmpPath, dbPath)
+        } catch (err) {
+          if ((err as NodeJS.ErrnoException).code === 'EPERM') {
+            await copyFile(tmpPath, dbPath)
+            await unlink(tmpPath)
+          } else {
+            throw err
+          }
         }
+        console.log('[migrateDb] schema updated:', dbPath)
       }
-      console.log('[migrateDb] schema updated:', dbPath)
+
+      await unlink(backupPath).catch(() => {
+        console.warn('[migrateDb] could not delete backup:', backupPath)
+      })
+
+      return { migrated }
+    } catch (err) {
+      console.error('[migrateDb] migration failed, backup kept at:', backupPath, err)
+      throw err
+    } finally {
+      db.close()
     }
-
-    await unlink(backupPath).catch(() => {
-      console.warn('[migrateDb] could not delete backup:', backupPath)
-    })
-
-    return { migrated }
-  } catch (err) {
-    console.error('[migrateDb] migration failed, backup kept at:', backupPath, err)
-    throw err
   } finally {
-    db.close()
+    await releaseWriteLock(lockPath)
   }
 }
 

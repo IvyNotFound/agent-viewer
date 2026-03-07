@@ -88,6 +88,11 @@ vi.mock('electron', () => ({
 
 vi.mock('./claude-md', () => ({ insertAgentIntoClaudeMd: vi.fn((c: string) => c) }))
 
+vi.mock('./db-lock', () => ({
+  acquireWriteLock: vi.fn().mockResolvedValue('/mock.wlock'),
+  releaseWriteLock: vi.fn().mockResolvedValue(undefined),
+}))
+
 vi.mock('child_process', () => ({
   default: { execSync: vi.fn(), execFile: vi.fn(), spawn: vi.fn(() => ({ unref: vi.fn() })) },
   execSync: vi.fn(),
