@@ -10,7 +10,7 @@ import type { Task, Agent } from '@renderer/types'
 // Mock window.electronAPI
 const api = {
   getClaudeInstances: vi.fn().mockResolvedValue([
-    { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true, profiles: ['claude'] }
+    { distro: 'Ubuntu-24.04', version: '2.1.58', isDefault: true }
   ]),
   getAgentSystemPrompt: vi.fn().mockResolvedValue({
     success: true, systemPrompt: 'You are dev-front', systemPromptSuffix: null, thinkingMode: 'auto'
@@ -25,10 +25,10 @@ Object.defineProperty(window, 'electronAPI', { value: api, writable: true })
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
-    id: 1, titre: 'Test task', description: null, statut: 'todo',
-    agent_assigne_id: 10, agent_createur_id: null, agent_valideur_id: null,
-    agent_name: 'dev-front-vuejs', agent_createur_name: null, agent_perimetre: null,
-    parent_task_id: null, session_id: null, perimetre: 'front-vuejs',
+    id: 1, title: 'Test task', description: null, status: 'todo',
+    agent_assigned_id: 10, agent_creator_id: null, agent_validator_id: null,
+    agent_name: 'dev-front-vuejs', agent_creator_name: null, agent_scope: null,
+    parent_task_id: null, session_id: null, scope: 'front-vuejs',
     effort: 2, priority: 'normal', created_at: '', updated_at: '',
     started_at: null, completed_at: null, validated_at: null,
     ...overrides
@@ -37,9 +37,9 @@ function makeTask(overrides: Partial<Task> = {}): Task {
 
 function makeAgent(overrides: Partial<Agent> = {}): Agent {
   return {
-    id: 10, name: 'dev-front-vuejs', type: 'dev', perimetre: 'front-vuejs',
+    id: 10, name: 'dev-front-vuejs', type: 'dev', scope: 'front-vuejs',
     system_prompt: null, system_prompt_suffix: null, thinking_mode: 'auto',
-    allowed_tools: null, auto_launch: 1, created_at: '',
+    allowed_tools: null, auto_launch: 1, permission_mode: null, max_sessions: 3, created_at: '',
     ...overrides
   } as Agent
 }
@@ -97,7 +97,7 @@ describe('composables/useAutoLaunch', () => {
 
     // First watch trigger = init phase: 5 done tasks already present at startup
     tasks.value = Array.from({ length: 5 }, (_, i) =>
-      makeTask({ id: i + 1, statut: 'done', agent_assigne_id: 10 })
+      makeTask({ id: i + 1, status: 'done', agent_assigned_id: 10 })
     )
     await nextTick()
 
@@ -118,7 +118,7 @@ describe('composables/useAutoLaunch', () => {
 
     // First watch trigger = init phase: only 3 done tasks, below threshold of 10
     tasks.value = Array.from({ length: 3 }, (_, i) =>
-      makeTask({ id: i + 1, statut: 'done', agent_assigne_id: 10 })
+      makeTask({ id: i + 1, status: 'done', agent_assigned_id: 10 })
     )
     await nextTick()
     await nextTick()
@@ -135,7 +135,7 @@ describe('composables/useAutoLaunch', () => {
     await nextTick()
 
     // New task appears — auto-launch was removed in T345
-    tasks.value = [makeTask({ id: 1, statut: 'todo', agent_assigne_id: 10 })]
+    tasks.value = [makeTask({ id: 1, status: 'todo', agent_assigned_id: 10 })]
     await nextTick()
     await nextTick()
 
@@ -147,7 +147,7 @@ describe('composables/useAutoLaunch', () => {
     useAutoLaunch({ tasks, agents, dbPath })
 
     // Seed with in_progress task
-    tasks.value = [makeTask({ id: 1, statut: 'in_progress', agent_assigne_id: 10 })]
+    tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
     await nextTick()
 
     // Simulate an existing terminal for this agent
@@ -157,7 +157,7 @@ describe('composables/useAutoLaunch', () => {
     termTab.streamId = 'stream-123'
 
     // Task transitions to done
-    tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
+    tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 10 })]
     await nextTick()
 
     // Terminal should still exist (immediate poll is async — not yet resolved)
@@ -182,7 +182,7 @@ describe('composables/useAutoLaunch', () => {
     useAutoLaunch({ tasks, agents, dbPath })
 
     // Seed
-    tasks.value = [makeTask({ id: 1, statut: 'in_progress', agent_assigne_id: 10 })]
+    tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
     await nextTick()
 
     const tabsStore = useTabsStore()
@@ -191,7 +191,7 @@ describe('composables/useAutoLaunch', () => {
     termTab.streamId = 'stream-waiting'
 
     // Task transitions to done
-    tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
+    tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 10 })]
     await nextTick()
 
     // Poll fires — but no completed session yet
@@ -216,7 +216,7 @@ describe('composables/useAutoLaunch', () => {
     useAutoLaunch({ tasks, agents, dbPath })
 
     // Seed
-    tasks.value = [makeTask({ id: 1, statut: 'in_progress', agent_assigne_id: 10 })]
+    tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
     await nextTick()
 
     const tabsStore = useTabsStore()
@@ -225,7 +225,7 @@ describe('composables/useAutoLaunch', () => {
     termTab.streamId = 'stream-fallback'
 
     // Task transitions to done
-    tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
+    tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 10 })]
     await nextTick()
 
     // Advance 1 minute + 80ms debounce (fallback timeout starts after debounce fires)
@@ -258,11 +258,11 @@ describe('composables/useAutoLaunch', () => {
     useAutoLaunch({ tasks, agents, dbPath })
 
     // Seed with in_progress task
-    tasks.value = [makeTask({ id: 1, statut: 'in_progress', agent_assigne_id: 10 })]
+    tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
     await nextTick()
 
     // Transition to done — starts 80ms debounce
-    tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
+    tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 10 })]
     await nextTick()
 
     // Project changes during the debounce window (before 80ms elapses)
@@ -309,7 +309,7 @@ describe('composables/useAutoLaunch', () => {
   describe('T341: auto-review', () => {
     function makeDoneTasks(count: number): Task[] {
       return Array.from({ length: count }, (_, i) =>
-        makeTask({ id: i + 1, statut: 'done', agent_assigne_id: 10 })
+        makeTask({ id: i + 1, status: 'done', agent_assigned_id: 10 })
       )
     }
 
@@ -485,7 +485,7 @@ describe('composables/useAutoLaunch', () => {
       termTab.streamId = 'stream-task-creator-notask'
 
       // Trigger tasks watch (task for a different agent)
-      tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 999 })]
+      tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
       await nextTick()
 
       // Past debounce + immediate poll
@@ -512,7 +512,7 @@ describe('composables/useAutoLaunch', () => {
       termTab.streamId = 'stream-task-creator-close'
 
       // Trigger no-task check
-      tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 999 })]
+      tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
       await nextTick()
       await vi.advanceTimersByTimeAsync(200) // debounce + immediate poll → no close
 
@@ -543,7 +543,7 @@ describe('composables/useAutoLaunch', () => {
       tabsStore.addTerminal('task-creator', 'Ubuntu-24.04')
 
       const beforeSchedule = new Date().toISOString()
-      tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 999 })]
+      tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
       await nextTick()
       await vi.advanceTimersByTimeAsync(200)
 
@@ -570,7 +570,7 @@ describe('composables/useAutoLaunch', () => {
 
       useAutoLaunch({ tasks, agents, dbPath })
 
-      tasks.value = [makeTask({ id: 1, statut: 'in_progress', agent_assigne_id: 10 })]
+      tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
       await nextTick()
 
       const tabsStore = useTabsStore()
@@ -579,7 +579,7 @@ describe('composables/useAutoLaunch', () => {
       termTab.streamId = 'stream-race'
 
       // Task transitions to done — agent session was already completed (race condition)
-      tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
+      tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 10 })]
       await nextTick()
 
       // Past debounce + immediate poll → lookback window covers the completed session
@@ -595,7 +595,7 @@ describe('composables/useAutoLaunch', () => {
   describe('launchReviewSession failure', () => {
     function makeDoneTasks(count: number): Task[] {
       return Array.from({ length: count }, (_, i) =>
-        makeTask({ id: i + 1, statut: 'done', agent_assigne_id: 10 })
+        makeTask({ id: i + 1, status: 'done', agent_assigned_id: 10 })
       )
     }
 
@@ -647,7 +647,7 @@ describe('composables/useAutoLaunch', () => {
       useAutoLaunch({ tasks, agents, dbPath })
 
       // Seed with in_progress task
-      tasks.value = [makeTask({ id: 1, statut: 'in_progress', agent_assigne_id: 10 })]
+      tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
       await nextTick()
 
       const tabsStore = useTabsStore()
@@ -656,7 +656,7 @@ describe('composables/useAutoLaunch', () => {
       termTab.streamId = 'stream-no-auto'
 
       // Task transitions to done
-      tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
+      tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 10 })]
       await nextTick()
 
       // Advance past poll interval and fallback — no close should happen
@@ -673,7 +673,7 @@ describe('composables/useAutoLaunch', () => {
       useAutoLaunch({ tasks, agents, dbPath })
 
       // Seed with in_progress task
-      tasks.value = [makeTask({ id: 1, statut: 'in_progress', agent_assigne_id: 10 })]
+      tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
       await nextTick()
 
       // Add terminal WITHOUT setting streamId
@@ -681,7 +681,7 @@ describe('composables/useAutoLaunch', () => {
       tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
 
       // Task transitions to done
-      tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
+      tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 10 })]
       await nextTick()
 
       // Advance past 80ms debounce + immediate 0ms poll, flush promises
@@ -700,7 +700,7 @@ describe('composables/useAutoLaunch', () => {
       useAutoLaunch({ tasks, agents, dbPath })
 
       // Seed with in_progress task
-      tasks.value = [makeTask({ id: 1, statut: 'in_progress', agent_assigne_id: 10 })]
+      tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
       await nextTick()
 
       const tabsStore = useTabsStore()
@@ -709,7 +709,7 @@ describe('composables/useAutoLaunch', () => {
       termTab.streamId = 'stream-456'
 
       // First done transition
-      tasks.value = [makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 })]
+      tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 10 })]
       await nextTick()
 
       // Advance 3s — immediate poll fires (0ms) + resolves: terminé found → doClose called
@@ -717,8 +717,8 @@ describe('composables/useAutoLaunch', () => {
 
       // Second done transition (same agent — pendingClose already cleared by doClose)
       tasks.value = [
-        makeTask({ id: 1, statut: 'done', agent_assigne_id: 10 }),
-        makeTask({ id: 2, statut: 'done', agent_assigne_id: 10 }),
+        makeTask({ id: 1, status: 'done', agent_assigned_id: 10 }),
+        makeTask({ id: 2, status: 'done', agent_assigned_id: 10 }),
       ]
       await nextTick()
 
