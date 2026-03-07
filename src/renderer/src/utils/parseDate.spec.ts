@@ -50,3 +50,70 @@ describe('parseUtcDate', () => {
     expect(d1.getTime()).toBe(d2.getTime())
   })
 })
+
+describe('parseUtcDate — mutation-killing cases (T1074)', () => {
+  // Branch: includes('T') fires even without Z suffix
+  it('passes through string with T but no Z (includes-T branch)', () => {
+    // "2024-01-15T10:30:00" → includes('T') is true → returned as-is by new Date()
+    // If mutation changes includes('T') to includes('X'), no pass-through occurs
+    const d = parseUtcDate('2024-01-15T10:30:00')
+    expect(isNaN(d.getTime())).toBe(false)
+    expect(d.getUTCMinutes()).toBe(30)
+    expect(d.getUTCSeconds()).toBe(0)
+  })
+
+  // replace path: space→T and append Z — verify both substitutions are correct
+  it('replace path: converts space to T and appends Z (catches empty-string mutations)', () => {
+    // "2024-03-10 08:45:00" → must become "2024-03-10T08:45:00Z"
+    // Mutation: replace ' ' with '' would produce "2024-03-1008:45:00Z" → NaN
+    // Mutation: append '' instead of 'Z' → local time used, wrong UTC epoch
+    const d = parseUtcDate('2024-03-10 08:45:00')
+    expect(d.getUTCFullYear()).toBe(2024)
+    expect(d.getUTCMonth()).toBe(2) // 0-indexed March
+    expect(d.getUTCDate()).toBe(10)
+    expect(d.getUTCHours()).toBe(8)
+    expect(d.getUTCMinutes()).toBe(45)
+    expect(d.getUTCSeconds()).toBe(0)
+    // Epoch must match UTC exactly (catches missing Z mutation)
+    expect(d.getTime()).toBe(Date.UTC(2024, 2, 10, 8, 45, 0))
+  })
+
+  // endsWith('Z') branch — verify epoch is preserved correctly
+  it('endsWith Z: passes through with correct UTC epoch', () => {
+    const d = parseUtcDate('2024-06-15T12:00:00Z')
+    expect(d.getUTCHours()).toBe(12)
+    expect(d.getUTCMinutes()).toBe(0)
+    expect(d.getTime()).toBe(Date.UTC(2024, 5, 15, 12, 0, 0))
+  })
+
+  // includes('+') branch
+  it('passes through strings with + timezone offset', () => {
+    const d = parseUtcDate('2024-08-20T14:00:00+02:00')
+    expect(d.getUTCHours()).toBe(12)
+    expect(d.getTime()).toBe(Date.UTC(2024, 7, 20, 12, 0, 0))
+  })
+
+  // Verify replace replaces the separator space correctly
+  it('replace replaces only the date-time separator space', () => {
+    const d = parseUtcDate('2024-12-31 23:59:59')
+    expect(d.getUTCHours()).toBe(23)
+    expect(d.getUTCMinutes()).toBe(59)
+    expect(d.getUTCSeconds()).toBe(59)
+    expect(d.getTime()).toBe(Date.UTC(2024, 11, 31, 23, 59, 59))
+  })
+
+  // Boundary: midnight UTC
+  it('parses midnight UTC correctly (replace path)', () => {
+    const d = parseUtcDate('2024-01-01 00:00:00')
+    expect(d.getTime()).toBe(Date.UTC(2024, 0, 1, 0, 0, 0))
+    expect(d.getUTCHours()).toBe(0)
+    expect(d.getUTCMinutes()).toBe(0)
+    expect(d.getUTCSeconds()).toBe(0)
+  })
+
+  // String with both T and Z
+  it('string with both T and Z: passes through unchanged', () => {
+    const d = parseUtcDate('2025-01-01T00:00:00Z')
+    expect(d.getTime()).toBe(Date.UTC(2025, 0, 1, 0, 0, 0))
+  })
+})
