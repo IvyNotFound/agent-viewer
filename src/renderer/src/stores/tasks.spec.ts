@@ -1301,3 +1301,471 @@ describe('stores/tasks — agentGroups actions', () => {
     })
   })
 })
+
+
+describe('stores/tasks — tasksByStatus with scope filter (mutation: ConditionalExpression)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    mockElectronAPI.queryDb.mockResolvedValue([])
+  })
+
+  it('should return only tasks matching selectedScope', () => {
+    const store = useTasksStore()
+    store.tasks = [
+      { id: 1, title: 'T1', agent_assigned_id: 1, scope: 'front-vuejs', status: 'todo' },
+      { id: 2, title: 'T2', agent_assigned_id: 2, scope: 'back-electron', status: 'todo' },
+      { id: 3, title: 'T3', agent_assigned_id: 3, scope: 'front-vuejs', status: 'in_progress' },
+    ] as never
+
+    store.selectedPerimetre = 'front-vuejs'
+    const byStatus = store.tasksByStatus
+
+    expect(byStatus.todo).toHaveLength(1)
+    expect(byStatus.todo[0].id).toBe(1)
+    expect(byStatus.in_progress).toHaveLength(1)
+    expect(byStatus.in_progress[0].id).toBe(3)
+    expect(byStatus.done).toHaveLength(0)
+  })
+
+  it('should return all tasks when selectedScope is null', () => {
+    const store = useTasksStore()
+    store.tasks = [
+      { id: 1, title: 'T1', agent_assigned_id: 1, scope: 'front-vuejs', status: 'todo' },
+      { id: 2, title: 'T2', agent_assigned_id: 2, scope: 'back-electron', status: 'done' },
+    ] as never
+
+    store.selectedPerimetre = null
+    const byStatus = store.tasksByStatus
+
+    expect(byStatus.todo).toHaveLength(1)
+    expect(byStatus.done).toHaveLength(1)
+  })
+
+  it('should return empty groups when scope filter matches nothing', () => {
+    const store = useTasksStore()
+    store.tasks = [
+      { id: 1, title: 'T1', agent_assigned_id: 1, scope: 'front-vuejs', status: 'todo' },
+    ] as never
+
+    store.selectedPerimetre = 'nonexistent-scope'
+    const byStatus = store.tasksByStatus
+
+    expect(byStatus.todo).toHaveLength(0)
+    expect(byStatus.in_progress).toHaveLength(0)
+    expect(byStatus.done).toHaveLength(0)
+    expect(byStatus.archived).toHaveLength(0)
+  })
+})
+
+
+describe('stores/tasks — DONE_TASKS_LIMIT (mutation: EqualityOperator L159)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    mockElectronAPI.migrateDb.mockResolvedValue({ success: true })
+    mockElectronAPI.watchDb.mockResolvedValue(undefined)
+    mockElectronAPI.onDbChanged.mockReturnValue(() => {})
+  })
+
+  it('should set doneTasksLimited=true when done tasks count equals DONE_TASKS_LIMIT', async () => {
+    const store = useTasksStore()
+    store.dbPath = '/p/.claude/db'
+
+    const { DONE_TASKS_LIMIT } = await import('@renderer/stores/tasks')
+    const doneTasks = Array.from({ length: DONE_TASKS_LIMIT }, (_, i) => ({
+      id: i + 1, title: `Done ${i}`, status: 'done', agent_assigned_id: null,
+    }))
+
+    mockElectronAPI.queryDb
+      .mockResolvedValueOnce([]) // live tasks
+      .mockResolvedValueOnce(doneTasks) // done tasks — exactly DONE_TASKS_LIMIT
+      .mockResolvedValueOnce([]) // agents
+      .mockResolvedValueOnce([]) // stats
+      .mockResolvedValueOnce([]) // perimetres
+      .mockResolvedValueOnce([]) // boardAssignees
+
+    await store.refresh()
+
+    expect(store.doneTasksLimited).toBe(true)
+  })
+
+  it('should set doneTasksLimited=false when done tasks count is below DONE_TASKS_LIMIT', async () => {
+    const store = useTasksStore()
+    store.dbPath = '/p/.claude/db'
+
+    mockElectronAPI.queryDb
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 1, title: 'Done 1', status: 'done', agent_assigned_id: null }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+
+    await store.refresh()
+
+    expect(store.doneTasksLimited).toBe(false)
+  })
+})
+
+
+describe('stores/tasks — setTaskStatut mutations', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+  })
+
+  it('should only modify the targeted task — not other tasks', async () => {
+    ;(mockElectronAPI as Record<string, ReturnType<typeof vi.fn>>).tasksUpdateStatus =
+      vi.fn().mockResolvedValue({ success: true })
+
+    const store = useTasksStore()
+    store.$patch({
+      dbPath: '/p/db',
+      tasks: [
+        { id: 1, status: 'todo', title: 'Task A' },
+        { id: 2, status: 'todo', title: 'Task B' },
+        { id: 3, status: 'todo', title: 'Task C' },
+      ] as never,
+    })
+
+    await store.setTaskStatut(2, 'in_progress')
+
+    expect(store.tasks[0].status).toBe('todo')
+    expect(store.tasks[1].status).toBe('in_progress')
+    expect(store.tasks[2].status).toBe('todo')
+  })
+
+  it('should not crash when task does not exist', async () => {
+    ;(mockElectronAPI as Record<string, ReturnType<typeof vi.fn>>).tasksUpdateStatus =
+      vi.fn().mockResolvedValue({ success: true })
+
+    const store = useTasksStore()
+    store.$patch({
+      dbPath: '/p/db',
+      tasks: [{ id: 1, status: 'todo', title: 'Task A' }] as never,
+    })
+
+    await expect(store.setTaskStatut(999, 'in_progress')).resolves.not.toThrow()
+    expect(store.tasks[0].status).toBe('todo')
+  })
+
+  it('should apply optimistic update before IPC resolves', async () => {
+    let resolveIpc!: (value: unknown) => void
+    ;(mockElectronAPI as Record<string, ReturnType<typeof vi.fn>>).tasksUpdateStatus =
+      vi.fn().mockReturnValue(new Promise(resolve => { resolveIpc = resolve }))
+
+    const store = useTasksStore()
+    store.$patch({
+      dbPath: '/p/db',
+      tasks: [{ id: 1, status: 'todo', title: 'Task A' }] as never,
+    })
+
+    const promise = store.setTaskStatut(1, 'in_progress')
+    expect(store.tasks[0].status).toBe('in_progress')
+
+    resolveIpc({ success: true })
+    await promise
+    expect(store.tasks[0].status).toBe('in_progress')
+  })
+
+  it('should rollback optimistic update on IPC throw', async () => {
+    ;(mockElectronAPI as Record<string, ReturnType<typeof vi.fn>>).tasksUpdateStatus =
+      vi.fn().mockRejectedValue(new Error('Network error'))
+
+    const store = useTasksStore()
+    store.$patch({
+      dbPath: '/p/db',
+      tasks: [{ id: 1, status: 'todo', title: 'Task A' }] as never,
+    })
+
+    await expect(store.setTaskStatut(1, 'in_progress')).rejects.toThrow()
+    expect(store.tasks[0].status).toBe('todo')
+  })
+
+  it('should return blockers from error object when IPC returns blockers', async () => {
+    const blockers = [{ id: 5, title: 'Blocker', status: 'in_progress' }]
+    ;(mockElectronAPI as Record<string, ReturnType<typeof vi.fn>>).tasksUpdateStatus =
+      vi.fn().mockResolvedValue({ success: false, error: 'TASK_BLOCKED', blockers })
+
+    const store = useTasksStore()
+    store.$patch({
+      dbPath: '/p/db',
+      tasks: [{ id: 1, status: 'todo', title: 'Task A' }] as never,
+    })
+
+    let errorBlockers: unknown[] = []
+    try {
+      await store.setTaskStatut(1, 'in_progress')
+    } catch (e) {
+      errorBlockers = (e as { blockers: unknown[] }).blockers ?? []
+    }
+
+    expect(errorBlockers).toEqual(blockers)
+  })
+
+  it('should return empty blockers array when IPC error has no blockers', async () => {
+    ;(mockElectronAPI as Record<string, ReturnType<typeof vi.fn>>).tasksUpdateStatus =
+      vi.fn().mockResolvedValue({ success: false, error: 'UPDATE_FAILED' })
+
+    const store = useTasksStore()
+    store.$patch({
+      dbPath: '/p/db',
+      tasks: [{ id: 1, status: 'todo', title: 'Task A' }] as never,
+    })
+
+    let errorBlockers: unknown[] | undefined
+    try {
+      await store.setTaskStatut(1, 'in_progress')
+    } catch (e) {
+      errorBlockers = (e as { blockers?: unknown[] }).blockers
+    }
+
+    expect(errorBlockers).toEqual([])
+  })
+
+  it('should not call IPC when dbPath is null', async () => {
+    ;(mockElectronAPI as Record<string, ReturnType<typeof vi.fn>>).tasksUpdateStatus =
+      vi.fn().mockResolvedValue({ success: true })
+
+    const store = useTasksStore()
+    store.dbPath = null
+
+    await store.setTaskStatut(1, 'in_progress')
+
+    expect((mockElectronAPI as Record<string, ReturnType<typeof vi.fn>>).tasksUpdateStatus).not.toHaveBeenCalled()
+  })
+})
+
+
+describe('stores/tasks — projectPath derivation from dbPath (mutation: EqualityOperator parts.length)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    mockElectronAPI.queryDb.mockResolvedValue([])
+    mockElectronAPI.migrateDb.mockResolvedValue({ success: true })
+    mockElectronAPI.watchDb.mockResolvedValue(undefined)
+    mockElectronAPI.onDbChanged.mockReturnValue(() => {})
+    mockElectronAPI.findProjectDb.mockResolvedValue(null)
+  })
+
+  it('should derive projectPath from unix-style dbPath with .claude folder', async () => {
+    localStorage.setItem('dbPath', '/home/user/myproject/.claude/project.db')
+
+    useTasksStore()
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(localStorage.getItem('projectPath')).toBe('/home/user/myproject')
+  })
+
+  it('should derive projectPath from WSL-style dbPath /mnt/c/.../.claude/project.db', async () => {
+    localStorage.setItem('dbPath', '/mnt/c/Users/Cover/dev/agent-viewer/.claude/project.db')
+
+    useTasksStore()
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(localStorage.getItem('projectPath')).toBe('/mnt/c/Users/Cover/dev/agent-viewer')
+  })
+
+  it('should NOT derive projectPath when second-to-last segment is not .claude', async () => {
+    localStorage.setItem('dbPath', '/home/user/myproject/other/project.db')
+
+    useTasksStore()
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(localStorage.getItem('projectPath')).toBeNull()
+  })
+
+  it('should NOT derive projectPath when dbPath has fewer than 2 segments', async () => {
+    localStorage.setItem('dbPath', 'project.db')
+
+    useTasksStore()
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(localStorage.getItem('projectPath')).toBeNull()
+  })
+
+  it('should use existing projectPath from localStorage without re-deriving', async () => {
+    localStorage.setItem('dbPath', '/home/user/myproject/.claude/project.db')
+    localStorage.setItem('projectPath', '/existing/path')
+
+    useTasksStore()
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(localStorage.getItem('projectPath')).toBe('/existing/path')
+  })
+})
+
+
+describe('stores/tasks — desktop notifications (mutation: LogicalOperator L163)', () => {
+  const originalNotification = global.Notification
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    mockElectronAPI.queryDb.mockResolvedValue([])
+    mockElectronAPI.migrateDb.mockResolvedValue({ success: true })
+    mockElectronAPI.watchDb.mockResolvedValue(undefined)
+    mockElectronAPI.onDbChanged.mockReturnValue(() => {})
+  })
+
+  afterEach(() => {
+    global.Notification = originalNotification
+  })
+
+  it('should fire notification when task transitions todo → done with permission granted', async () => {
+    const mockNotificationCtor = vi.fn()
+    ;(global as unknown as Record<string, unknown>).Notification = Object.assign(mockNotificationCtor, { permission: 'granted' })
+
+    const store = useTasksStore()
+    await store.setProject('/p', '/p/.claude/db')
+    const settingsStore = useSettingsStore()
+    settingsStore.notificationsEnabled = true
+
+    // Use unique ids to avoid _lastNotifTs debounce cross-test pollution
+    store.tasks = [{ id: 8001, title: 'Task A', status: 'todo', agent_assigned_id: null }] as never
+
+    mockElectronAPI.queryDb
+      .mockResolvedValueOnce([]) // live tasks
+      .mockResolvedValueOnce([{ id: 8001, title: 'Task A', status: 'done', agent_assigned_id: null }]) // done tasks
+      .mockResolvedValueOnce([]) // agents
+      .mockResolvedValueOnce([]) // stats
+      .mockResolvedValueOnce([]) // perimetres
+      .mockResolvedValueOnce([]) // boardAssignees
+
+    await store.refresh()
+
+    expect(mockNotificationCtor).toHaveBeenCalledWith('Task completed', expect.any(Object))
+  })
+
+  it('should NOT fire notification when notificationsEnabled is false', async () => {
+    const mockNotificationCtor = vi.fn()
+    ;(global as unknown as Record<string, unknown>).Notification = Object.assign(mockNotificationCtor, { permission: 'granted' })
+
+    const store = useTasksStore()
+    await store.setProject('/p', '/p/.claude/db')
+    const settingsStore = useSettingsStore()
+    settingsStore.notificationsEnabled = false
+
+    store.tasks = [{ id: 8002, title: 'Task A', status: 'todo', agent_assigned_id: null }] as never
+
+    mockElectronAPI.queryDb
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 8002, title: 'Task A', status: 'done', agent_assigned_id: null }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+
+    await store.refresh()
+
+    expect(mockNotificationCtor).not.toHaveBeenCalled()
+  })
+
+  it('should NOT fire notification when Notification.permission is not granted', async () => {
+    const mockNotificationCtor = vi.fn()
+    ;(global as unknown as Record<string, unknown>).Notification = Object.assign(mockNotificationCtor, { permission: 'denied' })
+
+    const store = useTasksStore()
+    await store.setProject('/p', '/p/.claude/db')
+    const settingsStore = useSettingsStore()
+    settingsStore.notificationsEnabled = true
+
+    store.tasks = [{ id: 8003, title: 'Task A', status: 'todo', agent_assigned_id: null }] as never
+
+    mockElectronAPI.queryDb
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 8003, title: 'Task A', status: 'done', agent_assigned_id: null }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+
+    await store.refresh()
+
+    expect(mockNotificationCtor).not.toHaveBeenCalled()
+  })
+
+  it('should NOT fire notification when tasks.value was empty before refresh (first load)', async () => {
+    const mockNotificationCtor = vi.fn()
+    ;(global as unknown as Record<string, unknown>).Notification = Object.assign(mockNotificationCtor, { permission: 'granted' })
+
+    const store = useTasksStore()
+    await store.setProject('/p', '/p/.claude/db')
+    const settingsStore = useSettingsStore()
+    settingsStore.notificationsEnabled = true
+
+    store.tasks = [] as never
+
+    mockElectronAPI.queryDb
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 8004, title: 'Task A', status: 'done', agent_assigned_id: null }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+
+    await store.refresh()
+
+    expect(mockNotificationCtor).not.toHaveBeenCalled()
+  })
+
+  it('should NOT fire notification when task status did not change', async () => {
+    const mockNotificationCtor = vi.fn()
+    ;(global as unknown as Record<string, unknown>).Notification = Object.assign(mockNotificationCtor, { permission: 'granted' })
+
+    const store = useTasksStore()
+    await store.setProject('/p', '/p/.claude/db')
+    const settingsStore = useSettingsStore()
+    settingsStore.notificationsEnabled = true
+
+    store.tasks = [{ id: 8005, title: 'Task A', status: 'done', agent_assigned_id: null }] as never
+
+    mockElectronAPI.queryDb
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 8005, title: 'Task A', status: 'done', agent_assigned_id: null }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+
+    await store.refresh()
+
+    expect(mockNotificationCtor).not.toHaveBeenCalled()
+  })
+
+  it('should fire "Task started" notification when task transitions to in_progress', async () => {
+    const mockNotificationCtor = vi.fn()
+    ;(global as unknown as Record<string, unknown>).Notification = Object.assign(mockNotificationCtor, { permission: 'granted' })
+
+    const store = useTasksStore()
+    await store.setProject('/p', '/p/.claude/db')
+    const settingsStore = useSettingsStore()
+    settingsStore.notificationsEnabled = true
+
+    // Use unique task id to avoid cross-test debounce pollution (_lastNotifTs is module-level)
+    store.tasks = [{ id: 9999, title: 'Task B', status: 'todo', agent_assigned_id: null }] as never
+
+    mockElectronAPI.queryDb
+      .mockResolvedValueOnce([{ id: 9999, title: 'Task B', status: 'in_progress', agent_assigned_id: null }]) // live tasks
+      .mockResolvedValueOnce([]) // done tasks
+      .mockResolvedValueOnce([]) // agents
+      .mockResolvedValueOnce([]) // stats
+      .mockResolvedValueOnce([]) // perimetres
+      .mockResolvedValueOnce([]) // boardAssignees
+
+    await store.refresh()
+
+    expect(mockNotificationCtor).toHaveBeenCalledWith('Task started', expect.any(Object))
+  })
+})
