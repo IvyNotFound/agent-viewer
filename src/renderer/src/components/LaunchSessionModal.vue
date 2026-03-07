@@ -7,7 +7,18 @@ import { useSettingsStore } from '@renderer/stores/settings'
 import { agentFg, agentBorder } from '@renderer/utils/agentColor'
 import { useModalEscape } from '@renderer/composables/useModalEscape'
 import type { Agent } from '@renderer/types'
-import type { CliType, CliInstance } from '@shared/cli-types'
+import type { CliType, CliInstance, CliCapabilities } from '@shared/cli-types'
+
+// ── Static capabilities map (T1036 / R2) ─────────────────────────────────────
+// T1012 will eventually expose this via IPC; until then, source-of-truth is here.
+const CLI_CAPABILITIES: Record<CliType, CliCapabilities> = {
+  claude:   { worktree: true, profileSelection: true,  systemPrompt: true,  thinkingMode: true,  convResume: true  },
+  codex:    { worktree: true, profileSelection: false, systemPrompt: true,  thinkingMode: false, convResume: false },
+  gemini:   { worktree: true, profileSelection: false, systemPrompt: false, thinkingMode: false, convResume: false },
+  opencode: { worktree: true, profileSelection: false, systemPrompt: false, thinkingMode: false, convResume: false },
+  aider:    { worktree: true, profileSelection: false, systemPrompt: true,  thinkingMode: false, convResume: false },
+  goose:    { worktree: true, profileSelection: false, systemPrompt: true,  thinkingMode: false, convResume: false },
+}
 
 const props = defineProps<{ agent: Agent }>()
 const emit = defineEmits<{ close: [] }>()
@@ -27,7 +38,7 @@ const launching = ref(false)
 const systemPrompt = ref<string | null>(null)
 const systemPromptSuffix = ref<string | null>(null)
 const thinkingMode = ref<'auto' | 'disabled'>('auto')
-/** Active binary wrapper profile within the selected instance */
+/** Active binary wrapper profile within the selected instance (Claude only) */
 const selectedProfile = ref<string>('claude')
 /** Claude Code conversation UUID from last session — used for --resume */
 const lastConvId = ref<string | null>(null)
@@ -44,7 +55,15 @@ const fullSystemPrompt = computed(() => {
   return parts.join('\n\n')
 })
 
-const activeProfiles = computed(() => selectedInstance.value?.profiles ?? ['claude'])
+/** Capabilities of the currently selected CLI — drives conditional sections (T1036) */
+const caps = computed<CliCapabilities>(() => CLI_CAPABILITIES[selectedCli.value])
+
+// profiles is Claude-specific; access via type cast (T1031 removed it from CliInstance)
+const activeProfiles = computed(() =>
+  caps.value.profileSelection
+    ? ((selectedInstance.value as Record<string, unknown>)?.profiles as string[] | undefined) ?? ['claude']
+    : ['claude']
+)
 
 /** Instances detected for the currently selected CLI */
 const instancesForCli = computed(() =>
@@ -73,7 +92,8 @@ const CLI_BADGE: Record<CliType, string> = {
 }
 
 watch(selectedInstance, (inst) => {
-  selectedProfile.value = inst?.profiles[0] ?? 'claude'
+  const profiles = (inst as Record<string, unknown> | null)?.profiles as string[] | undefined
+  selectedProfile.value = profiles?.[0] ?? 'claude'
 })
 
 // When CLI changes, pick first detected instance for that CLI
@@ -96,7 +116,7 @@ onMounted(async () => {
   // Auto-select instance: prefer stored preference, fall back to isDefault/first
   const instances = instancesForCli.value
   if (instances.length > 0) {
-    const stored = settingsStore.defaultCliInstance
+    const stored = settingsStore.defaultClaudeInstance
     selectedInstance.value =
       (stored ? instances.find(i => i.distro === stored) : undefined)
       ?? instances.find(i => i.isDefault)
@@ -104,7 +124,8 @@ onMounted(async () => {
       ?? null
 
     const storedProfile = settingsStore.defaultClaudeProfile
-    if (storedProfile && selectedInstance.value?.profiles.includes(storedProfile)) {
+    const instProfiles = (selectedInstance.value as Record<string, unknown> | null)?.profiles as string[] | undefined
+    if (storedProfile && instProfiles?.includes(storedProfile)) {
       selectedProfile.value = storedProfile
     }
   }
@@ -161,26 +182,28 @@ async function launch() {
       workDir = result.workDir
     }
 
-    const distro = selectedInstance.value?.distro
-    const cmdProfile = selectedProfile.value !== 'claude' ? selectedProfile.value : undefined
-    const convId = useResume.value && lastConvId.value ? lastConvId.value : undefined
+    const distro = caps.value.profileSelection ? selectedInstance.value?.distro : undefined
+    const cmdProfile = caps.value.profileSelection && selectedProfile.value !== 'claude' ? selectedProfile.value : undefined
+    const convId = caps.value.convResume && useResume.value && lastConvId.value ? lastConvId.value : undefined
+    const activeThinking = caps.value.thinkingMode ? thinkingMode.value : undefined
+    const activeSystemPrompt = caps.value.systemPrompt ? fullSystemPrompt.value : undefined
 
     if (convId) {
       tabsStore.addTerminal(
         props.agent.name, distro, undefined, undefined,
-        thinkingMode.value, cmdProfile, convId,
+        activeThinking, cmdProfile, convId,
         true, undefined, 'stream', selectedCli.value, workDir
       )
-    } else if (fullSystemPrompt.value) {
+    } else if (activeSystemPrompt) {
       tabsStore.addTerminal(
-        props.agent.name, distro, finalPrompt, fullSystemPrompt.value,
-        thinkingMode.value, cmdProfile, undefined,
+        props.agent.name, distro, finalPrompt, activeSystemPrompt,
+        activeThinking, cmdProfile, undefined,
         true, undefined, 'stream', selectedCli.value, workDir
       )
     } else {
       tabsStore.addTerminal(
         props.agent.name, distro, finalPrompt, undefined,
-        thinkingMode.value, cmdProfile, undefined,
+        activeThinking, cmdProfile, undefined,
         true, undefined, 'stream', selectedCli.value, workDir
       )
     }
@@ -244,85 +267,112 @@ async function launch() {
             </div>
           </div>
 
-          <!-- Instance selection -->
-          <div>
-            <p class="text-sm font-medium text-content-secondary mb-2">
-              {{ multiCli ? CLI_LABELS[selectedCli] + ' — ' + t('launch.instance') : t('launch.claudeInstance') }}
-            </p>
+          <!-- Instance selection — profileSelection CLIs only (Claude) (T1036) -->
+          <Transition
+            enter-active-class="transition-all duration-200 overflow-hidden"
+            enter-from-class="opacity-0 max-h-0"
+            enter-to-class="opacity-100 max-h-64"
+            leave-active-class="transition-all duration-150 overflow-hidden"
+            leave-from-class="opacity-100 max-h-64"
+            leave-to-class="opacity-0 max-h-0"
+          >
+            <div v-if="caps.profileSelection">
+              <p class="text-sm font-medium text-content-secondary mb-2">
+                {{ multiCli ? CLI_LABELS[selectedCli] + ' — ' + t('launch.instance') : t('launch.claudeInstance') }}
+              </p>
 
-            <div v-if="loading" class="text-sm text-content-subtle animate-pulse">{{ t('common.loading') }}</div>
+              <div v-if="loading" class="text-sm text-content-subtle animate-pulse">{{ t('common.loading') }}</div>
 
-            <div v-else-if="instancesForCli.length === 0" class="text-sm text-content-subtle italic">
-              {{ t('launch.noInstance') }}
+              <div v-else-if="instancesForCli.length === 0" class="text-sm text-content-subtle italic">
+                {{ t('launch.noInstance') }}
+              </div>
+
+              <div v-else class="space-y-1.5">
+                <label
+                  v-for="inst in instancesForCli"
+                  :key="inst.distro"
+                  class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
+                  :class="selectedInstance?.distro === inst.distro
+                    ? ''
+                    : 'border-edge-default hover:border-content-faint bg-surface-secondary/40'"
+                  :style="selectedInstance?.distro === inst.distro ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '15' } : {}"
+                >
+                  <input
+                    v-model="selectedInstance"
+                    type="radio"
+                    :value="inst"
+                    :style="{ accentColor: agentFg(agent.name) }"
+                  />
+                  <span class="flex-1 text-sm font-mono text-content-secondary">{{ instanceLabel(inst) }}</span>
+                  <span class="text-[10px] text-content-subtle font-mono shrink-0">{{ t('launch.instanceVersion', { version: inst.version }) }}</span>
+                  <span
+                    v-if="inst.isDefault"
+                    class="text-[9px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-surface-tertiary text-content-muted shrink-0"
+                  >{{ t('launch.defaultBadge') }}</span>
+                </label>
+              </div>
             </div>
+          </Transition>
 
-            <div v-else class="space-y-1.5">
-              <label
-                v-for="inst in instancesForCli"
-                :key="inst.distro"
-                class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
-                :class="selectedInstance?.distro === inst.distro
-                  ? ''
-                  : 'border-edge-default hover:border-content-faint bg-surface-secondary/40'"
-                :style="selectedInstance?.distro === inst.distro ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '15' } : {}"
+          <!-- Resume session — convResume CLIs only (Claude) (T1036) -->
+          <Transition
+            enter-active-class="transition-all duration-200 overflow-hidden"
+            enter-from-class="opacity-0 max-h-0"
+            enter-to-class="opacity-100 max-h-32"
+            leave-active-class="transition-all duration-150 overflow-hidden"
+            leave-from-class="opacity-100 max-h-32"
+            leave-to-class="opacity-0 max-h-0"
+          >
+            <div v-if="caps.convResume && lastConvId">
+              <p class="text-sm font-medium text-content-secondary mb-2">{{ t('launch.prevSession') }}</p>
+              <label class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
+                :class="useResume ? '' : 'border-edge-default bg-surface-secondary/40 hover:border-content-faint'"
+                :style="useResume ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '15' } : {}"
               >
-                <input
-                  v-model="selectedInstance"
-                  type="radio"
-                  :value="inst"
-                  :style="{ accentColor: agentFg(agent.name) }"
-                />
-                <span class="flex-1 text-sm font-mono text-content-secondary">{{ instanceLabel(inst) }}</span>
-                <span class="text-[10px] text-content-subtle font-mono shrink-0">{{ t('launch.instanceVersion', { version: inst.version }) }}</span>
-                <span
-                  v-if="inst.isDefault"
-                  class="text-[9px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-surface-tertiary text-content-muted shrink-0"
-                >{{ t('launch.defaultBadge') }}</span>
+                <input v-model="useResume" type="checkbox" :style="{ accentColor: agentFg(agent.name) }" />
+                <span class="text-sm text-content-secondary">{{ t('launch.resume', { resume: '--resume' }) }}</span>
               </label>
+              <p class="text-[10px] text-content-faint mt-1">{{ t('launch.resumeNote') }}</p>
             </div>
-          </div>
+          </Transition>
 
-          <!-- Resume session: shown when a previous conv_id exists -->
-          <div v-if="lastConvId">
-            <p class="text-sm font-medium text-content-secondary mb-2">{{ t('launch.prevSession') }}</p>
-            <label class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
-              :class="useResume ? '' : 'border-edge-default bg-surface-secondary/40 hover:border-content-faint'"
-              :style="useResume ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '15' } : {}"
-            >
-              <input v-model="useResume" type="checkbox" :style="{ accentColor: agentFg(agent.name) }" />
-              <span class="text-sm text-content-secondary">{{ t('launch.resume', { resume: '--resume' }) }}</span>
-            </label>
-            <p class="text-[10px] text-content-faint mt-1">{{ t('launch.resumeNote') }}</p>
-          </div>
-
-          <!-- Thinking mode -->
-          <div>
-            <p class="text-sm font-medium text-content-secondary mb-2">{{ t('launch.thinkingMode') }}</p>
-            <div class="flex gap-2">
-              <button
-                class="flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all"
-                :class="thinkingMode !== 'auto' ? 'border-edge-default bg-surface-secondary/40 text-content-muted hover:border-content-faint' : ''"
-                :style="thinkingMode === 'auto' ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
-                @click="thinkingMode = 'auto'"
-              >
-                Auto
-              </button>
-              <button
-                class="flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all"
-                :class="thinkingMode !== 'disabled' ? 'border-edge-default bg-surface-secondary/40 text-content-muted hover:border-content-faint' : ''"
-                :style="thinkingMode === 'disabled' ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
-                @click="thinkingMode = 'disabled'"
-              >
-                {{ t('launch.disabled') }}
-              </button>
+          <!-- Thinking mode — thinkingMode CLIs only (Claude) (T1036) -->
+          <Transition
+            enter-active-class="transition-all duration-200 overflow-hidden"
+            enter-from-class="opacity-0 max-h-0"
+            enter-to-class="opacity-100 max-h-32"
+            leave-active-class="transition-all duration-150 overflow-hidden"
+            leave-from-class="opacity-100 max-h-32"
+            leave-to-class="opacity-0 max-h-0"
+          >
+            <div v-if="caps.thinkingMode">
+              <p class="text-sm font-medium text-content-secondary mb-2">{{ t('launch.thinkingMode') }}</p>
+              <div class="flex gap-2">
+                <button
+                  class="flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all"
+                  :class="thinkingMode !== 'auto' ? 'border-edge-default bg-surface-secondary/40 text-content-muted hover:border-content-faint' : ''"
+                  :style="thinkingMode === 'auto' ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
+                  @click="thinkingMode = 'auto'"
+                >
+                  Auto
+                </button>
+                <button
+                  class="flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all"
+                  :class="thinkingMode !== 'disabled' ? 'border-edge-default bg-surface-secondary/40 text-content-muted hover:border-content-faint' : ''"
+                  :style="thinkingMode === 'disabled' ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
+                  @click="thinkingMode = 'disabled'"
+                >
+                  {{ t('launch.disabled') }}
+                </button>
+              </div>
+              <p class="text-[10px] text-content-faint mt-1.5">
+                {{ t('launch.thinkingNote') }}
+              </p>
             </div>
-            <p class="text-[10px] text-content-faint mt-1.5">
-              {{ t('launch.thinkingNote') }}
-            </p>
-          </div>
+          </Transition>
 
-          <!-- API Profile (hidden when only default profile available) -->
-          <div v-if="activeProfiles.length > 1">
+          <!-- API Profile (hidden when only default profile available, Claude only) -->
+          <div v-if="caps.profileSelection && activeProfiles.length > 1">
             <p class="text-sm font-medium text-content-secondary mb-2">{{ t('launch.apiProfile') }}</p>
             <div class="flex flex-wrap gap-2">
               <button
@@ -361,7 +411,7 @@ async function launch() {
             </div>
           </div>
 
-          <!-- Multi-instance toggle (ADR-006) -->
+          <!-- Multi-instance toggle (ADR-006) — worktree: true for all CLIs -->
           <div>
             <label class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
               :class="multiInstance ? '' : 'border-edge-default bg-surface-secondary/40 hover:border-content-faint'"

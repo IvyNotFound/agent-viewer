@@ -389,3 +389,171 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
     )
   })
 })
+
+// ── Capability-driven sections (T1036) ───────────────────────────────────────
+
+describe('LaunchSessionModal — capabilities (T1036)', () => {
+  const mockAgent = {
+    id: 1,
+    name: 'review-master',
+    type: 'global',
+    perimetre: null,
+    system_prompt: null,
+    system_prompt_suffix: null,
+    thinking_mode: null,
+    allowed_tools: null,
+    created_at: '2026-01-01',
+    session_statut: null,
+    session_started_at: null,
+  }
+
+  const teleportStub = { Teleport: { template: '<div><slot /></div>' } }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
+    api.getClaudeInstances.mockResolvedValue([])
+    api.getAgentSystemPrompt.mockResolvedValue({ success: true, systemPrompt: null, systemPromptSuffix: null, thinkingMode: 'auto' })
+    api.queryDb.mockResolvedValue([])
+    api.buildAgentPrompt.mockResolvedValue('test prompt')
+  })
+
+  it('shows instance selector for Claude (profileSelection=true)', async () => {
+    const wrapper = shallowMount(LaunchSessionModal, {
+      props: { agent: mockAgent as never },
+      global: {
+        plugins: [createTestingPinia({
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: {
+              enabledClis: ['claude'],
+              allCliInstances: [{ cli: 'claude', distro: 'Ubuntu-24.04', version: '2.1.0', isDefault: true, profiles: ['claude'], type: 'wsl' }],
+            },
+          },
+        }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Ubuntu-24.04')
+  })
+
+  it('hides instance selector for Codex (profileSelection=false)', async () => {
+    const wrapper = shallowMount(LaunchSessionModal, {
+      props: { agent: mockAgent as never },
+      global: {
+        plugins: [createTestingPinia({
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: {
+              enabledClis: ['codex'],
+              allCliInstances: [{ cli: 'codex', distro: 'Ubuntu-24.04', version: '1.0.0', isDefault: true, profiles: ['codex'], type: 'wsl' }],
+            },
+          },
+        }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    await flushPromises()
+    // The instance radio buttons should NOT appear (profileSelection=false for codex)
+    const radios = wrapper.findAll('input[type="radio"]')
+    expect(radios.length).toBe(0)
+  })
+
+  it('hides thinking mode section for Codex (thinkingMode=false)', async () => {
+    const wrapper = shallowMount(LaunchSessionModal, {
+      props: { agent: mockAgent as never },
+      global: {
+        plugins: [createTestingPinia({
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: { enabledClis: ['codex'], allCliInstances: [] },
+          },
+        }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    await flushPromises()
+    // Auto/Disabled buttons are only rendered when thinkingMode=true
+    const buttons = wrapper.findAll('button')
+    const hasThinkingBtn = buttons.some(b => b.text() === 'Auto')
+    expect(hasThinkingBtn).toBe(false)
+  })
+
+  it('shows thinking mode section for Claude (thinkingMode=true)', async () => {
+    const wrapper = shallowMount(LaunchSessionModal, {
+      props: { agent: mockAgent as never },
+      global: {
+        plugins: [createTestingPinia({
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: { enabledClis: ['claude'], allCliInstances: [] },
+          },
+        }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    await flushPromises()
+    const buttons = wrapper.findAll('button')
+    const hasAutoBtn = buttons.some(b => b.text() === 'Auto')
+    expect(hasAutoBtn).toBe(true)
+  })
+
+  it('hides resume checkbox for Codex (convResume=false)', async () => {
+    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
+    api.queryDb.mockResolvedValue([{ claude_conv_id: 'conv-abc' }])
+
+    const wrapper = shallowMount(LaunchSessionModal, {
+      props: { agent: mockAgent as never },
+      global: {
+        plugins: [createTestingPinia({
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: { enabledClis: ['codex'], allCliInstances: [] },
+          },
+        }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    await flushPromises()
+    // No resume checkbox should appear for codex
+    const checkboxes = wrapper.findAll('input[type="checkbox"]')
+    expect(checkboxes.length).toBe(1) // only multiInstance checkbox
+  })
+
+  it('launch for Codex passes undefined thinkingMode and distro', async () => {
+    const pinia = createTestingPinia({
+      initialState: {
+        tasks: { dbPath: '/p/.claude/db' },
+        settings: {
+          enabledClis: ['codex'],
+          allCliInstances: [],
+        },
+      },
+    })
+    const wrapper = shallowMount(LaunchSessionModal, {
+      props: { agent: mockAgent as never },
+      global: { plugins: [pinia, i18n], stubs: teleportStub },
+    })
+    await flushPromises()
+
+    const { useTabsStore } = await import('@renderer/stores/tabs')
+    const tabsStore = useTabsStore()
+
+    const launchBtn = wrapper.findAll('button').find(b => {
+      const text = b.text().toLowerCase()
+      return text.includes('lancer') || text.includes('launch')
+    })
+    await launchBtn!.trigger('click')
+    await flushPromises()
+
+    const call = (tabsStore.addTerminal as ReturnType<typeof vi.fn>).mock.calls[0]
+    // distro (arg[1]) should be undefined — codex has no profileSelection
+    expect(call[1]).toBeUndefined()
+    // thinkingMode (arg[4]) should be undefined — codex has no thinkingMode
+    expect(call[4]).toBeUndefined()
+    // cli (arg[10]) should be 'codex'
+    expect(call[10]).toBe('codex')
+  })
+})
