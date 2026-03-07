@@ -25,9 +25,7 @@ export function getWslExe(): string {
     : 'C:\\Windows\\System32\\wsl.exe'
 }
 
-const WSL_TIMEOUT = 10_000
 const LOCAL_TIMEOUT = 5_000
-const CONCURRENCY = 2
 
 // Guard: enrich PATH only once per process (T1024)
 let pathEnriched = false
@@ -76,55 +74,6 @@ export async function enrichWindowsPath(): Promise<void> {
 }
 
 /**
- * Represents a WSL distro or local installation with Claude Code installed.
- *
- * @property distro    - WSL distribution name (e.g. `Ubuntu`, `Debian`) or `"local"` for native installs
- * @property version   - Claude Code version string (e.g. `2.1.58`)
- * @property isDefault - Whether this distro is marked as default in `wsl.exe -l`
- * @property type      - `"wsl"` for WSL distro instances, `"local"` for native installs (T774)
- */
-export interface ClaudeInstance {
-  distro: string
-  version: string
-  isDefault: boolean
-  type: 'wsl' | 'local'
-}
-
-/**
- * Detect a locally-installed Claude Code instance (Linux, macOS, or Windows native).
- *
- * - Uses `which claude` on Linux/macOS, `where claude` on Windows
- * - Returns null if Claude Code is not found in PATH
- *
- * @returns ClaudeInstance with type `"local"`, or null if not found
- */
-export async function detectLocalInstance(): Promise<ClaudeInstance | null> {
-  const platform = process.platform
-  const whichCmd = platform === 'win32' ? 'where' : 'which'
-
-  if (platform === 'win32') {
-    await enrichWindowsPath()
-  }
-
-  try {
-    await execPromise(whichCmd, ['claude'], { timeout: LOCAL_TIMEOUT })
-
-    const versionResult = await execPromise(
-      'claude',
-      ['--version'],
-      { timeout: LOCAL_TIMEOUT, shell: platform === 'win32' }
-    )
-    const rawVersion = versionResult.stdout.trim()
-    if (!rawVersion) return null
-    const version = rawVersion.split(' ')[0]
-
-    return { distro: 'local', version, isDefault: true, type: 'local' }
-  } catch {
-    return null
-  }
-}
-
-/**
  * List WSL distros (non-docker) by parsing `wsl.exe -l --verbose`.
  * Exported for reuse by ipc-cli-detect.ts.
  *
@@ -147,54 +96,6 @@ export async function getWslDistros(): Promise<{ distro: string; isDefault: bool
     }
   }
   return entries
-}
-
-/**
- * Detect all WSL distros that have Claude Code installed.
- *
- * Detection strategy:
- * 1. List distros via `wsl.exe -l --verbose` (marks default with `*`)
- * 2. For each non-docker distro, run `bash -lc 'claude --version'` to check availability
- *
- * Note: wsl.exe outputs UTF-16LE on Windows — null bytes must be stripped.
- *
- * @returns Array of WSL ClaudeInstance objects (type `"wsl"`)
- */
-async function detectWslInstances(): Promise<ClaudeInstance[]> {
-  // Step 1: get list of distros and find which one is the default
-  const distroEntries = await getWslDistros()
-
-  if (distroEntries.length === 0) return []
-
-  // Step 2: check each distro for claude — max 2 concurrent to avoid overloading WSL
-  const results: (ClaudeInstance | null)[] = []
-  for (let i = 0; i < distroEntries.length; i += CONCURRENCY) {
-    const batch = distroEntries.slice(i, i + CONCURRENCY)
-    const batchResults = await Promise.all(batch.map(async ({ distro, isDefault }) => {
-      try {
-        const versionResult = await execPromise(
-          getWslExe(),
-          ['-d', distro, '--', 'bash', '-lc', 'claude --version 2>/dev/null'],
-          { timeout: WSL_TIMEOUT }
-        )
-        const rawVersion = versionResult.stdout.replace(/\0/g, '').trim()
-        if (!rawVersion) return null
-        // Parse "2.1.58 (Claude Code)" → "2.1.58"
-        const version = rawVersion.split(' ')[0]
-
-        return { distro, version, isDefault, type: 'wsl' as const }
-      } catch {
-        // Claude not installed in this distro, or timed out
-        return null
-      }
-    }))
-    results.push(...batchResults)
-  }
-
-  // Filter out nulls and sort: default distro first
-  return results
-    .filter((r): r is ClaudeInstance => r !== null)
-    .sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0))
 }
 
 /**
@@ -229,49 +130,11 @@ async function openWslTerminalWindow(): Promise<{ success: boolean; error?: stri
  * Register all WSL IPC handlers on `ipcMain`.
  *
  * Handlers registered:
- * - `wsl:getClaudeInstances` — detect Claude Code instances (local + WSL depending on platform)
- * - `wsl:openTerminal`       — open an external WSL terminal window
- *
- * Platform behavior (T774):
- * - Linux / macOS : local instance only (no WSL)
- * - Windows       : local instance (if any) + all WSL distros with Claude Code
+ * - `wsl:openTerminal` — open an external WSL terminal window
  *
  * @returns void
  */
 export function registerWslHandlers(): void {
-  /**
-   * Detect all Claude Code instances available on the current platform.
-   * Returns a ClaudeInstance array — local instance first, then WSL distros (default distro first).
-   */
-  ipcMain.handle('wsl:getClaudeInstances', async (): Promise<ClaudeInstance[]> => {
-    const platform = process.platform
-
-    // On Linux/macOS, Electron runs natively — only detect local install, never call wsl.exe
-    if (platform === 'linux' || platform === 'darwin') {
-      try {
-        const local = await detectLocalInstance()
-        return local ? [local] : []
-      } catch {
-        return []
-      }
-    }
-
-    // Windows: detect local Claude Code + all WSL distros
-    const results: ClaudeInstance[] = []
-
-    try {
-      const local = await detectLocalInstance()
-      if (local) results.push(local)
-    } catch { /* local detection failed — continue with WSL */ }
-
-    try {
-      const wslInstances = await detectWslInstances()
-      results.push(...wslInstances)
-    } catch { /* WSL not available */ }
-
-    return results
-  })
-
   /** Open an external WSL terminal window (wt.exe → wsl:// → wsl.exe). */
   ipcMain.handle('wsl:openTerminal', async (): Promise<{ success: boolean; error?: string }> => {
     return openWslTerminalWindow()
