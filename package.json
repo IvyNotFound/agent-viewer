@@ -1,6 +1,6 @@
 {
   "name": "agent-viewer",
-  "version": "0.28.1",
+  "version": "0.28.2",
   "description": "Interface desktop Trello/Jira pour visualiser les agents Claude",
   "author": "IvyNotFound",
   "main": "out/main/index.js",
