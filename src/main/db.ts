@@ -310,7 +310,18 @@ export async function migrateDb(dbPath: string): Promise<{ migrated: number }> {
 
     if (migrated > 0) {
       const exported = db.export()
-      await writeFile(dbPath, Buffer.from(exported))
+      const tmpPath = `${dbPath}.migrate.tmp`
+      await writeFile(tmpPath, Buffer.from(exported))
+      try {
+        await rename(tmpPath, dbPath)
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === 'EPERM') {
+          await copyFile(tmpPath, dbPath)
+          await unlink(tmpPath)
+        } else {
+          throw err
+        }
+      }
       console.log('[migrateDb] schema updated:', dbPath)
     }
 
