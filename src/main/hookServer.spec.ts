@@ -164,6 +164,20 @@ describe('parseTokensFromJSONL', () => {
     expect(parseTokensFromJSONL(content)).toEqual({ tokensIn: 0, tokensOut: 0, cacheRead: 0, cacheWrite: 0 })
   })
 
+  it('ignores assistant messages with no message field at all', () => {
+    const content = JSON.stringify({ type: 'assistant' })
+    expect(parseTokensFromJSONL(content)).toEqual({ tokensIn: 0, tokensOut: 0, cacheRead: 0, cacheWrite: 0 })
+  })
+
+  it('ignores assistant message with usage but stop_reason explicitly null', () => {
+    // Ensures ConditionalExpression mutation `stop_reason == null` is killed
+    const content = JSON.stringify({
+      type: 'assistant',
+      message: { stop_reason: null, usage: { input_tokens: 99, output_tokens: 10 } },
+    })
+    expect(parseTokensFromJSONL(content)).toEqual({ tokensIn: 0, tokensOut: 0, cacheRead: 0, cacheWrite: 0 })
+  })
+
   it('treats missing token sub-fields as 0', () => {
     const content = JSON.stringify({
       type: 'assistant',
@@ -213,6 +227,24 @@ describe('detectWslGatewayIp', () => {
       ],
     })
     expect(detectWslGatewayIp()).toBe('172.17.240.1')
+  })
+
+  it('skips WSL interface whose addrs is undefined', () => {
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
+    mockNetworkInterfaces.mockReturnValue({
+      'vEthernet (WSL)': undefined,
+    })
+    expect(detectWslGatewayIp()).toBeNull()
+  })
+
+  it('skips internal IPv4 addresses on WSL interface', () => {
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
+    mockNetworkInterfaces.mockReturnValue({
+      'vEthernet (WSL)': [
+        { family: 'IPv4', address: '127.0.0.1', internal: true, netmask: '', mac: '', cidr: '' },
+      ],
+    })
+    expect(detectWslGatewayIp()).toBeNull()
   })
 })
 
@@ -332,6 +364,30 @@ describe('injectHookUrls', () => {
     const written = JSON.parse(mockWriteFile.mock.calls[0][1] as string)
     expect(Object.keys(written.hooks)).toHaveLength(7)
     expect(written.hooks.Stop[0].hooks[0].url).toBe('http://172.17.240.1:27182/hooks/stop')
+  })
+
+  it('returns without writing when readFile fails with non-ENOENT error', async () => {
+    const err = Object.assign(new Error('EACCES'), { code: 'EACCES' })
+    mockReadFile.mockRejectedValue(err)
+    await injectHookUrls('/fake/settings.json', '172.17.240.1')
+    expect(mockWriteFile).not.toHaveBeenCalled()
+  })
+
+  it('does not crash when an http hook has no url property', async () => {
+    const settings = {
+      hooks: {
+        Stop: [{ hooks: [{ type: 'http' }] }], // url absent
+        SessionStart:       [{ hooks: [{ type: 'http', url: 'http://172.17.240.1:27182/hooks/session-start' }] }],
+        SubagentStart:      [{ hooks: [{ type: 'http', url: 'http://172.17.240.1:27182/hooks/subagent-start' }] }],
+        SubagentStop:       [{ hooks: [{ type: 'http', url: 'http://172.17.240.1:27182/hooks/subagent-stop' }] }],
+        PreToolUse:         [{ hooks: [{ type: 'http', url: 'http://172.17.240.1:27182/hooks/pre-tool-use' }] }],
+        PostToolUse:        [{ hooks: [{ type: 'http', url: 'http://172.17.240.1:27182/hooks/post-tool-use' }] }],
+        InstructionsLoaded: [{ hooks: [{ type: 'http', url: 'http://172.17.240.1:27182/hooks/instructions-loaded' }] }],
+      },
+    }
+    mockReadFile.mockResolvedValue(JSON.stringify(settings))
+    // Should not throw; Stop already has an http hook (no url) so hasHttp=true, no extra group added
+    await expect(injectHookUrls('/fake/settings.json', '172.17.240.1')).resolves.toBeUndefined()
   })
 
   it('adds only missing hook events when hooks section is partially populated', async () => {
