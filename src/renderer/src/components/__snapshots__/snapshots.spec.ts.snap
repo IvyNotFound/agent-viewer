@@ -129,8 +129,8 @@ exports[`TaskCard — snapshots > matches snapshot: critical in_progress task wi
   </div><!-- Footer: dates left, #id right -->
   <div class="flex items-end justify-between gap-2 mt-auto pt-2 border-t border-edge-default/50">
     <div class="flex flex-col gap-0.5">
-      <p class="text-xs text-content-subtle"><span class="text-content-muted">Créé</span> 01/01/26 01:00</p>
-      <p class="text-xs text-content-subtle"><span class="text-content-muted">Modifié</span> 01/01/26 01:00</p>
+      <p class="text-xs text-content-subtle"><span class="text-content-muted">Créé</span> 01/01/26 00:00</p>
+      <p class="text-xs text-content-subtle"><span class="text-content-muted">Modifié</span> 01/01/26 00:00</p>
     </div><span class="text-xs text-content-faint font-mono shrink-0">#42</span>
   </div>
 </div>
@@ -155,8 +155,8 @@ exports[`TaskCard — snapshots > matches snapshot: done task without agent or p
   <!-- Footer: dates left, #id right -->
   <div class="flex items-end justify-between gap-2 mt-auto pt-2">
     <div class="flex flex-col gap-0.5">
-      <p class="text-xs text-content-subtle"><span class="text-content-muted">Créé</span> 01/01/26 01:00</p>
-      <p class="text-xs text-content-subtle"><span class="text-content-muted">Modifié</span> 01/01/26 01:00</p>
+      <p class="text-xs text-content-subtle"><span class="text-content-muted">Créé</span> 01/01/26 00:00</p>
+      <p class="text-xs text-content-subtle"><span class="text-content-muted">Modifié</span> 01/01/26 00:00</p>
     </div><span class="text-xs text-content-faint font-mono shrink-0">#99</span>
   </div>
 </div>
@@ -182,8 +182,8 @@ exports[`TaskCard — snapshots > matches snapshot: minimal todo task 1`] = `
   </div><!-- Footer: dates left, #id right -->
   <div class="flex items-end justify-between gap-2 mt-auto pt-2 border-t border-edge-default/50">
     <div class="flex flex-col gap-0.5">
-      <p class="text-xs text-content-subtle"><span class="text-content-muted">Créé</span> 01/01/26 01:00</p>
-      <p class="text-xs text-content-subtle"><span class="text-content-muted">Modifié</span> 01/01/26 01:00</p>
+      <p class="text-xs text-content-subtle"><span class="text-content-muted">Créé</span> 01/01/26 00:00</p>
+      <p class="text-xs text-content-subtle"><span class="text-content-muted">Modifié</span> 01/01/26 00:00</p>
     </div><span class="text-xs text-content-faint font-mono shrink-0">#10</span>
   </div>
 </div>

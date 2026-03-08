@@ -8,6 +8,7 @@ export default defineConfig({
     // Global test configuration
     globals: true,
     environment: 'jsdom',
+    env: { TZ: 'UTC' },
     // Run main process and preload tests in Node environment (no DOM)
     environmentMatchGlobs: [
       ['src/main/**', 'node'],
