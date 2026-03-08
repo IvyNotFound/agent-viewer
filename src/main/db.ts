@@ -137,11 +137,36 @@ export async function getDbBuffer(dbPath: string): Promise<Buffer> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let SQL: any = null
 
+// ── T1154: WASM module recycling ─────────────────────────────────────────────
+// Emscripten WASM heap never shrinks — each new sqlJs.Database() allocates
+// ~10 MB that persists even after db.close(). After many operations, memory
+// grows to multi-GB (992 buffers × 10 MB = 9.5 GB observed).
+// Fix: periodically destroy the entire sql.js module and create a fresh one.
+// The old module's ArrayBuffers become eligible for V8 GC.
+let sqlJsOpCount = 0
+const MAX_OPS_BEFORE_RECYCLE = 50
+
 /**
  * Get the sql.js WASM singleton. Lazily initialized on first call.
+ * Recycles the WASM module when the operation threshold is reached (T1154).
  * @returns {Promise} sql.js module instance
  */
 export async function getSqlJs() {
+  // T1154: recycle WASM module when operation threshold is reached
+  if (sqlJsOpCount >= MAX_OPS_BEFORE_RECYCLE && SQL) {
+    // Close all cached DB instances — they belong to the current WASM module
+    for (const [, entry] of dbCache.entries()) {
+      if (entry.db) {
+        try { entry.db.close() } catch { /* already closed */ }
+        entry.db = null
+        entry.dbCreatedAt = 0
+      }
+    }
+    SQL = null
+    sqlJsOpCount = 0
+    console.debug('[db] sql.js WASM module recycled after', MAX_OPS_BEFORE_RECYCLE, 'operations (heap reset)')
+  }
+
   if (!SQL) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const initSqlJs = require('sql.js')
@@ -214,6 +239,7 @@ export async function writeDb<T = void>(dbPath: string, fn: (db: any) => T): Pro
         return result
       } finally {
         db.close()
+        sqlJsOpCount++ // T1154: track WASM heap pressure
       }
     } finally {
       await releaseWriteLock(lockPath)
@@ -249,6 +275,7 @@ async function queryLiveAttempt(
   let db = entry?.db
   if (!db) {
     db = new sqlJs.Database(buf)
+    sqlJsOpCount++ // T1154: track WASM heap pressure
     if (entry) {
       entry.db = db
       entry.dbCreatedAt = Date.now()
@@ -299,6 +326,7 @@ export async function migrateDb(dbPath: string): Promise<{ migrated: number }> {
   try {
     const checkBuf = await getDbBuffer(dbPath)
     const checkDb = new sqlJs.Database(checkBuf)
+    sqlJsOpCount++ // T1154
     try {
       const uvResult = checkDb.exec('PRAGMA user_version')
       const currentVersion = uvResult.length > 0 && uvResult[0].values.length > 0
@@ -317,6 +345,7 @@ export async function migrateDb(dbPath: string): Promise<{ migrated: number }> {
 
     const buf = await readFile(dbPath)
     const db = new sqlJs.Database(buf)
+    sqlJsOpCount++ // T1154
 
     try {
       const migrated = applyMigrations(db)
@@ -363,4 +392,11 @@ export function clearDbCacheEntry(dbPath: string): void {
   const entry = dbCache.get(dbPath)
   if (entry?.db) { try { entry.db.close() } catch { /* ignore */ } }
   dbCache.delete(dbPath)
+}
+
+/** @internal Test-only access to WASM recycling state (T1154) */
+export const _testingRecycle = {
+  get opCount() { return sqlJsOpCount },
+  set opCount(v: number) { sqlJsOpCount = v },
+  MAX_OPS_BEFORE_RECYCLE,
 }

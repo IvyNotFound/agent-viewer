@@ -60,6 +60,7 @@ import {
   writeDb,
   queryLive,
   migrateDb,
+  _testingRecycle,
 } from './db'
 
 // ── Shared helper ─────────────────────────────────────────────────────────────
@@ -398,5 +399,85 @@ describe('migrateDb — additional branches', () => {
 
     const result = await migrateDb(dbPath)
     expect(result).toEqual({ migrated: 5 })
+  })
+})
+
+// ── T1154: sql.js WASM module recycling ─────────────────────────────────────
+
+describe('sql.js WASM module recycling (T1154)', () => {
+  const dbPath = '/test/recycle-test.db'
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    clearDbCacheEntry(dbPath)
+    _testingRecycle.opCount = 0
+  })
+
+  it('should recycle the WASM module after MAX_OPS_BEFORE_RECYCLE operations', async () => {
+    const first = await getSqlJs()
+    expect(first).toBeTruthy()
+
+    // Set counter to threshold — next getSqlJs() call should trigger recycle
+    _testingRecycle.opCount = _testingRecycle.MAX_OPS_BEFORE_RECYCLE
+
+    const second = await getSqlJs()
+    expect(second).toBeTruthy()
+    // Counter should be reset after recycle
+    expect(_testingRecycle.opCount).toBe(0)
+    // Module is still functional
+    expect(typeof second.Database).toBe('function')
+  })
+
+  it('should NOT recycle when below threshold', async () => {
+    const first = await getSqlJs()
+    _testingRecycle.opCount = _testingRecycle.MAX_OPS_BEFORE_RECYCLE - 1
+
+    const second = await getSqlJs()
+    // Same module — no recycle
+    expect(second).toBe(first)
+  })
+
+  it('should close cached DB instances during recycle', async () => {
+    const buf = await buildDbBuffer(db => {
+      db.run('CREATE TABLE recycle_test (id INTEGER)')
+      db.run('INSERT INTO recycle_test VALUES (1)')
+    })
+    mockStat.mockResolvedValue({ mtimeMs: Date.now() })
+    mockReadFile.mockResolvedValue(buf)
+
+    // Populate cache with a DB instance via queryLive
+    await queryLive(dbPath, 'SELECT * FROM recycle_test', [])
+
+    // Force recycle
+    _testingRecycle.opCount = _testingRecycle.MAX_OPS_BEFORE_RECYCLE
+    await getSqlJs()
+
+    // After recycle, queryLive should still work (creates new DB from fresh module)
+    const rows = await queryLive(dbPath, 'SELECT * FROM recycle_test', [])
+    expect(rows).toEqual([{ id: 1 }])
+  })
+
+  it('should increment opCount in writeDb', async () => {
+    const fakeBuffer = Buffer.from('recycle-write-db')
+    mockStat.mockResolvedValue({ mtimeMs: 1000 })
+    mockReadFile.mockResolvedValue(fakeBuffer)
+    mockAcquireWriteLock.mockResolvedValue(dbPath + '.wlock')
+    mockReleaseWriteLock.mockResolvedValue(undefined)
+
+    _testingRecycle.opCount = 0
+    await writeDb(dbPath, () => 'ok')
+    expect(_testingRecycle.opCount).toBeGreaterThan(0)
+  })
+
+  it('should increment opCount in queryLive when creating new DB instance', async () => {
+    const buf = await buildDbBuffer(db => {
+      db.run('CREATE TABLE op_count_test (v TEXT)')
+    })
+    mockStat.mockResolvedValue({ mtimeMs: Date.now() + 100 })
+    mockReadFile.mockResolvedValue(buf)
+
+    _testingRecycle.opCount = 0
+    await queryLive(dbPath, 'SELECT * FROM op_count_test', [])
+    expect(_testingRecycle.opCount).toBeGreaterThan(0)
   })
 })
