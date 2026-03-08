@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useTabsStore } from '@renderer/stores/tabs'
@@ -19,36 +19,33 @@ interface TopologyRow {
   current_task: string | null
 }
 
-const rows = ref<TopologyRow[]>([])
-const loading = ref(false)
-
-async function fetchTopology(): Promise<void> {
-  if (!store.dbPath) return
-  loading.value = true
-  try {
-    const result = await window.electronAPI.queryDb(
-      store.dbPath,
-      `SELECT a.id, a.name, a.type, a.scope,
-              s.status as session_status,
-              s.tokens_in + s.tokens_out as session_tokens,
-              t.title as current_task
-       FROM agents a
-       LEFT JOIN sessions s ON s.id = (
-         SELECT s2.id FROM sessions s2
-         WHERE s2.agent_id = a.id AND s2.status = 'started'
-         ORDER BY s2.started_at DESC LIMIT 1
-       )
-       LEFT JOIN tasks t ON t.agent_assigned_id = a.id AND t.status = 'in_progress'
-       ORDER BY a.scope, a.type, a.name`,
-      []
-    ) as TopologyRow[]
-    rows.value = result
-  } catch {
-    rows.value = []
-  } finally {
-    loading.value = false
+// Derived from store.agents + store.tasks — no IPC call needed (T1116)
+// session_tokens comes from AGENT_CTE_SQL (tokens_in + tokens_out for active sessions only)
+const rows = computed<TopologyRow[]>(() => {
+  const inProgressTask = new Map<number, string>()
+  for (const task of store.tasks) {
+    if (task.status === 'in_progress' && task.agent_assigned_id != null) {
+      if (!inProgressTask.has(task.agent_assigned_id)) {
+        inProgressTask.set(task.agent_assigned_id, task.title)
+      }
+    }
   }
-}
+  return store.agents.map(a => ({
+    id: a.id,
+    name: a.name,
+    type: a.type,
+    scope: a.scope,
+    session_status: a.session_status ?? null,
+    session_tokens: a.session_tokens ?? null,
+    current_task: inProgressTask.get(a.id) ?? null,
+  })).sort((a, b) => {
+    const sa = a.scope ?? '\uffff'
+    const sb = b.scope ?? '\uffff'
+    if (sa !== sb) return sa.localeCompare(sb)
+    if (a.type !== b.type) return a.type.localeCompare(b.type)
+    return a.name.localeCompare(b.name)
+  })
+})
 
 type AgentStatus = 'active' | 'blocked' | 'idle'
 
@@ -78,10 +75,6 @@ function onAgentClick(row: TopologyRow): void {
   store.selectedAgentId = row.id
   tabsStore.setActive('backlog')
 }
-
-onMounted(fetchTopology)
-watch(() => store.dbPath, fetchTopology)
-watch(() => store.lastRefresh, fetchTopology)
 </script>
 
 <template>
@@ -91,17 +84,17 @@ watch(() => store.lastRefresh, fetchTopology)
       <h2 class="text-sm font-semibold text-content-secondary">{{ t('topology.title') }}</h2>
       <button
         class="text-xs text-content-subtle hover:text-content-secondary transition-colors"
-        @click="fetchTopology"
+        @click="store.refresh()"
       >{{ t('common.refresh') }}</button>
     </div>
 
     <!-- Loading -->
-    <div v-if="loading && rows.length === 0" class="flex items-center justify-center flex-1 py-12">
+    <div v-if="store.loading && rows.length === 0" class="flex items-center justify-center flex-1 py-12">
       <p class="text-sm text-content-faint animate-pulse">{{ t('common.loading') }}</p>
     </div>
 
     <!-- Empty -->
-    <div v-else-if="!loading && rows.length === 0" class="flex items-center justify-center flex-1 py-12">
+    <div v-else-if="!store.loading && rows.length === 0" class="flex items-center justify-center flex-1 py-12">
       <p class="text-sm text-content-faint italic">{{ t('topology.noAgents') }}</p>
     </div>
 
