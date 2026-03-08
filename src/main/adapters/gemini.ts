@@ -1,12 +1,9 @@
 /**
  * Google Gemini CLI adapter for agent-viewer.
  *
- * Gemini runs in headless mode via `--headless` (to be confirmed during testing).
+ * Gemini runs in non-interactive mode via `-p`/`--prompt` (confirmed).
  * System prompt injection via `--system-prompt <file>` (to be confirmed).
  * Output: plain text — wrapped as StreamEvent for phase 1 (T1012).
- *
- * TODO: Confirm exact flags for headless mode and system prompt injection when
- * testing with the actual gemini binary. Update buildCommand accordingly.
  *
  * @module adapters/gemini
  */
@@ -33,7 +30,7 @@ export const geminiAdapter: CliAdapter = {
       : 'gemini'
 
     const args: string[] = [
-      '--headless',  // TODO: confirm flag name for non-interactive mode
+      '-p', '',  // non-interactive mode; actual prompt delivered via stdin
     ]
 
     if (opts.systemPromptFile) {

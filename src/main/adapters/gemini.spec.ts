@@ -4,7 +4,7 @@
  * Targets:
  * - GEMINI_CMD_REGEX: anchors, suffix pattern, invalid chars
  * - buildCommand: binaryName guard (falsy, valid, invalid)
- * - buildCommand: args array contains --headless flag
+ * - buildCommand: args array contains -p flag (non-interactive mode)
  * - buildCommand: systemPromptFile flag wiring
  */
 
@@ -78,14 +78,14 @@ describe('geminiAdapter.buildCommand', () => {
     expect(spec.command).toBe('gemini-dev')
   })
 
-  it('args array is non-empty (at least --headless flag)', () => {
+  it('args array is non-empty (at least -p flag)', () => {
     const spec = geminiAdapter.buildCommand({})
     expect(spec.args.length).toBeGreaterThan(0)
   })
 
-  it('args contain --headless by default', () => {
+  it('args contain -p by default (non-interactive mode)', () => {
     const spec = geminiAdapter.buildCommand({})
-    expect(spec.args).toContain('--headless')
+    expect(spec.args).toContain('-p')
   })
 
   it('includes --system-prompt <file> when systemPromptFile provided', () => {
