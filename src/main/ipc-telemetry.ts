@@ -10,6 +10,7 @@
 import { ipcMain } from 'electron'
 import { readdir, readFile } from 'fs/promises'
 import path from 'path'
+import { assertProjectPathAllowed } from './db'
 
 const LANGUAGE_MAP: Record<string, { name: string; color: string }> = {
   '.ts': { name: 'TypeScript', color: '#3178c6' },
@@ -109,19 +110,44 @@ interface ExtStats {
   codeLines: number
 }
 
-async function scanDir(dir: string, stats: Map<string, ExtStats>): Promise<void> {
+interface FileEntry {
+  filePath: string
+  ext: string
+  isTest: boolean
+}
+
+const BATCH_SIZE = 20
+
+/** Phase 1: DFS to collect all matching file paths (sequential, avoids EMFILE on deep trees). */
+async function collectFiles(dir: string): Promise<FileEntry[]> {
+  const result: FileEntry[] = []
   const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
   for (const entry of entries) {
     if (entry.isDirectory()) {
       if (!IGNORE_DIRS.has(entry.name)) {
-        await scanDir(path.join(dir, entry.name), stats)
+        const sub = await collectFiles(path.join(dir, entry.name))
+        result.push(...sub)
       }
     } else {
       const ext = path.extname(entry.name).toLowerCase()
-      if (!LANGUAGE_MAP[ext]) continue
-      const filePath = path.join(dir, entry.name)
-      const ls = await analyzeFile(filePath)
-      const test = isTestFile(filePath)
+      if (LANGUAGE_MAP[ext]) {
+        const filePath = path.join(dir, entry.name)
+        result.push({ filePath, ext, isTest: isTestFile(filePath) })
+      }
+    }
+  }
+  return result
+}
+
+/** Phase 2: Analyze files in parallel batches then accumulate stats. */
+async function scanDir(dir: string, stats: Map<string, ExtStats>): Promise<void> {
+  const files = await collectFiles(dir)
+  for (let i = 0; i < files.length; i += BATCH_SIZE) {
+    const batch = files.slice(i, i + BATCH_SIZE)
+    const lineStats = await Promise.all(batch.map(({ filePath }) => analyzeFile(filePath)))
+    for (let j = 0; j < batch.length; j++) {
+      const { ext, isTest } = batch[j]
+      const ls = lineStats[j]
       const s = stats.get(ext) ?? {
         files: 0,
         lines: 0,
@@ -136,10 +162,10 @@ async function scanDir(dir: string, stats: Map<string, ExtStats>): Promise<void>
       stats.set(ext, {
         files: s.files + 1,
         lines: s.lines + ls.total,
-        sourceFiles: s.sourceFiles + (test ? 0 : 1),
-        testFiles: s.testFiles + (test ? 1 : 0),
-        sourceLines: s.sourceLines + (test ? 0 : ls.total),
-        testLines: s.testLines + (test ? ls.total : 0),
+        sourceFiles: s.sourceFiles + (isTest ? 0 : 1),
+        testFiles: s.testFiles + (isTest ? 1 : 0),
+        sourceLines: s.sourceLines + (isTest ? 0 : ls.total),
+        testLines: s.testLines + (isTest ? ls.total : 0),
         blankLines: s.blankLines + ls.blank,
         commentLines: s.commentLines + ls.comment,
         codeLines: s.codeLines + ls.code,
@@ -175,6 +201,7 @@ export function registerTelemetryHandlers(): void {
           totalTestFiles: 0,
         }
       }
+      assertProjectPathAllowed(projectPath)
       const stats = new Map<string, ExtStats>()
       await scanDir(projectPath, stats)
       const totalLines = [...stats.values()].reduce((s, v) => s + v.lines, 0)
