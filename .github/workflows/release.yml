@@ -15,6 +15,65 @@ permissions:
   contents: write
 
 jobs:
+  i18n-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check i18n completeness
+        run: node scripts/check-i18n.js
+
+  e2e:
+    needs: [i18n-check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright + Electron deps
+        run: |
+          npm install -D @playwright/test playwright
+          npx playwright install chromium --with-deps
+
+      - name: Install Linux display dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y xvfb libgtk-3-dev libnss3 libasound2t64 libgbm1
+
+      - name: Build renderer (electron-vite)
+        run: npx electron-vite build
+
+      - name: Run E2E tests (with Xvfb virtual display)
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npx playwright test --config playwright.config.ts
+        env:
+          CI: true
+          DISPLAY: ':99'
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-release
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
   build-windows:
     needs: [e2e]
     runs-on: windows-latest
@@ -87,48 +146,6 @@ jobs:
             dist/*.AppImage
             dist/*.deb
             dist/latest-linux.yml
-
-  e2e:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright + Electron deps
-        run: |
-          npm install -D @playwright/test playwright
-          npx playwright install chromium --with-deps
-
-      - name: Install Linux display dependencies
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y xvfb libgtk-3-dev libnss3 libasound2t64 libgbm1
-
-      - name: Build renderer (electron-vite)
-        run: npx electron-vite build
-
-      - name: Run E2E tests (with Xvfb virtual display)
-        run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npx playwright test --config playwright.config.ts
-        env:
-          CI: true
-          DISPLAY: ':99'
-
-      - name: Upload test results on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-results-release
-          path: |
-            playwright-report/
-            test-results/
-          retention-days: 7
 
   create-release:
     needs: [build-windows, build-mac, build-linux]
