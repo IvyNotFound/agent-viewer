@@ -33,7 +33,7 @@ jobs:
         run: ls -la && echo "package.json exists:" && cat package.json | head -3
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Check i18n completeness
         run: node scripts/check-i18n.js
