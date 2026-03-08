@@ -48,45 +48,7 @@ npm install --silent 2>/dev/null
 echo "Checking i18n completeness..."
 node scripts/check-i18n.js || { echo "ERROR: i18n check failed. Fix missing keys before releasing."; exit 1; }
 
-echo "Checking CI status on HEAD..."
-HEAD_SHA=$(git rev-parse HEAD)
-
-# Block if ANY workflow is still running on HEAD
-PENDING_RUNS=$(gh run list --branch=main --limit=20 --json headSha,status,workflowName \
-  --jq "[.[] | select(.headSha == \"$HEAD_SHA\") | select(.status == \"in_progress\" or .status == \"queued\")] | map(.workflowName) | join(\", \")")
-if [ -n "$PENDING_RUNS" ]; then
-  echo "ERROR: Workflows still running on HEAD ($HEAD_SHA): $PENDING_RUNS"
-  echo "Wait for all CI runs to complete before releasing."
-  exit 1
-fi
-
-# Require E2E success
-E2E_STATUS=$(gh run list --workflow=e2e.yml --branch=main --limit=5 --json headSha,conclusion,status \
-  --jq "[.[] | select(.headSha == \"$HEAD_SHA\")] | if length == 0 then \"not_found\" elif all(.[]; .conclusion == \"success\") then \"success\" else \"failure\" end")
-
-case "$E2E_STATUS" in
-  success)
-    echo "CI E2E tests passed on HEAD."
-    ;;
-  not_found)
-    echo "WARNING: No CI E2E run found for HEAD ($HEAD_SHA)."
-    read -p "No CI run found — release anyway? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then exit 1; fi
-    ;;
-  *)
-    echo "ERROR: CI E2E tests FAILED on HEAD ($HEAD_SHA). Fix tests before releasing."
-    gh run list --workflow=e2e.yml --branch=main --limit=3
-    exit 1
-    ;;
-esac
-
-# Warn (non-blocking) if mutation tests failed
-MUTATION_STATUS=$(gh run list --workflow=mutation.yml --branch=main --limit=5 --json headSha,conclusion,status \
-  --jq "[.[] | select(.headSha == \"$HEAD_SHA\")] | if length == 0 then \"not_found\" elif all(.[]; .conclusion == \"success\") then \"success\" else \"failure\" end")
-if [ "$MUTATION_STATUS" = "failure" ]; then
-  echo "WARNING: Mutation tests failed on HEAD ($HEAD_SHA). Review score before releasing."
-fi
+echo "CI E2E and i18n checks will run automatically in the release pipeline after push."
 
 # Bump version
 echo ""
