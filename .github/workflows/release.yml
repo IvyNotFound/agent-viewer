@@ -68,22 +68,26 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install dependencies
+      - name: Pre-install dir check
         run: |
-          set +e
-          npm ci
-          NPM_EXIT=$?
-          set -e
-          if [ "$NPM_EXIT" -ne 0 ]; then
-            NPM_LOG=$(ls -t /home/runner/.npm/_logs/*.log 2>/dev/null | head -1)
-            if [ -n "$NPM_LOG" ]; then
-              echo "=== npm debug log: lines with 'runScript\\|spawn\\|script\\|lifecycle\\|ENOENT' ==="
-              grep -n "runScript\|lifecycle\|ENOENT\|spawn.*node\|run-script\|hasInstallScript" "$NPM_LOG" || echo "none"
-              echo "=== Last 50 log lines ==="
-              tail -50 "$NPM_LOG"
-            fi
-          fi
-          exit "$NPM_EXIT"
+          echo "PWD=$PWD"
+          echo "=== /home/runner/work/agent-viewer/ ==="
+          ls -la /home/runner/work/agent-viewer/
+          echo "=== project dir ==="
+          ls -la .
+          echo "=== node_modules exists? ==="
+          ls -d node_modules 2>/dev/null && echo "YES" || echo "NO"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Post-install dir check
+        if: always()
+        run: |
+          echo "=== /home/runner/work/agent-viewer/ ==="
+          ls -la /home/runner/work/agent-viewer/ 2>/dev/null || echo "PARENT GONE"
+          echo "=== project dir ==="
+          ls -la . 2>/dev/null || echo "PROJECT DIR GONE"
 
       - name: Run unit tests with coverage
         run: npm run test:coverage -- --reporter=verbose
