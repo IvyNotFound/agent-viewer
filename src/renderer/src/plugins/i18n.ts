@@ -48,7 +48,10 @@ export type AppLocale =
   | 'ko'
   | 'ja'
 
-const savedLocale = (localStorage.getItem('language') as AppLocale | null) ?? 'fr'
+const savedLocale =
+  (typeof localStorage !== 'undefined'
+    ? (localStorage.getItem('language') as AppLocale | null)
+    : null) ?? 'fr'
 
 const i18n = createI18n({
   legacy: false,

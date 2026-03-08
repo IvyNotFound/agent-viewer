@@ -1,6 +1,22 @@
 import { vi } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 
+// Node 25+ ships a built-in localStorage that shadows jsdom's implementation.
+// Without a valid --localstorage-file path the built-in methods are undefined.
+// Replace it with a simple in-memory shim so tests work regardless of Node version.
+;(() => {
+  const store: Record<string, string> = {}
+  const storage: Storage = {
+    getItem: (k: string) => (k in store ? store[k] : null),
+    setItem: (k: string, v: string) => { store[k] = String(v) },
+    removeItem: (k: string) => { delete store[k] },
+    clear: () => { for (const k of Object.keys(store)) delete store[k] },
+    key: (i: number) => Object.keys(store)[i] ?? null,
+    get length() { return Object.keys(store).length },
+  }
+  Object.defineProperty(globalThis, 'localStorage', { value: storage, writable: true, configurable: true })
+})()
+
 // Mock window.electronAPI for tests
 const mockElectronAPI = {
   selectProjectDir: vi.fn(),
