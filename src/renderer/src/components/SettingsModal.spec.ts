@@ -47,9 +47,9 @@ describe('SettingsModal', () => {
       const title = b.attributes('title') || ''
       return title.includes('fermer') || title.includes('Fermer') || title.includes('close')
     })
-    expect(closeBtn).toBeDefined()
+    expect(closeBtn?.exists()).toBe(true)
     await closeBtn!.trigger('click')
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
   it('calls setTheme when theme button is clicked', async () => {
@@ -67,7 +67,7 @@ describe('SettingsModal', () => {
     // Find the theme buttons — look for Dark/Sombre or Light/Clair (appearance section is default)
     const themeButtons = wrapper.findAll('button')
     const darkBtn = themeButtons.find(b => b.text().includes('Dark') || b.text().includes('Sombre'))
-    expect(darkBtn).toBeDefined()
+    expect(darkBtn?.exists()).toBe(true)
     await darkBtn!.trigger('click')
     expect(settingsStore.setTheme).toHaveBeenCalledWith('dark')
   })

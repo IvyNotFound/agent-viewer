@@ -311,9 +311,9 @@ describe('wsl:get-cli-instances — Windows', () => {
       .mockRejectedValueOnce(new Error('not found'))                      // where goose
       .mockResolvedValueOnce({ stdout: 'codex:1.0.0\n', stderr: '' })    // WSL Ubuntu one-liner
 
-    const result = await callHandler() as Array<{ cli: string; type: string }>
-    expect(result.find(r => r.cli === 'claude' && r.type === 'local')).toBeDefined()
-    expect(result.find(r => r.cli === 'codex' && r.type === 'wsl')).toBeDefined()
+    const result = await callHandler() as Array<{ cli: string; type: string; version: string }>
+    expect(result.find(r => r.cli === 'claude' && r.type === 'local')).toEqual(expect.objectContaining({ cli: 'claude', type: 'local', version: '2.1.58' }))
+    expect(result.find(r => r.cli === 'codex' && r.type === 'wsl')).toEqual(expect.objectContaining({ cli: 'codex', type: 'wsl' }))
   })
 
   it('returns [] when all detections fail', async () => {

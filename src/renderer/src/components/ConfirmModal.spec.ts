@@ -28,7 +28,6 @@ describe('ConfirmModal (T675)', () => {
     const buttons = wrapper.findAll('button')
     const confirmBtn = buttons[buttons.length - 1]
     await confirmBtn.trigger('click')
-    expect(wrapper.emitted('confirm')).toBeTruthy()
     expect(wrapper.emitted('confirm')).toHaveLength(1)
   })
 
@@ -40,7 +39,6 @@ describe('ConfirmModal (T675)', () => {
     const buttons = wrapper.findAll('button')
     const cancelBtn = buttons[0]
     await cancelBtn.trigger('click')
-    expect(wrapper.emitted('cancel')).toBeTruthy()
     expect(wrapper.emitted('cancel')).toHaveLength(1)
   })
 
@@ -51,6 +49,6 @@ describe('ConfirmModal (T675)', () => {
     })
     const backdrop = wrapper.find('.fixed.inset-0')
     await backdrop.trigger('click')
-    expect(wrapper.emitted('cancel')).toBeTruthy()
+    expect(wrapper.emitted('cancel')).toHaveLength(1)
   })
 })

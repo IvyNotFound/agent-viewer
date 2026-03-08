@@ -93,7 +93,7 @@ describe('worktree-manager', () => {
         }
       )
 
-      await expect(createWorktree(REPO, SESSION_ID)).resolves.toBeDefined()
+      await expect(createWorktree(REPO, SESSION_ID)).resolves.toEqual({ path: EXPECTED_WT_PATH, branch: EXPECTED_BRANCH })
       expect(mockExecFile).toHaveBeenCalledTimes(2)
     })
 

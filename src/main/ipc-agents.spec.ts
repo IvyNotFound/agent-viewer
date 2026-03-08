@@ -1143,8 +1143,7 @@ describe('agent-groups:create', () => {
       success: boolean; group?: { id: number; name: string; sort_order: number; created_at: string }
     }
     expect(result.success).toBe(true)
-    expect(result.group).toBeDefined()
-    expect(result.group!.name).toBe('My Group')
+    expect(result.group).toEqual(expect.objectContaining({ name: 'My Group' }))
     expect(typeof result.group!.id).toBe('number')
     expect(typeof result.group!.sort_order).toBe('number')
     expect(typeof result.group!.created_at).toBe('string')
@@ -1179,7 +1178,7 @@ describe('agent-groups:create', () => {
     const result = await handlers['agent-groups:create'](null, TEST_DB_PATH, 'DupeGroup') as { success: boolean; group?: { id: number } }
     // Schema has no UNIQUE on name — duplicates are allowed, two distinct rows inserted
     expect(result.success).toBe(true)
-    expect(result.group).toBeDefined()
+    expect(result.group).toEqual(expect.objectContaining({ name: 'DupeGroup' }))
 
     const rows = await queryLive(TEST_DB_PATH, "SELECT id FROM agent_groups WHERE name = 'DupeGroup'", []) as unknown[]
     expect(rows).toHaveLength(2)
@@ -1388,7 +1387,7 @@ describe('session:parseTokens (T581)', () => {
   it('returns { success: false } for empty convId', async () => {
     const result = await handlers['session:parseTokens'](null, TEST_DB_PATH, '') as { success: boolean; error?: string }
     expect(result.success).toBe(false)
-    expect(result.error).toBeDefined()
+    expect(typeof result.error).toBe('string')
   })
 
   it('returns { success: false, error: "Invalid convId format" } for non-UUID convId', async () => {
@@ -1485,7 +1484,7 @@ describe('session:collectTokens (T581)', () => {
   it('returns { success: false } for empty agentName', async () => {
     const result = await handlers['session:collectTokens'](null, TEST_DB_PATH, '') as { success: boolean; error?: string }
     expect(result.success).toBe(false)
-    expect(result.error).toBeDefined()
+    expect(typeof result.error).toBe('string')
   })
 
   it('returns { success: true, tokens: null } when agent has no sessions with convId', async () => {

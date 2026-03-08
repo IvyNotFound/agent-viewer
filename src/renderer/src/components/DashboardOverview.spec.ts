@@ -75,9 +75,10 @@ describe('DashboardOverview (T923)', () => {
       },
     })
     await flushPromises()
-    const text = wrapper.text()
-    expect(text).toContain('3')
-    expect(text).toContain('5')
+    // Verify exact metric values appear in the metric display cells
+    const metricValues = wrapper.findAll('.tabular-nums')
+    expect(metricValues.some(el => el.text() === '3')).toBe(true)
+    expect(metricValues.some(el => el.text() === '5')).toBe(true)
     wrapper.unmount()
   })
 

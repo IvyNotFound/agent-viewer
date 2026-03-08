@@ -300,8 +300,8 @@ describe('getSqlJs', () => {
   it('should return a sql.js instance', async () => {
     const result = await getSqlJs()
     // getSqlJs caches the singleton — it should have a Database constructor
-    expect(result).toBeDefined()
-    expect(result.Database).toBeDefined()
+    expect(typeof result).toBe('object')
+    expect(typeof result.Database).toBe('function')
   })
 
   it('should return same instance on multiple calls (singleton)', async () => {

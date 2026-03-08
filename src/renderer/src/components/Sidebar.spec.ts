@@ -181,6 +181,7 @@ describe('Sidebar — context menu & advanced flows', () => {
         stubs: sidebarStubs,
       },
     })
+    // Component renders without crashing with perimetresData in store
     expect(wrapper.exists()).toBe(true)
   })
 

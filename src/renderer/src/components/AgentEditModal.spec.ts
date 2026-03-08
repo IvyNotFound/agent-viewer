@@ -54,7 +54,7 @@ describe('AgentEditModal', () => {
     })
     const buttons = wrapper.findAll('button')
     const autoBtn = buttons.find(b => b.text().trim().toLowerCase() === 'auto')
-    expect(autoBtn).toBeDefined()
+    expect(autoBtn?.exists()).toBe(true)
   })
 
   it('renders allowedTools textarea pre-filled', () => {
@@ -84,7 +84,7 @@ describe('AgentEditModal', () => {
     })
     const backdrop = wrapper.find('.fixed.inset-0')
     await backdrop.trigger('click')
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
   it('emits close when close button ✕ is clicked', async () => {
@@ -98,9 +98,9 @@ describe('AgentEditModal', () => {
       },
     })
     const closeBtn = wrapper.findAll('button').find(b => b.text().includes('✕'))
-    expect(closeBtn).toBeDefined()
+    expect(closeBtn?.exists()).toBe(true)
     await closeBtn!.trigger('click')
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
   it('calls updateAgent on save and emits saved + close', async () => {
@@ -122,15 +122,15 @@ describe('AgentEditModal', () => {
       const text = b.text().toLowerCase()
       return text.includes('save') || text.includes('enregistrer') || text.includes('sauvegarder')
     })
-    expect(saveBtn).toBeDefined()
+    expect(saveBtn?.exists()).toBe(true)
     await saveBtn!.trigger('click')
     await flushPromises()
     expect(api.updateAgent).toHaveBeenCalledWith('/p/.claude/db', 7, expect.objectContaining({
       name: 'dev-front',
       thinkingMode: 'auto',
     }))
-    expect(wrapper.emitted('saved')).toBeTruthy()
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('saved')).toHaveLength(1)
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
   it('shows error when updateAgent fails', async () => {
@@ -153,7 +153,7 @@ describe('AgentEditModal', () => {
       const text = b.text().toLowerCase()
       return text.includes('save') || text.includes('enregistrer') || text.includes('sauvegarder')
     })
-    expect(saveBtn).toBeDefined()
+    expect(saveBtn?.exists()).toBe(true)
     await saveBtn!.trigger('click')
     await flushPromises()
     expect(wrapper.text()).toContain('DB locked')

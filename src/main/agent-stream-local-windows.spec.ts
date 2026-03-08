@@ -231,7 +231,7 @@ describe('buildWindowsPS1Script', () => {
   it('error message mentions Settings > Claude Binary Path (T1029)', () => {
     const script = buildWindowsPS1Script({})
     const errorLine = script.split('\n').find(l => l.includes('Write-Output') && l.includes('not found'))
-    expect(errorLine).toBeDefined()
+    expect(typeof errorLine).toBe('string')
     expect(errorLine).toContain('Settings')
     expect(errorLine).toContain('Claude Binary Path')
   })
@@ -249,7 +249,7 @@ describe('buildWindowsPS1Script', () => {
     expect(script).toContain('exit 1')
     // Error message must be short and readable — no raw $env:PATH dump (T995)
     const errorLine = script.split('\n').find(l => l.includes('Write-Output') && l.includes('not found'))
-    expect(errorLine).toBeDefined()
+    expect(typeof errorLine).toBe('string')
     expect(errorLine).toContain('Install Claude CLI')
     expect(errorLine).not.toContain('$env:PATH')
   })
@@ -333,7 +333,7 @@ describe('agent:create — local Windows spawn (T916)', () => {
     const ps1Call = mockWriteFileSync.mock.calls.find(
       ([p]: [unknown]) => String(p).includes('claude-start') && String(p).endsWith('.ps1')
     )
-    expect(ps1Call).toBeTruthy()
+    expect(ps1Call).toBeDefined()
     const content = String(ps1Call![1])
     expect(content).toContain('--output-format')
     expect(content).toContain('stream-json')
@@ -394,7 +394,7 @@ describe('agent:create — local Windows spawn (T916)', () => {
     const handler = handlers.get('agent:create')!
     const id = await handler({ sender: mockSender }, { wslDistro: 'local' })
     expect(typeof id).toBe('string')
-    expect(id).toBeTruthy()
+    expect((id as string).length).toBeGreaterThan(0)
   })
 
   it('writes settings JSON to temp file and PS1 reads it via ReadAllText when thinkingMode=disabled (T1107)', async () => {
@@ -405,7 +405,7 @@ describe('agent:create — local Windows spawn (T916)', () => {
     const settingsCall = mockWriteFileSync.mock.calls.find(
       ([p]: [unknown]) => String(p).includes('claude-settings') && String(p).endsWith('.json')
     )
-    expect(settingsCall).toBeTruthy()
+    expect(settingsCall).toBeDefined()
     expect(settingsCall![1]).toBe('{"alwaysThinkingEnabled":false}')
 
     // PS1 script must reference the temp file via ReadAllText (not inline JSON)

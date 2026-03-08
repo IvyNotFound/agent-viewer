@@ -146,7 +146,7 @@ describe('CostStatsSection (T824)', () => {
     // Click "Semaine" / "Week" button
     const buttons = wrapper.findAll('button')
     const weekBtn = buttons.find(b => b.text().match(/semaine|week/i))
-    expect(weekBtn).toBeDefined()
+    expect(weekBtn?.exists()).toBe(true)
     await weekBtn!.trigger('click')
     await flushPromises()
     expect(api.sessionsStatsCost).toHaveBeenCalledTimes(2)

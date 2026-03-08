@@ -92,14 +92,10 @@ describe('telemetry:scan', () => {
     expect(result.languages).toHaveLength(2)
 
     const ts = result.languages.find((l: { name: string }) => l.name === 'TypeScript')
-    expect(ts).toBeDefined()
-    expect(ts!.files).toBe(1)
-    expect(ts!.lines).toBe(3)
+    expect(ts).toEqual(expect.objectContaining({ files: 1, lines: 3 }))
 
     const vue = result.languages.find((l: { name: string }) => l.name === 'Vue')
-    expect(vue).toBeDefined()
-    expect(vue!.files).toBe(1)
-    expect(vue!.lines).toBe(2)
+    expect(vue).toEqual(expect.objectContaining({ files: 1, lines: 2 }))
   })
 
   // ── 2. node_modules ignored ────────────────────────────────────────────────
@@ -178,7 +174,7 @@ describe('telemetry:scan', () => {
     expect(result.totalFiles).toBe(0)
     expect(result.totalLines).toBe(0)
     expect(result.languages).toHaveLength(0)
-    expect(result.scannedAt).toBeTruthy()
+    expect(() => new Date(result.scannedAt).toISOString()).not.toThrow()
     expect(result.testRatio).toBe(0)
     expect(result.totalSourceFiles).toBe(0)
     expect(result.totalTestFiles).toBe(0)

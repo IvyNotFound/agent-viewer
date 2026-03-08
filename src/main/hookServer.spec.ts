@@ -280,7 +280,7 @@ describe('injectHookUrls', () => {
     await injectHookUrls('/fake/settings.json', '172.17.240.1')
     expect(mockWriteFile).toHaveBeenCalledOnce()
     const written = JSON.parse(mockWriteFile.mock.calls[0][1] as string)
-    expect(written.hooks).toBeDefined()
+    expect(typeof written.hooks).toBe('object')
     expect(Object.keys(written.hooks)).toHaveLength(7)
     expect(written.hooks.Stop[0].hooks[0].url).toBe('http://172.17.240.1:27182/hooks/stop')
     expect(written.hooks.SessionStart[0].hooks[0].url).toBe('http://172.17.240.1:27182/hooks/session-start')

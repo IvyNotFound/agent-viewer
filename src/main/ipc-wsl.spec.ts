@@ -293,7 +293,7 @@ describe('registerWslHandlers', () => {
 
   it('registers the wsl:openTerminal handler', () => {
     registerWslHandlers()
-    expect(handlers['wsl:openTerminal']).toBeDefined()
+    expect(typeof handlers['wsl:openTerminal']).toBe('function')
   })
 
   it('wsl:openTerminal succeeds via wt.exe when available', async () => {

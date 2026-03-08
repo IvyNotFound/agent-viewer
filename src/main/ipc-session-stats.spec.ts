@@ -341,10 +341,7 @@ describe('tasks:qualityStats — behavioural (T836)', () => {
 
     expect(result.success).toBe(true)
     const row = result.rows.find(r => r.agent_name === 'agent-quality')
-    expect(row).toBeDefined()
-    expect(row!.total_tasks).toBe(3)
-    expect(row!.rejected_tasks).toBe(1)
-    expect(row!.rejection_rate).toBe(33.3)
+    expect(row).toEqual(expect.objectContaining({ total_tasks: 3, rejected_tasks: 1, rejection_rate: 33.3 }))
   })
 
   it('detects rejection via keyword "rejet"', async () => {
@@ -430,8 +427,7 @@ describe('tasks:qualityStats — behavioural (T836)', () => {
     // only front agent should appear (HAVING total_tasks > 0)
     const frontRow = result.rows.find(r => r.agent_name === 'agent-front')
     const backRow = result.rows.find(r => r.agent_name === 'agent-back')
-    expect(frontRow).toBeDefined()
-    expect(frontRow!.total_tasks).toBe(1)
+    expect(frontRow).toEqual(expect.objectContaining({ total_tasks: 1 }))
     expect(backRow).toBeUndefined()
   })
 
@@ -464,7 +460,7 @@ describe('tasks:qualityStats — behavioural (T836)', () => {
     }
 
     expect(result.success).toBe(false)
-    expect(result.error).toBeDefined()
+    expect(typeof result.error).toBe('string')
     expect(result.rows).toEqual([])
   })
 })

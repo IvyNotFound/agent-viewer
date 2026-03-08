@@ -46,8 +46,8 @@ describe('AgentLogsView', () => {
       },
     })
     const buttons = wrapper.findAll('button')
-    // At least 2 sub-tab buttons (logs and tokenStats)
-    expect(buttons.length).toBeGreaterThanOrEqual(2)
+    // Level filter buttons (all, info, warn, error, debug) + at least one more
+    expect(buttons.length).toBeGreaterThanOrEqual(5)
   })
 
   it('shows reset button when a filter is active and resets on click', async () => {
@@ -79,7 +79,7 @@ describe('AgentLogsView', () => {
 
     // Reset button should now be visible
     const resetBtn = wrapper.findAll('button').find(b => b.text().includes('réinitialiser') || b.text().includes('reset'))
-    expect(resetBtn).toBeDefined()
+    expect(resetBtn?.exists()).toBe(true)
 
     // Click reset button
     await resetBtn!.trigger('click')

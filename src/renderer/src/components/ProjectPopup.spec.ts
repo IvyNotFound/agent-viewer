@@ -39,7 +39,7 @@ describe('ProjectPopup (T675)', () => {
     const { useTasksStore } = await import('@renderer/stores/tasks')
     const store = useTasksStore()
     const changeBtn = wrapper.findAll('button').find(b => b.text().includes('Changer de projet'))
-    expect(changeBtn).toBeDefined()
+    expect(changeBtn?.exists()).toBe(true)
     await changeBtn!.trigger('click')
     await flushPromises()
     expect(store.selectProject).toHaveBeenCalled()
@@ -56,7 +56,7 @@ describe('ProjectPopup (T675)', () => {
     })
     const closeBtn = wrapper.find('button[title="Fermer"]')
     await closeBtn.trigger('click')
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
   it('emits close when backdrop clicked', async () => {
@@ -70,6 +70,6 @@ describe('ProjectPopup (T675)', () => {
     })
     const backdrop = wrapper.find('.fixed.inset-0')
     await backdrop.trigger('click')
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 })

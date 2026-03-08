@@ -174,7 +174,7 @@ describe('agent-stream', () => {
     const scriptCall = mockWriteFileSync.mock.calls.find(
       ([p]: [unknown]) => String(p).includes('claude-start')
     )!
-    expect(scriptCall).toBeTruthy()
+    expect(scriptCall).toBeDefined()
     const scriptContent = String(scriptCall[1])
     expect(scriptContent).toContain('-p')
     expect(scriptContent).toContain('--input-format stream-json')
@@ -208,7 +208,7 @@ describe('agent-stream', () => {
     const event = { sender: mockSender }
     const id = await handler(event, {})
     expect(typeof id).toBe('string')
-    expect(id).toBeTruthy()
+    expect((id as string).length).toBeGreaterThan(0)
   })
 
   it('registers process in agents map', async () => {
@@ -384,7 +384,7 @@ describe('agent-stream', () => {
     const call = vi.mocked(mockSender.send).mock.calls.find(
       ([ch]) => ch === `agent:stream:${id}`
     )
-    expect(call).toBeTruthy()
+    expect(call).toBeDefined()
     const payload = call![1] as { type: string; error: string }
     expect(payload.type).toBe('error:exit')
     expect(payload.error).toContain('Process exited with code 1')

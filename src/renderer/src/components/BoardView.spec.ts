@@ -49,6 +49,6 @@ describe('BoardView', () => {
     })
     const columns = wrapper.findAllComponents({ name: 'StatusColumn' })
     // backlog view: todo, in_progress, done columns (3)
-    expect(columns.length).toBeGreaterThanOrEqual(3)
+    expect(columns.length).toBe(3)
   })
 })

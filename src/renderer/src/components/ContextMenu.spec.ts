@@ -43,7 +43,7 @@ describe('ContextMenu', () => {
     })
     const buttons = wrapper.findAll('button')
     await buttons[1].trigger('click')
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
   it('Escape key emits close', async () => {
@@ -55,7 +55,7 @@ describe('ContextMenu', () => {
     // ContextMenu registers a keydown listener on document
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     await nextTick()
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
   it('clicking overlay emits close', async () => {
@@ -66,7 +66,7 @@ describe('ContextMenu', () => {
     })
     const overlay = wrapper.find('.fixed.inset-0')
     await overlay.trigger('click')
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
   it('renders separator when item has separator: true', () => {
@@ -80,7 +80,7 @@ describe('ContextMenu', () => {
       global: { stubs: teleportStub },
     })
     const separators = wrapper.findAll('.border-t')
-    expect(separators.length).toBeGreaterThanOrEqual(1)
+    expect(separators.length).toBe(1)
   })
 
 })
@@ -88,4 +88,5 @@ describe('ContextMenu', () => {
 // ══════════════════════════════════════════════════════════════════════════════
 // T353 — Tests manquants : composants Vue critiques (P2)
 // ══════════════════════════════════════════════════════════════════════════════
+
 

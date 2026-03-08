@@ -78,7 +78,7 @@ describe('CommandPalette', () => {
 
     const backdrop = wrapper.find('.fixed.inset-0')
     await backdrop.trigger('click')
-    expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+    expect(wrapper.emitted('update:modelValue')).toHaveLength(1)
     expect(wrapper.emitted('update:modelValue')![0]).toEqual([false])
   })
 

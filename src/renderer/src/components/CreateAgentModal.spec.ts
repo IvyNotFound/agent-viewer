@@ -46,9 +46,9 @@ describe('CreateAgentModal', () => {
       const svg = b.find('svg')
       return svg.exists() && !b.text().trim()
     })
-    expect(closeBtn).toBeDefined()
+    expect(closeBtn?.exists()).toBe(true)
     await closeBtn!.trigger('click')
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
   it('shows name error when submitting empty name', async () => {
@@ -63,7 +63,7 @@ describe('CreateAgentModal', () => {
 
     // Submit button should be disabled when name is empty
     const submitBtn = wrapper.findAll('button').find(b => b.attributes('disabled') !== undefined)
-    expect(submitBtn).toBeDefined()
+    expect(submitBtn?.exists()).toBe(true)
   })
 
   it('renders thinking mode buttons (auto/disabled)', () => {
@@ -77,7 +77,7 @@ describe('CreateAgentModal', () => {
     })
     const buttons = wrapper.findAll('button')
     const autoBtn = buttons.find(b => b.text().trim() === 'Auto' || b.text().trim() === 'auto')
-    expect(autoBtn).toBeDefined()
+    expect(autoBtn?.exists()).toBe(true)
   })
 
   it('emits close when backdrop is clicked', async () => {
@@ -92,6 +92,6 @@ describe('CreateAgentModal', () => {
 
     const backdrop = wrapper.find('.fixed.inset-0')
     await backdrop.trigger('click')
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 })
