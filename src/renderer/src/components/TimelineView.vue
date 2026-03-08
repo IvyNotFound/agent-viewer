@@ -112,7 +112,10 @@ function taskEndMs(task: TimelineTask): number {
 
 const rangeStart = computed(() => {
   if (filteredTasks.value.length === 0) return Date.now() - daysBack.value * 86_400_000
-  return Math.min(...filteredTasks.value.map(t => new Date(t.created_at).getTime()))
+  return filteredTasks.value.reduce(
+    (min, t) => Math.min(min, new Date(t.created_at).getTime()),
+    Infinity
+  )
 })
 
 const rangeEnd = computed(() => {
