@@ -10,8 +10,8 @@ const fs = require('fs')
 const path = require('path')
 const { execSync } = require('child_process')
 
-const SQLITE_VERSION = '3510200' // 3.51.2
-const SQLITE_YEAR = '2026'
+const SQLITE_VERSION = '3460000' // 3.46.0
+const SQLITE_YEAR = '2024'
 
 const DEST_DIR = path.join(__dirname, '..', 'resources', 'bin')
 
