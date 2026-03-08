@@ -41,7 +41,7 @@ const thinkingMode = ref<'auto' | 'disabled'>('auto')
 const lastConvId = ref<string | null>(null)
 const useResume = ref(false)
 /** Multi-instance mode: create an isolated git worktree before launching (ADR-006) */
-const multiInstance = ref(false)
+const multiInstance = ref(true)
 /** Error message if worktree creation fails */
 const worktreeError = ref<string | null>(null)
 
@@ -323,7 +323,7 @@ async function launch() {
                   :style="thinkingMode === 'auto' ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
                   @click="thinkingMode = 'auto'"
                 >
-                  Auto
+                  {{ t('launch.auto') }}
                 </button>
                 <button
                   class="flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all"
