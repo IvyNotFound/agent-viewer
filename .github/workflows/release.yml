@@ -51,13 +51,20 @@ jobs:
           node-version: 22
           cache: ''
 
+      - name: Debug npm config
+        run: |
+          echo "=== npm root: $(npm root) ==="
+          echo "=== npm root -g: $(npm root -g) ==="
+          echo "=== npm prefix: $(npm config get prefix) ==="
+          echo "=== cat ~/.npmrc ===" && cat ~/.npmrc 2>/dev/null || echo "not found"
+          echo "=== cat .npmrc ===" && cat .npmrc 2>/dev/null || echo "not found"
+          echo "=== npm config list ===" && npm config list
+
       - name: Install dependencies
         run: |
-          echo "=== npm prefix: $(npm config get prefix) ==="
-          echo "=== npm production: $(npm config get production) ==="
-          echo "=== NODE_ENV: $NODE_ENV ==="
-          npm ci --ignore-scripts
-          echo "=== After npm ci: $(ls -la . && echo DIR_EXISTS || echo DIR_GONE) ==="
+          npm install --ignore-scripts
+          echo "=== After npm install: $(ls -la . 2>&1 | head -5) ==="
+          echo "=== node_modules exists: $(ls -d node_modules 2>/dev/null && echo YES || echo NO) ==="
 
       - name: Run ESLint
         run: npm run lint
@@ -75,7 +82,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci --ignore-scripts
+          npm install --ignore-scripts
           node node_modules/esbuild/install.js
           node node_modules/vitest/node_modules/esbuild/install.js 2>/dev/null || true
           node node_modules/vue-demi/scripts/postinstall.js || true
@@ -114,7 +121,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci --ignore-scripts
+          npm install --ignore-scripts
           node node_modules/esbuild/install.js
           node node_modules/vue-demi/scripts/postinstall.js || true
 
@@ -215,7 +222,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci --ignore-scripts
+          npm install --ignore-scripts
           node node_modules/esbuild/install.js
           node node_modules/vue-demi/scripts/postinstall.js || true
 
@@ -292,7 +299,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci --ignore-scripts
+          npm install --ignore-scripts
           node node_modules/esbuild/install.js
           node node_modules/vue-demi/scripts/postinstall.js || true
 
@@ -324,7 +331,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci --ignore-scripts
+          npm install --ignore-scripts
           node node_modules/esbuild/install.js
           node node_modules/vue-demi/scripts/postinstall.js || true
 
