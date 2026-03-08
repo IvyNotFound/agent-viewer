@@ -1,11 +1,12 @@
 /**
- * Deep mutation-killing tests for the opencode adapter (T1070).
+ * Deep mutation-killing tests for the opencode adapter (T1070, updated T1084).
  *
  * Targets:
  * - OPENCODE_CMD_REGEX: anchors, suffix pattern, invalid chars
  * - buildCommand: binaryName guard (falsy, valid, invalid)
- * - buildCommand: args array contains "run" subcommand
- * - buildCommand: systemPromptFile flag wiring
+ * - buildCommand: args array contains "run" subcommand and "--format json"
+ * - buildCommand: no --message flag (opencode does not support it)
+ * - parseLine: text, reasoning, error, lifecycle events, plain text fallback
  */
 
 import { describe, it, expect, vi } from 'vitest'
@@ -78,7 +79,7 @@ describe('opencodeAdapter.buildCommand', () => {
     expect(spec.command).toBe('opencode-dev')
   })
 
-  it('args array is non-empty (at least "run" subcommand)', () => {
+  it('args array is non-empty (at least "run" and "--format" flags)', () => {
     const spec = opencodeAdapter.buildCommand({})
     expect(spec.args.length).toBeGreaterThan(0)
   })
@@ -93,11 +94,21 @@ describe('opencodeAdapter.buildCommand', () => {
     expect(spec.args[0]).toBe('run')
   })
 
-  it('includes --message @file when systemPromptFile provided', () => {
-    const spec = opencodeAdapter.buildCommand({ systemPromptFile: '/tmp/sp.txt' })
-    const idx = spec.args.indexOf('--message')
+  it('args contain "--format" flag for JSONL output', () => {
+    const spec = opencodeAdapter.buildCommand({})
+    expect(spec.args).toContain('--format')
+  })
+
+  it('args contain "json" as value for --format flag', () => {
+    const spec = opencodeAdapter.buildCommand({})
+    const idx = spec.args.indexOf('--format')
     expect(idx).toBeGreaterThan(-1)
-    expect(spec.args[idx + 1]).toBe('@/tmp/sp.txt')
+    expect(spec.args[idx + 1]).toBe('json')
+  })
+
+  it('does not include --message flag (opencode has no --message @file support)', () => {
+    const spec = opencodeAdapter.buildCommand({ systemPromptFile: '/tmp/sp.txt' })
+    expect(spec.args).not.toContain('--message')
   })
 
   it('does not include --message when systemPromptFile is absent', () => {
@@ -108,5 +119,60 @@ describe('opencodeAdapter.buildCommand', () => {
   it('binaryName exact name is in returned command field', () => {
     const spec = opencodeAdapter.buildCommand({ binaryName: 'opencode' })
     expect(spec.command).toBe('opencode')
+  })
+})
+
+// ── opencodeAdapter.parseLine ─────────────────────────────────────────────────
+
+describe('opencodeAdapter.parseLine', () => {
+  it('returns null for blank line', () => {
+    expect(opencodeAdapter.parseLine('')).toBeNull()
+    expect(opencodeAdapter.parseLine('   ')).toBeNull()
+  })
+
+  it('maps type:text event to StreamEvent text', () => {
+    const event = opencodeAdapter.parseLine('{"type":"text","text":"hello","sessionID":"s1"}')
+    expect(event).toEqual({ type: 'text', text: 'hello' })
+  })
+
+  it('maps type:reasoning event to StreamEvent text', () => {
+    const event = opencodeAdapter.parseLine('{"type":"reasoning","text":"thinking...","sessionID":"s1"}')
+    expect(event).toEqual({ type: 'text', text: 'thinking...' })
+  })
+
+  it('maps type:error event using message field', () => {
+    const event = opencodeAdapter.parseLine('{"type":"error","message":"something failed"}')
+    expect(event).toEqual({ type: 'error', text: 'something failed' })
+  })
+
+  it('maps type:error event using text field when message absent', () => {
+    const event = opencodeAdapter.parseLine('{"type":"error","text":"alt error"}')
+    expect(event).toEqual({ type: 'error', text: 'alt error' })
+  })
+
+  it('returns null for type:tool_use (lifecycle event)', () => {
+    const event = opencodeAdapter.parseLine('{"type":"tool_use","name":"bash","input":{}}')
+    expect(event).toBeNull()
+  })
+
+  it('returns null for type:step_start (lifecycle event)', () => {
+    const event = opencodeAdapter.parseLine('{"type":"step_start","timestamp":1234}')
+    expect(event).toBeNull()
+  })
+
+  it('returns null for type:step_finish (lifecycle event)', () => {
+    const event = opencodeAdapter.parseLine('{"type":"step_finish","duration":100}')
+    expect(event).toBeNull()
+  })
+
+  it('falls back to plain text for non-JSON line', () => {
+    const event = opencodeAdapter.parseLine('some plain text output')
+    expect(event).toEqual({ type: 'text', text: 'some plain text output' })
+  })
+
+  it('falls back to raw line for type:text event with missing text field', () => {
+    const raw = '{"type":"text","other":"field"}'
+    const event = opencodeAdapter.parseLine(raw)
+    expect(event).toEqual({ type: 'text', text: raw })
   })
 })

@@ -2,11 +2,12 @@
  * SST OpenCode CLI adapter for agent-viewer.
  *
  * OpenCode is a terminal-based coding agent from SST.
- * System prompt injection and headless flags to be confirmed during testing.
- * Output: plain text — wrapped as StreamEvent for phase 1 (T1012).
+ * Headless mode: `opencode run --format json` emits JSONL events to stdout.
+ * No TTY required — stdout is streamed line by line without a TUI.
  *
- * TODO: Confirm flags for non-interactive mode and system prompt injection.
- * The opencode CLI is session-based; review `opencode run` vs `opencode session`.
+ * Limitations:
+ * - System prompt injection is not supported via CLI flags; configure via opencode config.
+ * - Initial prompt is delivered via piped stdin (opencode run reads stdin as the message).
  *
  * @module adapters/opencode
  */
@@ -33,13 +34,13 @@ export const opencodeAdapter: CliAdapter = {
       : 'opencode'
 
     const args: string[] = [
-      'run',  // TODO: confirm subcommand for headless/non-interactive mode
+      'run',            // non-interactive subcommand (no TUI launched)
+      '--format', 'json', // stream JSONL events to stdout line by line
     ]
 
-    if (opts.systemPromptFile) {
-      // TODO: confirm flag — may be --message, --system-prompt, or config file
-      args.push('--message', `@${opts.systemPromptFile}`)
-    }
+    // Note: opencode does not expose a --system-prompt CLI flag.
+    // opts.systemPromptFile is intentionally ignored here; configure system
+    // prompt via opencode's project config file instead.
 
     return { command: cmd, args }
   },
@@ -57,9 +58,23 @@ export const opencodeAdapter: CliAdapter = {
     if (!line.trim()) return null
     try {
       const parsed = JSON.parse(line) as Record<string, unknown>
-      if (typeof parsed.type === 'string') return parsed as unknown as StreamEvent
-      return { type: 'text', text: line }
+      const evType = parsed.type
+
+      if (evType === 'text' || evType === 'reasoning') {
+        // Text and reasoning blocks — show as text output
+        return { type: 'text', text: typeof parsed.text === 'string' ? parsed.text : line }
+      }
+      if (evType === 'error') {
+        // Error events — prefer message field, fallback to text or raw line
+        const msg = typeof parsed.message === 'string' ? parsed.message
+          : typeof parsed.text === 'string' ? parsed.text
+          : line
+        return { type: 'error', text: msg }
+      }
+      // tool_use, step_start, step_finish — lifecycle metadata, not displayed
+      return null
     } catch {
+      // Non-JSON line (plain text or ANSI output) — surface as text
       return { type: 'text', text: line }
     }
   },
