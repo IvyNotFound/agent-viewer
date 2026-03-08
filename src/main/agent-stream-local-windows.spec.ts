@@ -160,7 +160,8 @@ describe('buildWindowsPS1Script', () => {
   it('uses Get-Command when claudeBinaryPath is not provided (T1029)', () => {
     const script = buildWindowsPS1Script({})
     expect(script).toContain('Get-Command claude -ErrorAction SilentlyContinue')
-    expect(script).not.toContain('Test-Path')
+    // claudeBinaryPath Test-Path block must not appear — only .cmd resolution Test-Path is OK (T1151)
+    expect(script).not.toContain('$claudeExe = $null')
   })
 
   it('error message mentions Settings > Claude Binary Path (T1029)', () => {
@@ -169,6 +170,42 @@ describe('buildWindowsPS1Script', () => {
     expect(typeof errorLine).toBe('string')
     expect(errorLine).toContain('Settings')
     expect(errorLine).toContain('Claude Binary Path')
+  })
+
+  it('includes .cmd wrapper resolution block to bypass cmd.exe argument corruption (T1151)', () => {
+    const script = buildWindowsPS1Script({})
+    // Must detect .cmd files
+    expect(script).toContain('$resolvedJsEntry = $null')
+    expect(script).toContain(".EndsWith('.cmd')")
+    // Must parse .cmd content to find .js entry point
+    expect(script).toContain('Get-Content $claudeExe -Raw')
+    expect(script).toContain('.js')
+    // Must resolve node.exe from same directory
+    expect(script).toContain("'node.exe'")
+    // Must prepend .js entry as first argument
+    expect(script).toContain('if ($resolvedJsEntry) { $a.Add($resolvedJsEntry) }')
+  })
+
+  it('.cmd resolution appears before argument list construction (T1151)', () => {
+    const script = buildWindowsPS1Script({})
+    const cmdDetectIdx = script.indexOf('$resolvedJsEntry = $null')
+    const argListIdx = script.indexOf('$a = [System.Collections.Generic.List[string]]::new()')
+    const firstArgIdx = script.indexOf("$a.Add('-p')")
+    // .cmd detection must come before $a construction
+    expect(cmdDetectIdx).toBeGreaterThan(-1)
+    expect(cmdDetectIdx).toBeLessThan(argListIdx)
+    // .js entry must be added before other args
+    const jsEntryIdx = script.indexOf('if ($resolvedJsEntry) { $a.Add($resolvedJsEntry) }')
+    expect(jsEntryIdx).toBeGreaterThan(argListIdx)
+    expect(jsEntryIdx).toBeLessThan(firstArgIdx)
+  })
+
+  it('.cmd resolution uses correct regex for npm wrapper patterns (T1151)', () => {
+    const script = buildWindowsPS1Script({})
+    // Regex must match both %~dp0\ and %dp0%\ prefixes used by npm .cmd wrappers
+    expect(script).toContain('%~dp0')
+    expect(script).toContain('%dp0%')
+    expect(script).toContain('.js')
   })
 
   it('uses Get-Command for dynamic claude discovery (T939)', () => {

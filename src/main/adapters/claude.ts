@@ -134,7 +134,27 @@ export function buildWindowsPS1Script(opts: {
   lines.push(`  Write-Output "ERROR: '${cmd}' not found. Install Claude CLI or use Settings > Claude Binary Path to specify the location."`)
   lines.push(`  exit 1`)
   lines.push(`}`)
+
+  // T1151: Resolve .cmd wrapper → run node.exe directly to bypass cmd.exe argument corruption.
+  // When $claudeExe is a .cmd file (npm global install), PowerShell invokes cmd.exe to run it,
+  // and cmd.exe re-interprets { } in JSON arguments (--settings, --append-system-prompt).
+  // Resolving the .js entry point and running node.exe directly bypasses cmd.exe entirely.
+  lines.push('$resolvedJsEntry = $null')
+  lines.push('if ($claudeExe -and $claudeExe.ToLower().EndsWith(\'.cmd\')) {')
+  lines.push('  $cmdDir = Split-Path $claudeExe -Parent')
+  lines.push('  $cmdContent = Get-Content $claudeExe -Raw -ErrorAction SilentlyContinue')
+  lines.push('  if ($cmdContent -match \'(?:%~dp0\\\\|%dp0%\\\\)([^\\s"]+\\.js)\') {')
+  lines.push('    $candidate = Join-Path $cmdDir $Matches[1]')
+  lines.push('    if (Test-Path $candidate) {')
+  lines.push('      $resolvedJsEntry = $candidate')
+  lines.push('      $nodeCandidate = Join-Path $cmdDir \'node.exe\'')
+  lines.push('      if (Test-Path $nodeCandidate) { $claudeExe = $nodeCandidate } else { $claudeExe = \'node\' }')
+  lines.push('    }')
+  lines.push('  }')
+  lines.push('}')
+
   lines.push('$a = [System.Collections.Generic.List[string]]::new()')
+  lines.push('if ($resolvedJsEntry) { $a.Add($resolvedJsEntry) }')
   lines.push('$a.Add(\'-p\')')
   lines.push('$a.Add(\'--verbose\')')
   lines.push('$a.Add(\'--input-format\')')
