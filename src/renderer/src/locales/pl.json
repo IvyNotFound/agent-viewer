@@ -296,7 +296,8 @@
     "instance": "Instance",
     "multiInstance": "Wiele instancji / Izolowane drzewo robocze",
     "multiInstanceNote": "Tworzy dedykowane drzewo robocze git (ADR-006) — umożliwia równoległe uruchamianie wielu instancji tego samego agenta bez konfliktów",
-    "multiInstanceError": "Nie udało się utworzyć drzewa roboczego: {error}"
+    "multiInstanceError": "Nie udało się utworzyć drzewa roboczego: {error}",
+    "refreshDetection": "Odśwież"
   },
   "titleBar": {
     "searchTitle": "Szukaj zadania (Ctrl+K)",
@@ -532,7 +533,8 @@
     "testRatio": "testów",
     "scan": "Skanuj",
     "notScanned": "Nie zeskanowano — kliknij, aby zeskanować",
-    "others": "Inne"
+    "others": "Inne",
+    "telemetryTab": "Telemetria"
   },
   "status": {
     "todo": "do zrobienia",

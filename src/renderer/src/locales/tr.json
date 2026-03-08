@@ -296,7 +296,8 @@
     "instance": "Instance",
     "multiInstance": "Çoklu örnek / İzole worktree",
     "multiInstanceNote": "Özel bir git worktree oluşturur (ADR-006) — aynı ajanın birden fazla örneğinin çakışma olmadan paralel çalışmasına izin verir",
-    "multiInstanceError": "Worktree oluşturulamadı: {error}"
+    "multiInstanceError": "Worktree oluşturulamadı: {error}",
+    "refreshDetection": "Yenile"
   },
   "titleBar": {
     "searchTitle": "Görev ara (Ctrl+K)",
@@ -532,7 +533,8 @@
     "testRatio": "test",
     "scan": "Tara",
     "notScanned": "Henüz taranmadı — taramak için tıklayın",
-    "others": "Diğer"
+    "others": "Diğer",
+    "telemetryTab": "Telemetri"
   },
   "status": {
     "todo": "yapılacak",

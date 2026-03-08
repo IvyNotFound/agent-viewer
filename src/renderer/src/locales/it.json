@@ -296,7 +296,8 @@
     "instance": "Instance",
     "multiInstance": "Multi-istanza / Worktree isolato",
     "multiInstanceNote": "Crea un git worktree dedicato (ADR-006) — consente di eseguire più istanze dello stesso agente in parallelo senza conflitti",
-    "multiInstanceError": "Creazione del worktree non riuscita: {error}"
+    "multiInstanceError": "Creazione del worktree non riuscita: {error}",
+    "refreshDetection": "Aggiorna"
   },
   "titleBar": {
     "searchTitle": "Cerca un'attività (Ctrl+K)",
@@ -532,7 +533,8 @@
     "testRatio": "test",
     "scan": "Scansiona",
     "notScanned": "Non ancora scansionato — clicca per scansionare",
-    "others": "Altri"
+    "others": "Altri",
+    "telemetryTab": "Telemetria"
   },
   "status": {
     "todo": "da fare",

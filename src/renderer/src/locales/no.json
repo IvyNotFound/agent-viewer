@@ -296,7 +296,8 @@
     "instance": "Instance",
     "multiInstance": "Multi-instans / Isolert worktree",
     "multiInstanceNote": "Oppretter en dedikert git worktree (ADR-006) — tillater kjøring av flere instanser av samme agent parallelt uten konflikter",
-    "multiInstanceError": "Klarte ikke opprette worktree: {error}"
+    "multiInstanceError": "Klarte ikke opprette worktree: {error}",
+    "refreshDetection": "Oppdater"
   },
   "titleBar": {
     "searchTitle": "Søk etter oppgave (Ctrl+K)",
@@ -532,7 +533,8 @@
     "testRatio": "tester",
     "scan": "Skann",
     "notScanned": "Ikke skannet ennå — klikk for å skanne",
-    "others": "Andre"
+    "others": "Andre",
+    "telemetryTab": "Telemetri"
   },
   "status": {
     "todo": "å gjøre",

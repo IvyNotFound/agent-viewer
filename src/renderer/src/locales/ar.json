@@ -296,7 +296,8 @@
     "instance": "instance",
     "multiInstance": "متعدد الحالات / worktree معزول",
     "multiInstanceNote": "ينشئ git worktree مخصصاً (ADR-006) — يسمح بتشغيل حالات متعددة بالتوازي دون تعارضات",
-    "multiInstanceError": "فشل إنشاء worktree: {error}"
+    "multiInstanceError": "فشل إنشاء worktree: {error}",
+    "refreshDetection": "تحديث"
   },
   "titleBar": {
     "searchTitle": "ابحث عن مهمة (Ctrl+K)",
@@ -532,7 +533,8 @@
     "testRatio": "اختبارات",
     "scan": "فحص",
     "notScanned": "لم يتم الفحص بعد — انقر للفحص",
-    "others": "أخرى"
+    "others": "أخرى",
+    "telemetryTab": "القياس عن بُعد"
   },
   "status": {
     "todo": "للتنفيذ",

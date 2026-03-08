@@ -296,7 +296,8 @@
     "instance": "Instance",
     "multiInstance": "Multi-instanssi / Eristetty worktree",
     "multiInstanceNote": "Luo dedikoidun git worktree -hakemiston (ADR-006) — mahdollistaa useiden rinnakkaisten instanssien ajamisen ilman konflikteja",
-    "multiInstanceError": "Worktreen luominen epäonnistui: {error}"
+    "multiInstanceError": "Worktreen luominen epäonnistui: {error}",
+    "refreshDetection": "Päivitä"
   },
   "titleBar": {
     "searchTitle": "Hae tehtävää (Ctrl+K)",
@@ -532,7 +533,8 @@
     "testRatio": "testejä",
     "scan": "Skannaa",
     "notScanned": "Ei vielä skannattu — napsauta skannataksesi",
-    "others": "Muut"
+    "others": "Muut",
+    "telemetryTab": "Telemetria"
   },
   "status": {
     "todo": "odottaa",

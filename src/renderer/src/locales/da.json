@@ -296,7 +296,8 @@
     "instance": "Instance",
     "multiInstance": "Multi-instans / Isoleret worktree",
     "multiInstanceNote": "Opretter en dedikeret git worktree (ADR-006) — tillader kørsel af flere instanser parallelt uden konflikter",
-    "multiInstanceError": "Oprettelse af worktree mislykkedes: {error}"
+    "multiInstanceError": "Oprettelse af worktree mislykkedes: {error}",
+    "refreshDetection": "Opdater"
   },
   "titleBar": {
     "searchTitle": "Søg en opgave (Ctrl+K)",
@@ -532,7 +533,8 @@
     "testRatio": "tests",
     "scan": "Scan",
     "notScanned": "Ikke scannet endnu — klik for at scanne",
-    "others": "Andre"
+    "others": "Andre",
+    "telemetryTab": "Telemetri"
   },
   "status": {
     "todo": "afventer",

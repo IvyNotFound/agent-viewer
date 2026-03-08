@@ -296,7 +296,8 @@
     "instance": "instance",
     "multiInstance": "マルチインスタンス / 分離された worktree",
     "multiInstanceNote": "専用の git worktree を作成します (ADR-006) — 競合なしに同じエージェントの複数インスタンスを並行実行できます",
-    "multiInstanceError": "worktree の作成に失敗しました: {error}"
+    "multiInstanceError": "worktree の作成に失敗しました: {error}",
+    "refreshDetection": "更新"
   },
   "titleBar": {
     "searchTitle": "タスクを検索 (Ctrl+K)",
@@ -532,7 +533,8 @@
     "testRatio": "テスト",
     "scan": "スキャン",
     "notScanned": "未スキャン — クリックしてスキャン",
-    "others": "その他"
+    "others": "その他",
+    "telemetryTab": "テレメトリ"
   },
   "status": {
     "todo": "未着手",

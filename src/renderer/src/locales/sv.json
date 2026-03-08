@@ -296,7 +296,8 @@
     "instance": "Instance",
     "multiInstance": "Multi-instans / Isolerat worktree",
     "multiInstanceNote": "Skapar ett dedikerat git worktree (ADR-006) — möjliggör körning av flera instanser av samma agent parallellt utan konflikter",
-    "multiInstanceError": "Det gick inte att skapa worktree: {error}"
+    "multiInstanceError": "Det gick inte att skapa worktree: {error}",
+    "refreshDetection": "Uppdatera"
   },
   "titleBar": {
     "searchTitle": "Sök en uppgift (Ctrl+K)",
@@ -532,7 +533,8 @@
     "testRatio": "tester",
     "scan": "Skanna",
     "notScanned": "Inte skannat ännu — klicka för att skanna",
-    "others": "Andra"
+    "others": "Andra",
+    "telemetryTab": "Telemetri"
   },
   "status": {
     "todo": "att göra",

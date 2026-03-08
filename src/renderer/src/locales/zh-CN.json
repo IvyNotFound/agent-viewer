@@ -296,7 +296,8 @@
     "instance": "instance",
     "multiInstance": "多实例 / 隔离 worktree",
     "multiInstanceNote": "创建专用 git worktree（ADR-006）— 允许同一 Agent 的多个实例并行运行而不产生冲突",
-    "multiInstanceError": "创建 worktree 失败：{error}"
+    "multiInstanceError": "创建 worktree 失败：{error}",
+    "refreshDetection": "刷新"
   },
   "titleBar": {
     "searchTitle": "搜索任务（Ctrl+K）",
@@ -532,7 +533,8 @@
     "testRatio": "测试",
     "scan": "扫描",
     "notScanned": "尚未扫描 — 点击扫描",
-    "others": "其他"
+    "others": "其他",
+    "telemetryTab": "遥测"
   },
   "status": {
     "todo": "待办",
