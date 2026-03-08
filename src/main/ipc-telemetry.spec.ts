@@ -17,6 +17,10 @@ vi.mock('fs/promises', () => {
   return { default: { readdir, readFile }, readdir, readFile }
 })
 
+vi.mock('./db', () => ({
+  assertProjectPathAllowed: vi.fn(),
+}))
+
 // Capture the handler registered via ipcMain.handle so tests can invoke it.
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, ...args: unknown[]) => unknown
 const registeredHandlers: Record<string, IpcHandler> = {}
