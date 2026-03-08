@@ -1,4 +1,5 @@
-import type { Database } from 'sql.js'
+import type { MigrationDb } from '../migration-db-adapter'
+type Database = MigrationDb
 
 /**
  * Migration: Drops the legacy `commentaire` column from the tasks table.

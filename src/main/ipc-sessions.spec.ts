@@ -92,6 +92,13 @@ vi.mock('./db-lock', () => ({
   releaseWriteLock: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock('better-sqlite3', async (importOriginal) => {
+  const mod = await importOriginal()
+  return {
+    default: function MockDatabase() { return new (mod as any).default(':memory:') },
+  }
+})
+
 vi.mock('child_process', () => ({
   default: { execSync: vi.fn(), execFile: vi.fn(), spawn: vi.fn(() => ({ unref: vi.fn() })) },
   execSync: vi.fn(),
@@ -100,7 +107,7 @@ vi.mock('child_process', () => ({
 }))
 
 // ── Import after mocks ────────────────────────────────────────────────────────
-import { getSqlJs, registerDbPath, registerProjectPath, clearDbCacheEntry, queryLive, writeDb } from './db'
+import { registerDbPath, registerProjectPath, clearDbCacheEntry, queryLive, writeDb } from './db'
 import { registerIpcHandlers } from './ipc'
 import {
   buildSchema,
@@ -116,9 +123,7 @@ beforeEach(async () => {
   clearDbCacheEntry(TEST_DB_PATH)
   dbMtime = 1000
 
-  const db = await buildSchema()
-  dbBuffer = Buffer.from(db.export())
-  db.close()
+  await buildSchema()
 
   registerDbPath(TEST_DB_PATH)
   registerProjectPath(TEST_PROJECT_PATH)
@@ -130,7 +135,6 @@ afterEach(() => {
 })
 
 // Suppress unused import warnings — helpers re-exported from ipc-test-setup
-void getSqlJs
 void writeDb
 
 // ── Tests: session:updateResult ───────────────────────────────────────────────

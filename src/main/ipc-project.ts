@@ -12,12 +12,12 @@ import { access, copyFile, mkdir, readdir, readFile, writeFile } from 'fs/promis
 import { join, basename } from 'path'
 import { GENERIC_AGENTS_BY_LANG } from './default-agents'
 import type { AgentLanguage } from './default-agents'
+import Database from 'better-sqlite3'
 import {
   registerDbPath,
   registerProjectPath,
   getAllowedProjectPaths,
   assertProjectPathAllowed,
-  getSqlJs,
 } from './db'
 import { buildSingleFileZip } from './ipc-project-zip'
 
@@ -116,9 +116,11 @@ export function registerProjectHandlers(): void {
       const claudeDir = join(projectPath, '.claude')
       await mkdir(claudeDir, { recursive: true })
       const dbPath = join(claudeDir, 'project.db')
-      const sqlJs = await getSqlJs()
-      const db = new sqlJs.Database()
-      db.run(`
+      const db = new Database(dbPath)
+      db.pragma('journal_mode = WAL')
+      db.pragma('busy_timeout = 5000')
+      db.pragma('foreign_keys = ON')
+      db.exec(`
         CREATE TABLE IF NOT EXISTS agents (
           id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE,
           type TEXT NOT NULL, scope TEXT, system_prompt TEXT,
@@ -202,16 +204,14 @@ export function registerProjectHandlers(): void {
         CREATE INDEX IF NOT EXISTS idx_task_links_from_task ON task_links(from_task);
         CREATE INDEX IF NOT EXISTS idx_task_links_to_task ON task_links(to_task);
       `)
+      const insertAgent = db.prepare(
+        `INSERT OR IGNORE INTO agents (name, type, scope, system_prompt, system_prompt_suffix)
+         VALUES (?, ?, ?, ?, ?)`
+      )
       for (const agent of GENERIC_AGENTS_BY_LANG[agentLang]) {
-        db.run(
-          `INSERT OR IGNORE INTO agents (name, type, scope, system_prompt, system_prompt_suffix)
-           VALUES (?, ?, ?, ?, ?)`,
-          [agent.name, agent.type, agent.scope ?? null, agent.system_prompt ?? null, agent.system_prompt_suffix ?? null]
-        )
+        insertAgent.run(agent.name, agent.type, agent.scope ?? null, agent.system_prompt ?? null, agent.system_prompt_suffix ?? null)
       }
-      const exported = db.export()
       db.close()
-      await writeFile(dbPath, Buffer.from(exported))
       registerDbPath(dbPath)
       console.log('[create-project-db] created:', dbPath)
 

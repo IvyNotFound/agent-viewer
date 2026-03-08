@@ -15,18 +15,6 @@ import { useTasksStore } from '@renderer/stores/tasks'
 
 export const PAGE_SIZE = 50
 
-// sql.js returns Uint8Array for TEXT columns in some cases — convert to string
-function toStr(v: unknown): unknown {
-  if (v instanceof Uint8Array) return new TextDecoder().decode(v)
-  return v
-}
-
-function normalizeRow<T extends Record<string, unknown>>(row: T): T {
-  const out = {} as T
-  for (const k in row) out[k] = toStr(row[k]) as T[typeof k]
-  return out
-}
-
 export function useArchivedPagination() {
   const store = useTasksStore()
 
@@ -52,7 +40,7 @@ export function useArchivedPagination() {
         agentId: store.selectedAgentId ?? null,
         scope: store.selectedPerimetre ?? null,
       })
-      archivedTasks.value = (result.rows as Task[]).map(normalizeRow)
+      archivedTasks.value = result.rows as Task[]
       total.value = result.total
     } catch (e) {
       console.error('[useArchivedPagination] loadPage error:', e)

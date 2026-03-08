@@ -87,8 +87,8 @@ function createMockDb({
 // ── CURRENT_SCHEMA_VERSION ────────────────────────────────────────────────────
 
 describe('CURRENT_SCHEMA_VERSION', () => {
-  it('equals the last migration version (28)', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(28)
+  it('equals the last migration version (27)', () => {
+    expect(CURRENT_SCHEMA_VERSION).toBe(27)
   })
 })
 
@@ -99,19 +99,19 @@ describe('migrateDb — fresh DB', () => {
 
   it('applies all migrations and returns CURRENT_SCHEMA_VERSION', () => {
     const db = createMockDb({ userVersion: 0, hasConfigTable: false })
-    const result = migrateDb(db as unknown as import('sql.js').Database)
+    const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     expect(result).toBe(CURRENT_SCHEMA_VERSION)
   })
 
   it('sets user_version to CURRENT_SCHEMA_VERSION after full migration', () => {
     const db = createMockDb({ userVersion: 0, hasConfigTable: false })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     expect(db._getVersion()).toBe(CURRENT_SCHEMA_VERSION)
   })
 
   it('wraps each migration in SAVEPOINT / RELEASE', () => {
     const db = createMockDb({ userVersion: 0, hasConfigTable: false })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     for (let v = 1; v <= CURRENT_SCHEMA_VERSION; v++) {
       expect(calls.some((s: string) => s.includes(`SAVEPOINT m${v}`))).toBe(true)
@@ -143,22 +143,22 @@ describe('migrateDb — legacy bootstrap', () => {
     })
   }
 
-  it('sets cursor to 23 (bootstrap) and returns 5 migrations (v24–v28)', () => {
+  it('sets cursor to 23 (bootstrap) and returns 4 migrations (v24, v25, v26, v27)', () => {
     const db = createLegacyDb()
-    const result = migrateDb(db as unknown as import('sql.js').Database)
-    expect(result).toBe(5)
+    const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
+    expect(result).toBe(4)
   })
 
   it('emits PRAGMA user_version = 23 (bootstrap cursor)', () => {
     const db = createLegacyDb()
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s === 'PRAGMA user_version = 23')).toBe(true)
   })
 
   it('does NOT run migrations v1-v23', () => {
     const db = createLegacyDb()
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     // Use exact match (not includes) to avoid "SAVEPOINT m2" matching "SAVEPOINT m24"
     for (let v = 1; v <= 23; v++) {
@@ -168,7 +168,7 @@ describe('migrateDb — legacy bootstrap', () => {
 
   it('runs v24 (ADD COLUMN parent_id) when column is absent', () => {
     const db = createLegacyDb()
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('ADD COLUMN parent_id'))).toBe(true)
   })
@@ -181,21 +181,21 @@ describe('migrateDb — idempotence', () => {
 
   it('returns 0 when user_version already equals CURRENT_SCHEMA_VERSION', () => {
     const db = createMockDb({ userVersion: CURRENT_SCHEMA_VERSION })
-    const result = migrateDb(db as unknown as import('sql.js').Database)
+    const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     expect(result).toBe(0)
   })
 
   it('makes no db.run calls when already up-to-date', () => {
     const db = createMockDb({ userVersion: CURRENT_SCHEMA_VERSION })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     expect(db.run).not.toHaveBeenCalled()
   })
 
   it('second call returns 0 after first call migrated a fresh DB', () => {
     const db = createMockDb({ userVersion: 0, hasConfigTable: false })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     // Now DB is at CURRENT_SCHEMA_VERSION — second call should do nothing
-    const result2 = migrateDb(db as unknown as import('sql.js').Database)
+    const result2 = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     expect(result2).toBe(0)
   })
 })
@@ -215,7 +215,7 @@ describe('migrateDb — SAVEPOINT rollback on error', () => {
       if (sql.includes('DROP INDEX IF EXISTS idx_locks_released_at')) throw error
     })
 
-    expect(() => migrateDb(db as unknown as import('sql.js').Database)).toThrow('DROP TABLE failed')
+    expect(() => migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)).toThrow('DROP TABLE failed')
 
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('SAVEPOINT m26'))).toBe(true)
@@ -228,7 +228,7 @@ describe('migrateDb — SAVEPOINT rollback on error', () => {
     db.run.mockImplementation((sql: string) => {
       if (sql.includes('DROP INDEX IF EXISTS idx_locks_released_at')) throw new Error('fail')
     })
-    try { migrateDb(db as unknown as import('sql.js').Database) } catch { /* expected */ }
+    try { migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb) } catch { /* expected */ }
     // user_version should stay at 25
     expect(db._getVersion()).toBe(25)
   })
@@ -246,7 +246,7 @@ describe('migrateDb v2 — agents column guard', () => {
         agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'],
       },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.every((s: string) => !s.includes('ALTER TABLE agents ADD COLUMN system_prompt '))).toBe(true)
   })
@@ -259,7 +259,7 @@ describe('migrateDb v2 — agents column guard', () => {
         agents: ['id', 'name', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'],
       },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('ADD COLUMN system_prompt '))).toBe(true)
     expect(calls.every((s: string) => !s.includes('ADD COLUMN system_prompt_suffix'))).toBe(true)
@@ -269,7 +269,7 @@ describe('migrateDb v2 — agents column guard', () => {
 
   it('skips all ALTER TABLE calls when agents table does not exist (PRAGMA returns empty)', () => {
     const db = createMockDb({ userVersion: 1, colMap: {} })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.every((s: string) => !s.includes('ALTER TABLE agents'))).toBe(true)
   })
@@ -288,7 +288,7 @@ describe('migrateDb v3 — config table guard', () => {
         agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'],
       },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.every((s: string) => !s.includes('CREATE TABLE config'))).toBe(true)
   })
@@ -301,217 +301,10 @@ describe('migrateDb v3 — config table guard', () => {
         agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'],
       },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('CREATE TABLE config'))).toBe(true)
   })
 })
 
-// ── migrateDb v25 — hasTable COUNT(*) > 0 ────────────────────────────────────
-
-describe('migrateDb v25 — hasTable() guard (COUNT(*) > 0)', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  it('renames perimetres → scopes when perimetres table exists and scopes does not', () => {
-    const db = createMockDb({
-      userVersion: 24,
-      tableMap: { perimetres: true, scopes: false },
-      colMap: {
-        perimetres: ['id', 'name', 'dossier', 'actif'],
-        agents: ['id', 'name', 'perimetre'],
-        sessions: ['id', 'statut'],
-        tasks: ['id', 'titre', 'statut', 'agent_createur_id', 'agent_assigne_id', 'agent_valideur_id', 'perimetre'],
-        task_comments: ['id', 'task_id', 'contenu'],
-        locks: ['id', 'fichier'],
-        agent_logs: ['id', 'niveau', 'fichiers'],
-      },
-    })
-    migrateDb(db as unknown as import('sql.js').Database)
-    const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    expect(calls.some((s: string) => s.includes('ALTER TABLE perimetres RENAME TO scopes'))).toBe(true)
-  })
-
-  it('skips perimetres rename when scopes already exists', () => {
-    const db = createMockDb({
-      userVersion: 24,
-      tableMap: { perimetres: true, scopes: true },
-      colMap: {
-        perimetres: ['id', 'name', 'dossier', 'actif'],
-        agents: ['id', 'name', 'scope'],
-        sessions: ['id', 'status'],
-        tasks: ['id', 'title', 'status'],
-        task_comments: ['id', 'task_id', 'content'],
-        locks: ['id', 'file'],
-        agent_logs: ['id', 'level', 'files'],
-      },
-    })
-    migrateDb(db as unknown as import('sql.js').Database)
-    const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    expect(calls.every((s: string) => !s.includes('RENAME TO scopes'))).toBe(true)
-  })
-
-  it('skips perimetres rename when perimetres table does not exist', () => {
-    const db = createMockDb({
-      userVersion: 24,
-      tableMap: { perimetres: false, scopes: false },
-      colMap: {
-        agents: ['id', 'name', 'scope'],
-        sessions: ['id', 'status'],
-        tasks: ['id', 'title', 'status'],
-        task_comments: ['id', 'task_id', 'content'],
-        locks: ['id', 'file'],
-        agent_logs: ['id', 'level', 'files'],
-      },
-    })
-    migrateDb(db as unknown as import('sql.js').Database)
-    const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    expect(calls.every((s: string) => !s.includes('RENAME TO scopes'))).toBe(true)
-  })
-})
-
-// ── migrateDb v25 — French columns renamed to English ────────────────────────
-
-describe('migrateDb v25 — French column rename', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  function createFrenchDb() {
-    return createMockDb({
-      userVersion: 24,
-      tableMap: { perimetres: true, scopes: false },
-      colMap: {
-        perimetres: ['id', 'name', 'dossier', 'actif'],
-        agents: ['id', 'name', 'perimetre'],
-        sessions: ['id', 'statut'],
-        tasks: ['id', 'titre', 'statut', 'agent_createur_id', 'agent_assigne_id', 'agent_valideur_id', 'perimetre'],
-        task_comments: ['id', 'task_id', 'contenu'],
-        locks: ['id', 'fichier'],
-        agent_logs: ['id', 'niveau', 'fichiers'],
-      },
-    })
-  }
-
-  it('renames agents.perimetre → scope', () => {
-    const db = createFrenchDb()
-    migrateDb(db as unknown as import('sql.js').Database)
-    const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    expect(calls.some((s: string) => s.includes('RENAME COLUMN perimetre TO scope'))).toBe(true)
-  })
-
-  it('renames sessions.statut → status', () => {
-    const db = createFrenchDb()
-    migrateDb(db as unknown as import('sql.js').Database)
-    const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    expect(calls.some((s: string) => s.includes('RENAME COLUMN statut TO status'))).toBe(true)
-  })
-
-  it('renames tasks French columns (titre, statut, agent_createur_id, etc.)', () => {
-    const db = createFrenchDb()
-    migrateDb(db as unknown as import('sql.js').Database)
-    const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    expect(calls.some((s: string) => s.includes('RENAME COLUMN titre TO title'))).toBe(true)
-    expect(calls.some((s: string) => s.includes('RENAME COLUMN agent_createur_id TO agent_creator_id'))).toBe(true)
-    expect(calls.some((s: string) => s.includes('RENAME COLUMN agent_assigne_id TO agent_assigned_id'))).toBe(true)
-    expect(calls.some((s: string) => s.includes('RENAME COLUMN agent_valideur_id TO agent_validator_id'))).toBe(true)
-  })
-
-  it('renames task_comments.contenu → content', () => {
-    const db = createFrenchDb()
-    migrateDb(db as unknown as import('sql.js').Database)
-    const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    expect(calls.some((s: string) => s.includes('RENAME COLUMN contenu TO content'))).toBe(true)
-  })
-
-  it('renames locks.fichier → file', () => {
-    const db = createFrenchDb()
-    migrateDb(db as unknown as import('sql.js').Database)
-    const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    expect(calls.some((s: string) => s.includes('RENAME COLUMN fichier TO file'))).toBe(true)
-  })
-
-  it('renames agent_logs.niveau → level and fichiers → files', () => {
-    const db = createFrenchDb()
-    migrateDb(db as unknown as import('sql.js').Database)
-    const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    expect(calls.some((s: string) => s.includes('RENAME COLUMN niveau TO level'))).toBe(true)
-    expect(calls.some((s: string) => s.includes('RENAME COLUMN fichiers TO files'))).toBe(true)
-  })
-
-  it('is idempotent — skips all renames when columns already in English', () => {
-    const db = createMockDb({
-      userVersion: 24,
-      tableMap: { perimetres: false, scopes: true },
-      colMap: {
-        scopes: ['id', 'name', 'folder', 'active'],
-        agents: ['id', 'name', 'scope'],
-        sessions: ['id', 'status'],
-        tasks: ['id', 'title', 'status', 'agent_creator_id', 'agent_assigned_id', 'agent_validator_id', 'scope'],
-        task_comments: ['id', 'task_id', 'content'],
-        locks: ['id', 'file'],
-        agent_logs: ['id', 'level', 'files'],
-      },
-    })
-    migrateDb(db as unknown as import('sql.js').Database)
-    const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    const renameRuns = calls.filter((s: string) => s.includes('RENAME COLUMN') && !s.includes('tasks_fts'))
-    expect(renameRuns).toHaveLength(0)
-  })
-})
-
-// ── migrateDb v25 — task_links recreation ────────────────────────────────────
-
-describe('migrateDb v25 — task_links French constraint recreation', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  it('recreates task_links when schema contains French constraint names', () => {
-    const frenchTaskLinksSchema = `CREATE TABLE task_links (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      from_task INTEGER NOT NULL REFERENCES tasks(id),
-      to_task INTEGER NOT NULL REFERENCES tasks(id),
-      type TEXT NOT NULL CHECK(type IN ('bloque','dépend_de','lié_à','duplique')),
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`
-    const db = createMockDb({
-      userVersion: 24,
-      taskLinksSql: frenchTaskLinksSchema,
-      tableMap: { perimetres: false },
-      colMap: {
-        agents: ['id', 'name', 'scope'],
-        sessions: ['id', 'status'],
-        tasks: ['id', 'title', 'status'],
-        task_comments: ['id', 'content'],
-        locks: ['id', 'file'],
-        agent_logs: ['id', 'level', 'files'],
-      },
-    })
-    migrateDb(db as unknown as import('sql.js').Database)
-    const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    expect(calls.some((s: string) => s.includes('task_links_new'))).toBe(true)
-    expect(calls.some((s: string) => s.includes('DROP TABLE task_links'))).toBe(true)
-  })
-
-  it('skips task_links recreation when schema already uses English constraint', () => {
-    const englishTaskLinksSchema = `CREATE TABLE task_links (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      from_task INTEGER NOT NULL,
-      to_task INTEGER NOT NULL,
-      type TEXT NOT NULL CHECK(type IN ('blocks','depends_on','related_to','duplicates')),
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`
-    const db = createMockDb({
-      userVersion: 24,
-      taskLinksSql: englishTaskLinksSchema,
-      tableMap: { perimetres: false },
-      colMap: {
-        agents: ['id', 'name', 'scope'],
-        sessions: ['id', 'status'],
-        tasks: ['id', 'title', 'status'],
-        task_comments: ['id', 'content'],
-        locks: ['id', 'file'],
-        agent_logs: ['id', 'level', 'files'],
-      },
-    })
-    migrateDb(db as unknown as import('sql.js').Database)
-    const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    expect(calls.every((s: string) => !s.includes('task_links_new'))).toBe(true)
-  })
-})
+// v25, v25 French rename, v25 task_links → see migration-runner-4.spec.ts

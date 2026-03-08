@@ -1,4 +1,5 @@
-import type { Database } from 'sql.js'
+import type { MigrationDb } from '../migration-db-adapter'
+type Database = MigrationDb
 
 /**
  * Migration: Add worktree_enabled column to agents table (T1142).

@@ -1,16 +1,24 @@
 /**
  * Database infrastructure for agent-viewer
  *
- * Provides sql.js (WASM) caching, read/write helpers with concurrency
- * protection, and security registries for allowed paths.
+ * Provides better-sqlite3 (native) connection pool, read/write helpers
+ * with concurrency protection, and security registries for allowed paths.
+ *
+ * Replaces the sql.js (WASM) implementation — T1157.
  *
  * @module db
  */
 
-import { readFile, writeFile, rename, stat, copyFile, unlink } from 'fs/promises'
-import { join, dirname, resolve } from 'path'
+import { copyFile, unlink } from 'fs/promises'
+import { resolve } from 'path'
+import Database from 'better-sqlite3'
 import { migrateDb as applyMigrations, CURRENT_SCHEMA_VERSION } from './migration'
 import { acquireWriteLock, releaseWriteLock } from './db-lock'
+import type { MigrationDb } from './migration-db-adapter'
+import { createMigrationAdapter } from './migration-db-adapter'
+
+// Re-export MigrationDb for consumers that type writeDb callbacks
+export type { MigrationDb } from './migration-db-adapter'
 
 // ── T282: Registry of allowed DB paths ────────────────────────────────────────
 const allowedDbPaths = new Set<string>()
@@ -53,144 +61,48 @@ export function assertProjectPathAllowed(projectPath: string): void {
   }
 }
 
-// ── DB Cache ─────────────────────────────────────────────────────────────────
-interface DbCacheEntry {
-  buf: Buffer
-  mtime: number
-  lastAccess: number
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  db: any | null // Cached sql.js Database instance (lazily created)
-  dbCreatedAt: number // timestamp when db was created (0 if db is null)
-}
-const dbCache = new Map<string, DbCacheEntry>()
-
-const DB_INSTANCE_TTL_MS = 10_000 // release WASM heap after 10s of inactivity
-const CACHE_TTL_MS = 10_000       // keep buffer in memory for 10s (T1136: reduced from 60s)
-const MAX_CACHE_ENTRIES = 3
-
-function evictStaleCacheEntries(): void {
-  const now = Date.now()
-  for (const [path, entry] of dbCache.entries()) {
-    // Free the WASM instance if unused for DB_INSTANCE_TTL_MS (reduces WASM heap)
-    if (entry.db && now - entry.dbCreatedAt > DB_INSTANCE_TTL_MS) {
-      try { entry.db.close() } catch { /* already closed */ }
-      entry.db = null
-      entry.dbCreatedAt = 0
-    }
-    // Evict the entire entry (buf + db) if not accessed for CACHE_TTL_MS
-    if (now - entry.lastAccess > CACHE_TTL_MS) {
-      if (entry.db) { try { entry.db.close() } catch { /* already closed */ } }
-      console.debug(`[db-cache] evicting buffer for ${path}, size: ${entry.buf.length} bytes`)
-      dbCache.delete(path)
-    }
-  }
-}
-
-function enforceMaxCacheEntries(): void {
-  if (dbCache.size >= MAX_CACHE_ENTRIES) {
-    let oldestPath: string | null = null
-    let oldestTime = Infinity
-    for (const [path, entry] of dbCache.entries()) {
-      if (entry.lastAccess < oldestTime) {
-        oldestTime = entry.lastAccess
-        oldestPath = path
-      }
-    }
-    if (oldestPath) {
-      const entry = dbCache.get(oldestPath)
-      if (entry?.db) { try { entry.db.close() } catch { /* already closed */ } }
-      dbCache.delete(oldestPath)
-    }
-  }
-}
+// ── Connection pool ──────────────────────────────────────────────────────────
+const dbPool = new Map<string, Database.Database>()
 
 /**
- * Gets database buffer with caching based on file mtime.
- * Avoids re-reading disk if file hasn't changed.
+ * Get or create a better-sqlite3 connection for the given path.
+ * Enables WAL mode, busy_timeout, and foreign keys on first open.
  */
-export async function getDbBuffer(dbPath: string): Promise<Buffer> {
-  evictStaleCacheEntries()
-  enforceMaxCacheEntries()
-
-  try {
-    const statResult = await stat(dbPath)
-    const mtimeMs = statResult.mtimeMs
-    const now = Date.now()
-
-    const cached = dbCache.get(dbPath)
-    if (cached && cached.mtime === mtimeMs) {
-      cached.lastAccess = now
-      return cached.buf
-    }
-
-    if (cached?.db) { try { cached.db.close() } catch { /* already closed */ } }
-
-    const buf = await readFile(dbPath)
-    dbCache.set(dbPath, { buf, mtime: mtimeMs, lastAccess: now, db: null, dbCreatedAt: 0 })
-    return buf
-  } catch {
-    return readFile(dbPath)
-  }
+function getDb(dbPath: string): Database.Database {
+  let db = dbPool.get(dbPath)
+  if (db) return db
+  db = new Database(dbPath)
+  db.pragma('journal_mode = WAL')
+  db.pragma('busy_timeout = 5000')
+  db.pragma('foreign_keys = ON')
+  dbPool.set(dbPath, db)
+  return db
 }
 
-// ── sql.js singleton ─────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let SQL: any = null
-
-// ── T1154: WASM module recycling ─────────────────────────────────────────────
-// Emscripten WASM heap never shrinks — each new sqlJs.Database() allocates
-// ~10 MB that persists even after db.close(). After many operations, memory
-// grows to multi-GB (992 buffers × 10 MB = 9.5 GB observed).
-// Fix: periodically destroy the entire sql.js module and create a fresh one.
-// The old module's ArrayBuffers become eligible for V8 GC.
-let sqlJsOpCount = 0
-const MAX_OPS_BEFORE_RECYCLE = 50
-
-/**
- * Get the sql.js WASM singleton. Lazily initialized on first call.
- * Recycles the WASM module when the operation threshold is reached (T1154).
- * @returns {Promise} sql.js module instance
- */
-export async function getSqlJs() {
-  // T1154: recycle WASM module when operation threshold is reached
-  if (sqlJsOpCount >= MAX_OPS_BEFORE_RECYCLE && SQL) {
-    // Close all cached DB instances — they belong to the current WASM module
-    for (const [, entry] of dbCache.entries()) {
-      if (entry.db) {
-        try { entry.db.close() } catch { /* already closed */ }
-        entry.db = null
-        entry.dbCreatedAt = 0
-      }
-    }
-    SQL = null
-    sqlJsOpCount = 0
-    console.debug('[db] sql.js WASM module recycled after', MAX_OPS_BEFORE_RECYCLE, 'operations (heap reset)')
+/** Close and remove a connection from the pool. */
+export function clearDbCacheEntry(dbPath: string): void {
+  const db = dbPool.get(dbPath)
+  if (db) {
+    try { db.close() } catch { /* already closed */ }
+    dbPool.delete(dbPath)
   }
-
-  if (!SQL) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const initSqlJs = require('sql.js')
-    const wasmDir = dirname(require.resolve('sql.js'))
-    SQL = await initSqlJs({
-      locateFile: (file: string) => join(wasmDir, file)
-    })
-  }
-  return SQL
 }
 
 // ── T313: Per-path write mutex ───────────────────────────────────────────────
 const writeMutex = new Map<string, Promise<unknown>>()
 
 /**
- * Shared write helper — reads via cached buffer, runs mutation, exports + writes.
- * Uses per-path mutex and atomic write (temp file + rename).
+ * Shared write helper — opens a connection, runs mutation via MigrationDb adapter.
+ * Uses per-path mutex and cross-process advisory lock for concurrency safety.
+ *
+ * better-sqlite3 writes directly to the file — no export/import cycle needed.
+ *
  * @param dbPath - Absolute path to the SQLite database file
- * @param fn - Callback receiving a sql.js Database instance to run mutations on
+ * @param fn - Callback receiving a MigrationDb adapter to run mutations on
  * @returns The value returned by the callback
- * @throws If the database read, mutation, or atomic write fails
+ * @throws If the mutation fails
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function writeDb<T = void>(dbPath: string, fn: (db: any) => T): Promise<T> {
+export async function writeDb<T = void>(dbPath: string, fn: (db: MigrationDb) => T): Promise<T> {
   const prev = writeMutex.get(dbPath) ?? Promise.resolve()
   let release: () => void
   const gate = new Promise<void>((r) => { release = r })
@@ -198,49 +110,12 @@ export async function writeDb<T = void>(dbPath: string, fn: (db: any) => T): Pro
 
   try {
     await prev
-    // Acquire cross-process advisory lock (.wlock) — same protocol as scripts/dblock.js
     const lockPath = await acquireWriteLock(dbPath)
     try {
-      const sqlJs = await getSqlJs()
-      const buf = await getDbBuffer(dbPath)
-      const db = new sqlJs.Database(buf)
-      try {
-        const result = fn(db)
-        // T1110: skip export+write if callback signals no changes (returns false)
-        if (result === false) return result as T
-        const exported = db.export()
-        const newBuf = Buffer.from(exported)
-        const tmpPath = dbPath + '.tmp'
-        await writeFile(tmpPath, newBuf)
-        // On Windows, rename over a locked file throws EPERM — fall back to copyFile + unlink
-        try {
-          await rename(tmpPath, dbPath)
-        } catch (err: unknown) {
-          if ((err as NodeJS.ErrnoException).code === 'EPERM') {
-            await copyFile(tmpPath, dbPath)
-            await unlink(tmpPath)
-          } else {
-            throw err
-          }
-        }
-        // Update cache: refresh buffer, invalidate DB instance (lazy recreation on next queryLive)
-        // Avoids creating a second WASM Database instance per write — WASM heap never shrinks (T908)
-        const statResult = await stat(dbPath)
-        const entry = dbCache.get(dbPath)
-        if (entry?.db) { try { entry.db.close() } catch { /* ignore */ } }
-        if (entry) {
-          entry.buf = newBuf
-          entry.mtime = statResult.mtimeMs
-          entry.lastAccess = Date.now()
-          entry.db = null
-        } else {
-          dbCache.set(dbPath, { buf: newBuf, mtime: statResult.mtimeMs, lastAccess: Date.now(), db: null, dbCreatedAt: 0 })
-        }
-        return result
-      } finally {
-        db.close()
-        sqlJsOpCount++ // T1154: track WASM heap pressure
-      }
+      const db = getDb(dbPath)
+      const adapter = createMigrationAdapter(db)
+      const result = fn(adapter)
+      return result
     } finally {
       await releaseWriteLock(lockPath)
     }
@@ -253,58 +128,18 @@ export async function writeDb<T = void>(dbPath: string, fn: (db: any) => T): Pro
 // ── queryLive ────────────────────────────────────────────────────────────────
 
 /**
- * Execute a read-only SQL query using cached DB buffer and sql.js instance.
- * Retries once on malformed DB errors (cache invalidation).
+ * Execute a read-only SQL query using a pooled better-sqlite3 connection.
+ * Returns rows as plain JS objects (strings, not Uint8Array).
+ *
  * @param dbPath - Path to the SQLite database
  * @param query - SQL query string
  * @param params - Bind parameters
- * @returns {Promise<Record<string, unknown>[]>} Query result rows
- * @throws {Error} If query fails after retry
+ * @returns Query result rows as objects
  */
 export async function queryLive(dbPath: string, query: string, params: unknown[]): Promise<unknown[]> {
-  return queryLiveAttempt(dbPath, query, params, true)
-}
-
-async function queryLiveAttempt(
-  dbPath: string, query: string, params: unknown[], canRetry: boolean
-): Promise<unknown[]> {
-  const sqlJs = await getSqlJs()
-  const buf = await getDbBuffer(dbPath)
-
-  const entry = dbCache.get(dbPath)
-  let db = entry?.db
-  if (!db) {
-    db = new sqlJs.Database(buf)
-    sqlJsOpCount++ // T1154: track WASM heap pressure
-    if (entry) {
-      entry.db = db
-      entry.dbCreatedAt = Date.now()
-    }
-  }
-
-  try {
-    const stmt = db.prepare(query)
-    const rows: Record<string, unknown>[] = []
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    stmt.bind(params as any)
-    while (stmt.step()) {
-      rows.push(stmt.getAsObject())
-    }
-    stmt.free()
-    return rows
-  } catch (err) {
-    if (entry && entry.db === db) {
-      try { db.close() } catch { /* ignore */ }
-      entry.db = null
-    }
-    const msg = String(err)
-    if (canRetry && (msg.includes('malformed') || msg.includes('not a database'))) {
-      console.warn('[queryLive] Malformed DB buffer — evicting cache and retrying once:', msg)
-      dbCache.delete(dbPath)
-      return queryLiveAttempt(dbPath, query, params, false)
-    }
-    throw err
-  }
+  const db = getDb(dbPath)
+  const stmt = db.prepare(query)
+  return params.length > 0 ? stmt.all(...params) : stmt.all()
 }
 
 // ── Migration ────────────────────────────────────────────────────────────────
@@ -316,25 +151,16 @@ async function queryLiveAttempt(
  * Fast-path: skips migration if PRAGMA user_version is already at CURRENT_SCHEMA_VERSION.
  *
  * @param dbPath - Path to the SQLite database
- * @returns {Promise<{ migrated: number }>} Number of migrations applied
- * @throws {Error} If migration fails (backup is kept)
+ * @returns Number of migrations applied
+ * @throws If migration fails (backup is kept)
  */
 export async function migrateDb(dbPath: string): Promise<{ migrated: number }> {
-  const sqlJs = await getSqlJs()
-
-  // Fast-path: check user_version before loading the full DB
+  // Fast-path: check user_version before full migration
   try {
-    const checkBuf = await getDbBuffer(dbPath)
-    const checkDb = new sqlJs.Database(checkBuf)
-    sqlJsOpCount++ // T1154
-    try {
-      const uvResult = checkDb.exec('PRAGMA user_version')
-      const currentVersion = uvResult.length > 0 && uvResult[0].values.length > 0
-        ? (uvResult[0].values[0][0] as number) : 0
-      if (currentVersion >= CURRENT_SCHEMA_VERSION) return { migrated: 0 }
-    } finally {
-      checkDb.close()
-    }
+    const db = getDb(dbPath)
+    const row = db.pragma('user_version', { simple: true })
+    const currentVersion = typeof row === 'number' ? row : 0
+    if (currentVersion >= CURRENT_SCHEMA_VERSION) return { migrated: 0 }
   } catch { /* DB unreadable — proceed to full migration */ }
 
   // Migration needed — acquire cross-process lock before backup + write
@@ -343,27 +169,18 @@ export async function migrateDb(dbPath: string): Promise<{ migrated: number }> {
     const backupPath = `${dbPath}.bak`
     await copyFile(dbPath, backupPath)
 
-    const buf = await readFile(dbPath)
-    const db = new sqlJs.Database(buf)
-    sqlJsOpCount++ // T1154
+    // Close pooled connection before migration (will reopen after)
+    clearDbCacheEntry(dbPath)
+
+    const db = new Database(dbPath)
+    db.pragma('journal_mode = WAL')
+    db.pragma('busy_timeout = 5000')
 
     try {
-      const migrated = applyMigrations(db)
+      const adapter = createMigrationAdapter(db)
+      const migrated = applyMigrations(adapter)
 
       if (migrated > 0) {
-        const exported = db.export()
-        const tmpPath = `${dbPath}.migrate.tmp`
-        await writeFile(tmpPath, Buffer.from(exported))
-        try {
-          await rename(tmpPath, dbPath)
-        } catch (err) {
-          if ((err as NodeJS.ErrnoException).code === 'EPERM') {
-            await copyFile(tmpPath, dbPath)
-            await unlink(tmpPath)
-          } else {
-            throw err
-          }
-        }
         console.log('[migrateDb] schema updated:', dbPath)
       }
 
@@ -386,17 +203,3 @@ export async function migrateDb(dbPath: string): Promise<{ migrated: number }> {
 // ── SQL write guard ──────────────────────────────────────────────────────────
 
 export const FORBIDDEN_WRITE_PATTERN = /\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE|ATTACH|DETACH|VACUUM)\b/i
-
-/** Clear cached DB entry for a given path (used when unwatching). */
-export function clearDbCacheEntry(dbPath: string): void {
-  const entry = dbCache.get(dbPath)
-  if (entry?.db) { try { entry.db.close() } catch { /* ignore */ } }
-  dbCache.delete(dbPath)
-}
-
-/** @internal Test-only access to WASM recycling state (T1154) */
-export const _testingRecycle = {
-  get opCount() { return sqlJsOpCount },
-  set opCount(v: number) { sqlJsOpCount = v },
-  MAX_OPS_BEFORE_RECYCLE,
-}

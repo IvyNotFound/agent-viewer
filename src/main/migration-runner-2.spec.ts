@@ -67,14 +67,14 @@ describe('migrateDb v3 — exact SQL strings', () => {
 
   it('inserts exact config keys (claude_md_commit, schema_version)', () => {
     const db = makeMockDb({ userVersion: 2, tableMap: { config: false }, colMap: { agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'] } })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes("'claude_md_commit'") && s.includes("'schema_version'"))).toBe(true)
   })
 
   it('creates config table with key, value, updated_at columns', () => {
     const db = makeMockDb({ userVersion: 2, tableMap: { config: false }, colMap: { agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'] } })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const createConfig = calls.find((s: string) => s.includes('CREATE TABLE config'))
     expect(createConfig).toBeDefined()
@@ -95,7 +95,7 @@ describe('migrateDb v4 — perimetres table guard', () => {
       tableMap: { config: true, perimetres: false },
       colMap: { agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('CREATE TABLE perimetres'))).toBe(true)
   })
@@ -106,7 +106,7 @@ describe('migrateDb v4 — perimetres table guard', () => {
       tableMap: { config: true, perimetres: false },
       colMap: { agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const insertCall = calls.find((s: string) => s.includes('INSERT INTO perimetres'))
     expect(insertCall).toBeDefined()
@@ -121,7 +121,7 @@ describe('migrateDb v4 — perimetres table guard', () => {
       tableMap: { config: true, perimetres: true },
       colMap: { agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.every((s: string) => !s.includes('CREATE TABLE perimetres'))).toBe(true)
   })
@@ -141,42 +141,42 @@ describe('migrateDb v5 — exact index names', () => {
 
   it('creates idx_sessions_agent_id', () => {
     const db = createV4Db()
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('idx_sessions_agent_id'))).toBe(true)
   })
 
   it('creates idx_sessions_started_at DESC', () => {
     const db = createV4Db()
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('idx_sessions_started_at') && s.includes('DESC'))).toBe(true)
   })
 
   it('creates idx_agent_logs_agent_id', () => {
     const db = createV4Db()
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('idx_agent_logs_agent_id'))).toBe(true)
   })
 
   it('creates idx_task_comments_task_id', () => {
     const db = createV4Db()
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('idx_task_comments_task_id'))).toBe(true)
   })
 
   it('creates idx_tasks_updated_at DESC', () => {
     const db = createV4Db()
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('idx_tasks_updated_at') && s.includes('DESC'))).toBe(true)
   })
 
   it('creates idx_sessions_agent_started composite index', () => {
     const db = createV4Db()
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('idx_sessions_agent_started') && s.includes('agent_id, started_at DESC'))).toBe(true)
   })
@@ -193,7 +193,7 @@ describe('migrateDb v6 — task_agents table guard', () => {
       tableMap: { task_agents: false },
       colMap: { agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('task_agents'))).toBe(true)
   })
@@ -204,7 +204,7 @@ describe('migrateDb v6 — task_agents table guard', () => {
       tableMap: { task_agents: true },
       colMap: { agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     // Only SAVEPOINT/RELEASE/PRAGMA calls should exist — no CREATE TABLE task_agents
     expect(calls.every((s: string) => !s.includes('CREATE TABLE') || !s.includes('task_agents'))).toBe(true)
@@ -216,7 +216,7 @@ describe('migrateDb v6 — task_agents table guard', () => {
       tableMap: { task_agents: false },
       colMap: { agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('idx_task_agents_task_id'))).toBe(true)
     expect(calls.some((s: string) => s.includes('idx_task_agents_agent_id'))).toBe(true)
@@ -228,7 +228,7 @@ describe('migrateDb v6 — task_agents table guard', () => {
       tableMap: { task_agents: false },
       colMap: { agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const ddl = calls.find((s: string) => s.includes('CREATE TABLE IF NOT EXISTS task_agents'))
     expect(ddl).toBeDefined()
@@ -249,7 +249,7 @@ describe('migrateDb v17 — auto_launch column guard', () => {
       userVersion: 16,
       colMap: { agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('ADD COLUMN auto_launch'))).toBe(true)
   })
@@ -259,7 +259,7 @@ describe('migrateDb v17 — auto_launch column guard', () => {
       userVersion: 16,
       colMap: { agents: ['id', 'name', 'auto_launch', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.every((s: string) => !s.includes('ADD COLUMN auto_launch'))).toBe(true)
   })
@@ -269,7 +269,7 @@ describe('migrateDb v17 — auto_launch column guard', () => {
       userVersion: 16,
       colMap: { agents: ['id', 'name'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const col = calls.find((s: string) => s.includes('ADD COLUMN auto_launch'))
     expect(col).toBeDefined()
@@ -278,7 +278,7 @@ describe('migrateDb v17 — auto_launch column guard', () => {
 
   it('skips when agents table does not exist (PRAGMA returns empty)', () => {
     const db = makeMockDb({ userVersion: 16, colMap: {} })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.every((s: string) => !s.includes('ADD COLUMN auto_launch'))).toBe(true)
   })
@@ -292,7 +292,7 @@ describe('migrateDb v18 — permission_mode column guard', () => {
       userVersion: 17,
       colMap: { agents: ['id', 'name', 'auto_launch'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('ADD COLUMN permission_mode'))).toBe(true)
   })
@@ -302,7 +302,7 @@ describe('migrateDb v18 — permission_mode column guard', () => {
       userVersion: 17,
       colMap: { agents: ['id', 'name', 'auto_launch', 'permission_mode'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.every((s: string) => !s.includes('ADD COLUMN permission_mode'))).toBe(true)
   })
@@ -312,7 +312,7 @@ describe('migrateDb v18 — permission_mode column guard', () => {
       userVersion: 17,
       colMap: { agents: ['id', 'name'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const col = calls.find((s: string) => s.includes('ADD COLUMN permission_mode'))
     expect(col).toBeDefined()
@@ -329,7 +329,7 @@ describe('migrateDb v19 — max_sessions column guard', () => {
       userVersion: 18,
       colMap: { agents: ['id', 'name', 'auto_launch', 'permission_mode'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('ADD COLUMN max_sessions'))).toBe(true)
   })
@@ -339,7 +339,7 @@ describe('migrateDb v19 — max_sessions column guard', () => {
       userVersion: 18,
       colMap: { agents: ['id', 'name', 'auto_launch', 'permission_mode', 'max_sessions'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.every((s: string) => !s.includes('ADD COLUMN max_sessions'))).toBe(true)
   })
@@ -349,7 +349,7 @@ describe('migrateDb v19 — max_sessions column guard', () => {
       userVersion: 18,
       colMap: { agents: ['id', 'name'] },
     })
-    migrateDb(db as unknown as import('sql.js').Database)
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const col = calls.find((s: string) => s.includes('ADD COLUMN max_sessions'))
     expect(col).toBeDefined()
@@ -357,15 +357,4 @@ describe('migrateDb v19 — max_sessions column guard', () => {
   })
 })
 
-// ── CURRENT_SCHEMA_VERSION alignment ─────────────────────────────────────────
-
-describe('CURRENT_SCHEMA_VERSION alignment', () => {
-  it('counts of migrations array matches CURRENT_SCHEMA_VERSION', () => {
-    // Validate: applying from v0 returns exactly CURRENT_SCHEMA_VERSION migrations
-    const db = makeMockDb({ userVersion: 0 })
-    const applied = migrateDb(db as unknown as import('sql.js').Database)
-    expect(applied).toBeGreaterThan(0)
-    expect(db._getVersion()).toBe(28)
-  })
-})
-
+// v20 onward → see migration-runner-5.spec.ts

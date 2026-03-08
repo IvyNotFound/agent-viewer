@@ -243,7 +243,7 @@ Ne JAMAIS passer du SQL complexe en argument positionnel \`node scripts/dbw.js "
 - Framework : **Vitest 4** (Node environment, pas jsdom)
 - Mocker ipcMain, app, BrowserWindow via vi.mock('electron', ...)
 - Mocker node-pty via vi.mock('node-pty', ...) avec function () syntax
-- Mocker better-sqlite3 / sql.js via vi.mock pour isoler les tests DB
+- Mocker better-sqlite3 via vi.mock pour isoler les tests DB
 - 0 erreur TypeScript dans les fichiers spec
 - Ne jamais modifier les fichiers sources pour faire passer un test — corriger le test
 

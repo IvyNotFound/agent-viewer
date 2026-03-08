@@ -19,6 +19,7 @@
 
 const fs = require('fs')
 const path = require('path')
+const Database = require('better-sqlite3')
 
 const DB_PATH = path.resolve(__dirname, '../.claude/project.db')
 const PROJECT_PATH = path.resolve(__dirname, '..')
@@ -93,32 +94,23 @@ async function main() {
   const tokens = parseTokensFromJSONL(transcriptPath)
   if (tokens.tokensIn === 0 && tokens.tokensOut === 0) process.exit(0)
 
-  // 5. Load sql.js with wasm binary (avoids async init issues)
-  const initSqlJs = require('sql.js')
-  const wasmPath = require.resolve('sql.js/dist/sql-wasm.wasm')
-  const wasmBuf = fs.readFileSync(wasmPath)
-  const SQL = await initSqlJs({ wasmBinary: wasmBuf })
-
-  // 6. Find the target session by conv_id, fallback to most recent with no tokens
+  // 5. Find the target session by conv_id, fallback to most recent with no tokens
   let sessionId = null
   {
-    const buf = fs.readFileSync(DB_PATH)
-    const db = new SQL.Database(buf)
+    const db = new Database(DB_PATH, { readonly: true })
+    db.pragma('busy_timeout = 5000')
 
-    const byConvId = db.prepare('SELECT id FROM sessions WHERE claude_conv_id = ?')
-    byConvId.bind([convId])
-    if (byConvId.step()) sessionId = byConvId.getAsObject().id
-    byConvId.free()
+    const byConvId = db.prepare('SELECT id FROM sessions WHERE claude_conv_id = ?').get(convId)
+    if (byConvId) sessionId = byConvId.id
 
     if (sessionId === null) {
       const fallback = db.prepare(
         "SELECT id FROM sessions WHERE (tokens_in = 0 OR tokens_in IS NULL) AND statut IN ('started','completed') ORDER BY id DESC LIMIT 1"
-      )
-      if (fallback.step()) {
-        sessionId = fallback.getAsObject().id
+      ).get()
+      if (fallback) {
+        sessionId = fallback.id
         process.stderr.write(`[capture-tokens] Fallback: using session ${sessionId} (conv_id ${convId} not found)\n`)
       }
-      fallback.free()
     }
     db.close()
   }
@@ -128,21 +120,17 @@ async function main() {
     process.exit(0)
   }
 
-  // 7. Write token counts — use advisory lock to prevent concurrent write races
+  // 6. Write token counts — use advisory lock to prevent concurrent write races
   const { acquireLock, releaseLock, cleanupOrphanTmp } = require('./dblock')
   cleanupOrphanTmp(DB_PATH)
   const lockPath = acquireLock(DB_PATH)
   try {
-    const buf = fs.readFileSync(DB_PATH)
-    const db = new SQL.Database(buf)
-    const stmt = db.prepare(
+    const db = new Database(DB_PATH)
+    db.pragma('journal_mode = WAL')
+    db.pragma('busy_timeout = 5000')
+    db.prepare(
       'UPDATE sessions SET tokens_in = ?, tokens_out = ?, tokens_cache_read = ?, tokens_cache_write = ? WHERE id = ?'
-    )
-    stmt.run([tokens.tokensIn, tokens.tokensOut, tokens.cacheRead, tokens.cacheWrite, sessionId])
-    stmt.free()
-    const tmpPath = `${DB_PATH}.tmp.${process.pid}.${Date.now()}`
-    fs.writeFileSync(tmpPath, Buffer.from(db.export()))
-    fs.renameSync(tmpPath, DB_PATH)
+    ).run(tokens.tokensIn, tokens.tokensOut, tokens.cacheRead, tokens.cacheWrite, sessionId)
     db.close()
     process.stderr.write(`[capture-tokens] session ${sessionId}: in=${tokens.tokensIn} out=${tokens.tokensOut} cacheR=${tokens.cacheRead} cacheW=${tokens.cacheWrite}\n`)
   } finally {

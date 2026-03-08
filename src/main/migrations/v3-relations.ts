@@ -1,4 +1,5 @@
-import type { Database } from 'sql.js'
+import type { MigrationDb } from '../migration-db-adapter'
+type Database = MigrationDb
 
 /**
  * Helper: finds the 'review' agent id, or the first agent id as fallback.

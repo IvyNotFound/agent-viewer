@@ -1,4 +1,5 @@
-import type { Database } from 'sql.js'
+import type { MigrationDb } from '../migration-db-adapter'
+type Database = MigrationDb
 
 /**
  * Returns true if the tasks table CHECK constraint already includes a modern

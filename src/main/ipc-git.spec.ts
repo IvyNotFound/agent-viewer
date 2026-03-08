@@ -39,18 +39,16 @@ vi.mock('electron', () => ({
   },
 }))
 
-// ── sql.js mock ────────────────────────────────────────────────────────────────
-vi.mock('sql.js', () => ({
-  default: vi.fn().mockResolvedValue({
-    Database: vi.fn(() => ({
-      prepare: vi.fn(() => ({ bind: vi.fn(), step: vi.fn(() => false), getAsObject: vi.fn(() => ({})), free: vi.fn() })),
-      exec: vi.fn(() => []),
-      run: vi.fn(),
-      export: vi.fn(() => new Uint8Array([1, 2, 3])),
+// ── better-sqlite3 mock ─────────────────────────────────────────────────────
+vi.mock('better-sqlite3', () => ({
+  default: function MockDatabase() {
+    return {
+      pragma: vi.fn(),
+      prepare: vi.fn(() => ({ run: vi.fn(), all: vi.fn(() => []), get: vi.fn() })),
+      exec: vi.fn(),
       close: vi.fn(),
-      getRowsModified: vi.fn(() => 0),
-    })),
-  }),
+    }
+  },
 }))
 
 // ── fs mock ────────────────────────────────────────────────────────────────────

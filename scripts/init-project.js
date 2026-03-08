@@ -12,12 +12,11 @@
  *   4. Insère la config initiale (schema_version, claude_md_commit)
  *   5. Copie les fichiers template dans le répertoire cible
  *
- * Prérequis : npm install (sql.js disponible)
- * Note : utilise sql.js (async) — better-sqlite3 non installé dans ce projet
+ * Prérequis : npm install (better-sqlite3 disponible)
  * Exit 0 : succès | Exit 1 : erreur
  */
 
-const initSqlJs = require('sql.js')
+const Database = require('better-sqlite3')
 const fs = require('fs')
 const path = require('path')
 
@@ -183,13 +182,15 @@ if (fs.existsSync(dbPath)) {
 // Créer le répertoire cible si nécessaire
 fs.mkdirSync(targetDir, { recursive: true })
 
-initSqlJs().then((SQL) => {
-  // Créer une nouvelle DB vide
-  const db = new SQL.Database()
+try {
+  // Créer une nouvelle DB
+  const db = new Database(dbPath)
+  db.pragma('journal_mode = WAL')
+  db.pragma('busy_timeout = 5000')
 
   // ── 1. Schéma ──────────────────────────────────────────────────────────────
   console.log('\n[1/5] Création du schéma...')
-  db.run(SCHEMA_SQL)
+  db.exec(SCHEMA_SQL)
   const schemaVersion = CONFIG.find(c => c.key === 'schema_version').value
   log(`Tables créées (schéma v${schemaVersion})`)
 
@@ -200,7 +201,7 @@ initSqlJs().then((SQL) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `)
   for (const a of AGENTS) {
-    stmtAgent.run([
+    stmtAgent.run(
       a.id,
       a.name,
       a.type ?? null,
@@ -209,10 +210,9 @@ initSqlJs().then((SQL) => {
       a.system_prompt_suffix ?? null,
       a.thinking_mode ?? null,
       a.allowed_tools ?? null,
-    ])
+    )
     log(`Agent ${String(a.id).padStart(3)}: ${a.name} (${a.type ?? '-'})`)
   }
-  stmtAgent.free()
 
   // ── 3. Périmètres ──────────────────────────────────────────────────────────
   console.log('\n[3/5] Insertion des périmètres...')
@@ -221,25 +221,20 @@ initSqlJs().then((SQL) => {
     VALUES (?, ?, ?, ?, ?)
   `)
   for (const p of PERIMETRES) {
-    stmtPeri.run([p.name, p.dossier, p.techno, p.description, p.actif])
+    stmtPeri.run(p.name, p.dossier, p.techno, p.description, p.actif)
     log(`Périmètre: ${p.name}`)
   }
-  stmtPeri.free()
 
   // ── 4. Config ──────────────────────────────────────────────────────────────
   console.log('\n[4/5] Insertion de la config initiale...')
   const stmtConfig = db.prepare(`INSERT INTO config (key, value) VALUES (?, ?)`)
   for (const c of CONFIG) {
-    stmtConfig.run([c.key, c.value])
+    stmtConfig.run(c.key, c.value)
     log(`config.${c.key} = '${c.value}'`)
   }
-  stmtConfig.free()
 
-  // Persister la DB sur disque
-  const dbBuf = Buffer.from(db.export())
-  fs.writeFileSync(dbPath, dbBuf)
   db.close()
-  log(`DB persistée : ${dbBuf.length} octets`)
+  log(`DB persistée : ${dbPath}`)
 
   // ── 5. Templates ───────────────────────────────────────────────────────────
   console.log('\n[5/5] Copie des fichiers template...')
@@ -275,6 +270,6 @@ initSqlJs().then((SQL) => {
   console.log(`  2. node scripts/dbstart.js setup`)
   console.log(`  3. node scripts/dbstart.js arch  (pour créer les premières ADRs)`)
   process.exit(0)
-}).catch((err) => {
-  die(`Erreur sql.js : ${err.message}\n${err.stack}`)
-})
+} catch (err) {
+  die(`Erreur better-sqlite3 : ${err.message}\n${err.stack}`)
+}

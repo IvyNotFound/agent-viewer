@@ -11,7 +11,7 @@
  * - POST /hooks/post-tool-use  → push IPC hook:event (no DB write — high volume)
  * - POST /hooks/instructions-loaded → push IPC hook:event (InstructionsLoaded)
  *
- * Uses sql.js via writeDb() (same as IPC handlers) — no better-sqlite3.
+ * Uses better-sqlite3 via writeDb() (same as IPC handlers).
  * Always returns 2xx to avoid blocking Claude Code shutdown.
  *
  * @module hookServer

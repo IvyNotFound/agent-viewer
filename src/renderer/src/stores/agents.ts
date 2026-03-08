@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Agent, AgentGroup } from '@renderer/types'
 import { useProjectStore } from '@renderer/stores/project'
-import { normalizeRow } from '@renderer/utils/db'
 
 export const AGENT_CTE_SQL = `
   WITH latest_sessions AS (
@@ -87,7 +86,7 @@ export const useAgentsStore = defineStore('agents', () => {
     if (document.visibilityState === 'hidden') return
     try {
       const rawAgents = await query<Agent>(AGENT_CTE_SQL)
-      agents.value = rawAgents.map(normalizeRow)
+      agents.value = rawAgents
     } catch {
       // silent: main refresh handles error display
     }

@@ -1,21 +1,20 @@
 #!/usr/bin/env node
 /**
- * dbw.js — SQLite write wrapper (bypasses Windows file locks via fs.readFile/writeFile)
+ * dbw.js — SQLite write wrapper (better-sqlite3, file-based)
  *
  * Usage:
  *   node scripts/dbw.js "UPDATE tasks SET statut='en_cours' WHERE id=250"
  *   echo "UPDATE ..." | node scripts/dbw.js   # stdin (safe for complex queries)
  *   echo '{"sql":"INSERT INTO t (col) VALUES (?)","params":["val with apostrophe O'\''Brien"]}' | node scripts/dbw.js
  *
- * Load → modify in memory → export. Uses an OS-level advisory lock (.wlock file)
- * to serialize concurrent writes and prevent lost-update races between agents.
+ * Uses better-sqlite3 for direct file access — no export/import cycle.
+ * Advisory lock (.wlock file) serializes concurrent writes between agents.
  *
  * Stdin mode avoids shell interpretation of backticks, $(), quotes and newlines.
  * Useful for long UPDATE/INSERT with system_prompt content or multi-line SQL.
  */
 
-const initSqlJs = require('sql.js')
-const fs = require('fs')
+const Database = require('better-sqlite3')
 const path = require('path')
 const { acquireLock, releaseLock, cleanupOrphanTmp } = require('./dblock')
 
@@ -24,70 +23,40 @@ const sqlArg = process.argv[2]
 const dbPath = path.resolve(process.cwd(), '.claude/project.db')
 
 /**
- * Retries fs.renameSync up to maxRetries times on EPERM/EBUSY (Windows file lock).
- * @param {string} src
- * @param {string} dest
- * @param {number} [maxRetries=3]
- * @param {number} [delayMs=200]
- */
-function renameWithRetry(src, dest, maxRetries = 3, delayMs = 200) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      fs.renameSync(src, dest)
-      return
-    } catch (err) {
-      if (i === maxRetries - 1 || (err.code !== 'EPERM' && err.code !== 'EBUSY')) throw err
-      // On Windows the file may be temporarily locked — wait and retry
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delayMs)
-    }
-  }
-}
-
-/**
- * Executes a write SQL statement and persists the result.
+ * Executes a write SQL statement directly on the database file.
  * Serialized via advisory lock to prevent concurrent lost-update races.
  * @param {string} sql
  * @param {any[]} [params=[]] — Bound parameters for prepared statement (T620)
  */
 function run(sql, params = []) {
   // Normalize MySQL/PostgreSQL datetime functions to SQLite equivalents.
-  // Note: regex may replace NOW() inside string literals — acceptable trade-off.
   sql = sql.replace(/\bNOW\s*\(\s*\)/gi, 'CURRENT_TIMESTAMP')
   // Normalize typographic quotes to ASCII equivalents.
-  // Note: regex may replace curly quotes inside string literals — acceptable trade-off.
-  sql = sql.replace(/[\u201C\u201D]/g, '"') // curly double quotes -> straight
-  sql = sql.replace(/[\u2018\u2019]/g, "'") // curly single quotes -> straight
-  sql = sql.replace(/\\"/g, '"') // backslash-escaped double quote -> straight
-  sql = sql.replace(/\\'/g, "'") // backslash-escaped single quote -> straight
+  sql = sql.replace(/[\u201C\u201D]/g, '"')
+  sql = sql.replace(/[\u2018\u2019]/g, "'")
+  sql = sql.replace(/\\"/g, '"')
+  sql = sql.replace(/\\'/g, "'")
 
-  initSqlJs().then((SQL) => {
-    cleanupOrphanTmp(dbPath)
-    const lockPath = acquireLock(dbPath)
-    let db
-    try {
-      const buf = fs.readFileSync(dbPath)
-      db = new SQL.Database(buf)
-      if (params.length > 0) {
-        // Parameterized query — single statement only (sql.js limitation)
-        const stmt = db.prepare(sql)
-        stmt.run(params)
-        stmt.free()
-      } else {
-        // Non-parameterized — support multi-statement via exec()
-        db.exec(sql)
-      }
-      // T313: Atomic write — unique temp file + rename prevents partial reads
-      const tmpPath = `${dbPath}.tmp.${process.pid}.${Date.now()}`
-      fs.writeFileSync(tmpPath, Buffer.from(db.export()))
-      renameWithRetry(tmpPath, dbPath)
-    } finally {
-      if (db) db.close()
-      releaseLock(lockPath)
+  cleanupOrphanTmp(dbPath)
+  const lockPath = acquireLock(dbPath)
+  try {
+    const db = new Database(dbPath)
+    db.pragma('journal_mode = WAL')
+    db.pragma('busy_timeout = 5000')
+    if (params.length > 0) {
+      // Parameterized query — single statement only
+      db.prepare(sql).run(...params)
+    } else {
+      // Non-parameterized — support multi-statement via exec()
+      db.exec(sql)
     }
-  }).catch((err) => {
+    db.close()
+  } catch (err) {
+    releaseLock(lockPath)
     console.error('ERREUR dbw:', err.message)
     process.exit(1)
-  })
+  }
+  releaseLock(lockPath)
 }
 
 if (sqlArg) {

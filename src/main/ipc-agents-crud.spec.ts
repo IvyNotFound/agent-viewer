@@ -93,6 +93,13 @@ vi.mock('./db-lock', () => ({
   releaseWriteLock: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock('better-sqlite3', async (importOriginal) => {
+  const mod = await importOriginal()
+  return {
+    default: function MockDatabase() { return new (mod as any).default(':memory:') },
+  }
+})
+
 vi.mock('child_process', () => ({
   default: { execSync: vi.fn(), execFile: vi.fn(), spawn: vi.fn(() => ({ unref: vi.fn() })) },
   execSync: vi.fn(),
@@ -117,9 +124,7 @@ beforeEach(async () => {
   clearDbCacheEntry(TEST_DB_PATH)
   dbMtime = 1000
 
-  const db = await buildSchema()
-  dbBuffer = Buffer.from(db.export())
-  db.close()
+  await buildSchema()
 
   registerDbPath(TEST_DB_PATH)
   registerProjectPath(TEST_PROJECT_PATH)

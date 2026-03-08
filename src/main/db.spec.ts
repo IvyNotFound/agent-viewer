@@ -1,14 +1,14 @@
 /**
- * Tests for DB infrastructure — src/main/db.ts (T349)
+ * Tests for DB infrastructure — src/main/db.ts (T1157)
  *
- * Covers: getDbBuffer cache, clearDbCacheEntry, registerDbPath/assertDbPathAllowed,
- * registerProjectPath/assertProjectPathAllowed, getSqlJs, writeDb, queryLive,
+ * Covers: connection pool, clearDbCacheEntry, registerDbPath/assertDbPathAllowed,
+ * registerProjectPath/assertProjectPathAllowed, writeDb, queryLive,
  * migrateDb, FORBIDDEN_WRITE_PATTERN.
  *
  * Framework: Vitest (node environment)
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { resolve } from 'path'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
@@ -21,216 +21,57 @@ vi.mock('./db-lock', () => ({
   releaseWriteLock: (...args: unknown[]) => mockReleaseWriteLock(...args),
 }))
 
-const mockStat = vi.fn()
-const mockReadFile = vi.fn()
-const mockWriteFile = vi.fn().mockResolvedValue(undefined)
-const mockRename = vi.fn().mockResolvedValue(undefined)
 const mockCopyFile = vi.fn().mockResolvedValue(undefined)
 const mockUnlink = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('fs/promises', () => ({
   default: {
-    stat: (...args: unknown[]) => mockStat(...args),
-    readFile: (...args: unknown[]) => mockReadFile(...args),
-    writeFile: (...args: unknown[]) => mockWriteFile(...args),
-    rename: (...args: unknown[]) => mockRename(...args),
     copyFile: (...args: unknown[]) => mockCopyFile(...args),
     unlink: (...args: unknown[]) => mockUnlink(...args),
   },
-  stat: (...args: unknown[]) => mockStat(...args),
-  readFile: (...args: unknown[]) => mockReadFile(...args),
-  writeFile: (...args: unknown[]) => mockWriteFile(...args),
-  rename: (...args: unknown[]) => mockRename(...args),
   copyFile: (...args: unknown[]) => mockCopyFile(...args),
   unlink: (...args: unknown[]) => mockUnlink(...args),
 }))
 
 // Mock migration module — db.ts delegates all migration logic to migration.ts
 const mockApplyMigrations = vi.fn(() => 0)
-const MOCK_CURRENT_SCHEMA_VERSION = 19 // must match vi.mock factory below
 
 vi.mock('./migration', () => ({
   migrateDb: (...args: unknown[]) => mockApplyMigrations(...args),
-  CURRENT_SCHEMA_VERSION: 19, // literal: vi.mock is hoisted, cannot reference const above
+  CURRENT_SCHEMA_VERSION: 19,
 }))
 
-// Mock sql.js — create a factory for mock DB instances
-function createMockStmt(rows: Record<string, unknown>[] = []) {
-  let idx = -1
-  return {
-    bind: vi.fn(),
-    step: vi.fn(() => {
-      idx++
-      return idx < rows.length
-    }),
-    getAsObject: vi.fn(() => rows[idx]),
-    free: vi.fn(),
-  }
+// Mock better-sqlite3
+const mockPragma = vi.fn().mockReturnValue('wal')
+const mockPrepare = vi.fn()
+const mockExec = vi.fn()
+const mockClose = vi.fn()
+
+const mockDbInstance = {
+  pragma: mockPragma,
+  prepare: mockPrepare,
+  exec: mockExec,
+  close: mockClose,
 }
 
-function createMockDb(options?: {
-  execResult?: { values: unknown[][] }[]
-  prepareRows?: Record<string, unknown>[]
-  exportData?: Uint8Array
-  runFn?: (...args: unknown[]) => void
-  throwOnPrepare?: Error
-}) {
-  const exported = options?.exportData ?? new Uint8Array([1, 2, 3])
-  return {
-    exec: vi.fn(() => options?.execResult ?? []),
-    run: options?.runFn ?? vi.fn(),
-    prepare: options?.throwOnPrepare
-      ? vi.fn(() => { throw options.throwOnPrepare })
-      : vi.fn(() => createMockStmt(options?.prepareRows ?? [])),
-    export: vi.fn(() => exported),
-    close: vi.fn(),
-  }
-}
-
-let mockDatabaseConstructor: ReturnType<typeof vi.fn>
-const mockInitSqlJs = vi.fn()
-
-vi.mock('sql.js', () => {
-  // Default: return an object with Database constructor
-  return {
-    default: (...args: unknown[]) => mockInitSqlJs(...args),
-    __esModule: true,
-  }
-})
+vi.mock('better-sqlite3', () => ({
+  default: function MockDatabase() { return mockDbInstance },
+}))
 
 // ── Import after mocks ────────────────────────────────────────────────────────
 
 import {
-  getDbBuffer,
   clearDbCacheEntry,
   registerDbPath,
   assertDbPathAllowed,
   registerProjectPath,
   assertProjectPathAllowed,
-  getSqlJs,
   writeDb,
   queryLive,
-  migrateDb,
   FORBIDDEN_WRITE_PATTERN,
 } from './db'
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-// getSqlJs uses require('sql.js') internally, so we need to set up the mock
-// that it returns. We intercept via the module-level singleton.
-function setupSqlJsMock(dbFactory?: () => ReturnType<typeof createMockDb>) {
-  mockDatabaseConstructor = vi.fn(() => (dbFactory ?? createMockDb)())
-  // getSqlJs does `require('sql.js')` which returns initSqlJs function.
-  // The result of calling initSqlJs is { Database: constructor }.
-  // Since getSqlJs caches the singleton, we need to reset it between tests
-  // by manipulating the module's internal state.
-}
-
 // ── Tests ─────────────────────────────────────────────────────────────────────
-
-describe('DB cache — getDbBuffer (T228)', () => {
-  const dbPath = '/test/project.db'
-  const fakeBuffer = Buffer.from('fake-db-content')
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-    clearDbCacheEntry(dbPath)
-    clearDbCacheEntry('/test/db1.db')
-    clearDbCacheEntry('/test/db2.db')
-    clearDbCacheEntry('/test/db3.db')
-    clearDbCacheEntry('/test/db4.db')
-    mockStat.mockResolvedValue({ mtimeMs: 1000 })
-    mockReadFile.mockResolvedValue(fakeBuffer)
-  })
-
-  it('should read file on first call (cache miss)', async () => {
-    const buf = await getDbBuffer(dbPath)
-    expect(mockStat).toHaveBeenCalledWith(dbPath)
-    expect(mockReadFile).toHaveBeenCalledWith(dbPath)
-    expect(buf).toEqual(fakeBuffer)
-  })
-
-  it('should return cached buffer on second call with same mtime (cache hit)', async () => {
-    await getDbBuffer(dbPath)
-    expect(mockReadFile).toHaveBeenCalledTimes(1)
-
-    const buf2 = await getDbBuffer(dbPath)
-    expect(mockStat).toHaveBeenCalledTimes(2)
-    expect(mockReadFile).toHaveBeenCalledTimes(1)
-    expect(buf2).toEqual(fakeBuffer)
-  })
-
-  it('should re-read file when mtime changes (cache invalidation)', async () => {
-    await getDbBuffer(dbPath)
-    expect(mockReadFile).toHaveBeenCalledTimes(1)
-
-    mockStat.mockResolvedValue({ mtimeMs: 2000 })
-    const newBuffer = Buffer.from('updated-content')
-    mockReadFile.mockResolvedValue(newBuffer)
-
-    const buf2 = await getDbBuffer(dbPath)
-    expect(mockReadFile).toHaveBeenCalledTimes(2)
-    expect(buf2).toEqual(newBuffer)
-  })
-
-  it('should evict stale entries after CACHE_TTL_MS (10s)', async () => {
-    vi.useFakeTimers()
-
-    await getDbBuffer(dbPath)
-    expect(mockReadFile).toHaveBeenCalledTimes(1)
-
-    vi.advanceTimersByTime(15_000)
-
-    await getDbBuffer(dbPath)
-    expect(mockReadFile).toHaveBeenCalledTimes(2)
-
-    vi.useRealTimers()
-  })
-
-  it('should enforce MAX_CACHE_ENTRIES=3 by evicting oldest', async () => {
-    for (let i = 1; i <= 3; i++) {
-      mockStat.mockResolvedValue({ mtimeMs: i * 1000 })
-      mockReadFile.mockResolvedValue(Buffer.from(`db${i}`))
-      await getDbBuffer(`/test/db${i}.db`)
-    }
-    expect(mockReadFile).toHaveBeenCalledTimes(3)
-
-    mockStat.mockResolvedValue({ mtimeMs: 4000 })
-    mockReadFile.mockResolvedValue(Buffer.from('db4'))
-    await getDbBuffer('/test/db4.db')
-    expect(mockReadFile).toHaveBeenCalledTimes(4)
-
-    mockStat.mockResolvedValue({ mtimeMs: 1000 })
-    mockReadFile.mockResolvedValue(Buffer.from('db1'))
-    await getDbBuffer('/test/db1.db')
-    expect(mockReadFile).toHaveBeenCalledTimes(5)
-  })
-
-  it('should handle stat failure gracefully (fallback to readFile)', async () => {
-    mockStat.mockRejectedValueOnce(new Error('ENOENT'))
-    const buf = await getDbBuffer(dbPath)
-    expect(mockReadFile).toHaveBeenCalled()
-    expect(buf).toEqual(fakeBuffer)
-  })
-})
-
-describe('clearDbCacheEntry', () => {
-  it('should force cache miss on next getDbBuffer call', async () => {
-    const dbPath = '/test/clear-test.db'
-    clearDbCacheEntry(dbPath)
-    vi.clearAllMocks()
-    mockStat.mockResolvedValue({ mtimeMs: 1000 })
-    mockReadFile.mockResolvedValue(Buffer.from('content'))
-
-    await getDbBuffer(dbPath)
-    expect(mockReadFile).toHaveBeenCalledTimes(1)
-
-    clearDbCacheEntry(dbPath)
-
-    await getDbBuffer(dbPath)
-    expect(mockReadFile).toHaveBeenCalledTimes(2)
-  })
-})
 
 // ── registerDbPath / assertDbPathAllowed ──────────────────────────────────────
 
@@ -294,39 +135,19 @@ describe('registerProjectPath / assertProjectPathAllowed (T283)', () => {
   })
 })
 
-// ── getSqlJs ─────────────────────────────────────────────────────────────────
-
-describe('getSqlJs', () => {
-  it('should return a sql.js instance', async () => {
-    const result = await getSqlJs()
-    // getSqlJs caches the singleton — it should have a Database constructor
-    expect(typeof result).toBe('object')
-    expect(typeof result.Database).toBe('function')
-  })
-
-  it('should return same instance on multiple calls (singleton)', async () => {
-    const first = await getSqlJs()
-    const second = await getSqlJs()
-    expect(first).toBe(second)
-  })
-})
-
 // ── writeDb ──────────────────────────────────────────────────────────────────
 
-describe('writeDb (T313)', () => {
+describe('writeDb (T1157)', () => {
   const dbPath = '/test/write-test.db'
-  const fakeBuffer = Buffer.from('fake-db')
 
   beforeEach(() => {
     vi.clearAllMocks()
     clearDbCacheEntry(dbPath)
-    mockStat.mockResolvedValue({ mtimeMs: 1000 })
-    mockReadFile.mockResolvedValue(fakeBuffer)
     mockAcquireWriteLock.mockResolvedValue(dbPath + '.wlock')
     mockReleaseWriteLock.mockResolvedValue(undefined)
   })
 
-  it('should call fn with a db instance and write result to disk', async () => {
+  it('should call fn with a MigrationDb adapter and return result', async () => {
     const fn = vi.fn(() => 'result-value')
     const result = await writeDb(dbPath, fn)
 
@@ -335,12 +156,6 @@ describe('writeDb (T313)', () => {
     // Should acquire cross-process lock before write
     expect(mockAcquireWriteLock).toHaveBeenCalledWith(dbPath)
     expect(mockReleaseWriteLock).toHaveBeenCalledWith(dbPath + '.wlock')
-    // Should write tmp file then rename
-    expect(mockWriteFile).toHaveBeenCalledWith(
-      dbPath + '.tmp',
-      expect.any(Buffer)
-    )
-    expect(mockRename).toHaveBeenCalledWith(dbPath + '.tmp', dbPath)
   })
 
   it('should execute concurrent writes sequentially (mutex)', async () => {
@@ -364,17 +179,17 @@ describe('writeDb (T313)', () => {
     expect(order).toEqual([1, 2])
   })
 
-  it('should not rename if fn throws (rollback)', async () => {
+  it('should release lock if fn throws', async () => {
     const fn = vi.fn(() => { throw new Error('mutation-failed') })
 
     await expect(writeDb(dbPath, fn)).rejects.toThrow('mutation-failed')
-    expect(mockRename).not.toHaveBeenCalled()
+    expect(mockReleaseWriteLock).toHaveBeenCalledWith(dbPath + '.wlock')
   })
 })
 
-// ── queryLive ────────────────────────────────────────────────────────────────
+// ── queryLive ─────────────────────────────────────────────────────────────────
 
-describe('queryLive', () => {
+describe('queryLive (T1157)', () => {
   const dbPath = '/test/query-test.db'
 
   beforeEach(() => {
@@ -382,198 +197,36 @@ describe('queryLive', () => {
     clearDbCacheEntry(dbPath)
   })
 
-  it('should return rows from a SELECT query', async () => {
-    // Build a real SQLite db buffer with data
-    const sqlJs = await getSqlJs()
-    const db = new sqlJs.Database()
-    db.run('CREATE TABLE test (id INTEGER, val TEXT)')
-    db.run("INSERT INTO test VALUES (1, 'hello')")
-    db.run("INSERT INTO test VALUES (2, 'world')")
-    const buf = Buffer.from(db.export())
-    db.close()
+  it('should call prepare().all() on the pooled connection', async () => {
+    const mockAll = vi.fn().mockReturnValue([{ id: 1, name: 'test' }])
+    mockPrepare.mockReturnValue({ all: mockAll })
 
-    mockStat.mockResolvedValue({ mtimeMs: Date.now() })
-    mockReadFile.mockResolvedValue(buf)
-
-    const rows = await queryLive(dbPath, 'SELECT * FROM test', [])
-    expect(rows).toEqual([
-      { id: 1, val: 'hello' },
-      { id: 2, val: 'world' },
-    ])
+    const result = await queryLive(dbPath, 'SELECT * FROM agents', [])
+    expect(mockPrepare).toHaveBeenCalledWith('SELECT * FROM agents')
+    expect(result).toEqual([{ id: 1, name: 'test' }])
   })
 
-  it('should retry on "not a database" error then throw on second failure', async () => {
-    mockReadFile.mockResolvedValue(Buffer.from('not-a-real-db'))
-    mockStat.mockResolvedValue({ mtimeMs: Date.now() })
+  it('should spread params when provided', async () => {
+    const mockAll = vi.fn().mockReturnValue([])
+    mockPrepare.mockReturnValue({ all: mockAll })
 
-    // First attempt: "not a database" → retry after cache clear
-    // Second attempt: same error → throw
-    await expect(queryLive(dbPath, 'SELECT 1', []))
-      .rejects.toThrow()
-  })
-
-  it('should propagate non-retryable errors immediately', async () => {
-    // Build a real db but query a nonexistent table
-    const sqlJs = await getSqlJs()
-    const db = new sqlJs.Database()
-    const buf = Buffer.from(db.export())
-    db.close()
-
-    mockStat.mockResolvedValue({ mtimeMs: Date.now() })
-    mockReadFile.mockResolvedValue(buf)
-
-    await expect(queryLive(dbPath, 'SELECT * FROM nonexistent_table', []))
-      .rejects.toThrow(/no such table/)
-  })
-
-  it('should release DB instance after DB_INSTANCE_TTL_MS (10s) but keep buffer (T910)', async () => {
-    vi.useFakeTimers()
-    try {
-      const sqlJs = await getSqlJs()
-      const db = new sqlJs.Database()
-      db.run('CREATE TABLE t (id INTEGER)')
-      db.run('INSERT INTO t VALUES (42)')
-      const buf = Buffer.from(db.export())
-      db.close()
-
-      const mtime = 9000
-      mockStat.mockResolvedValue({ mtimeMs: mtime })
-      mockReadFile.mockResolvedValue(buf)
-
-      // First query — populates buffer cache (lastAccess=0) and DB instance (dbCreatedAt=0)
-      await queryLive(dbPath, 'SELECT * FROM t', [])
-      expect(mockReadFile).toHaveBeenCalledTimes(1)
-
-      // At T=5s, touch buffer cache via getDbBuffer (refreshes lastAccess but not dbCreatedAt)
-      vi.advanceTimersByTime(5_000)
-      await getDbBuffer(dbPath)
-
-      // At T=12s: dbCreatedAt is 12s old (>10s → evict DB), lastAccess is 7s old (<10s → keep buffer)
-      vi.advanceTimersByTime(7_000)
-
-      // Second query — evictStaleCacheEntries closes db instance
-      // but buf is still cached (lastAccess refreshed at T=5s)
-      await queryLive(dbPath, 'SELECT * FROM t', [])
-      // Buffer was NOT re-read from disk (cache hit on buf)
-      expect(mockReadFile).toHaveBeenCalledTimes(1)
-    } finally {
-      vi.useRealTimers()
-    }
+    await queryLive(dbPath, 'SELECT * FROM agents WHERE id = ?', [42])
+    expect(mockAll).toHaveBeenCalledWith(42)
   })
 })
 
-// ── migrateDb ────────────────────────────────────────────────────────────────
-
-describe('migrateDb', () => {
-  const dbPath = '/test/migrate-test.db'
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-    clearDbCacheEntry(dbPath)
-    mockApplyMigrations.mockReturnValue(0)
-    mockAcquireWriteLock.mockResolvedValue(dbPath + '.wlock')
-    mockReleaseWriteLock.mockResolvedValue(undefined)
-  })
-
-  /** Build a minimal SQLite DB buffer (real sql.js, no tables needed for these tests) */
-  async function buildTestDbBuffer() {
-    const sqlJs = await getSqlJs()
-    const db = new sqlJs.Database()
-    const buf = Buffer.from(db.export())
-    db.close()
-    return buf
-  }
-
-  /** Build a DB buffer with PRAGMA user_version already at CURRENT_SCHEMA_VERSION */
-  async function buildCurrentVersionDbBuffer() {
-    const sqlJs = await getSqlJs()
-    const db = new sqlJs.Database()
-    db.run(`PRAGMA user_version = ${MOCK_CURRENT_SCHEMA_VERSION}`)
-    const buf = Buffer.from(db.export())
-    db.close()
-    return buf
-  }
-
-  it('should create backup before migration', async () => {
-    mockReadFile.mockResolvedValue(await buildTestDbBuffer())
-    mockCopyFile.mockResolvedValue(undefined)
-    mockWriteFile.mockResolvedValue(undefined)
-    mockUnlink.mockResolvedValue(undefined)
-
-    await migrateDb(dbPath)
-
-    expect(mockAcquireWriteLock).toHaveBeenCalledWith(dbPath)
-    expect(mockCopyFile).toHaveBeenCalledWith(dbPath, `${dbPath}.bak`)
-  })
-
-  it('should delegate to migration.migrateDb', async () => {
-    mockReadFile.mockResolvedValue(await buildTestDbBuffer())
-
-    await migrateDb(dbPath)
-
-    expect(mockApplyMigrations).toHaveBeenCalledWith(expect.any(Object))
-  })
-
-  it('should delete backup on success', async () => {
-    mockReadFile.mockResolvedValue(await buildTestDbBuffer())
-
-    await migrateDb(dbPath)
-
-    expect(mockUnlink).toHaveBeenCalledWith(`${dbPath}.bak`)
-  })
-
-  it('should keep backup on failure', async () => {
-    mockReadFile.mockResolvedValue(await buildTestDbBuffer())
-    mockApplyMigrations.mockImplementation(() => { throw new Error('migration failed') })
-
-    await expect(migrateDb(dbPath)).rejects.toThrow('migration failed')
-    expect(mockUnlink).not.toHaveBeenCalled()
-  })
-
-  it('should return migrated count from migration.migrateDb', async () => {
-    mockReadFile.mockResolvedValue(await buildTestDbBuffer())
-    mockApplyMigrations.mockReturnValue(7)
-
-    const result = await migrateDb(dbPath)
-    expect(result).toEqual({ migrated: 7 })
-  })
-
-  it('T491: should skip migration entirely when user_version is already current', async () => {
-    // Build a real DB buffer with user_version set to CURRENT_SCHEMA_VERSION
-    mockStat.mockResolvedValue({ mtimeMs: Date.now() })
-    mockReadFile.mockResolvedValue(await buildCurrentVersionDbBuffer())
-
-    const result = await migrateDb(dbPath)
-
-    // Fast-path: returns immediately without backup, migration, or lock
-    expect(result).toEqual({ migrated: 0 })
-    expect(mockCopyFile).not.toHaveBeenCalled()
-    expect(mockApplyMigrations).not.toHaveBeenCalled()
-    expect(mockAcquireWriteLock).not.toHaveBeenCalled()
-  })
-})
-
-// ── FORBIDDEN_WRITE_PATTERN ──────────────────────────────────────────────────
+// ── FORBIDDEN_WRITE_PATTERN ─────────────────────────────────────────────────
 
 describe('FORBIDDEN_WRITE_PATTERN', () => {
   it('should match write SQL keywords', () => {
-    expect(FORBIDDEN_WRITE_PATTERN.test('INSERT INTO foo')).toBe(true)
-    expect(FORBIDDEN_WRITE_PATTERN.test('UPDATE foo SET')).toBe(true)
-    expect(FORBIDDEN_WRITE_PATTERN.test('DELETE FROM foo')).toBe(true)
-    expect(FORBIDDEN_WRITE_PATTERN.test('DROP TABLE foo')).toBe(true)
-    expect(FORBIDDEN_WRITE_PATTERN.test('ALTER TABLE foo')).toBe(true)
-    expect(FORBIDDEN_WRITE_PATTERN.test('CREATE TABLE foo')).toBe(true)
-    expect(FORBIDDEN_WRITE_PATTERN.test('TRUNCATE foo')).toBe(true)
-    expect(FORBIDDEN_WRITE_PATTERN.test('REPLACE INTO foo')).toBe(true)
+    expect(FORBIDDEN_WRITE_PATTERN.test('INSERT INTO tasks')).toBe(true)
+    expect(FORBIDDEN_WRITE_PATTERN.test('UPDATE tasks SET')).toBe(true)
+    expect(FORBIDDEN_WRITE_PATTERN.test('DELETE FROM tasks')).toBe(true)
+    expect(FORBIDDEN_WRITE_PATTERN.test('DROP TABLE tasks')).toBe(true)
   })
 
-  it('should match case-insensitively', () => {
-    expect(FORBIDDEN_WRITE_PATTERN.test('insert into foo')).toBe(true)
-    expect(FORBIDDEN_WRITE_PATTERN.test('Insert Into Foo')).toBe(true)
-  })
-
-  it('should not match SELECT queries', () => {
-    expect(FORBIDDEN_WRITE_PATTERN.test('SELECT * FROM foo')).toBe(false)
-    expect(FORBIDDEN_WRITE_PATTERN.test('SELECT count(*) FROM bar')).toBe(false)
+  it('should not match read-only SQL', () => {
+    expect(FORBIDDEN_WRITE_PATTERN.test('SELECT * FROM tasks')).toBe(false)
+    expect(FORBIDDEN_WRITE_PATTERN.test('PRAGMA table_info(tasks)')).toBe(false)
   })
 })

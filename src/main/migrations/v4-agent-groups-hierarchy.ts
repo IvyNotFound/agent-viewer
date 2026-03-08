@@ -1,4 +1,5 @@
-import type { Database } from 'sql.js'
+import type { MigrationDb } from '../migration-db-adapter'
+type Database = MigrationDb
 
 /**
  * Migration: Add parent_id column to agent_groups for nested group support (T945).

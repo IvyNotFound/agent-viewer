@@ -1,15 +1,14 @@
-import type { Database } from 'sql.js'
+import type { MigrationDb } from './migration-db-adapter'
 import { runDropCommentaireColumnMigration, runRemoveThinkingModeBudgetTokensMigration, runAddTokensToSessionsMigration, runAddConvIdToSessionsMigration, runAddPriorityMigration } from './migrations/v1-columns'
 import { runTaskStatutI18nMigration, runTaskStatusMigration, runSessionStatutI18nMigration } from './migrations/v2-statuts'
 import { runMakeAgentAssigneNotNullMigration, runMakeCommentAgentNotNullMigration, runAddAgentGroupsMigration } from './migrations/v3-relations'
 import { runAddParentIdToAgentGroupsMigration } from './migrations/v4-agent-groups-hierarchy'
-import { runAddWorktreeToAgentsMigration } from './migrations/v5-agent-worktree'
 
 // ── Numbered migration system ────────────────────────────────────────────────
 
 interface Migration {
   version: number
-  up: (db: Database) => void
+  up: (db: MigrationDb) => void
 }
 
 const migrations: Migration[] = [
@@ -309,19 +308,13 @@ const migrations: Migration[] = [
     db.run('CREATE INDEX IF NOT EXISTS idx_sessions_agent_status ON sessions(agent_id, status, started_at DESC)')
     db.run('CREATE INDEX IF NOT EXISTS idx_task_comments_agent_id ON task_comments(agent_id)')
   } },
-
-  // v28: add agents.worktree_enabled + config worktree_default (T1142)
-  { version: 28, up: (db) => {
-    runAddWorktreeToAgentsMigration(db)
-    db.run("INSERT OR IGNORE INTO config (key, value) VALUES ('worktree_default', '1')")
-  } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */
 export const CURRENT_SCHEMA_VERSION = migrations[migrations.length - 1].version
 
 /**
- * Apply all pending migrations to an in-memory sql.js Database.
+ * Apply all pending migrations to a MigrationDb (better-sqlite3 adapter).
  *
  * Reads PRAGMA user_version to determine the current schema level.
  * Runs each pending migration (version > current) in a SAVEPOINT for atomicity.
@@ -330,12 +323,12 @@ export const CURRENT_SCHEMA_VERSION = migrations[migrations.length - 1].version
  * sets cursor to LEGACY_BOOTSTRAP_VERSION (23) so only migrations v24+ are
  * executed — does NOT return early, always falls through to the migration loop.
  *
- * @param db - sql.js in-memory Database instance to migrate.
+ * @param db - MigrationDb adapter wrapping a better-sqlite3 Database.
  * @returns Number of migrations applied.
  * @throws If any migration's `up()` function throws; the SAVEPOINT is rolled back
  *         and the error is re-thrown, leaving the database unchanged for that version.
  */
-export function migrateDb(db: Database): number {
+export function migrateDb(db: MigrationDb): number {
   const uvResult = db.exec('PRAGMA user_version')
   const rawCurrent = uvResult.length > 0 && uvResult[0].values.length > 0
     ? (uvResult[0].values[0][0] as number)

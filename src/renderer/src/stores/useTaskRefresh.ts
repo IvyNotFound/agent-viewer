@@ -10,7 +10,6 @@ import type { Task, Agent, Stats, Perimetre, TaskAssignee } from '@renderer/type
 import { useAgentsStore, AGENT_CTE_SQL } from '@renderer/stores/agents'
 import { useSettingsStore } from '@renderer/stores/settings'
 import { useToast } from '@renderer/composables/useToast'
-import { normalizeRow } from '@renderer/utils/db'
 
 /** Debounce: last notification timestamp per task (prevent spam). */
 const _lastNotifTs: Record<number, number> = {}
@@ -88,7 +87,7 @@ export function useTaskRefresh(deps: TaskRefreshDeps) {
       const rawTasks = [...rawLiveTasks, ...rawDoneTasks]
       deps.doneTasksLimited.value = rawDoneTasks.length === DONE_TASKS_LIMIT
 
-      const newTasks = rawTasks.map(normalizeRow) as Task[]
+      const newTasks = rawTasks as Task[]
       // Desktop notifications — detect status transitions (T755)
       if (settingsStore.notificationsEnabled && Notification.permission === 'granted' && deps.tasks.value.length > 0) {
         const prevMap = new Map(deps.tasks.value.map(t => [t.id, t.status]))
@@ -121,8 +120,8 @@ export function useTaskRefresh(deps: TaskRefreshDeps) {
           assigned_at: '',
         })
       }
-      deps.agents.value = rawAgents.map(normalizeRow)
-      deps.perimetresData.value = rawPerimetres.map(normalizeRow)
+      deps.agents.value = rawAgents
+      deps.perimetresData.value = rawPerimetres
 
       const s: Stats = { todo: 0, in_progress: 0, done: 0, archived: 0 }
       for (const row of rawStats) {

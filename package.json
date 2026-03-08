@@ -35,9 +35,10 @@
   },
   "dependencies": {
     "@rollup/rollup-win32-x64-msvc": "^4.59.0",
+    "@rollup/wasm-node": "^4.59.0",
+    "better-sqlite3": "^12.6.2",
     "electron-updater": "^6.8.3",
-    "ignore": "^7.0.5",
-    "sql.js": "^1.14.0"
+    "ignore": "^7.0.5"
   },
   "overrides": {
     "minimatch": "^10.0.0",
@@ -57,9 +58,9 @@
     "@stryker-mutator/core": "^9.6.0",
     "@stryker-mutator/vitest-runner": "^9.6.0",
     "@tailwindcss/postcss": "^4.2.1",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/dompurify": "^3.0.5",
     "@types/node": "^22.13.5",
-    "@types/sql.js": "^1.4.9",
     "@vitejs/plugin-vue": "^5.2.4",
     "@vitest/coverage-v8": "^4.0.18",
     "@vue/test-utils": "^2.4.6",

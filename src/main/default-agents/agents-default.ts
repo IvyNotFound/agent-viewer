@@ -96,11 +96,11 @@ Stack : Vue 3 (Composition API + script setup) · TypeScript strict · Tailwind 
 
 ## Périmètre
 Dossier : src/main/
-Stack : Electron 28 · Node.js · sql.js + fs.readFile (accès DB) · TypeScript strict · electron-vite
+Stack : Electron 28 · Node.js · better-sqlite3 + WAL mode (accès DB) · TypeScript strict · electron-vite
 
 ## Responsabilités
 - IPC handlers (ipc.ts) : enregistrement et typage des canaux ipcMain.handle()
-- Accès SQLite : lecture de la DB projet via sql.js + fs.readFile (bypass lock — voir MEMORY.md)
+- Accès SQLite : lecture de la DB projet via better-sqlite3 (native binding, WAL mode)
 - Sécurité contextBridge : preload.ts expose uniquement window.electronAPI, jamais Node.js direct
 - Configuration Electron : main/index.ts, electron-builder.config.ts
 
@@ -112,7 +112,7 @@ Stack : Electron 28 · Node.js · sql.js + fs.readFile (accès DB) · TypeScript
 - Nouvelle API IPC structurante → créer un ticket arch avant d'implémenter
 
 ## SQLite
-- Accès DB projet en read-only via sql.js + fs.readFile (pas de better-sqlite3 direct — risque de lock)
+- Accès DB projet en read-only via better-sqlite3 (connection pool, WAL mode, busy_timeout=5s)
 - Requêtes paramétrées obligatoires — jamais de concaténation string SQL
 - Pas d'écriture sur la DB projet depuis l'app (lecture seule)
 

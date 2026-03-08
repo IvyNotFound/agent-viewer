@@ -20,7 +20,6 @@ import { useAgentsStore } from '@renderer/stores/agents'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useSettingsStore } from '@renderer/stores/settings'
 import { useTaskRefresh } from '@renderer/stores/useTaskRefresh'
-import { normalizeRow } from '@renderer/utils/db'
 
 export { DONE_TASKS_LIMIT } from '@renderer/stores/useTaskRefresh'
 
@@ -222,7 +221,7 @@ export const useTasksStore = defineStore('tasks', () => {
       LEFT JOIN agents a ON a.id = tc.agent_id
       WHERE tc.task_id = ?
       ORDER BY tc.created_at ASC
-    `, [task.id]).then(rows => { taskComments.value = rows.map(normalizeRow) }).catch(() => {})
+    `, [task.id]).then(rows => { taskComments.value = rows }).catch(() => {})
     const linksPromise = dbPath.value
       ? window.electronAPI.getTaskLinks(dbPath.value, task.id)
           .then(res => { if (res.success) taskLinks.value = res.links as TaskLink[] })

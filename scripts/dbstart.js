@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * dbstart.js — All-in-one agent session startup (single DB open)
+ * dbstart.js — All-in-one agent session startup (better-sqlite3)
  *
  * Usage: node scripts/dbstart.js <agent-name> [type] [scope]
  *
@@ -13,8 +13,7 @@
  * Replaces 3-5 separate dbq/dbw calls at session startup.
  */
 
-const initSqlJs = require('sql.js')
-const fs = require('fs')
+const Database = require('better-sqlite3')
 const path = require('path')
 const { randomUUID } = require('node:crypto')
 const { execSync } = require('child_process')
@@ -36,66 +35,35 @@ if (!agent) {
 
 const dbPath = path.resolve(process.cwd(), '.claude/project.db')
 
-/**
- * Retries fs.renameSync up to maxRetries times on EPERM/EBUSY (Windows file lock).
- * @param {string} src
- * @param {string} dest
- * @param {number} [maxRetries=3]
- * @param {number} [delayMs=200]
- */
-function renameWithRetry(src, dest, maxRetries = 3, delayMs = 200) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      fs.renameSync(src, dest)
-      return
-    } catch (err) {
-      if (i === maxRetries - 1 || (err.code !== 'EPERM' && err.code !== 'EBUSY')) throw err
-      // On Windows the file may be temporarily locked — wait and retry
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delayMs)
-    }
-  }
-}
-
-initSqlJs().then((SQL) => {
+try {
   cleanupOrphanTmp(dbPath)
   const lockPath = acquireLock(dbPath)
   try {
-  const buf = fs.readFileSync(dbPath)
-  const db = new SQL.Database(buf)
+    const db = new Database(dbPath)
+    db.pragma('journal_mode = WAL')
+    db.pragma('busy_timeout = 5000')
 
-  // Guard: reject purely numeric agent names (likely an agent_id passed by mistake)
-  // Manual releaseLock required: process.exit() does not trigger finally blocks.
-  if (/^\d+$/.test(agent)) {
-    const byId = db.exec(`SELECT name FROM agents WHERE id = ${parseInt(agent, 10)}`)
-    const hint =
-      byId.length && byId[0].values.length
-        ? ` Utilisez: node scripts/dbstart.js ${byId[0].values[0][0]}`
-        : ''
-    db.close()
-    releaseLock(lockPath)
-    console.error(`ERREUR: nom d'agent "${agent}" est un entier (probablement un agent_id).${hint}`)
-    process.exit(3)
-  }
+    // Guard: reject purely numeric agent names (likely an agent_id passed by mistake)
+    if (/^\d+$/.test(agent)) {
+      const byId = db.prepare('SELECT name FROM agents WHERE id = ?').get(parseInt(agent, 10))
+      const hint = byId ? ` Utilisez: node scripts/dbstart.js ${byId.name}` : ''
+      db.close()
+      releaseLock(lockPath)
+      console.error(`ERREUR: nom d'agent "${agent}" est un entier (probablement un agent_id).${hint}`)
+      process.exit(3)
+    }
 
-  // 1. Register agent (idempotent)
-  db.run(
-    `INSERT OR IGNORE INTO agents (name, type, scope) VALUES ('${agent}', '${type}', '${scope}')`
-  )
+    // 1. Register agent (idempotent)
+    db.prepare(
+      `INSERT OR IGNORE INTO agents (name, type, scope) VALUES (?, ?, ?)`
+    ).run(agent, type, scope)
 
-  // 2. Get agent_id
-  const agentRow = db.exec(`SELECT id FROM agents WHERE name = '${agent}'`)
-  const agentId = agentRow[0].values[0][0]
+    // 2. Get agent_id
+    const agentRow = db.prepare('SELECT id FROM agents WHERE name = ?').get(agent)
+    const agentId = agentRow.id
 
-  // 2c. Mark zombie sessions as terminated
-  const zombieSessions = db.exec(`
-    SELECT COUNT(*) FROM sessions
-    WHERE status = 'started'
-      AND ended_at IS NULL
-      AND started_at < datetime('now', '-60 minutes')
-  `)
-  const zombieSessionCount = zombieSessions[0].values[0][0]
-  if (zombieSessionCount > 0) {
-    db.run(`
+    // 2c. Mark zombie sessions as terminated
+    const zombieResult = db.prepare(`
       UPDATE sessions
       SET status = 'completed',
           ended_at = datetime('now'),
@@ -103,86 +71,84 @@ initSqlJs().then((SQL) => {
       WHERE status = 'started'
         AND ended_at IS NULL
         AND started_at < datetime('now', '-60 minutes')
-    `)
-    console.log(`\n[auto-release] ${zombieSessionCount} zombie session(s) marked as completed`)
-  }
-
-  // 3. Check parallel session limit (reads max_sessions from agents table, default 3)
-  // Guard: column may not exist if Electron migration v6 hasn't run yet
-  const hasMaxSessions =
-    db.exec("SELECT COUNT(*) FROM pragma_table_info('agents') WHERE name='max_sessions'")[0]
-      .values[0][0] > 0
-  const maxSessions = hasMaxSessions
-    ? (db.exec(`SELECT max_sessions FROM agents WHERE id = ${agentId}`)[0]?.values[0]?.[0] ?? 3)
-    : 3
-  const activeRow = db.exec(
-    `SELECT COUNT(*) FROM sessions WHERE agent_id = ${agentId} AND status = 'started'`
-  )
-  const activeCount = activeRow[0].values[0][0]
-  if (maxSessions !== -1 && activeCount >= maxSessions) {
-    db.close()
-    releaseLock(lockPath)  // Manual releaseLock required: process.exit() does not trigger finally blocks.
-    console.error(
-      `ERREUR: ${agent} a déjà ${activeCount} session(s) active(s) (max ${maxSessions}). Terminer une session avant d'en ouvrir une nouvelle.`
-    )
-    process.exit(2)
-  }
-
-  // 4. Create session with pre-assigned conv_id (T626: avoids race condition with setSessionConvId)
-  const sessionUUID = randomUUID()
-  db.run(`INSERT INTO sessions (agent_id, claude_conv_id) VALUES (${agentId}, '${sessionUUID}')`)
-  const sessionRow = db.exec(`SELECT last_insert_rowid()`)
-  const sessionId = sessionRow[0].values[0][0]
-
-  // Persist writes (atomic: unique tmp + rename, serialized by .wlock)
-  const tmpPath = `${dbPath}.tmp.${process.pid}.${Date.now()}`
-  fs.writeFileSync(tmpPath, Buffer.from(db.export()))
-  renameWithRetry(tmpPath, dbPath)
-  releaseLock(lockPath)
-
-  // === OUTPUT ===
-
-  console.log(`=== IDENTIFIANTS ===`)
-  console.log(`agent_id: ${agentId}`)
-  console.log(`session_id: ${sessionId}`)
-  console.log(`SESSION_ID=${sessionUUID}`)
-
-  // 4. Last terminated session
-  const session = db.exec(`
-    SELECT s.summary, s.ended_at FROM sessions s
-    WHERE s.agent_id = ${agentId} AND s.status = 'completed' AND s.id != ${sessionId}
-    ORDER BY s.ended_at DESC LIMIT 1
-  `)
-
-  console.log('\n=== SESSION PRÉCÉDENTE ===')
-  if (session.length && session[0].values.length) {
-    const [summary, endedAt] = session[0].values[0]
-    console.log(`ended_at: ${endedAt}`)
-    console.log(`summary: ${summary ?? '(aucun)'}`)
-  } else {
-    console.log('(aucune session completed)')
-  }
-
-  // 5. Open tasks (todo + in_progress)
-  const tasks = db.exec(`
-    SELECT t.id, t.status, t.scope, t.priority, t.title, t.description
-    FROM tasks t
-    WHERE t.agent_assigned_id = ${agentId} AND t.status IN ('todo', 'in_progress')
-    ORDER BY t.status DESC, t.updated_at DESC
-  `)
-
-  console.log('\n=== TÂCHES ASSIGNÉES ===')
-  if (!tasks.length || !tasks[0].values.length) {
-    console.log('(aucune tâche todo / in_progress)')
-  } else {
-    for (const [id, status, peri, priority, title, description] of tasks[0].values) {
-      console.log(`
-[T${id}] ${status} | ${peri ?? '-'} | prio:${priority} | ${title}`)
-      if (description) console.log(description)
+    `).run()
+    if (zombieResult.changes > 0) {
+      console.log(`\n[auto-release] ${zombieResult.changes} zombie session(s) marked as completed`)
     }
-  }
 
-  db.close()
+    // 3. Check parallel session limit (reads max_sessions from agents table, default 3)
+    const agentCols = db.pragma('table_info(agents)')
+    const hasMaxSessions = agentCols.some(c => c.name === 'max_sessions')
+    const maxSessions = hasMaxSessions
+      ? (db.prepare('SELECT max_sessions FROM agents WHERE id = ?').get(agentId)?.max_sessions ?? 3)
+      : 3
+    const activeRow = db.prepare(
+      'SELECT COUNT(*) as cnt FROM sessions WHERE agent_id = ? AND status = ?'
+    ).get(agentId, 'started')
+    const activeCount = activeRow.cnt
+    if (maxSessions !== -1 && activeCount >= maxSessions) {
+      db.close()
+      releaseLock(lockPath)
+      console.error(
+        `ERREUR: ${agent} a déjà ${activeCount} session(s) active(s) (max ${maxSessions}). Terminer une session avant d'en ouvrir une nouvelle.`
+      )
+      process.exit(2)
+    }
+
+    // 4. Create session with pre-assigned conv_id (T626)
+    const sessionUUID = randomUUID()
+    db.prepare('INSERT INTO sessions (agent_id, claude_conv_id) VALUES (?, ?)').run(agentId, sessionUUID)
+    const sessionId = db.prepare('SELECT last_insert_rowid() as id').get().id
+
+    // Release lock — writes are done
+    releaseLock(lockPath)
+
+    // === OUTPUT ===
+
+    console.log(`=== IDENTIFIANTS ===`)
+    console.log(`agent_id: ${agentId}`)
+    console.log(`session_id: ${sessionId}`)
+    console.log(`SESSION_ID=${sessionUUID}`)
+
+    // 4. Last terminated session
+    const session = db.prepare(`
+      SELECT s.summary, s.ended_at FROM sessions s
+      WHERE s.agent_id = ? AND s.status = 'completed' AND s.id != ?
+      ORDER BY s.ended_at DESC LIMIT 1
+    `).get(agentId, sessionId)
+
+    console.log('\n=== SESSION PRÉCÉDENTE ===')
+    if (session) {
+      console.log(`ended_at: ${session.ended_at}`)
+      console.log(`summary: ${session.summary ?? '(aucun)'}`)
+    } else {
+      console.log('(aucune session completed)')
+    }
+
+    // 5. Open tasks (todo + in_progress)
+    const tasks = db.prepare(`
+      SELECT t.id, t.status, t.scope, t.priority, t.title, t.description
+      FROM tasks t
+      WHERE t.agent_assigned_id = ? AND t.status IN ('todo', 'in_progress')
+      ORDER BY t.status DESC, t.updated_at DESC
+    `).all(agentId)
+
+    console.log('\n=== TÂCHES ASSIGNÉES ===')
+    if (tasks.length === 0) {
+      console.log('(aucune tâche todo / in_progress)')
+    } else {
+      for (const t of tasks) {
+        console.log(`
+[T${t.id}] ${t.status} | ${t.scope ?? '-'} | prio:${t.priority} | ${t.title}`)
+        if (t.description) console.log(t.description)
+      }
+    }
+
+    db.close()
+  } catch (err) {
+    releaseLock(lockPath)
+    throw err
+  }
 
   // Non-fatal: prune orphan worktrees on startup (ADR-006)
   try {
@@ -190,10 +156,7 @@ initSqlJs().then((SQL) => {
   } catch (e) {
     console.warn('[dbstart] git worktree prune failed:', e.message)
   }
-  } finally {
-    releaseLock(lockPath)
-  }
-}).catch((err) => {
+} catch (err) {
   console.error('ERREUR dbstart:', err.message)
   process.exit(1)
-})
+}
