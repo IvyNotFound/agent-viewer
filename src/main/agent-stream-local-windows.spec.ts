@@ -9,7 +9,13 @@
  * - PATH enrichment from registry (T996/T1029)
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+vi.mock('electron', () => ({
+  app: { getPath: vi.fn(() => '/tmp') },
+  ipcMain: { handle: vi.fn() },
+}))
+
 import { buildWindowsPS1Script } from './agent-stream-helpers'
 
 // ── buildWindowsPS1Script unit tests ─────────────────────────────────────────
