@@ -177,7 +177,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
 </script>
 
 <template>
-  <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+  <div class="flex flex-col h-full overflow-auto bg-surface-base text-content-primary p-6 gap-6">
 
     <!-- No project state -->
     <div v-if="!store.dbPath" class="flex items-center justify-center h-40">
@@ -187,10 +187,10 @@ const PRIORITY_CLASSES: Record<string, string> = {
     <template v-else>
 
       <!-- ── 4 Metric Cards ──────────────────────────────────────────────── -->
-      <div class="grid grid-cols-4 gap-3">
+      <div class="grid grid-cols-4 gap-4">
 
         <!-- Agents actifs -->
-        <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-secondary border border-edge-default hover:border-edge-subtle transition-colors">
+        <div class="flex items-center gap-3 p-4 rounded-lg bg-surface-secondary border border-edge-default hover:border-edge-subtle transition-colors">
           <div class="shrink-0 w-8 h-8 rounded-md bg-cyan-500/15 flex items-center justify-center">
             <!-- users icon -->
             <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 20 20" fill="currentColor">
@@ -207,7 +207,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
         </div>
 
         <!-- Tâches in_progress -->
-        <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-secondary border border-edge-default hover:border-edge-subtle transition-colors">
+        <div class="flex items-center gap-3 p-4 rounded-lg bg-surface-secondary border border-edge-default hover:border-edge-subtle transition-colors">
           <div class="shrink-0 w-8 h-8 rounded-md bg-amber-500/15 flex items-center justify-center">
             <!-- lightning icon -->
             <svg class="w-4 h-4 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
@@ -224,7 +224,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
         </div>
 
         <!-- Tâches todo -->
-        <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-secondary border border-edge-default hover:border-edge-subtle transition-colors">
+        <div class="flex items-center gap-3 p-4 rounded-lg bg-surface-secondary border border-edge-default hover:border-edge-subtle transition-colors">
           <div class="shrink-0 w-8 h-8 rounded-md bg-violet-500/15 flex items-center justify-center">
             <!-- clipboard icon -->
             <svg class="w-4 h-4 text-violet-400" viewBox="0 0 20 20" fill="currentColor">
@@ -242,7 +242,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
         </div>
 
         <!-- Sessions aujourd'hui -->
-        <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-secondary border border-edge-default hover:border-edge-subtle transition-colors">
+        <div class="flex items-center gap-3 p-4 rounded-lg bg-surface-secondary border border-edge-default hover:border-edge-subtle transition-colors">
           <div class="shrink-0 w-8 h-8 rounded-md bg-emerald-500/15 flex items-center justify-center">
             <!-- calendar icon -->
             <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
@@ -268,12 +268,12 @@ const PRIORITY_CLASSES: Record<string, string> = {
       />
 
       <!-- ── 2 Sections ──────────────────────────────────────────────────── -->
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 gap-4">
 
         <!-- Tâches récentes -->
         <div class="flex flex-col rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
-          <div class="shrink-0 px-3 py-2 border-b border-edge-subtle">
-            <span class="text-xs font-semibold uppercase tracking-wider text-content-secondary">{{ t('dashboard.recentTasks') }}</span>
+          <div class="shrink-0 px-4 py-2.5 border-b border-edge-default">
+            <span class="text-xs text-content-muted uppercase tracking-wide">{{ t('dashboard.recentTasks') }}</span>
           </div>
           <div class="flex-1 overflow-y-auto">
             <div
@@ -285,7 +285,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div
               v-for="task in recentTasks"
               :key="task.id"
-              class="flex items-start gap-2 px-3 py-2 border-b border-edge-subtle/50 last:border-0 hover:bg-surface-tertiary/30 cursor-pointer transition-colors"
+              class="flex items-start gap-2 px-4 py-2 border-b border-edge-default/50 last:border-0 hover:bg-surface-tertiary/30 cursor-pointer transition-colors"
               @click="store.openTask(task)"
             >
               <!-- Statut badge -->
@@ -317,8 +317,8 @@ const PRIORITY_CLASSES: Record<string, string> = {
 
         <!-- Activité récente -->
         <div class="flex flex-col rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
-          <div class="shrink-0 px-3 py-2 border-b border-edge-subtle">
-            <span class="text-xs font-semibold uppercase tracking-wider text-content-secondary">{{ t('dashboard.recentActivity') }}</span>
+          <div class="shrink-0 px-4 py-2.5 border-b border-edge-default">
+            <span class="text-xs text-content-muted uppercase tracking-wide">{{ t('dashboard.recentActivity') }}</span>
           </div>
           <div class="flex-1 overflow-y-auto">
             <div
@@ -330,7 +330,7 @@ const PRIORITY_CLASSES: Record<string, string> = {
             <div
               v-for="(entry, i) in recentActivity"
               :key="i"
-              class="flex items-start gap-2 px-3 py-2 border-b border-edge-subtle/50 last:border-0"
+              class="flex items-start gap-2 px-4 py-2 border-b border-edge-default/50 last:border-0"
             >
               <!-- Agent badge -->
               <span
@@ -357,18 +357,18 @@ const PRIORITY_CLASSES: Record<string, string> = {
       </div>
 
       <!-- ── Code telemetry + Heatmap (2 columns) ────────────────────── -->
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 gap-4">
         <CodeTelemetryPanel :project-path="store.projectPath" />
         <div class="rounded-lg bg-surface-secondary border border-edge-default overflow-hidden">
-          <div class="shrink-0 px-3 py-2 border-b border-edge-subtle">
-            <span class="text-xs font-semibold uppercase tracking-wider text-content-secondary">{{ t('dashboard.activity') }}</span>
+          <div class="shrink-0 px-4 py-2.5 border-b border-edge-default">
+            <span class="text-xs text-content-muted uppercase tracking-wide">{{ t('dashboard.activity') }}</span>
           </div>
           <ActivityHeatmap v-if="store.dbPath" :db-path="store.dbPath" />
         </div>
       </div>
 
       <!-- ── Charts 14d (2 columns) ────────────────────────────────────── -->
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 gap-4">
         <SessionActivityChart class="min-h-[200px]" />
         <SuccessRateChart class="min-h-[200px]" />
       </div>

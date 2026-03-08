@@ -193,10 +193,10 @@ watch(() => props.initialAgentId, (v) => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-surface-primary min-h-0">
+  <div class="flex flex-col h-full bg-surface-base min-h-0">
 
     <!-- ── Barre de filtres ──────────────────────────────────────────────── -->
-    <div class="shrink-0 flex items-center gap-2 px-4 py-2.5 border-b border-edge-subtle bg-surface-base">
+    <div class="shrink-0 flex items-center gap-2 px-6 py-2.5 border-b border-edge-default bg-surface-base">
 
       <!-- Filtres niveau -->
       <div class="flex items-center gap-1">
@@ -304,13 +304,13 @@ watch(() => props.initialAgentId, (v) => {
         v-for="log in enrichedLogs"
         :key="log.id"
         :class="[
-          'group border-b border-edge-subtle/60 transition-colors',
+          'group border-b border-edge-default/50 transition-colors',
           log.detail || log.parsedFiles.length > 0 ? 'cursor-pointer hover:bg-surface-secondary/40' : ''
         ]"
         @click="(log.detail || log.parsedFiles.length > 0) && toggleExpand(log.id)"
       >
         <!-- Ligne principale -->
-        <div class="flex items-center gap-3 px-4 py-2.5 min-w-0">
+        <div class="flex items-center gap-3 px-6 py-2.5 min-w-0">
 
           <!-- Dot niveau -->
           <span
@@ -363,7 +363,7 @@ watch(() => props.initialAgentId, (v) => {
         <!-- Détail pliable -->
         <div
           v-if="isExpanded(log.id)"
-          class="px-4 pb-2.5 pt-0 ml-[18px] flex flex-col gap-1.5"
+          class="px-6 pb-2.5 pt-0 ml-[18px] flex flex-col gap-1.5"
         >
           <!-- Texte detail -->
           <p

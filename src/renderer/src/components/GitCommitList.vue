@@ -44,7 +44,7 @@ function formatDate(iso: string): string {
     <div
       v-for="commit in visibleCommits"
       :key="commit.hash"
-      class="flex items-start gap-2 px-3 py-2 border-b border-edge-subtle last:border-b-0 hover:bg-surface-secondary/30 transition-colors"
+      class="flex items-start gap-2 px-4 py-2 border-b border-edge-default/50 last:border-0 hover:bg-surface-tertiary/30 transition-colors"
     >
       <!-- Hash -->
       <code class="text-[10px] text-content-faint font-mono w-14 shrink-0 mt-0.5 select-all">{{ commit.hash.slice(0, 7) }}</code>

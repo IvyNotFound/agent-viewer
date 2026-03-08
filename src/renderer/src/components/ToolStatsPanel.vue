@@ -41,34 +41,35 @@ function sortIcon(key: SortKey): string {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-hidden">
+  <div class="flex flex-col h-full overflow-hidden bg-surface-base text-content-primary">
     <!-- Empty state -->
     <div v-if="toolStats.length === 0" class="flex items-center justify-center flex-1 py-12">
       <p class="text-sm text-content-faint italic text-center px-4">{{ t('toolStats.empty') }}</p>
     </div>
 
     <!-- Table -->
-    <div v-else class="flex-1 overflow-y-auto">
-      <table class="w-full text-xs">
-        <thead class="sticky top-0 bg-surface-base border-b border-edge-subtle">
-          <tr>
-            <th class="text-left px-4 py-2 text-content-faint font-semibold uppercase tracking-wider text-[10px] cursor-pointer hover:text-content-secondary"
+    <div v-else class="flex-1 overflow-y-auto p-6">
+      <div class="bg-surface-secondary rounded-lg border border-edge-default overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="sticky top-0">
+          <tr class="border-b border-edge-default text-content-muted text-xs uppercase tracking-wide">
+            <th class="text-left px-4 py-2.5 cursor-pointer hover:text-content-secondary"
                 @click="setSort('calls')">
               {{ t('toolStats.tool') }}
             </th>
-            <th class="text-right px-3 py-2 text-content-faint font-semibold uppercase tracking-wider text-[10px] cursor-pointer hover:text-content-secondary"
+            <th class="text-right px-4 py-2.5 cursor-pointer hover:text-content-secondary"
                 @click="setSort('calls')">
               {{ t('toolStats.calls') }}{{ sortIcon('calls') }}
             </th>
-            <th class="text-right px-3 py-2 text-content-faint font-semibold uppercase tracking-wider text-[10px] cursor-pointer hover:text-content-secondary"
+            <th class="text-right px-4 py-2.5 cursor-pointer hover:text-content-secondary"
                 @click="setSort('errors')">
               {{ t('toolStats.errors') }}{{ sortIcon('errors') }}
             </th>
-            <th class="text-right px-3 py-2 text-content-faint font-semibold uppercase tracking-wider text-[10px] cursor-pointer hover:text-content-secondary"
+            <th class="text-right px-4 py-2.5 cursor-pointer hover:text-content-secondary"
                 @click="setSort('errorRate')">
               {{ t('toolStats.errorRate') }}{{ sortIcon('errorRate') }}
             </th>
-            <th class="text-right px-3 py-2 text-content-faint font-semibold uppercase tracking-wider text-[10px] cursor-pointer hover:text-content-secondary"
+            <th class="text-right px-4 py-2.5 cursor-pointer hover:text-content-secondary"
                 @click="setSort('avgDurationMs')">
               {{ t('toolStats.avgDuration') }}{{ sortIcon('avgDurationMs') }}
             </th>
@@ -78,30 +79,31 @@ function sortIcon(key: SortKey): string {
           <tr
             v-for="row in sorted"
             :key="row.name"
-            class="border-b border-edge-subtle/50 hover:bg-surface-secondary/20 transition-colors"
+            class="border-b border-edge-default/50 last:border-0 hover:bg-surface-tertiary/30 transition-colors"
           >
             <!-- Tool name -->
             <td class="px-4 py-2 font-mono" :class="toolColor(row.name)">{{ row.name }}</td>
             <!-- Calls -->
-            <td class="px-3 py-2 text-right font-mono text-content-tertiary">{{ row.calls }}</td>
+            <td class="px-4 py-2 text-right font-mono text-content-tertiary">{{ row.calls }}</td>
             <!-- Errors -->
-            <td class="px-3 py-2 text-right font-mono"
+            <td class="px-4 py-2 text-right font-mono"
                 :class="row.errors > 0 ? 'text-red-400' : 'text-content-faint'">
               {{ row.errors }}
             </td>
             <!-- Error rate -->
-            <td class="px-3 py-2 text-right font-mono"
+            <td class="px-4 py-2 text-right font-mono"
                 :class="row.errorRate > 0 ? 'text-red-400' : 'text-content-faint'">
               {{ row.errors > 0 ? (row.errorRate * 100).toFixed(0) + '%' : '—' }}
             </td>
             <!-- Avg duration -->
-            <td class="px-3 py-2 text-right font-mono"
+            <td class="px-4 py-2 text-right font-mono"
                 :class="row.avgDurationMs !== null && row.avgDurationMs > 5000 ? 'text-amber-400' : 'text-content-faint'">
               {{ formatDuration(row.avgDurationMs) }}
             </td>
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 </template>

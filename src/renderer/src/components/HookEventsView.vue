@@ -55,10 +55,10 @@ watch(() => store.events.length, () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-hidden bg-surface-primary">
+  <div class="flex flex-col h-full overflow-hidden bg-surface-base">
     <!-- Header filters -->
-    <div class="flex items-center gap-2 px-3 py-2 border-b border-edge-subtle shrink-0 flex-wrap">
-      <span class="text-xs text-content-faint font-semibold mr-1">{{ t('hooks.filters') }}</span>
+    <div class="flex items-center gap-2 px-6 py-2.5 border-b border-edge-default shrink-0 flex-wrap">
+      <span class="text-xs text-content-muted uppercase tracking-wide mr-1">{{ t('hooks.filters') }}</span>
       <button
         v-for="eventType in ALL_TYPES"
         :key="eventType"
@@ -89,7 +89,7 @@ watch(() => store.events.length, () => {
     <!-- Event list -->
     <div
       ref="listRef"
-      class="flex-1 overflow-y-auto px-3 py-2 space-y-0.5"
+      class="flex-1 overflow-y-auto px-6 py-2 space-y-0.5"
     >
       <div
         v-if="filtered.length === 0"
