@@ -81,7 +81,7 @@ describe('session-closer', () => {
     })
 
     it('should pass a callback that runs the UPDATE query with agent_id logic', async () => {
-      const mockDb = { run: vi.fn() }
+      const mockDb = { run: vi.fn(), getRowsModified: vi.fn().mockReturnValue(0) }
       vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => {
         fn(mockDb)
         return undefined
@@ -108,6 +108,28 @@ describe('session-closer', () => {
       expect(mockDb.run).toHaveBeenCalledWith(
         expect.stringContaining("t.status = 'done'")
       )
+    })
+
+    it('callback returns false when getRowsModified() === 0 (T1110 skip-write signal)', async () => {
+      const mockDb = { run: vi.fn(), getRowsModified: vi.fn().mockReturnValue(0) }
+      let callbackResult: unknown
+      vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => {
+        callbackResult = fn(mockDb)
+        return callbackResult
+      })
+      await closeZombieSessions('/fake/project.db')
+      expect(callbackResult).toBe(false)
+    })
+
+    it('callback returns true when getRowsModified() > 0 (T1110 write proceeds)', async () => {
+      const mockDb = { run: vi.fn(), getRowsModified: vi.fn().mockReturnValue(2) }
+      let callbackResult: unknown
+      vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => {
+        callbackResult = fn(mockDb)
+        return callbackResult
+      })
+      await closeZombieSessions('/fake/project.db')
+      expect(callbackResult).toBe(true)
     })
   })
 })

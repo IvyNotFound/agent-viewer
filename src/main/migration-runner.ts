@@ -300,6 +300,14 @@ const migrations: Migration[] = [
     db.run('DROP INDEX IF EXISTS idx_locks_released_at')
     db.run('DROP TABLE IF EXISTS locks')
   } },
+
+  // v27: add missing indexes on frequently-queried columns (T1113)
+  { version: 27, up: (db) => {
+    db.run('CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_sessions_agent_status ON sessions(agent_id, status, started_at DESC)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_task_comments_agent_id ON task_comments(agent_id)')
+  } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */

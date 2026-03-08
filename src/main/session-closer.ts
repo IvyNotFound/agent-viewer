@@ -66,5 +66,7 @@ export async function closeZombieSessions(dbPath: string): Promise<void> {
             AND t.updated_at < datetime('now', '-1 minute')
         )
     `)
+    // T1110: return false when 0 rows modified → writeDb skips export+write
+    return db.getRowsModified() > 0
   })
 }

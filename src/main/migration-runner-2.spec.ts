@@ -549,10 +549,10 @@ describe('migrateDb v26 — drop locks table', () => {
     expect(calls.some((s: string) => s === 'DROP TABLE IF EXISTS locks')).toBe(true)
   })
 
-  it('updates user_version to 26', () => {
+  it('updates user_version to 27 (v26 + v27 apply from v25)', () => {
     const db = makeMockDb({ userVersion: 25 })
     migrateDb(db as unknown as import('sql.js').Database)
-    expect(db._getVersion()).toBe(26)
+    expect(db._getVersion()).toBe(27)
   })
 })
 
@@ -592,6 +592,57 @@ describe('migrateDb — SAVEPOINT rollback on early migrations', () => {
   })
 })
 
+// ── v27 — missing indexes ─────────────────────────────────────────────────────
+
+describe('migrateDb v27 — missing indexes on critical columns', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('creates idx_tasks_status ON tasks(status)', () => {
+    const db = makeMockDb({ userVersion: 26 })
+    migrateDb(db as unknown as import('sql.js').Database)
+    const calls = db.run.mock.calls.map((c: string[]) => c[0])
+    expect(calls.some((s: string) => s.includes('idx_tasks_status') && s.includes('tasks(status)'))).toBe(true)
+  })
+
+  it('creates idx_sessions_status ON sessions(status)', () => {
+    const db = makeMockDb({ userVersion: 26 })
+    migrateDb(db as unknown as import('sql.js').Database)
+    const calls = db.run.mock.calls.map((c: string[]) => c[0])
+    expect(calls.some((s: string) => s.includes('idx_sessions_status') && s.includes('sessions(status)'))).toBe(true)
+  })
+
+  it('creates idx_sessions_agent_status composite ON sessions(agent_id, status, started_at DESC)', () => {
+    const db = makeMockDb({ userVersion: 26 })
+    migrateDb(db as unknown as import('sql.js').Database)
+    const calls = db.run.mock.calls.map((c: string[]) => c[0])
+    expect(calls.some((s: string) => s.includes('idx_sessions_agent_status') && s.includes('agent_id, status, started_at DESC'))).toBe(true)
+  })
+
+  it('creates idx_task_comments_agent_id ON task_comments(agent_id)', () => {
+    const db = makeMockDb({ userVersion: 26 })
+    migrateDb(db as unknown as import('sql.js').Database)
+    const calls = db.run.mock.calls.map((c: string[]) => c[0])
+    expect(calls.some((s: string) => s.includes('idx_task_comments_agent_id') && s.includes('task_comments(agent_id)'))).toBe(true)
+  })
+
+  it('updates user_version to 27', () => {
+    const db = makeMockDb({ userVersion: 26 })
+    migrateDb(db as unknown as import('sql.js').Database)
+    expect(db._getVersion()).toBe(27)
+  })
+
+  it('uses CREATE INDEX IF NOT EXISTS for all indexes', () => {
+    const db = makeMockDb({ userVersion: 26 })
+    migrateDb(db as unknown as import('sql.js').Database)
+    const calls = db.run.mock.calls.map((c: string[]) => c[0])
+    const v27Indexes = calls.filter((s: string) =>
+      s.includes('idx_tasks_status') || s.includes('idx_sessions_status') ||
+      s.includes('idx_sessions_agent_status') || s.includes('idx_task_comments_agent_id')
+    )
+    expect(v27Indexes.every((s: string) => s.includes('IF NOT EXISTS'))).toBe(true)
+  })
+})
+
 // ── CURRENT_SCHEMA_VERSION alignment ─────────────────────────────────────────
 
 describe('CURRENT_SCHEMA_VERSION alignment', () => {
@@ -600,6 +651,6 @@ describe('CURRENT_SCHEMA_VERSION alignment', () => {
     const db = makeMockDb({ userVersion: 0 })
     const applied = migrateDb(db as unknown as import('sql.js').Database)
     expect(applied).toBeGreaterThan(0)
-    expect(db._getVersion()).toBe(26)
+    expect(db._getVersion()).toBe(27)
   })
 })

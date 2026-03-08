@@ -180,6 +180,8 @@ export async function writeDb<T = void>(dbPath: string, fn: (db: any) => T): Pro
       const db = new sqlJs.Database(buf)
       try {
         const result = fn(db)
+        // T1110: skip export+write if callback signals no changes (returns false)
+        if (result === false) return result as T
         const exported = db.export()
         const newBuf = Buffer.from(exported)
         const tmpPath = dbPath + '.tmp'
