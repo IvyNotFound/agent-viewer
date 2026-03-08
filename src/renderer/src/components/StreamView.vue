@@ -4,12 +4,12 @@
  * Renders agent sessions as structured blocks: text, tool_use, tool_result, thinking, result.
  * Used in App.vue for tabs with viewMode === 'stream' (T597).
  */
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useSettingsStore } from '@renderer/stores/settings'
 import { agentFg, agentBg, agentBorder, colorVersion } from '@renderer/utils/agentColor'
-import { renderMarkdown } from '@renderer/utils/renderMarkdown'
+import { useStreamEvents } from '@renderer/composables/useStreamEvents'
 import HookEventBar from './HookEventBar.vue'
 import StreamToolBlock from './StreamToolBlock.vue'
 import StreamInputBar from './StreamInputBar.vue'
@@ -43,17 +43,16 @@ function applyHljsTheme(theme: string): void {
 }
 watch(() => settingsStore.theme, applyHljsTheme, { immediate: true })
 
-const events = ref<StreamEvent[]>([])
-const scrollContainer = ref<HTMLElement | null>(null)
+const {
+  events, collapsed, scrollContainer,
+  assignEventId, enqueueEvent,
+  scrollToBottom, toggleCollapsed, cleanup,
+} = useStreamEvents(props.terminalId)
+
+import { ref } from 'vue'
 const sessionId = ref<string | null>(null)
 const ptyId = ref<string | null>(null)
-const collapsed = ref<Record<string, boolean>>({})
 const agentStopped = ref(false)
-
-let nextEventId = 1
-function assignEventId(e: StreamEvent): void {
-  if (e._id == null) e._id = nextEventId++
-}
 
 // ── Computed ──────────────────────────────────────────────────────────────────
 
@@ -88,11 +87,6 @@ const displayEvents = computed(() =>
 
 /**
  * Extract session/task context block from a launch prompt.
- *
- * Supports two formats produced by build-agent-prompt:
- *  - New (multi-line): "<context block>\n---\n<base>" where context starts with "=== IDENTIFIANTS ==="
- *  - Legacy (single-line): "<context> -> <base>" where context contains "Session préc.:" or "Tâches:"
- *
  * Returns { context, base } — context is null if no prefix detected.
  */
 function parsePromptContext(text: string): { context: string | null; base: string } {
@@ -111,10 +105,6 @@ function parsePromptContext(text: string): { context: string | null; base: strin
   return { context: null, base: text }
 }
 
-/**
- * Maps each system:init event _id to the context string of its first following user message.
- * Used to display session/task metadata in the init block instead of the user bubble.
- */
 const sessionContextMap = computed(() => {
   const map = new Map<number, string>()
   let lastInitId: number | null = null
@@ -130,12 +120,6 @@ const sessionContextMap = computed(() => {
   }
   return map
 })
-
-// ── Collapse helpers ──────────────────────────────────────────────────────────
-
-function toggleCollapsed(key: string, defaultCollapsed = false): void {
-  collapsed.value[key] = !(collapsed.value[key] ?? defaultCollapsed)
-}
 
 // ── IPC handlers ──────────────────────────────────────────────────────────────
 
@@ -160,107 +144,12 @@ function handleStop(): void {
   window.electronAPI.agentKill(ptyId.value)
 }
 
-// ── Micro-batching (T676) ─────────────────────────────────────────────────────
-// Buffer IPC events in a non-reactive array, flush once per nextTick to avoid
-// 1 re-render per JSONL line at high-frequency streaming.
-
-const MAX_EVENTS = 500
-const MAX_EVENTS_HIDDEN = 10
-const ANSI_RE = new RegExp('\x1B\\[[0-9;]*[mGKHF]', 'g')
-let pendingEvents: StreamEvent[] = []
-let flushPending = false
-
-function flushEvents(): void {
-  if (pendingEvents.length === 0) { flushPending = false; return }
-  for (const e of pendingEvents) {
-    assignEventId(e)
-    if (e.message?.content) {
-      for (const block of e.message.content) {
-        if (block.type === 'text' && block.text != null) {
-          block._html = renderMarkdown(block.text)
-        } else if (block.type === 'tool_result') {
-          const raw = !block.content ? '' : typeof block.content === 'string' ? block.content : Array.isArray(block.content) ? block.content.map(c => c.text ?? '').join('\n') : String(block.content)
-          const stripped = raw.replace(ANSI_RE, '')
-          block._lineCount = stripped.split('\n').length
-          block._isLong = block._lineCount > 15
-          block._html = renderMarkdown(stripped)
-        }
-      }
-    }
-    events.value.push(e)
-  }
-  pendingEvents = []
-  flushPending = false
-
-  // Sliding window eviction — purge collapsed keys by stable _id (T823).
-  if (events.value.length > MAX_EVENTS) {
-    const evicted = events.value.splice(0, events.value.length - MAX_EVENTS)
-    const evictedIds = new Set(evicted.map(e => e._id))
-    for (const key of Object.keys(collapsed.value)) {
-      if (evictedIds.has(parseInt(key.split('-')[0], 10))) delete collapsed.value[key]
-    }
-  }
-  scrollToBottom()
-}
-
-function isNearBottom(): boolean {
-  if (!scrollContainer.value) return true
-  const el = scrollContainer.value
-  return el.scrollHeight - el.scrollTop - el.clientHeight < 150
-}
-
-function scrollToBottom(force = false): void {
-  if (!force && !isNearBottom()) return
-  nextTick(() => { if (scrollContainer.value) scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight })
-}
-
-// ── Hidden-tab eviction (T962 + T1135) ───────────────────────────────────────
-// When a tab becomes inactive, trim events and clear _html strings to free RAM.
-// When re-activated, re-render _html for remaining events.
-watch(() => tabsStore.activeTabId === props.terminalId, (isActive) => {
-  if (!isActive) {
-    // Trim excess events
-    if (events.value.length > MAX_EVENTS_HIDDEN) {
-      const evicted = events.value.splice(0, events.value.length - MAX_EVENTS_HIDDEN)
-      const evictedIds = new Set(evicted.map(e => e._id))
-      for (const key of Object.keys(collapsed.value)) {
-        if (evictedIds.has(parseInt(key.split('-')[0], 10))) delete collapsed.value[key]
-      }
-    }
-    // Clear pre-rendered _html on remaining events (T1135)
-    for (const ev of events.value) {
-      if (ev.message?.content) {
-        for (const block of ev.message.content) block._html = undefined
-      }
-    }
-  } else {
-    // Re-render _html for events whose cached HTML was cleared (T1135)
-    for (const ev of events.value) {
-      if (!ev.message?.content) continue
-      for (const block of ev.message.content) {
-        if (block._html !== undefined) continue
-        if (block.type === 'text' && block.text != null) {
-          block._html = renderMarkdown(block.text)
-        } else if (block.type === 'tool_result') {
-          const raw = !block.content ? '' : typeof block.content === 'string' ? block.content : Array.isArray(block.content) ? block.content.map(c => c.text ?? '').join('\n') : String(block.content)
-          block._html = renderMarkdown(raw.replace(ANSI_RE, ''))
-        }
-      }
-    }
-  }
-})
-
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 let unsubStreamMessage: (() => void) | null = null
 let unsubConvId: (() => void) | null = null
 let unsubExit: (() => void) | null = null
 
-/**
- * Spawns the agent process and registers IPC subscriptions.
- * Subscriptions registered BEFORE agentSend to avoid race condition (T689).
- * Resume shortcut: sets sessionId from convId immediately so Send is enabled (ADR-009).
- */
 onMounted(async () => {
   const tab = tabsStore.tabs.find(t => t.id === props.terminalId)
   if (!tab) return
@@ -283,8 +172,7 @@ onMounted(async () => {
     tabsStore.setStreamId(props.terminalId, id)
 
     unsubStreamMessage = window.electronAPI.onAgentStream(id, (raw: Record<string, unknown>) => {
-      pendingEvents.push(raw as StreamEvent)
-      if (!flushPending) { flushPending = true; nextTick(flushEvents) }
+      enqueueEvent(raw)
     })
     unsubConvId = window.electronAPI.onAgentConvId(id, (convId: string) => { sessionId.value = convId })
     unsubExit = window.electronAPI.onAgentExit(id, (_exitCode: number | null) => {
@@ -323,7 +211,7 @@ onUnmounted(() => {
   scrollContainer.value?.removeEventListener('click', handleLinkClick, true)
   tabsStore.setStreamId(props.terminalId, null)
   if (ptyId.value && !agentStopped.value) window.electronAPI.agentKill(ptyId.value)
-  events.value = []; collapsed.value = {}; pendingEvents = []
+  cleanup()
 })
 </script>
 

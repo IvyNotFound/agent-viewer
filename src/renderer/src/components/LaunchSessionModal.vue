@@ -6,19 +6,9 @@ import { useTasksStore } from '@renderer/stores/tasks'
 import { useSettingsStore, parseDefaultCliInstance } from '@renderer/stores/settings'
 import { agentFg, agentBorder } from '@renderer/utils/agentColor'
 import { useModalEscape } from '@renderer/composables/useModalEscape'
+import { CLI_CAPABILITIES, CLI_LABELS, CLI_BADGE, systemLabel as getSystemLabel } from '@renderer/utils/cliCapabilities'
 import type { Agent } from '@renderer/types'
 import type { CliType, CliInstance, CliCapabilities } from '@shared/cli-types'
-
-// ── Static capabilities map (T1036 / R2) ─────────────────────────────────────
-// T1012 will eventually expose this via IPC; until then, source-of-truth is here.
-const CLI_CAPABILITIES: Record<CliType, CliCapabilities> = {
-  claude:   { worktree: true, profileSelection: true,  systemPrompt: true,  thinkingMode: true,  convResume: true  },
-  codex:    { worktree: true, profileSelection: false, systemPrompt: true,  thinkingMode: false, convResume: false },
-  gemini:   { worktree: true, profileSelection: false, systemPrompt: false, thinkingMode: false, convResume: false },
-  opencode: { worktree: true, profileSelection: false, systemPrompt: false, thinkingMode: false, convResume: false },
-  aider:    { worktree: true, profileSelection: false, systemPrompt: true,  thinkingMode: false, convResume: false },
-  goose:    { worktree: true, profileSelection: false, systemPrompt: true,  thinkingMode: false, convResume: false },
-}
 
 const props = defineProps<{ agent: Agent }>()
 const emit = defineEmits<{ close: [] }>()
@@ -42,6 +32,8 @@ const lastConvId = ref<string | null>(null)
 const useResume = ref(false)
 /** Multi-instance mode: create an isolated git worktree before launching (ADR-006) */
 const multiInstance = ref(true)
+/** Tracks origin of multiInstance value for UI hint (T1143) */
+const worktreeSource = ref<'global' | 'agent' | 'manual'>('global')
 /** Error message if worktree creation fails */
 const worktreeError = ref<string | null>(null)
 
@@ -65,24 +57,6 @@ const allAvailableInstances = computed(() =>
   settingsStore.allCliInstances.filter(i => settingsStore.enabledClis.includes(i.cli as CliType))
 )
 
-const CLI_LABELS: Record<CliType, string> = {
-  claude:   'Claude',
-  codex:    'Codex',
-  gemini:   'Gemini',
-  opencode: 'OpenCode',
-  aider:    'Aider',
-  goose:    'Goose',
-}
-
-const CLI_BADGE: Record<CliType, string> = {
-  claude:   'C',
-  codex:    'X',
-  gemini:   'G',
-  opencode: 'O',
-  aider:    'A',
-  goose:    'G',
-}
-
 /** Platform-aware "no CLI detected" message */
 const noInstanceText = computed(() => {
   const p = window.electronAPI.platform
@@ -91,13 +65,8 @@ const noInstanceText = computed(() => {
   return t('launch.noInstanceWin')
 })
 
-/** Human-readable OS/environment label for an instance */
 function systemLabel(inst: CliInstance): string {
-  if (inst.type === 'wsl') return `WSL ${inst.distro}`
-  const plat = window.electronAPI.platform
-  if (plat === 'win32') return 'Windows'
-  if (plat === 'darwin') return 'macOS'
-  return 'Linux'
+  return getSystemLabel(inst.type, inst.distro)
 }
 
 onMounted(async () => {
@@ -145,7 +114,22 @@ onMounted(async () => {
     }
   }
 
+  // Cascade resolution: agent override > global default (T1143)
+  const agentWorktree = props.agent.worktree_enabled
+  if (agentWorktree !== null && agentWorktree !== undefined) {
+    multiInstance.value = agentWorktree === 1
+    worktreeSource.value = 'agent'
+  } else {
+    multiInstance.value = settingsStore.worktreeDefault
+    worktreeSource.value = 'global'
+  }
+
   loading.value = false
+})
+
+// Track manual override of worktree toggle (T1143)
+watch(multiInstance, () => {
+  if (!loading.value) worktreeSource.value = 'manual'
 })
 
 async function launch() {
@@ -181,25 +165,13 @@ async function launch() {
     const activeThinking = caps.value.thinkingMode ? thinkingMode.value : undefined
     const activeSystemPrompt = caps.value.systemPrompt ? fullSystemPrompt.value : undefined
 
-    if (convId) {
-      tabsStore.addTerminal(
-        props.agent.name, distro, undefined, undefined,
-        activeThinking, undefined, convId,
-        true, undefined, 'stream', cli, workDir
-      )
-    } else if (activeSystemPrompt) {
-      tabsStore.addTerminal(
-        props.agent.name, distro, finalPrompt, activeSystemPrompt,
-        activeThinking, undefined, undefined,
-        true, undefined, 'stream', cli, workDir
-      )
-    } else {
-      tabsStore.addTerminal(
-        props.agent.name, distro, finalPrompt, undefined,
-        activeThinking, undefined, undefined,
-        true, undefined, 'stream', cli, workDir
-      )
-    }
+    tabsStore.addTerminal(
+      props.agent.name, distro,
+      convId ? undefined : finalPrompt,
+      convId ? undefined : activeSystemPrompt,
+      activeThinking, undefined, convId ?? undefined,
+      true, undefined, 'stream', cli, workDir
+    )
     emit('close')
   } finally {
     launching.value = false
@@ -372,6 +344,9 @@ async function launch() {
               <span class="text-sm text-content-secondary">{{ t('launch.multiInstance') }}</span>
             </label>
             <p class="text-[10px] text-content-faint mt-1">{{ t('launch.multiInstanceNote') }}</p>
+            <p class="text-[10px] text-content-faint mt-0.5 italic">
+              {{ t('launch.worktreeSource', { source: worktreeSource === 'global' ? t('launch.worktreeSourceGlobal') : worktreeSource === 'agent' ? t('launch.worktreeSourceAgent') : t('launch.worktreeSourceManual') }) }}
+            </p>
             <p v-if="worktreeError" class="text-[10px] text-red-400 mt-1">
               {{ t('launch.multiInstanceError', { error: worktreeError }) }}
             </p>

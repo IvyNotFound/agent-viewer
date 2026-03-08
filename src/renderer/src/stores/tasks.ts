@@ -5,7 +5,7 @@
  * - Project connection (dbPath, projectPath) — delegated to useProjectStore
  * - Agents list, groups — delegated to useAgentsStore
  * - Tasks CRUD and filtering
- * - Real-time polling and file watching
+ * - Real-time polling and file watching — delegated to useTaskRefresh
  *
  * Acts as a facade: exposes all symbols from sub-stores for backward compatibility.
  *
@@ -14,29 +14,22 @@
 
 import { defineStore, storeToRefs } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { Task, Agent, Stats, TaskComment, TaskLink, Perimetre, TaskAssignee } from '@renderer/types'
+import type { Task, Stats, TaskComment, TaskLink, Perimetre, TaskAssignee } from '@renderer/types'
 import { useProjectStore } from '@renderer/stores/project'
-import { useAgentsStore, AGENT_CTE_SQL } from '@renderer/stores/agents'
+import { useAgentsStore } from '@renderer/stores/agents'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useSettingsStore } from '@renderer/stores/settings'
-import { useToast } from '@renderer/composables/useToast'
+import { useTaskRefresh } from '@renderer/stores/useTaskRefresh'
 import { normalizeRow } from '@renderer/utils/db'
 
-/** Debounce: last notification timestamp per task (prevent spam). */
-const _lastNotifTs: Record<number, number> = {}
-
-/** Max number of 'done' tasks loaded in live refresh — older ones accessible via archive lazy-load. */
-export const DONE_TASKS_LIMIT = 100
+export { DONE_TASKS_LIMIT } from '@renderer/stores/useTaskRefresh'
 
 export const useTasksStore = defineStore('tasks', () => {
-  const { push: pushToast } = useToast()
-
   // Sub-stores
   const projectStore = useProjectStore()
   const agentsStore = useAgentsStore()
   const settingsStore = useSettingsStore()
 
-  // Reactive refs delegated from sub-stores (storeToRefs gives back the original refs — mutations propagate)
   const { projectPath, dbPath, setupWizardTarget } = storeToRefs(projectStore)
   const { agents, agentGroups, agentGroupsTree } = storeToRefs(agentsStore)
 
@@ -47,7 +40,6 @@ export const useTasksStore = defineStore('tasks', () => {
   const lastRefresh = ref<Date | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
-  /** Stale task threshold in minutes — loaded from config `stale_threshold_minutes`, default 120. */
   const staleThresholdMinutes = ref<number>(120)
   const selectedAgentId = ref<number | null>(null)
   const selectedPerimetre = ref<string | null>(null)
@@ -55,17 +47,26 @@ export const useTasksStore = defineStore('tasks', () => {
   const taskComments = ref<TaskComment[]>([])
   const taskLinks = ref<TaskLink[]>([])
   const taskAssignees = ref<TaskAssignee[]>([])
-  /** Board-level assignees indexed by task_id — loaded once in refresh(), no per-card IPC (T787) */
   const boardAssignees = ref<Map<number, TaskAssignee[]>>(new Map())
-  /** True when done tasks are capped at DONE_TASKS_LIMIT — signals UI that older done tasks exist */
   const doneTasksLimited = ref(false)
 
-  let pollInterval: ReturnType<typeof setInterval> | null = null
-  let agentPollInterval: ReturnType<typeof setInterval> | null = null
-  let groupPollInterval: ReturnType<typeof setInterval> | null = null
-  let unsubDbChange: (() => void) | null = null
-  let dbWatchInterval: ReturnType<typeof setInterval> | null = null
-  let dbChangeDebounce: ReturnType<typeof setTimeout> | null = null
+  async function query<T = unknown>(sql: string, params?: unknown[]): Promise<T[]> {
+    if (!dbPath.value) return []
+    const result = await window.electronAPI.queryDb(dbPath.value, sql, params)
+    if (!Array.isArray(result)) {
+      console.warn('[tasks query] Unexpected result type:', result)
+      return []
+    }
+    return result as T[]
+  }
+
+  // Delegate refresh/polling/watching to composable
+  const {
+    refresh, startPolling, stopPolling, startWatching, cleanupTimers,
+  } = useTaskRefresh({
+    dbPath, tasks, agents, perimetresData, stats,
+    lastRefresh, loading, error, doneTasksLimited, boardAssignees, query,
+  })
 
   function toggleAgentFilter(id: number | string): void {
     const numId = Number(id)
@@ -76,7 +77,6 @@ export const useTasksStore = defineStore('tasks', () => {
     selectedPerimetre.value = selectedPerimetre.value === p ? null : p
   }
 
-  // P3-B: single O(N) pass over tasks — Set deduplicates, Array.from+sort at the end only
   const perimetres = computed((): string[] => {
     const seen = new Set<string>()
     for (const t of tasks.value) if (t.scope) seen.add(t.scope)
@@ -91,7 +91,6 @@ export const useTasksStore = defineStore('tasks', () => {
     })
   )
 
-  // P3-A: single O(N) pass — replaces 4 separate .filter() calls (one per status)
   const tasksByStatus = computed(() => {
     const groups: { todo: Task[]; in_progress: Task[]; done: Task[]; archived: Task[] } = {
       todo: [], in_progress: [], done: [], archived: [],
@@ -102,120 +101,6 @@ export const useTasksStore = defineStore('tasks', () => {
     return groups
   })
 
-  async function query<T = unknown>(sql: string, params?: unknown[]): Promise<T[]> {
-    if (!dbPath.value) return []
-    const result = await window.electronAPI.queryDb(dbPath.value, sql, params)
-    // Handle error responses from IPC (e.g., blocked write attempts)
-    if (!Array.isArray(result)) {
-      console.warn('[tasks query] Unexpected result type:', result)
-      return []
-    }
-    return result as T[]
-  }
-
-  async function refresh(): Promise<void> {
-    if (!dbPath.value) return
-    loading.value = true
-    error.value = null
-    try {
-      // Split tasks query: load all active tasks + cap done tasks to avoid memory bloat (T819)
-      const [rawLiveTasks, rawDoneTasks, rawAgents, rawStats, rawPerimetres, rawBoardAssignees] = await Promise.all([
-        query<Task>(`
-          SELECT t.*, a.name as agent_name, a.scope as agent_scope,
-            c.name as agent_creator_name
-          FROM tasks t
-          LEFT JOIN agents a ON a.id = t.agent_assigned_id
-          LEFT JOIN agents c ON c.id = t.agent_creator_id
-          WHERE t.status IN ('todo', 'in_progress')
-          ORDER BY t.updated_at DESC
-          LIMIT 500
-        `),
-        query<Task>(`
-          SELECT t.*, a.name as agent_name, a.scope as agent_scope,
-            c.name as agent_creator_name
-          FROM tasks t
-          LEFT JOIN agents a ON a.id = t.agent_assigned_id
-          LEFT JOIN agents c ON c.id = t.agent_creator_id
-          WHERE t.status = 'done'
-          ORDER BY t.updated_at DESC
-          LIMIT ${DONE_TASKS_LIMIT}
-        `),
-        query<Agent>(AGENT_CTE_SQL),
-        query<{ status: string; count: number }>(`
-          SELECT status, COUNT(*) as count FROM tasks GROUP BY status
-        `),
-        query<Perimetre>(`
-          SELECT id, name, folder, techno, description, active
-          FROM scopes WHERE active = 1 ORDER BY name
-        `),
-        // Batch load all board assignees in one query — eliminates N per-card IPC calls (T787)
-        query<{ task_id: number; agent_id: number; agent_name: string; role: string | null }>(`
-          SELECT ta.task_id, ta.agent_id, a.name as agent_name, ta.role
-          FROM task_agents ta
-          JOIN agents a ON a.id = ta.agent_id
-          JOIN tasks t ON t.id = ta.task_id
-          WHERE t.status != 'archived'
-        `)
-      ])
-      const rawTasks = [...rawLiveTasks, ...rawDoneTasks]
-      doneTasksLimited.value = rawDoneTasks.length === DONE_TASKS_LIMIT
-
-      const newTasks = rawTasks.map(normalizeRow) as Task[]
-      // Desktop notifications — detect status transitions (T755)
-      if (settingsStore.notificationsEnabled && Notification.permission === 'granted' && tasks.value.length > 0) {
-        const prevMap = new Map(tasks.value.map(t => [t.id, t.status]))
-        const now = Date.now()
-        for (const t of newTasks) {
-          const prev = prevMap.get(t.id)
-          if (prev && prev !== t.status && ['in_progress', 'done'].includes(t.status)) {
-            // Debounce: skip if notified for this task in last 5s
-            if (now - (_lastNotifTs[t.id] ?? 0) < 5000) continue
-            _lastNotifTs[t.id] = now
-            new Notification(`Task ${t.status === 'done' ? 'completed' : 'started'}`, {
-              body: `${t.title} — ${(t as Task & { agent_name?: string }).agent_name ?? '?'}`,
-              silent: false,
-            })
-          }
-        }
-        // Purge stale entries (>60s) to keep _lastNotifTs bounded
-        const cutoff = now - 60_000
-        for (const [id, ts] of Object.entries(_lastNotifTs)) {
-          if (ts < cutoff) delete _lastNotifTs[Number(id)]
-        }
-      }
-      tasks.value = newTasks
-      // Rebuild boardAssignees in-place — avoids new Map allocation each refresh (T819)
-      boardAssignees.value.clear()
-      for (const row of rawBoardAssignees) {
-        if (!boardAssignees.value.has(row.task_id)) boardAssignees.value.set(row.task_id, [])
-        boardAssignees.value.get(row.task_id)!.push({
-          agent_id: row.agent_id,
-          agent_name: row.agent_name,
-          role: row.role as TaskAssignee['role'],
-          assigned_at: '',
-        })
-      }
-      // Update agentsStore state via storeToRefs refs — mutations propagate to the sub-store
-      agents.value = rawAgents.map(normalizeRow)
-      perimetresData.value = rawPerimetres.map(normalizeRow)
-
-      const s: Stats = { todo: 0, in_progress: 0, done: 0, archived: 0 }
-      for (const row of rawStats) {
-        if (row.status in s) {
-          s[row.status as keyof Stats] = row.count
-        }
-      }
-      stats.value = s
-      lastRefresh.value = new Date()
-    } catch (e) {
-      error.value = String(e)
-      pushToast(String(e))
-    } finally {
-      loading.value = false
-    }
-  }
-
-  // Delegate to agentsStore — updates agents/locks state in sub-store
   async function agentRefresh(): Promise<void> {
     await agentsStore.agentRefresh()
   }
@@ -225,11 +110,9 @@ export const useTasksStore = defineStore('tasks', () => {
     dbPath.value = dPath
     localStorage.setItem('projectPath', pPath)
     localStorage.setItem('dbPath', dPath)
-    // Reset filters when switching projects — agent/perimetre IDs are project-specific
     selectedAgentId.value = null
     selectedPerimetre.value = null
     await window.electronAPI.migrateDb(dPath)
-    // Load stale threshold from config (T749)
     try {
       const cfgRes = await window.electronAPI.getConfigValue(dPath, 'stale_threshold_minutes')
       if (cfgRes.success && cfgRes.value !== null) {
@@ -239,7 +122,7 @@ export const useTasksStore = defineStore('tasks', () => {
     } catch { /* ignore — fallback to default 120 */ }
     // Load worktree default from config (T1143)
     await settingsStore.loadWorktreeDefault(dPath)
-    await Promise.all([refresh(), agentsStore.fetchAgentGroups()])
+    await refresh()
     startPolling()
     startWatching(dPath)
   }
@@ -280,10 +163,7 @@ export const useTasksStore = defineStore('tasks', () => {
   }
 
   function closeProject(): void {
-    stopPolling()
-    if (dbChangeDebounce) { clearTimeout(dbChangeDebounce); dbChangeDebounce = null }
-    if (dbWatchInterval) { clearInterval(dbWatchInterval); dbWatchInterval = null }
-    if (unsubDbChange) { unsubDbChange(); unsubDbChange = null }
+    cleanupTimers()
     window.electronAPI.unwatchDb(dbPath.value ?? undefined)
     projectPath.value = null
     dbPath.value = null
@@ -300,49 +180,34 @@ export const useTasksStore = defineStore('tasks', () => {
     selectedAgentId.value = null
     selectedPerimetre.value = null
     error.value = null
-    // Clear debounce to prevent stale refresh after close (T796)
-    if (dbChangeDebounce) { clearTimeout(dbChangeDebounce); dbChangeDebounce = null }
   }
 
-  // Delegate to projectStore
-  function setProjectPathOnly(path: string): void {
-    projectStore.setProjectPathOnly(path)
-  }
+  function setProjectPathOnly(path: string): void { projectStore.setProjectPathOnly(path) }
+  function closeWizard(): void { projectStore.closeWizard() }
 
-  function watchForDb(path: string): void {
-    if (dbWatchInterval) clearInterval(dbWatchInterval)
-    dbWatchInterval = setInterval(async () => {
-      if (document.visibilityState === 'hidden') return
-      const db = await window.electronAPI.findProjectDb(path)
-      if (db) {
-        clearInterval(dbWatchInterval!)
-        dbWatchInterval = null
-        await setProject(path, db)
-      }
-    }, 2000)
-  }
+  // Agent group operations — delegate to agentsStore
+  async function fetchAgentGroups(): Promise<void> { await agentsStore.fetchAgentGroups() }
+  async function createAgentGroup(name: string, parentId?: number | null) { return agentsStore.createAgentGroup(name, parentId) }
+  async function renameAgentGroup(groupId: number, name: string): Promise<void> { return agentsStore.renameAgentGroup(groupId, name) }
+  async function deleteAgentGroup(groupId: number): Promise<void> { return agentsStore.deleteAgentGroup(groupId) }
+  async function setAgentGroup(agentId: number, groupId: number | null, sortOrder?: number): Promise<void> { return agentsStore.setAgentGroup(agentId, groupId, sortOrder) }
+  async function setGroupParent(groupId: number, parentId: number | null): Promise<void> { return agentsStore.setGroupParent(groupId, parentId) }
 
-  function startPolling(): void {
-    stopPolling()
-    // 5min fallback — file watcher is primary, these only trigger if watcher silently fails
-    pollInterval = setInterval(refresh, 300000)
-    agentPollInterval = setInterval(agentRefresh, 300000)
-    // Groups change rarely (manual actions only) — 5min poll is sufficient (T1122)
-    groupPollInterval = setInterval(() => agentsStore.fetchAgentGroups(), 300000)
-  }
-
-  function stopPolling(): void {
-    if (pollInterval) {
-      clearInterval(pollInterval)
-      pollInterval = null
+  async function setTaskStatut(taskId: number, statut: 'in_progress'): Promise<void> {
+    if (!dbPath.value) return
+    const task = tasks.value.find(t => t.id === taskId)
+    const previousStatus = task?.status
+    if (task) task.status = statut
+    let res: { success: boolean; error?: string; blockers?: Array<{ id: number; title: string; status: string }> }
+    try {
+      res = await window.electronAPI.tasksUpdateStatus(dbPath.value, taskId, statut) as typeof res
+    } catch (err) {
+      if (task && previousStatus !== undefined) task.status = previousStatus
+      throw err
     }
-    if (agentPollInterval) {
-      clearInterval(agentPollInterval)
-      agentPollInterval = null
-    }
-    if (groupPollInterval) {
-      clearInterval(groupPollInterval)
-      groupPollInterval = null
+    if (!res.success) {
+      if (task && previousStatus !== undefined) task.status = previousStatus
+      throw Object.assign(new Error(res.error ?? 'UPDATE_FAILED'), { blockers: res.blockers ?? [] })
     }
   }
 
@@ -378,69 +243,18 @@ export const useTasksStore = defineStore('tasks', () => {
     taskAssignees.value = []
   }
 
-  // Delegate to projectStore
-  function closeWizard(): void {
-    projectStore.closeWizard()
+  function watchForDb(path: string): void {
+    const checkInterval = setInterval(async () => {
+      if (document.visibilityState === 'hidden') return
+      const db = await window.electronAPI.findProjectDb(path)
+      if (db) {
+        clearInterval(checkInterval)
+        await setProject(path, db)
+      }
+    }, 2000)
   }
 
-  // Agent group operations — delegate to agentsStore
-  async function fetchAgentGroups(): Promise<void> {
-    await agentsStore.fetchAgentGroups()
-  }
-
-  async function createAgentGroup(name: string, parentId?: number | null) {
-    return agentsStore.createAgentGroup(name, parentId)
-  }
-
-  async function renameAgentGroup(groupId: number, name: string): Promise<void> {
-    return agentsStore.renameAgentGroup(groupId, name)
-  }
-
-  async function deleteAgentGroup(groupId: number): Promise<void> {
-    return agentsStore.deleteAgentGroup(groupId)
-  }
-
-  async function setAgentGroup(agentId: number, groupId: number | null, sortOrder?: number): Promise<void> {
-    return agentsStore.setAgentGroup(agentId, groupId, sortOrder)
-  }
-
-  async function setGroupParent(groupId: number, parentId: number | null): Promise<void> {
-    return agentsStore.setGroupParent(groupId, parentId)
-  }
-
-  async function setTaskStatut(taskId: number, statut: 'in_progress'): Promise<void> {
-    if (!dbPath.value) return
-    // Optimistic update — move card instantly, rollback on failure
-    const task = tasks.value.find(t => t.id === taskId)
-    const previousStatus = task?.status
-    if (task) task.status = statut
-    let res: { success: boolean; error?: string; blockers?: Array<{ id: number; title: string; status: string }> }
-    try {
-      res = await window.electronAPI.tasksUpdateStatus(dbPath.value, taskId, statut) as typeof res
-    } catch (err) {
-      if (task && previousStatus !== undefined) task.status = previousStatus
-      throw err
-    }
-    if (!res.success) {
-      if (task && previousStatus !== undefined) task.status = previousStatus
-      throw Object.assign(new Error(res.error ?? 'UPDATE_FAILED'), { blockers: res.blockers ?? [] })
-    }
-  }
-
-  function startWatching(path: string): void {
-    if (unsubDbChange) { unsubDbChange(); unsubDbChange = null }
-    window.electronAPI.watchDb(path)
-    // File watcher triggers refresh with 150ms debounce to coalesce burst writes
-    unsubDbChange = window.electronAPI.onDbChanged(() => {
-      if (dbChangeDebounce) clearTimeout(dbChangeDebounce)
-      dbChangeDebounce = setTimeout(() => {
-        dbChangeDebounce = null
-        refresh()
-      }, 150)
-    })
-  }
-
-  // Reset agent/perimetre filters whenever the project changes (IDs are project-specific)
+  // Reset filters whenever the project changes
   watch(dbPath, (newPath, oldPath) => {
     if (newPath !== oldPath) {
       selectedAgentId.value = null
@@ -448,8 +262,6 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   })
 
-  // Auto-clear selectedAgentId if the agent doesn't exist in the current project
-  // (prevents invisible stale filters after switching projects)
   watch(agents, (newAgents) => {
     if (selectedAgentId.value !== null) {
       const exists = newAgents.some(a => Number(a.id) === Number(selectedAgentId.value))
@@ -459,7 +271,6 @@ export const useTasksStore = defineStore('tasks', () => {
 
   // Auto-start if dbPath already stored
   if (dbPath.value) {
-    // Migration: derive projectPath from dbPath if not yet stored (.claude/xxx.db → parent dir)
     if (!projectPath.value) {
       const parts = dbPath.value.replace(/\\/g, '/').split('/').filter(Boolean)
       if (parts.length >= 2 && parts[parts.length - 2] === '.claude') {
@@ -468,13 +279,12 @@ export const useTasksStore = defineStore('tasks', () => {
         localStorage.setItem('projectPath', derived)
       }
     }
-    // Re-register dbPath in main process (allowedDbPaths is cleared on each app restart)
     const ensureRegistered = projectPath.value
       ? window.electronAPI.findProjectDb(projectPath.value)
       : Promise.resolve(dbPath.value)
     ensureRegistered
       .then(() => window.electronAPI.migrateDb(dbPath.value!))
-      .then(() => Promise.all([refresh(), agentsStore.fetchAgentGroups()]))
+      .then(() => refresh())
       .then(() => {
         startPolling()
         startWatching(dbPath.value!)
@@ -482,14 +292,11 @@ export const useTasksStore = defineStore('tasks', () => {
   }
 
   return {
-    // Project state (via projectStore)
     projectPath, dbPath, setupWizardTarget,
     setProjectPathOnly, closeWizard,
-    // Agents state (via agentsStore)
     agents, agentGroups, agentGroupsTree,
     agentRefresh, fetchAgentGroups,
     createAgentGroup, renameAgentGroup, deleteAgentGroup, setAgentGroup, setGroupParent,
-    // Tasks state
     tasks, stats, lastRefresh, loading, error, staleThresholdMinutes, doneTasksLimited,
     selectedAgentId, toggleAgentFilter,
     selectedPerimetre, togglePerimetreFilter, perimetres, perimetresData,
