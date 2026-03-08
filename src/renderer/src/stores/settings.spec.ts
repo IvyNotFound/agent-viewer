@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useSettingsStore } from '@renderer/stores/settings'
+import { useSettingsStore, parseDefaultCliInstance } from '@renderer/stores/settings'
 
 // Mock window.electronAPI
 const mockElectronAPI = {
@@ -297,11 +297,11 @@ describe('stores/settings — defaultCliInstance (T857, T1032)', () => {
     expect(store.defaultCliInstance).toBe('')
   })
 
-  it('should persist distro to localStorage', () => {
+  it('should persist cli:distro to localStorage', () => {
     const store = useSettingsStore()
-    store.setDefaultCliInstance('Ubuntu-24.04')
-    expect(store.defaultCliInstance).toBe('Ubuntu-24.04')
-    expect(localStorage.getItem('defaultCliInstance')).toBe('Ubuntu-24.04')
+    store.setDefaultCliInstance('claude', 'Ubuntu-24.04')
+    expect(store.defaultCliInstance).toBe('claude:Ubuntu-24.04')
+    expect(localStorage.getItem('defaultCliInstance')).toBe('claude:Ubuntu-24.04')
   })
 
   it('should read stored value on init', () => {
@@ -319,9 +319,9 @@ describe('stores/settings — defaultCliInstance (T857, T1032)', () => {
   it('should remove legacy defaultClaudeInstance key on write', () => {
     localStorage.setItem('defaultClaudeInstance', 'OldDistro')
     const store = useSettingsStore()
-    store.setDefaultCliInstance('NewDistro')
+    store.setDefaultCliInstance('claude', 'NewDistro')
     expect(localStorage.getItem('defaultClaudeInstance')).toBeNull()
-    expect(localStorage.getItem('defaultCliInstance')).toBe('NewDistro')
+    expect(localStorage.getItem('defaultCliInstance')).toBe('claude:NewDistro')
   })
 })
 
@@ -528,5 +528,59 @@ describe('stores/settings — enabledClis (T1013)', () => {
     store.toggleCli('codex' as 'claude')
     const stored = JSON.parse(localStorage.getItem('enabledClis') || '[]') as string[]
     expect(stored).toContain('codex')
+  })
+})
+
+// ── parseDefaultCliInstance (T1090) ───────────────────────────────────────────
+
+describe('parseDefaultCliInstance', () => {
+  it('returns empty distro and null cli for empty string', () => {
+    expect(parseDefaultCliInstance('')).toEqual({ cli: null, distro: '' })
+  })
+
+  it('returns distro-only with null cli for legacy format (no colon)', () => {
+    expect(parseDefaultCliInstance('Ubuntu')).toEqual({ cli: null, distro: 'Ubuntu' })
+  })
+
+  it('parses cli:distro format correctly', () => {
+    expect(parseDefaultCliInstance('claude:Ubuntu')).toEqual({ cli: 'claude', distro: 'Ubuntu' })
+  })
+
+  it('parses cli:local format correctly', () => {
+    expect(parseDefaultCliInstance('codex:local')).toEqual({ cli: 'codex', distro: 'local' })
+  })
+
+  it('handles distro with colons (e.g. Ubuntu-24.04 edge case)', () => {
+    // Distro names should not contain colons, but we only split on the first colon
+    expect(parseDefaultCliInstance('claude:Ubuntu-24.04')).toEqual({ cli: 'claude', distro: 'Ubuntu-24.04' })
+  })
+})
+
+// ── setDefaultCliInstance (T1090) ─────────────────────────────────────────────
+
+describe('stores/settings — setDefaultCliInstance (T1090)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+  })
+
+  it('stores cli:distro key', () => {
+    const store = useSettingsStore()
+    store.setDefaultCliInstance('claude', 'Ubuntu')
+    expect(store.defaultCliInstance).toBe('claude:Ubuntu')
+    expect(localStorage.getItem('defaultCliInstance')).toBe('claude:Ubuntu')
+  })
+
+  it('stores cli:local for local instance', () => {
+    const store = useSettingsStore()
+    store.setDefaultCliInstance('codex', 'local')
+    expect(store.defaultCliInstance).toBe('codex:local')
+  })
+
+  it('removes legacy defaultClaudeInstance key on save', () => {
+    localStorage.setItem('defaultClaudeInstance', 'Ubuntu')
+    const store = useSettingsStore()
+    store.setDefaultCliInstance('claude', 'Ubuntu')
+    expect(localStorage.getItem('defaultClaudeInstance')).toBeNull()
   })
 })

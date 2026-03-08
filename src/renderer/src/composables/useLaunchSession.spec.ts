@@ -168,7 +168,7 @@ describe('composables/useLaunchSession', () => {
         { cli: 'claude', distro: 'Debian', version: '2.1.58', isDefault: false, type: 'wsl' },
       ])
       const settingsStore = useSettingsStore()
-      settingsStore.setDefaultCliInstance('Debian')
+      settingsStore.setDefaultCliInstance('claude', 'Debian')
 
       const { launchAgentTerminal } = useLaunchSession()
       await launchAgentTerminal(makeAgent(), makeTask())
@@ -477,7 +477,7 @@ describe('composables/useLaunchSession', () => {
         { cli: 'claude', distro: 'Debian', version: '2.1.58', isDefault: false, type: 'wsl' },
       ])
       const settingsStore = useSettingsStore()
-      settingsStore.setDefaultCliInstance('Debian')
+      settingsStore.setDefaultCliInstance('claude', 'Debian')
 
       const { launchAgentTerminal } = useLaunchSession()
       await launchAgentTerminal(makeAgent(), makeTask())

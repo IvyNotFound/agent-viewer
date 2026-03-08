@@ -9,7 +9,7 @@
 
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useTasksStore } from '@renderer/stores/tasks'
-import { useSettingsStore } from '@renderer/stores/settings'
+import { useSettingsStore, parseDefaultCliInstance } from '@renderer/stores/settings'
 import type { Task, Agent } from '@renderer/types'
 
 export const MAX_AGENT_SESSIONS = 3
@@ -62,6 +62,7 @@ export function useLaunchSession() {
 
       const settingsStore = useSettingsStore()
       const storedDistro = settingsStore.defaultCliInstance
+      const parsedDefault = parseDefaultCliInstance(storedDistro)
 
       // Find first enabled CLI that has detected instances, fall back to enabledClis[0]
       let defaultCli = settingsStore.enabledClis[0] ?? 'claude'
@@ -74,7 +75,12 @@ export function useLaunchSession() {
       }
 
       const instance = cliInstances.length > 0
-        ? ((storedDistro ? cliInstances.find(i => i.distro === storedDistro) : undefined)
+        ? ((storedDistro
+              ? cliInstances.find(i =>
+                  i.distro === parsedDefault.distro &&
+                  (parsedDefault.cli === null || i.cli === parsedDefault.cli)
+                )
+              : undefined)
             ?? cliInstances.find(i => i.isDefault)
             ?? cliInstances[0])
         : null
@@ -135,6 +141,7 @@ export function useLaunchSession() {
 
       const settingsStore = useSettingsStore()
       const storedDistro = settingsStore.defaultCliInstance
+      const parsedDefault = parseDefaultCliInstance(storedDistro)
 
       // Find first enabled CLI that has detected instances, fall back to enabledClis[0]
       let defaultCli = settingsStore.enabledClis[0] ?? 'claude'
@@ -147,7 +154,12 @@ export function useLaunchSession() {
       }
 
       const instance = cliInstances.length > 0
-        ? ((storedDistro ? cliInstances.find(i => i.distro === storedDistro) : undefined)
+        ? ((storedDistro
+              ? cliInstances.find(i =>
+                  i.distro === parsedDefault.distro &&
+                  (parsedDefault.cli === null || i.cli === parsedDefault.cli)
+                )
+              : undefined)
             ?? cliInstances.find(i => i.isDefault)
             ?? cliInstances[0])
         : null

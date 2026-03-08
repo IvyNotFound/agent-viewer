@@ -196,6 +196,116 @@ describe('LaunchSessionModal', () => {
   })
 })
 
+// ── Auto-select by cli:distro (T1090) ────────────────────────────────────────
+
+describe('LaunchSessionModal — auto-select cli:distro (T1090)', () => {
+  const mockAgent = {
+    id: 1, name: 'review-master', type: 'global', perimetre: null,
+    system_prompt: null, system_prompt_suffix: null, thinking_mode: null,
+    allowed_tools: null, created_at: '2026-01-01', session_statut: null, session_started_at: null,
+  }
+  const teleportStub = { Teleport: { template: '<div><slot /></div>' } }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
+    api.getCliInstances.mockResolvedValue([])
+    api.getAgentSystemPrompt.mockResolvedValue({ success: true, systemPrompt: null, systemPromptSuffix: null, thinkingMode: 'auto' })
+    api.queryDb.mockResolvedValue([])
+    api.buildAgentPrompt.mockResolvedValue('test prompt')
+  })
+
+  it('selects claude/Ubuntu over codex/Ubuntu when stored key is claude:Ubuntu', async () => {
+    const wrapper = shallowMount(LaunchSessionModal, {
+      props: { agent: mockAgent as never },
+      global: {
+        plugins: [createTestingPinia({
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: {
+              enabledClis: ['claude', 'codex'],
+              allCliInstances: [
+                { cli: 'codex',  distro: 'Ubuntu', version: '1.0.0', isDefault: false, type: 'wsl' },
+                { cli: 'claude', distro: 'Ubuntu', version: '2.1.0', isDefault: true,  type: 'wsl' },
+              ],
+              defaultCliInstance: 'claude:Ubuntu',
+            },
+          },
+        }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    await flushPromises()
+
+    // The launch button should not be disabled (an instance was selected)
+    const launchBtn = wrapper.findAll('button').find(b => {
+      const text = b.text().toLowerCase()
+      return text.includes('lancer') || text.includes('launch')
+    })
+    expect(launchBtn).toBeDefined()
+    expect(launchBtn!.attributes('disabled')).toBeUndefined()
+  })
+
+  it('falls back to isDefault instance when stored key has no match', async () => {
+    const wrapper = shallowMount(LaunchSessionModal, {
+      props: { agent: mockAgent as never },
+      global: {
+        plugins: [createTestingPinia({
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: {
+              enabledClis: ['claude'],
+              allCliInstances: [
+                { cli: 'claude', distro: 'Ubuntu', version: '2.1.0', isDefault: true, type: 'wsl' },
+              ],
+              defaultCliInstance: 'claude:Debian', // stored distro no longer exists
+            },
+          },
+        }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    await flushPromises()
+
+    // Falls back to isDefault → Ubuntu — launch button should be enabled
+    const launchBtn = wrapper.findAll('button').find(b => {
+      const text = b.text().toLowerCase()
+      return text.includes('lancer') || text.includes('launch')
+    })
+    expect(launchBtn!.attributes('disabled')).toBeUndefined()
+  })
+
+  it('backward compat: legacy distro-only key still selects by distro', async () => {
+    const wrapper = shallowMount(LaunchSessionModal, {
+      props: { agent: mockAgent as never },
+      global: {
+        plugins: [createTestingPinia({
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: {
+              enabledClis: ['claude'],
+              allCliInstances: [
+                { cli: 'claude', distro: 'Ubuntu', version: '2.1.0', isDefault: false, type: 'wsl' },
+              ],
+              defaultCliInstance: 'Ubuntu', // legacy format (no cli prefix)
+            },
+          },
+        }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    await flushPromises()
+
+    // Backward compat: finds Ubuntu regardless of cli prefix
+    const launchBtn = wrapper.findAll('button').find(b => {
+      const text = b.text().toLowerCase()
+      return text.includes('lancer') || text.includes('launch')
+    })
+    expect(launchBtn!.attributes('disabled')).toBeUndefined()
+  })
+})
+
 // ── AgentBadge (T231) ────────────────────────────────────────────────────────
 
 import AgentBadge from '@renderer/components/AgentBadge.vue'

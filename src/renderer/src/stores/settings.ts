@@ -16,6 +16,16 @@ import { setDarkMode } from '../utils/agentColor'
 import type { CliType, CliInstance } from '@shared/cli-types'
 
 export type Theme = 'dark' | 'light'
+
+/**
+ * Parse stored defaultCliInstance key → { cli, distro }.
+ * Backward compat: if no ':' separator, treat as distro-only (legacy format). (T1090)
+ */
+export function parseDefaultCliInstance(stored: string): { cli: string | null; distro: string } {
+  const sep = stored.indexOf(':')
+  if (sep === -1) return { cli: null, distro: stored }
+  return { cli: stored.slice(0, sep), distro: stored.slice(sep + 1) }
+}
 export type Language =
   | 'fr'
   | 'en'
@@ -147,13 +157,14 @@ export const useSettingsStore = defineStore('settings', () => {
     localStorage.setItem('autoReviewThreshold', String(clamped))
   }
 
-  // Default CLI instance (T857, renamed T1032)
+  // Default CLI instance (T857, renamed T1032, T1090)
   const defaultCliInstance = ref<string>(
     localStorage.getItem('defaultCliInstance') || localStorage.getItem('defaultClaudeInstance') || ''
   )
-  function setDefaultCliInstance(distro: string) {
-    defaultCliInstance.value = distro
-    localStorage.setItem('defaultCliInstance', distro)
+  function setDefaultCliInstance(cli: string, distro: string) {
+    const key = cli ? `${cli}:${distro}` : distro
+    defaultCliInstance.value = key
+    localStorage.setItem('defaultCliInstance', key)
     localStorage.removeItem('defaultClaudeInstance') // cleanup legacy key (T1044)
   }
 

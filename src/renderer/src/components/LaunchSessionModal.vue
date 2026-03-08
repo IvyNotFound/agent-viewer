@@ -3,7 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useTasksStore } from '@renderer/stores/tasks'
-import { useSettingsStore } from '@renderer/stores/settings'
+import { useSettingsStore, parseDefaultCliInstance } from '@renderer/stores/settings'
 import { agentFg, agentBorder } from '@renderer/utils/agentColor'
 import { useModalEscape } from '@renderer/composables/useModalEscape'
 import type { Agent } from '@renderer/types'
@@ -83,6 +83,14 @@ const CLI_BADGE: Record<CliType, string> = {
   goose:    'G',
 }
 
+/** Platform-aware "no CLI detected" message */
+const noInstanceText = computed(() => {
+  const p = window.electronAPI.platform
+  if (p === 'darwin') return t('launch.noInstanceMac')
+  if (p === 'linux')  return t('launch.noInstanceLinux')
+  return t('launch.noInstanceWin')
+})
+
 /** Human-readable OS/environment label for an instance */
 function systemLabel(inst: CliInstance): string {
   if (inst.type === 'wsl') return `WSL ${inst.distro}`
@@ -96,12 +104,18 @@ onMounted(async () => {
   // Refresh CLI detection (fills allCliInstances with local + WSL instances)
   await settingsStore.refreshCliDetection()
 
-  // Auto-select: prefer stored preference (distro), fall back to default distro, then first
+  // Auto-select: prefer stored preference (cli:distro), fall back to default, then first (T1090)
   const instances = allAvailableInstances.value
   if (instances.length > 0) {
     const stored = settingsStore.defaultCliInstance
+    const parsed = parseDefaultCliInstance(stored)
     selectedInstance.value =
-      (stored ? instances.find(i => i.distro === stored) : undefined)
+      (stored
+        ? instances.find(i =>
+            i.distro === parsed.distro &&
+            (parsed.cli === null || i.cli === parsed.cli)
+          )
+        : undefined)
       ?? instances.find(i => i.isDefault)
       ?? instances[0]
       ?? null
@@ -161,6 +175,10 @@ async function launch() {
 
     const distro = selectedInstance.value?.distro
     const cli = selectedCli.value
+    // Persist selected instance as cli:distro for accurate auto-select next time (T1090)
+    if (selectedInstance.value) {
+      settingsStore.setDefaultCliInstance(selectedInstance.value.cli, selectedInstance.value.distro)
+    }
     const convId = caps.value.convResume && useResume.value && lastConvId.value ? lastConvId.value : undefined
     const activeThinking = caps.value.thinkingMode ? thinkingMode.value : undefined
     const activeSystemPrompt = caps.value.systemPrompt ? fullSystemPrompt.value : undefined
@@ -227,7 +245,7 @@ async function launch() {
             <div v-if="loading" class="text-sm text-content-subtle animate-pulse">{{ t('common.loading') }}</div>
 
             <div v-else-if="allAvailableInstances.length === 0" class="text-sm text-content-subtle italic">
-              {{ t('launch.noInstance') }}
+              {{ noInstanceText }}
             </div>
 
             <div v-else class="space-y-1.5">
@@ -365,7 +383,7 @@ async function launch() {
         <!-- Footer -->
         <div class="px-5 py-4 border-t border-edge-subtle bg-surface-base/50 space-y-2">
           <p v-if="!loading && allAvailableInstances.length === 0" class="text-xs text-amber-500 text-right">
-            {{ t('launch.noInstanceHelp') }}
+            {{ noInstanceText }}
           </p>
           <div class="flex items-center justify-end gap-2">
           <button
