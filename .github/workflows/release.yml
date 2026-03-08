@@ -18,6 +18,11 @@ concurrency:
 permissions:
   contents: write
 
+# Skip Electron binary download during npm ci on all jobs.
+# Electron binary is re-downloaded separately only where E2E tests need it.
+env:
+  ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+
 jobs:
   i18n-check:
     runs-on: ubuntu-22.04
@@ -64,7 +69,19 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          set +e
+          npm ci
+          NPM_EXIT=$?
+          set -e
+          if [ "$NPM_EXIT" -ne 0 ]; then
+            echo "=== Disk space ===" && df -h /
+            echo "=== Dir state ===" && (ls /home/runner/work/agent-viewer/agent-viewer 2>&1 || echo "WORKING DIR GONE")
+            echo "=== npm debug log (last 100 lines) ==="
+            NPM_LOG=$(ls -t /home/runner/.npm/_logs/*.log 2>/dev/null | head -1)
+            [ -n "$NPM_LOG" ] && tail -100 "$NPM_LOG" || echo "No log found"
+          fi
+          exit "$NPM_EXIT"
 
       - name: Run unit tests with coverage
         run: npm run test:coverage -- --reporter=verbose
@@ -100,6 +117,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Download Electron binary (needed for E2E)
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: ""
+        run: node node_modules/electron/install.js
 
       - name: Install Playwright + Electron deps
         run: |
@@ -182,6 +204,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Download Electron binary (needed for E2E)
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: ""
+        run: node node_modules/electron/install.js
 
       - name: Install Playwright
         run: |
