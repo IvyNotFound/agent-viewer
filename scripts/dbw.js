@@ -63,9 +63,10 @@ function run(sql, params = []) {
   initSqlJs().then((SQL) => {
     cleanupOrphanTmp(dbPath)
     const lockPath = acquireLock(dbPath)
+    let db
     try {
       const buf = fs.readFileSync(dbPath)
-      const db = new SQL.Database(buf)
+      db = new SQL.Database(buf)
       if (params.length > 0) {
         // Parameterized query — single statement only (sql.js limitation)
         const stmt = db.prepare(sql)
@@ -79,8 +80,8 @@ function run(sql, params = []) {
       const tmpPath = `${dbPath}.tmp.${process.pid}.${Date.now()}`
       fs.writeFileSync(tmpPath, Buffer.from(db.export()))
       renameWithRetry(tmpPath, dbPath)
-      db.close()
     } finally {
+      if (db) db.close()
       releaseLock(lockPath)
     }
   }).catch((err) => {
