@@ -212,6 +212,30 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  // Worktree isolation default (T1143)
+  const worktreeDefault = ref<boolean>(true)
+
+  /** Load worktreeDefault from DB config. Must be called after project is set. */
+  async function loadWorktreeDefault(dbPath: string): Promise<void> {
+    try {
+      const result = await window.electronAPI.getConfigValue(dbPath, 'worktree_default')
+      if (result.success && result.value !== null) {
+        worktreeDefault.value = result.value !== '0'
+      }
+    } catch { /* keep default true */ }
+  }
+
+  /** Persist worktreeDefault to DB config. Rolls back on IPC failure. */
+  async function setWorktreeDefault(dbPath: string, enabled: boolean): Promise<void> {
+    const prev = worktreeDefault.value
+    worktreeDefault.value = enabled
+    try {
+      await window.electronAPI.setConfigValue(dbPath, 'worktree_default', enabled ? '1' : '0')
+    } catch {
+      worktreeDefault.value = prev
+    }
+  }
+
   // Desktop notifications (T755)
   const notificationsEnabled = ref<boolean>(localStorage.getItem('notificationsEnabled') === 'true')
 
@@ -260,5 +284,9 @@ export const useSettingsStore = defineStore('settings', () => {
     // Default CLI instance (T857, renamed T1032)
     defaultCliInstance,
     setDefaultCliInstance,
+    // Worktree isolation default (T1143)
+    worktreeDefault,
+    loadWorktreeDefault,
+    setWorktreeDefault,
   }
 })

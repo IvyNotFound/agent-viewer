@@ -21,6 +21,8 @@ const mockElectronAPI = {
   agentGroupsDelete: vi.fn().mockResolvedValue({ success: true }),
   agentGroupsSetMember: vi.fn().mockResolvedValue({ success: true }),
   agentKill: vi.fn(),
+  getConfigValue: vi.fn().mockResolvedValue({ success: true, value: null }),
+  setConfigValue: vi.fn().mockResolvedValue({ success: true }),
 }
 
 Object.defineProperty(window, 'electronAPI', {
@@ -582,5 +584,42 @@ describe('stores/settings — setDefaultCliInstance (T1090)', () => {
     const store = useSettingsStore()
     store.setDefaultCliInstance('claude', 'Ubuntu')
     expect(localStorage.getItem('defaultClaudeInstance')).toBeNull()
+  })
+})
+
+
+describe('stores/settings — setWorktreeDefault rollback (T1147)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    document.documentElement.className = ''
+  })
+
+  it('should update ref on successful IPC call', async () => {
+    mockElectronAPI.setConfigValue.mockResolvedValue({ success: true })
+    const store = useSettingsStore()
+    expect(store.worktreeDefault).toBe(true)
+    await store.setWorktreeDefault('/fake/db', false)
+    expect(store.worktreeDefault).toBe(false)
+  })
+
+  it('should rollback ref when IPC call throws', async () => {
+    mockElectronAPI.setConfigValue.mockRejectedValue(new Error('IPC failed'))
+    const store = useSettingsStore()
+    expect(store.worktreeDefault).toBe(true)
+    await store.setWorktreeDefault('/fake/db', false)
+    expect(store.worktreeDefault).toBe(true)
+  })
+
+  it('should rollback to false when IPC fails after setting true', async () => {
+    mockElectronAPI.setConfigValue
+      .mockResolvedValueOnce({ success: true })
+      .mockRejectedValueOnce(new Error('IPC failed'))
+    const store = useSettingsStore()
+    await store.setWorktreeDefault('/fake/db', false)
+    expect(store.worktreeDefault).toBe(false)
+    await store.setWorktreeDefault('/fake/db', true)
+    expect(store.worktreeDefault).toBe(false)
   })
 })
