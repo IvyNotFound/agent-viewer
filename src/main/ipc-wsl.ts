@@ -39,8 +39,8 @@ let pathEnriched = false
  * buildWindowsPS1Script in agent-stream-helpers.ts) then prepends known
  * install locations as a fallback.
  */
-export async function enrichWindowsPath(): Promise<void> {
-  if (pathEnriched) return
+export async function enrichWindowsPath(force = false): Promise<void> {
+  if (pathEnriched && !force) return
   pathEnriched = true
 
   try {

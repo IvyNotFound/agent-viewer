@@ -189,6 +189,18 @@ describe('detectLocalClis — Windows', () => {
     await detectLocalClis()
     expect(enrichWindowsPathMock).toHaveBeenCalledTimes(1)
   })
+
+  it('passes force=true to enrichWindowsPath when forceRefresh=true', async () => {
+    execFileMock.mockRejectedValue(new Error('not found'))
+    await detectLocalClis(undefined, true)
+    expect(enrichWindowsPathMock).toHaveBeenCalledWith(true)
+  })
+
+  it('passes force=false to enrichWindowsPath by default', async () => {
+    execFileMock.mockRejectedValue(new Error('not found'))
+    await detectLocalClis()
+    expect(enrichWindowsPathMock).toHaveBeenCalledWith(false)
+  })
 })
 
 // ── detectWslClis ─────────────────────────────────────────────────────────────

@@ -73,11 +73,11 @@ function getEntries(filterClis?: CliType[]): [CliType, { binary: string }][] {
  * - Windows : execFile loop — `where <bin>` then `<bin> --version` per CLI
  * - Linux/macOS : bash one-liner — 1 spawn for all CLIs
  */
-export async function detectLocalClis(filterClis?: CliType[]): Promise<CliInstance[]> {
+export async function detectLocalClis(filterClis?: CliType[], forceRefresh = false): Promise<CliInstance[]> {
   const entries = getEntries(filterClis)
 
   if (process.platform === 'win32') {
-    await enrichWindowsPath()
+    await enrichWindowsPath(forceRefresh)
     const results: CliInstance[] = []
     for (const [cli, { binary }] of entries) {
       try {
@@ -202,12 +202,12 @@ export async function detectWslClis(
 /**
  * Run full (unfiltered) CLI detection — local CLIs + WSL distros on Windows.
  */
-async function runFullDetection(): Promise<CliInstance[]> {
+async function runFullDetection(forceRefresh = false): Promise<CliInstance[]> {
   const platform = process.platform
 
   if (platform === 'linux' || platform === 'darwin') {
     try {
-      return await detectLocalClis()
+      return await detectLocalClis(undefined, forceRefresh)
     } catch {
       return []
     }
@@ -217,7 +217,7 @@ async function runFullDetection(): Promise<CliInstance[]> {
   const results: CliInstance[] = []
 
   try {
-    const local = await detectLocalClis()
+    const local = await detectLocalClis(undefined, forceRefresh)
     results.push(...local)
   } catch { /* local detection failed — continue with WSL */ }
 
@@ -239,9 +239,9 @@ async function runFullDetection(): Promise<CliInstance[]> {
  * Return the cached detection Promise, or start a new one.
  * The Promise always resolves (errors resolve to []).
  */
-function getOrRunDetection(): Promise<CliInstance[]> {
+function getOrRunDetection(forceRefresh = false): Promise<CliInstance[]> {
   if (!detectionCache) {
-    detectionCache = runFullDetection().catch(() => [])
+    detectionCache = runFullDetection(forceRefresh).catch(() => [])
   }
   return detectionCache
 }
@@ -278,7 +278,7 @@ export function registerCliDetectHandlers(): void {
     async (_event, args?: { clis?: CliType[]; forceRefresh?: boolean }): Promise<CliInstance[]> => {
       if (args?.forceRefresh) detectionCache = null
       const filterClis = Array.isArray(args?.clis) ? args.clis : undefined
-      const all = await getOrRunDetection()
+      const all = await getOrRunDetection(args?.forceRefresh ?? false)
       return filterClis ? all.filter(inst => filterClis.includes(inst.cli)) : all
     },
   )
