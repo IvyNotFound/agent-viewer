@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.29.2] - 2026-03-08
+
+### Changes
+- ci: run E2E only on release and PR, not on every push to main (fa6fa5e)
+- ci(release): add i18n-check gate before E2E in release pipeline (b791912)
+- chore(i18n): add missing keys launch.refreshDetection and dashboard.telemetryTab in 16 locales (c849ab9)
+- chore: ignore worktrees/, mem-dump files and mem-dump.ps1 (babc15b)
+- fix(back-electron): batcher IPC wc.send() dans agent-stream + tronquer payloads hookServer (T1137) (54b33f5)
+- test: improve assertion quality across spec files (525203d)
+- chore(back-electron): add git worktree instructions in system prompts and WORKFLOW.md (T1125) (5ef6e6a)
+- ci(release): E2E gate before builds + auto-publish without draft (b5a72f4)
+- fix(back-electron): injecter chemin worktree dans le contexte de lancement agent (T1124) (6c82ee4)
+- test(front-vuejs): améliorer couverture mutation useAutoLaunch + useLaunchSession (T1105) (7eebf81)
+- fix(front-vuejs): use warmup cache in LaunchSessionModal CLI detection (T1118) (16ea111)
+- perf(front-vuejs): éliminer les IPC redondants lastRefresh (T1116) (9200b56)
+- test(front-vuejs): couvrir renderMarkdown.ts + useUpdater.ts — score 0% et 8% (T1106) (eeaa571)
+- test(back-electron): mock ./db dans ipc-telemetry.spec pour assertProjectPathAllowed (T1119) (e20044e)
+- perf(back-electron): paralléliser analyzeFile par batch de 20 dans telemetry:scan (T1119) (5947a2a)
+- test(front-vuejs): améliorer couverture mutation tasks.ts — +35 tests NoCoverage (T1104) (2043946)
+- perf(front-vuejs): split tooltip ref en 3 refs atomiques sans spread (T1120) (5c49f9d)
+- perf(front-vuejs): replace correlated subquery with CTE in TopologyView (T1111) (6c139a6)
+- perf(back-electron): skip writeDb export+write when 0 sessions closed (T1110) (e77e7d7)
+- perf(db): add missing indexes on critical columns — migration v27 (T1113) (b1183e1)
+- perf(stores): replace 4 correlated EXISTS with LEFT JOINs in agent_history CTE (T1112) (a25462e)
+- fix(back-electron): bypass cmd.exe JSON corruption for --settings on Windows (T1107) (7d7a72b)
+- test(back-electron): améliorer couverture mutation migration-runner.ts (T1103) (e883c0d)
+- refactor(front-vuejs): déplacer la télémétrie dans un sous-onglet Dashboard (T1100) (0354db8)
 ## [0.29.1] - 2026-03-08
 
 ### Changes
