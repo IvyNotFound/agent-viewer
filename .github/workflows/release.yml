@@ -86,6 +86,7 @@ jobs:
           node node_modules/esbuild/install.js
           node node_modules/vitest/node_modules/esbuild/install.js 2>/dev/null || true
           node node_modules/vue-demi/scripts/postinstall.js || true
+          npm rebuild better-sqlite3
 
       - name: Run unit tests with coverage
         run: npm run test:coverage -- --reporter=verbose
@@ -141,7 +142,7 @@ jobs:
       - name: Install Linux display dependencies
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y xvfb libgtk-3-dev libnss3 libasound2t64 libgbm1
+          sudo apt-get install -y xvfb libgtk-3-dev libnss3 libasound2 libgbm1
 
       - name: Build renderer (electron-vite)
         run: npx electron-vite build
