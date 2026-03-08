@@ -81,14 +81,14 @@ describe('stores/hookEvents — push() (T779)', () => {
     expect(store.events[0].ts).toBe(100)
   })
 
-  it('caps at MAX_EVENTS (2000) — oldest event removed when exceeded', () => {
+  it('caps at MAX_EVENTS (500) — oldest event removed when exceeded (T1135)', () => {
     const store = useHookEventsStore()
-    for (let i = 0; i < 2001; i++) {
+    for (let i = 0; i < 501; i++) {
       store.push({ event: 'SessionStart', payload: null, ts: i })
     }
-    expect(store.events.length).toBe(2000)
-    // Oldest (ts=0) should be gone, newest (ts=2000) should be present
-    expect(store.events[store.events.length - 1].ts).toBe(2000)
+    expect(store.events.length).toBe(500)
+    // Oldest (ts=0) should be gone, newest (ts=500) should be present
+    expect(store.events[store.events.length - 1].ts).toBe(500)
     expect(store.events.some(e => e.ts === 0)).toBe(false)
   })
 

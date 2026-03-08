@@ -173,13 +173,13 @@ describe('DB cache — getDbBuffer (T228)', () => {
     expect(buf2).toEqual(newBuffer)
   })
 
-  it('should evict stale entries after CACHE_TTL_MS (60s)', async () => {
+  it('should evict stale entries after CACHE_TTL_MS (10s)', async () => {
     vi.useFakeTimers()
 
     await getDbBuffer(dbPath)
     expect(mockReadFile).toHaveBeenCalledTimes(1)
 
-    vi.advanceTimersByTime(70000)
+    vi.advanceTimersByTime(15_000)
 
     await getDbBuffer(dbPath)
     expect(mockReadFile).toHaveBeenCalledTimes(2)
@@ -440,15 +440,19 @@ describe('queryLive', () => {
       mockStat.mockResolvedValue({ mtimeMs: mtime })
       mockReadFile.mockResolvedValue(buf)
 
-      // First query — populates buffer cache and DB instance
+      // First query — populates buffer cache (lastAccess=0) and DB instance (dbCreatedAt=0)
       await queryLive(dbPath, 'SELECT * FROM t', [])
       expect(mockReadFile).toHaveBeenCalledTimes(1)
 
-      // Advance past DB_INSTANCE_TTL_MS but within CACHE_TTL_MS
-      vi.advanceTimersByTime(15_000)
+      // At T=5s, touch buffer cache via getDbBuffer (refreshes lastAccess but not dbCreatedAt)
+      vi.advanceTimersByTime(5_000)
+      await getDbBuffer(dbPath)
+
+      // At T=12s: dbCreatedAt is 12s old (>10s → evict DB), lastAccess is 7s old (<10s → keep buffer)
+      vi.advanceTimersByTime(7_000)
 
       // Second query — evictStaleCacheEntries closes db instance
-      // but buf is still cached (60s TTL not reached)
+      // but buf is still cached (lastAccess refreshed at T=5s)
       await queryLive(dbPath, 'SELECT * FROM t', [])
       // Buffer was NOT re-read from disk (cache hit on buf)
       expect(mockReadFile).toHaveBeenCalledTimes(1)

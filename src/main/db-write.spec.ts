@@ -57,6 +57,7 @@ vi.mock('sql.js', () => ({
 
 import {
   clearDbCacheEntry,
+  getDbBuffer,
   getSqlJs,
   writeDb,
   queryLive,
@@ -183,10 +184,16 @@ describe('queryLive', () => {
       mockStat.mockResolvedValue({ mtimeMs: 9000 })
       mockReadFile.mockResolvedValue(buf)
 
+      // T=0: populate buffer (lastAccess=0) + DB instance (dbCreatedAt=0)
       await queryLive(dbPath, 'SELECT * FROM t', [])
       expect(mockReadFile).toHaveBeenCalledTimes(1)
 
-      vi.advanceTimersByTime(15_000) // past DB_INSTANCE_TTL_MS, within CACHE_TTL_MS
+      // T=5s: refresh buffer lastAccess (dbCreatedAt stays at 0)
+      vi.advanceTimersByTime(5_000)
+      await getDbBuffer(dbPath)
+
+      // T=12s: dbCreatedAt=12s old (>10s → evict DB), lastAccess=7s old (<10s → keep buffer)
+      vi.advanceTimersByTime(7_000)
 
       await queryLive(dbPath, 'SELECT * FROM t', [])
       expect(mockReadFile).toHaveBeenCalledTimes(1) // buffer not re-read

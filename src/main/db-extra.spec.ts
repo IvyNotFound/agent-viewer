@@ -207,10 +207,16 @@ describe('evictStaleCacheEntries — TTL branches', () => {
       mockStat.mockResolvedValue({ mtimeMs: 5000 })
       mockReadFile.mockResolvedValue(buf)
 
+      // T=0: populate buffer + DB instance
       await queryLive(dbPath, 'SELECT * FROM t', [])
       expect(mockReadFile).toHaveBeenCalledTimes(1)
 
-      vi.advanceTimersByTime(12_000) // past DB_INSTANCE_TTL_MS=10s, within CACHE_TTL_MS=60s
+      // T=5s: touch buffer (refreshes lastAccess, not dbCreatedAt)
+      vi.advanceTimersByTime(5_000)
+      await getDbBuffer(dbPath)
+
+      // T=12s: dbCreatedAt=12s old (>10s → evict DB), lastAccess=7s old (<10s → keep buffer)
+      vi.advanceTimersByTime(7_000)
 
       await queryLive(dbPath, 'SELECT * FROM t', [])
       expect(mockReadFile).toHaveBeenCalledTimes(1) // buffer not re-read
@@ -219,7 +225,7 @@ describe('evictStaleCacheEntries — TTL branches', () => {
     }
   })
 
-  it('should evict buffer after 60s CACHE_TTL_MS', async () => {
+  it('should evict buffer after 10s CACHE_TTL_MS', async () => {
     vi.useFakeTimers()
     try {
       const buf = await buildDbBuffer(db => { db.run('CREATE TABLE t (v TEXT)') })
@@ -229,7 +235,7 @@ describe('evictStaleCacheEntries — TTL branches', () => {
       await queryLive(dbPath, 'SELECT * FROM t', [])
       expect(mockReadFile).toHaveBeenCalledTimes(1)
 
-      vi.advanceTimersByTime(70_000) // past CACHE_TTL_MS=60s
+      vi.advanceTimersByTime(15_000) // past CACHE_TTL_MS=10s
 
       await queryLive(dbPath, 'SELECT * FROM t', [])
       expect(mockReadFile).toHaveBeenCalledTimes(2) // forced re-read

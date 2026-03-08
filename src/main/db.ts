@@ -65,7 +65,7 @@ interface DbCacheEntry {
 const dbCache = new Map<string, DbCacheEntry>()
 
 const DB_INSTANCE_TTL_MS = 10_000 // release WASM heap after 10s of inactivity
-const CACHE_TTL_MS = 60_000       // keep buffer in memory for 60s
+const CACHE_TTL_MS = 10_000       // keep buffer in memory for 10s (T1136: reduced from 60s)
 const MAX_CACHE_ENTRIES = 3
 
 function evictStaleCacheEntries(): void {
@@ -80,6 +80,7 @@ function evictStaleCacheEntries(): void {
     // Evict the entire entry (buf + db) if not accessed for CACHE_TTL_MS
     if (now - entry.lastAccess > CACHE_TTL_MS) {
       if (entry.db) { try { entry.db.close() } catch { /* already closed */ } }
+      console.debug(`[db-cache] evicting buffer for ${path}, size: ${entry.buf.length} bytes`)
       dbCache.delete(path)
     }
   }

@@ -18,6 +18,23 @@ import {
 } from './db'
 import { startSessionCloser, stopSessionCloser } from './session-closer'
 
+// ── Default LIMIT for user queries (T1136) ────────────────────────────────────
+
+const DEFAULT_QUERY_LIMIT = 1000
+
+/**
+ * Append a LIMIT clause to SELECT queries that don't already have one.
+ * Prevents unbounded result sets from saturating main-process memory.
+ * Only applies to SELECT statements — other SQL passes through unchanged.
+ */
+export function addDefaultLimit(sql: string, limit = DEFAULT_QUERY_LIMIT): string {
+  if (/\bLIMIT\b/i.test(sql)) return sql
+  if (!/\bSELECT\b/i.test(sql)) return sql
+  // Strip trailing semicolons/whitespace before appending LIMIT
+  const trimmed = sql.replace(/\s*;\s*$/, '')
+  return `${trimmed} LIMIT ${limit}`
+}
+
 // ── Shared watcher state ──────────────────────────────────────────────────────
 
 let watcher: FSWatcher | null = null
@@ -49,7 +66,8 @@ export function registerDbHandlers(): void {
       return { success: false, error: 'Write operations (INSERT/UPDATE/DELETE/DROP/etc.) are not allowed from the renderer. Use dedicated IPC handlers for write operations.', rows: [] }
     }
     try {
-      return await queryLive(dbPath, query, params)
+      const safeQuery = addDefaultLimit(query)
+      return await queryLive(dbPath, safeQuery, params)
     } catch (err) {
       console.error('[IPC query-db]', err)
       throw err

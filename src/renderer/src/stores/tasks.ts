@@ -62,6 +62,7 @@ export const useTasksStore = defineStore('tasks', () => {
 
   let pollInterval: ReturnType<typeof setInterval> | null = null
   let agentPollInterval: ReturnType<typeof setInterval> | null = null
+  let groupPollInterval: ReturnType<typeof setInterval> | null = null
   let unsubDbChange: (() => void) | null = null
   let dbWatchInterval: ReturnType<typeof setInterval> | null = null
   let dbChangeDebounce: ReturnType<typeof setTimeout> | null = null
@@ -127,6 +128,7 @@ export const useTasksStore = defineStore('tasks', () => {
           LEFT JOIN agents c ON c.id = t.agent_creator_id
           WHERE t.status IN ('todo', 'in_progress')
           ORDER BY t.updated_at DESC
+          LIMIT 500
         `),
         query<Task>(`
           SELECT t.*, a.name as agent_name, a.scope as agent_scope,
@@ -205,8 +207,6 @@ export const useTasksStore = defineStore('tasks', () => {
       }
       stats.value = s
       lastRefresh.value = new Date()
-      // Reload agent groups alongside main refresh
-      agentsStore.fetchAgentGroups()
     } catch (e) {
       error.value = String(e)
       pushToast(String(e))
@@ -237,7 +237,9 @@ export const useTasksStore = defineStore('tasks', () => {
         if (!isNaN(parsed) && parsed > 0) staleThresholdMinutes.value = parsed
       }
     } catch { /* ignore — fallback to default 120 */ }
-    await refresh()
+    // Load worktree default from config (T1143)
+    await settingsStore.loadWorktreeDefault(dPath)
+    await Promise.all([refresh(), agentsStore.fetchAgentGroups()])
     startPolling()
     startWatching(dPath)
   }
@@ -325,6 +327,8 @@ export const useTasksStore = defineStore('tasks', () => {
     // 5min fallback — file watcher is primary, these only trigger if watcher silently fails
     pollInterval = setInterval(refresh, 300000)
     agentPollInterval = setInterval(agentRefresh, 300000)
+    // Groups change rarely (manual actions only) — 5min poll is sufficient (T1122)
+    groupPollInterval = setInterval(() => agentsStore.fetchAgentGroups(), 300000)
   }
 
   function stopPolling(): void {
@@ -335,6 +339,10 @@ export const useTasksStore = defineStore('tasks', () => {
     if (agentPollInterval) {
       clearInterval(agentPollInterval)
       agentPollInterval = null
+    }
+    if (groupPollInterval) {
+      clearInterval(groupPollInterval)
+      groupPollInterval = null
     }
   }
 
@@ -466,7 +474,7 @@ export const useTasksStore = defineStore('tasks', () => {
       : Promise.resolve(dbPath.value)
     ensureRegistered
       .then(() => window.electronAPI.migrateDb(dbPath.value!))
-      .then(() => refresh())
+      .then(() => Promise.all([refresh(), agentsStore.fetchAgentGroups()]))
       .then(() => {
         startPolling()
         startWatching(dbPath.value!)

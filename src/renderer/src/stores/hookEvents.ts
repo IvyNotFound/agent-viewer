@@ -16,8 +16,14 @@ export interface HookEvent {
 
 let _seq = 0
 
+/** Max memoized computed entries per Map — simple LRU eviction (T1135). */
+const MAX_CACHED_COMPUTEDS = 20
+
 /** Maximum total events kept in the store (memory cap). */
-const MAX_EVENTS = 2000
+const MAX_EVENTS = 500
+
+/** TTL for hook events — events older than this are pruned on each push (T1135). */
+const HOOK_EVENT_TTL_MS = 5 * 60 * 1000
 
 /**
  * Global store for Claude Code hook events received via IPC `hook:event`.
@@ -41,8 +47,10 @@ export const useHookEventsStore = defineStore('hookEvents', () => {
     const e: HookEvent = { id: ++_seq, event: raw.event, payload: raw.payload, ts: raw.ts, sessionId, toolUseId }
 
     events.value.push(e)
-    // slice(-N) amortized: only triggers when limit exceeded, avoids O(N) shift() (T794)
-    if (events.value.length > MAX_EVENTS) events.value = events.value.slice(-MAX_EVENTS)
+    // TTL pruning — drop events older than 5 minutes relative to newest event, then cap (T1135)
+    const cutoff = e.ts - HOOK_EVENT_TTL_MS
+    const fresh = events.value.filter(ev => ev.ts > cutoff)
+    events.value = fresh.length > MAX_EVENTS ? fresh.slice(-MAX_EVENTS) : fresh
 
     const key = sessionId ?? '__global__'
     if (raw.event === 'PreToolUse') {
@@ -62,6 +70,10 @@ export const useHookEventsStore = defineStore('hookEvents', () => {
     const key = sessionId ?? '__null__'
     if (!_sessionComputeds.has(key)) {
       _sessionComputeds.set(key, computed(() => events.value.filter(e => e.sessionId === sessionId)))
+      // LRU eviction — drop oldest entry when cap exceeded (T1135)
+      if (_sessionComputeds.size > MAX_CACHED_COMPUTEDS) {
+        _sessionComputeds.delete(_sessionComputeds.keys().next().value!)
+      }
     }
     return _sessionComputeds.get(key)!
   }
@@ -74,6 +86,10 @@ export const useHookEventsStore = defineStore('hookEvents', () => {
     const key = sessionId ?? '__global__'
     if (!_activeToolComputeds.has(key)) {
       _activeToolComputeds.set(key, computed(() => activeTools.value[key] ?? null))
+      // LRU eviction — drop oldest entry when cap exceeded (T1135)
+      if (_activeToolComputeds.size > MAX_CACHED_COMPUTEDS) {
+        _activeToolComputeds.delete(_activeToolComputeds.keys().next().value!)
+      }
     }
     return _activeToolComputeds.get(key)!
   }

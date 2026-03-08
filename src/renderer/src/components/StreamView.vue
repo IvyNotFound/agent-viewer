@@ -165,7 +165,8 @@ function handleStop(): void {
 // 1 re-render per JSONL line at high-frequency streaming.
 
 const MAX_EVENTS = 500
-const MAX_EVENTS_HIDDEN = 50
+const MAX_EVENTS_HIDDEN = 10
+const ANSI_RE = new RegExp('\x1B\\[[0-9;]*[mGKHF]', 'g')
 let pendingEvents: StreamEvent[] = []
 let flushPending = false
 
@@ -179,7 +180,7 @@ function flushEvents(): void {
           block._html = renderMarkdown(block.text)
         } else if (block.type === 'tool_result') {
           const raw = !block.content ? '' : typeof block.content === 'string' ? block.content : Array.isArray(block.content) ? block.content.map(c => c.text ?? '').join('\n') : String(block.content)
-          const stripped = raw.replace(/\x1B\[[0-9;]*[mGKHF]/g, '')
+          const stripped = raw.replace(ANSI_RE, '')
           block._lineCount = stripped.split('\n').length
           block._isLong = block._lineCount > 15
           block._html = renderMarkdown(stripped)
@@ -213,14 +214,38 @@ function scrollToBottom(force = false): void {
   nextTick(() => { if (scrollContainer.value) scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight })
 }
 
-// ── Hidden-tab eviction (T962) ────────────────────────────────────────────────
-// When a tab becomes inactive, trim events to MAX_EVENTS_HIDDEN to free _html RAM.
+// ── Hidden-tab eviction (T962 + T1135) ───────────────────────────────────────
+// When a tab becomes inactive, trim events and clear _html strings to free RAM.
+// When re-activated, re-render _html for remaining events.
 watch(() => tabsStore.activeTabId === props.terminalId, (isActive) => {
-  if (!isActive && events.value.length > MAX_EVENTS_HIDDEN) {
-    const evicted = events.value.splice(0, events.value.length - MAX_EVENTS_HIDDEN)
-    const evictedIds = new Set(evicted.map(e => e._id))
-    for (const key of Object.keys(collapsed.value)) {
-      if (evictedIds.has(parseInt(key.split('-')[0], 10))) delete collapsed.value[key]
+  if (!isActive) {
+    // Trim excess events
+    if (events.value.length > MAX_EVENTS_HIDDEN) {
+      const evicted = events.value.splice(0, events.value.length - MAX_EVENTS_HIDDEN)
+      const evictedIds = new Set(evicted.map(e => e._id))
+      for (const key of Object.keys(collapsed.value)) {
+        if (evictedIds.has(parseInt(key.split('-')[0], 10))) delete collapsed.value[key]
+      }
+    }
+    // Clear pre-rendered _html on remaining events (T1135)
+    for (const ev of events.value) {
+      if (ev.message?.content) {
+        for (const block of ev.message.content) block._html = undefined
+      }
+    }
+  } else {
+    // Re-render _html for events whose cached HTML was cleared (T1135)
+    for (const ev of events.value) {
+      if (!ev.message?.content) continue
+      for (const block of ev.message.content) {
+        if (block._html !== undefined) continue
+        if (block.type === 'text' && block.text != null) {
+          block._html = renderMarkdown(block.text)
+        } else if (block.type === 'tool_result') {
+          const raw = !block.content ? '' : typeof block.content === 'string' ? block.content : Array.isArray(block.content) ? block.content.map(c => c.text ?? '').join('\n') : String(block.content)
+          block._html = renderMarkdown(raw.replace(ANSI_RE, ''))
+        }
+      }
     }
   }
 })

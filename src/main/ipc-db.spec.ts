@@ -123,6 +123,9 @@ vi.mock('./db', async (importOriginal) => {
 })
 import { queryLive as mockedQueryLive } from './db'
 
+// ── Import addDefaultLimit for unit testing ───────────────────────────────────
+import { addDefaultLimit } from './ipc-db'
+
 // ── Import ipc.ts AFTER mocks ─────────────────────────────────────────────────
 import { registerIpcHandlers, registerDbPath, registerProjectPath } from './ipc'
 
@@ -430,5 +433,38 @@ describe('IPC DB handlers', () => {
       const result = await callHandler('fs:listDir', '/other/path', '/allowed/project')
       expect(result).toEqual([])
     })
+  })
+})
+
+// ── addDefaultLimit (T1136) ─────────────────────────────────────────────────
+
+describe('addDefaultLimit', () => {
+  it('should append LIMIT 1000 to SELECT without LIMIT', () => {
+    expect(addDefaultLimit('SELECT * FROM tasks')).toBe('SELECT * FROM tasks LIMIT 1000')
+  })
+
+  it('should not modify queries that already have LIMIT', () => {
+    expect(addDefaultLimit('SELECT * FROM tasks LIMIT 50')).toBe('SELECT * FROM tasks LIMIT 50')
+  })
+
+  it('should be case-insensitive for existing LIMIT', () => {
+    expect(addDefaultLimit('SELECT * FROM tasks limit 10')).toBe('SELECT * FROM tasks limit 10')
+  })
+
+  it('should strip trailing semicolons before appending', () => {
+    expect(addDefaultLimit('SELECT * FROM tasks;')).toBe('SELECT * FROM tasks LIMIT 1000')
+  })
+
+  it('should not modify non-SELECT statements', () => {
+    expect(addDefaultLimit('PRAGMA user_version')).toBe('PRAGMA user_version')
+  })
+
+  it('should accept a custom limit value', () => {
+    expect(addDefaultLimit('SELECT id FROM logs', 500)).toBe('SELECT id FROM logs LIMIT 500')
+  })
+
+  it('should not add LIMIT to SELECT with subquery containing LIMIT', () => {
+    const sql = 'SELECT * FROM tasks WHERE id IN (SELECT id FROM logs LIMIT 5)'
+    expect(addDefaultLimit(sql)).toBe(sql)
   })
 })
