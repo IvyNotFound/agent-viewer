@@ -159,6 +159,9 @@ function parseDetectionOutput(
  * This avoids argument-passing issues with `bash -lc <script>` through wsl.exe
  * on Windows (complex scripts with $(), for-do-done, && get mangled).
  *
+ * The script sources `~/.bashrc` before probing binaries so that CLIs installed
+ * via nvm/npm (which add to PATH only in ~/.bashrc) are detected correctly.
+ *
  * The script ends with `exit 0` to prevent non-zero exit codes (from CLIs not
  * found) from causing execFile to reject and discard valid stdout output.
  */

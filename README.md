@@ -1,6 +1,6 @@
 # agent-viewer
 
-![Version](https://img.shields.io/badge/version-0.28.4-blue)
+![Version](https://img.shields.io/badge/version-0.29.1-blue)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 
 Desktop interface in Trello/Jira style for real-time visualization of Claude agent tasks from a local SQLite database. The application manages agents, launches Claude sessions in external WSL terminals, and monitors activity in real time.
@@ -293,14 +293,14 @@ agent-viewer can launch and stream any supported coding agent CLI, not just Clau
 |-----|--------|---------------|
 | Claude Code | `claude` | `--output-format stream-json` |
 | OpenAI Codex | `codex` | `--approval-mode full-auto` |
-| Google Gemini | `gemini` | headless mode |
-| OpenCode | `opencode` | terminal agent |
+| Google Gemini | `gemini` | `-p` flag (non-interactive, confirmed) |
+| OpenCode | `opencode` | `run --format json` (JSONL streaming, no TTY) |
 | Aider | `aider` | headless, multi-LLM |
 | Goose | `goose` | ACP stdio protocol |
 
 Detection runs automatically across WSL distros and native installs via `wsl:getCliInstances`. The `agent:create` IPC handler accepts an optional `cli` parameter (default: `'claude'`) — all existing sessions are unaffected.
 
-**CLI detection warmup (`ipc-cli-detect.ts`)**: `warmupCliDetection()` is called once at app startup (inside `registerIpcHandlers()`), firing detection in the background so the cache is ready before the first `LaunchSessionModal` opens. If the IPC handler is called while warmup is still in-flight, it awaits the same Promise — no duplicate spawns. Detection strategy: Windows local → `where` + `--version` per CLI (`execFile`, `shell: true` for `.cmd`/`.bat`); Linux/macOS → single bash one-liner; WSL distros → bash login-shell script file (`bash -l <file>`) with CONCURRENCY=2.
+**CLI detection warmup (`ipc-cli-detect.ts`)**: `warmupCliDetection()` is called once at app startup (inside `registerIpcHandlers()`), firing detection in the background so the cache is ready before the first `LaunchSessionModal` opens. If the IPC handler is called while warmup is still in-flight, it awaits the same Promise — no duplicate spawns. Detection strategy: Windows local → `where` + `--version` per CLI (`execFile`, `shell: true` for `.cmd`/`.bat`); Linux/macOS → single bash one-liner; WSL distros → bash login-shell script file (`bash -l <file>`) with CONCURRENCY=2. The WSL detection script sources `~/.bashrc` before probing binaries — ensuring CLIs installed via nvm/npm (which add to `PATH` only in `~/.bashrc`) are detected correctly. `getWslDistros()` includes `Stopped` distros — WSL starts them automatically on demand. Passing `{ forceRefresh: true }` to the `wsl:get-cli-instances` IPC handler invalidates the cache and triggers a fresh detection run.
 
 **Spawn routing for non-Claude CLIs (`agent-stream.ts`)**:
 - **Local Windows**: binary spawned with `{ shell: true }` — required for `.cmd`/`.bat` wrappers (e.g. `codex.cmd` installed via npm)

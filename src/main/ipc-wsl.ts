@@ -75,6 +75,8 @@ export async function enrichWindowsPath(force = false): Promise<void> {
 
 /**
  * List WSL distros (non-docker) by parsing `wsl.exe -l --verbose`.
+ * Includes distros in both `Running` and `Stopped` states — WSL starts
+ * a stopped distro automatically when a command is sent to it.
  * Exported for reuse by ipc-cli-detect.ts.
  *
  * @returns Array of { distro, isDefault } entries, or [] if wsl.exe fails
