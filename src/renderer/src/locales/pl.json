@@ -236,7 +236,9 @@
       "cli": "CLI & Agenci",
       "notifications": "Powiadomienia",
       "application": "Aplikacja"
-    }
+    },
+    "worktreeDefault": "Default worktree isolation",
+    "worktreeDefaultDesc": "Create an isolated git worktree for each new agent session"
   },
   "setup": {
     "missingDb": "Brakująca baza danych",
@@ -297,7 +299,11 @@
     "multiInstance": "Wiele instancji / Izolowane drzewo robocze",
     "multiInstanceNote": "Tworzy dedykowane drzewo robocze git (ADR-006) — umożliwia równoległe uruchamianie wielu instancji tego samego agenta bez konfliktów",
     "multiInstanceError": "Nie udało się utworzyć drzewa roboczego: {error}",
-    "refreshDetection": "Odśwież"
+    "refreshDetection": "Odśwież",
+    "worktreeSource": "Source: {source}",
+    "worktreeSourceGlobal": "global setting",
+    "worktreeSourceAgent": "agent setting",
+    "worktreeSourceManual": "manually changed"
   },
   "titleBar": {
     "searchTitle": "Szukaj zadania (Ctrl+K)",
@@ -371,7 +377,13 @@
       "arch": "ADR, interfejsy, decyzje strukturalne",
       "devops": "Commity, gałęzie, CI/CD, wydania",
       "doc": "README, CONTRIBUTING, JSDoc"
-    }
+    },
+    "worktreeEnabled": "Worktree isolation",
+    "worktreeInherit": "Inherit",
+    "worktreeOn": "Enabled",
+    "worktreeOff": "Disabled",
+    "worktreeNote": "Priority: global < agent < manual launch",
+    "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
     "tagline": "Przeglądaj zadania agentów Claude w czasie rzeczywistym.",

@@ -236,7 +236,9 @@
       "cli": "CLI & 代理",
       "notifications": "通知",
       "application": "应用程序"
-    }
+    },
+    "worktreeDefault": "Default worktree isolation",
+    "worktreeDefaultDesc": "Create an isolated git worktree for each new agent session"
   },
   "setup": {
     "missingDb": "未找到数据库",
@@ -297,7 +299,11 @@
     "multiInstance": "多实例 / 隔离 worktree",
     "multiInstanceNote": "创建专用 git worktree（ADR-006）— 允许同一 Agent 的多个实例并行运行而不产生冲突",
     "multiInstanceError": "创建 worktree 失败：{error}",
-    "refreshDetection": "刷新"
+    "refreshDetection": "刷新",
+    "worktreeSource": "Source: {source}",
+    "worktreeSourceGlobal": "global setting",
+    "worktreeSourceAgent": "agent setting",
+    "worktreeSourceManual": "manually changed"
   },
   "titleBar": {
     "searchTitle": "搜索任务（Ctrl+K）",
@@ -371,7 +377,13 @@
       "arch": "ADR、接口、结构性决策",
       "devops": "提交、分支、CI/CD、发布",
       "doc": "README、CONTRIBUTING、JSDoc"
-    }
+    },
+    "worktreeEnabled": "Worktree isolation",
+    "worktreeInherit": "Inherit",
+    "worktreeOn": "Enabled",
+    "worktreeOff": "Disabled",
+    "worktreeNote": "Priority: global < agent < manual launch",
+    "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
     "tagline": "实时查看您的 Claude Agent 任务。",

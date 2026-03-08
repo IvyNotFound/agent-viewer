@@ -236,7 +236,9 @@
       "cli": "CLI & Agenter",
       "notifications": "Varsler",
       "application": "Applikasjon"
-    }
+    },
+    "worktreeDefault": "Default worktree isolation",
+    "worktreeDefaultDesc": "Create an isolated git worktree for each new agent session"
   },
   "setup": {
     "missingDb": "Manglende database",
@@ -297,7 +299,11 @@
     "multiInstance": "Multi-instans / Isolert worktree",
     "multiInstanceNote": "Oppretter en dedikert git worktree (ADR-006) — tillater kjøring av flere instanser av samme agent parallelt uten konflikter",
     "multiInstanceError": "Klarte ikke opprette worktree: {error}",
-    "refreshDetection": "Oppdater"
+    "refreshDetection": "Oppdater",
+    "worktreeSource": "Source: {source}",
+    "worktreeSourceGlobal": "global setting",
+    "worktreeSourceAgent": "agent setting",
+    "worktreeSourceManual": "manually changed"
   },
   "titleBar": {
     "searchTitle": "Søk etter oppgave (Ctrl+K)",
@@ -371,7 +377,13 @@
       "arch": "ADR, grensesnitt, strukturelle beslutninger",
       "devops": "Commits, grener, CI/CD, utgivelser",
       "doc": "README, CONTRIBUTING, JSDoc"
-    }
+    },
+    "worktreeEnabled": "Worktree isolation",
+    "worktreeInherit": "Inherit",
+    "worktreeOn": "Enabled",
+    "worktreeOff": "Disabled",
+    "worktreeNote": "Priority: global < agent < manual launch",
+    "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
     "tagline": "Se Claude-agentoppgavene dine i sanntid.",

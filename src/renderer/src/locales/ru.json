@@ -236,7 +236,9 @@
       "cli": "CLI и агенты",
       "notifications": "Уведомления",
       "application": "Приложение"
-    }
+    },
+    "worktreeDefault": "Default worktree isolation",
+    "worktreeDefaultDesc": "Create an isolated git worktree for each new agent session"
   },
   "setup": {
     "missingDb": "База данных отсутствует",
@@ -297,7 +299,11 @@
     "multiInstance": "Мульти-экземпляр / Изолированное рабочее дерево",
     "multiInstanceNote": "Создаёт выделенное рабочее дерево git (ADR-006) — позволяет запускать несколько экземпляров одного агента параллельно без конфликтов",
     "multiInstanceError": "Не удалось создать рабочее дерево: {error}",
-    "refreshDetection": "Обновить"
+    "refreshDetection": "Обновить",
+    "worktreeSource": "Source: {source}",
+    "worktreeSourceGlobal": "global setting",
+    "worktreeSourceAgent": "agent setting",
+    "worktreeSourceManual": "manually changed"
   },
   "titleBar": {
     "searchTitle": "Поиск задачи (Ctrl+K)",
@@ -371,7 +377,13 @@
       "arch": "ADR, интерфейсы, структурные решения",
       "devops": "Коммиты, ветки, CI/CD, релизы",
       "doc": "README, CONTRIBUTING, JSDoc"
-    }
+    },
+    "worktreeEnabled": "Worktree isolation",
+    "worktreeInherit": "Inherit",
+    "worktreeOn": "Enabled",
+    "worktreeOff": "Disabled",
+    "worktreeNote": "Priority: global < agent < manual launch",
+    "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
     "tagline": "Просматривайте задачи ваших агентов Claude в реальном времени.",

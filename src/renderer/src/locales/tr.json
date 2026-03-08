@@ -236,7 +236,9 @@
       "cli": "CLI & Ajanlar",
       "notifications": "Bildirimler",
       "application": "Uygulama"
-    }
+    },
+    "worktreeDefault": "Default worktree isolation",
+    "worktreeDefaultDesc": "Create an isolated git worktree for each new agent session"
   },
   "setup": {
     "missingDb": "Veritabanı bulunamadı",
@@ -297,7 +299,11 @@
     "multiInstance": "Çoklu örnek / İzole worktree",
     "multiInstanceNote": "Özel bir git worktree oluşturur (ADR-006) — aynı ajanın birden fazla örneğinin çakışma olmadan paralel çalışmasına izin verir",
     "multiInstanceError": "Worktree oluşturulamadı: {error}",
-    "refreshDetection": "Yenile"
+    "refreshDetection": "Yenile",
+    "worktreeSource": "Source: {source}",
+    "worktreeSourceGlobal": "global setting",
+    "worktreeSourceAgent": "agent setting",
+    "worktreeSourceManual": "manually changed"
   },
   "titleBar": {
     "searchTitle": "Görev ara (Ctrl+K)",
@@ -371,7 +377,13 @@
       "arch": "ADR, arayüzler ve yapısal kararlar",
       "devops": "Commit, dal, CI/CD, sürüm",
       "doc": "README, CONTRIBUTING, JSDoc"
-    }
+    },
+    "worktreeEnabled": "Worktree isolation",
+    "worktreeInherit": "Inherit",
+    "worktreeOn": "Enabled",
+    "worktreeOff": "Disabled",
+    "worktreeNote": "Priority: global < agent < manual launch",
+    "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
     "tagline": "Claude ajan görevlerini gerçek zamanlı izleyin.",

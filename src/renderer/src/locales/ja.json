@@ -236,7 +236,9 @@
       "cli": "CLI & エージェント",
       "notifications": "通知",
       "application": "アプリケーション"
-    }
+    },
+    "worktreeDefault": "Default worktree isolation",
+    "worktreeDefaultDesc": "Create an isolated git worktree for each new agent session"
   },
   "setup": {
     "missingDb": "データベースが見つかりません",
@@ -297,7 +299,11 @@
     "multiInstance": "マルチインスタンス / 分離された worktree",
     "multiInstanceNote": "専用の git worktree を作成します (ADR-006) — 競合なしに同じエージェントの複数インスタンスを並行実行できます",
     "multiInstanceError": "worktree の作成に失敗しました: {error}",
-    "refreshDetection": "更新"
+    "refreshDetection": "更新",
+    "worktreeSource": "Source: {source}",
+    "worktreeSourceGlobal": "global setting",
+    "worktreeSourceAgent": "agent setting",
+    "worktreeSourceManual": "manually changed"
   },
   "titleBar": {
     "searchTitle": "タスクを検索 (Ctrl+K)",
@@ -371,7 +377,13 @@
       "arch": "ADR・インターフェース・構造的決定",
       "devops": "コミット・ブランチ・CI/CD・リリース",
       "doc": "README・CONTRIBUTING・JSDoc"
-    }
+    },
+    "worktreeEnabled": "Worktree isolation",
+    "worktreeInherit": "Inherit",
+    "worktreeOn": "Enabled",
+    "worktreeOff": "Disabled",
+    "worktreeNote": "Priority: global < agent < manual launch",
+    "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
     "tagline": "Claude エージェントのタスクをリアルタイムで確認。",

@@ -236,7 +236,9 @@
       "cli": "CLI & Agentit",
       "notifications": "Ilmoitukset",
       "application": "Sovellus"
-    }
+    },
+    "worktreeDefault": "Default worktree isolation",
+    "worktreeDefaultDesc": "Create an isolated git worktree for each new agent session"
   },
   "setup": {
     "missingDb": "Tietokanta puuttuu",
@@ -297,7 +299,11 @@
     "multiInstance": "Multi-instanssi / Eristetty worktree",
     "multiInstanceNote": "Luo dedikoidun git worktree -hakemiston (ADR-006) — mahdollistaa useiden rinnakkaisten instanssien ajamisen ilman konflikteja",
     "multiInstanceError": "Worktreen luominen epäonnistui: {error}",
-    "refreshDetection": "Päivitä"
+    "refreshDetection": "Päivitä",
+    "worktreeSource": "Source: {source}",
+    "worktreeSourceGlobal": "global setting",
+    "worktreeSourceAgent": "agent setting",
+    "worktreeSourceManual": "manually changed"
   },
   "titleBar": {
     "searchTitle": "Hae tehtävää (Ctrl+K)",
@@ -371,7 +377,13 @@
       "arch": "ADR, rajapinnat, rakennepäätökset",
       "devops": "Commitit, haarat, CI/CD, julkaisut",
       "doc": "README, CONTRIBUTING, JSDoc"
-    }
+    },
+    "worktreeEnabled": "Worktree isolation",
+    "worktreeInherit": "Inherit",
+    "worktreeOn": "Enabled",
+    "worktreeOff": "Disabled",
+    "worktreeNote": "Priority: global < agent < manual launch",
+    "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
     "tagline": "Tarkastele Claude-agenttitehtäviäsi reaaliajassa.",
