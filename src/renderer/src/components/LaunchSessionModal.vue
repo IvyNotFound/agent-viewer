@@ -101,8 +101,10 @@ function systemLabel(inst: CliInstance): string {
 }
 
 onMounted(async () => {
-  // Refresh CLI detection (fills allCliInstances with local + WSL instances)
-  await settingsStore.refreshCliDetection()
+  // Use warmup cache if available — only detect if empty (T1118)
+  if (settingsStore.allCliInstances.length === 0) {
+    await settingsStore.refreshCliDetection()
+  }
 
   // Auto-select: prefer stored preference (cli:distro), fall back to default, then first (T1090)
   const instances = allAvailableInstances.value
@@ -381,24 +383,38 @@ async function launch() {
           <p v-if="!loading && allAvailableInstances.length === 0" class="text-xs text-amber-500 text-right">
             {{ noInstanceText }}
           </p>
-          <div class="flex items-center justify-end gap-2">
-          <button
-            class="px-4 py-2 text-sm text-content-muted hover:text-content-secondary hover:bg-surface-secondary rounded-lg transition-colors"
-            @click="emit('close')"
-          >
-            {{ t('launch.cancel') }}
-          </button>
-          <button
-            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            :style="{ backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name), borderColor: agentBorder(agent.name), borderWidth: '1px' }"
-            :disabled="loading || launching || allAvailableInstances.length === 0"
-            @click="launch"
-          >
-            <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
-              <path d="M3.5 2.635a.5.5 0 0 1 .752-.43l9 5.364a.5.5 0 0 1 0 .862l-9 5.365A.5.5 0 0 1 3.5 13.364V2.635z"/>
-            </svg>
-            {{ launching ? t('launch.launching') : t('launch.launch') }}
-          </button>
+          <div class="flex items-center justify-between gap-2">
+            <button
+              class="flex items-center gap-1.5 px-3 py-2 text-xs text-content-subtle hover:text-content-secondary hover:bg-surface-secondary rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              :disabled="settingsStore.detectingClis"
+              :title="t('launch.refreshDetection')"
+              @click="settingsStore.refreshCliDetection(true)"
+            >
+              <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5" :class="settingsStore.detectingClis ? 'animate-spin' : ''">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+              </svg>
+              {{ t('launch.refreshDetection') }}
+            </button>
+            <div class="flex items-center gap-2">
+              <button
+                class="px-4 py-2 text-sm text-content-muted hover:text-content-secondary hover:bg-surface-secondary rounded-lg transition-colors"
+                @click="emit('close')"
+              >
+                {{ t('launch.cancel') }}
+              </button>
+              <button
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                :style="{ backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name), borderColor: agentBorder(agent.name), borderWidth: '1px' }"
+                :disabled="loading || launching || allAvailableInstances.length === 0"
+                @click="launch"
+              >
+                <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
+                  <path d="M3.5 2.635a.5.5 0 0 1 .752-.43l9 5.364a.5.5 0 0 1 0 .862l-9 5.365A.5.5 0 0 1 3.5 13.364V2.635z"/>
+                </svg>
+                {{ launching ? t('launch.launching') : t('launch.launch') }}
+              </button>
+            </div>
           </div>
         </div>
       </div>

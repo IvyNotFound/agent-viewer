@@ -27,6 +27,8 @@ export interface Agent {
   /** Session status. */
   session_status?: 'started' | 'completed' | 'blocked' | null
   session_started_at?: string | null
+  /** Total tokens (in + out) for the current active session; null if no active session. */
+  session_tokens?: number | null
   last_log_at?: string | null
   /** 1 if the agent has associated sessions, tasks, comments, or logs; 0 otherwise. */
   has_history?: number

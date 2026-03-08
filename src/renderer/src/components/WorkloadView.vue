@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { agentFg } from '@renderer/utils/agentColor'
@@ -15,41 +15,37 @@ interface WorkloadRow {
   currentTask: string | null
 }
 
-const rows = ref<WorkloadRow[]>([])
-const loading = ref(false)
+// Derived from store.tasks + store.agents — no IPC call needed (T1116)
+const rows = computed<WorkloadRow[]>(() => {
+  const map = new Map<number, WorkloadRow>()
+  for (const agent of store.agents) {
+    map.set(agent.id, {
+      agentId: agent.id,
+      agentName: agent.name,
+      taskCount: 0,
+      totalEffort: 0,
+      currentTask: null,
+    })
+  }
+  for (const task of store.tasks) {
+    if (task.status !== 'todo' && task.status !== 'in_progress') continue
+    if (task.agent_assigned_id == null) continue
+    const row = map.get(task.agent_assigned_id)
+    if (!row) continue
+    row.taskCount++
+    row.totalEffort += task.effort ?? 0
+    if (task.status === 'in_progress' && !row.currentTask) row.currentTask = task.title
+  }
+  return [...map.values()].sort((a, b) => {
+    if (b.totalEffort !== a.totalEffort) return b.totalEffort - a.totalEffort
+    if (b.taskCount !== a.taskCount) return b.taskCount - a.taskCount
+    return a.agentName.localeCompare(b.agentName)
+  })
+})
 
 const maxEffort = computed(() =>
   rows.value.reduce((max, r) => Math.max(max, r.totalEffort), 1)
 )
-
-async function fetchWorkload(): Promise<void> {
-  if (!store.dbPath) return
-  loading.value = true
-  try {
-    const result = await window.electronAPI.queryDb(
-      store.dbPath,
-      `SELECT a.id as agentId, a.name as agentName,
-              COUNT(t.id) as taskCount,
-              COALESCE(SUM(t.effort), 0) as totalEffort,
-              MAX(CASE WHEN t.status = 'in_progress' THEN t.title ELSE NULL END) as currentTask
-       FROM agents a
-       LEFT JOIN tasks t ON t.agent_assigned_id = a.id AND t.status IN ('todo','in_progress')
-       GROUP BY a.id, a.name
-       ORDER BY totalEffort DESC, taskCount DESC, a.name ASC`,
-      []
-    ) as WorkloadRow[]
-    rows.value = result
-  } catch {
-    rows.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(fetchWorkload)
-watch(() => store.dbPath, fetchWorkload)
-// Refresh when tasks change (polling or DB watch) — ensures real-time updates (T748)
-watch(() => store.lastRefresh, fetchWorkload)
 </script>
 
 <template>
@@ -59,12 +55,12 @@ watch(() => store.lastRefresh, fetchWorkload)
       <h2 class="text-sm font-semibold text-content-secondary">{{ t('workload.title') }}</h2>
       <button
         class="text-xs text-content-subtle hover:text-content-secondary transition-colors"
-        @click="fetchWorkload"
+        @click="store.refresh()"
       >{{ t('common.refresh') }}</button>
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center py-8">
+    <div v-if="store.loading" class="flex items-center justify-center py-8">
       <p class="text-sm text-content-faint animate-pulse">{{ t('common.loading') }}</p>
     </div>
 

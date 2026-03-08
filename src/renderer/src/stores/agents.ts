@@ -6,7 +6,7 @@ import { normalizeRow } from '@renderer/utils/db'
 
 export const AGENT_CTE_SQL = `
   WITH latest_sessions AS (
-    SELECT agent_id, status, started_at,
+    SELECT agent_id, status, started_at, tokens_in, tokens_out,
            ROW_NUMBER() OVER (PARTITION BY agent_id ORDER BY started_at DESC) as rn
     FROM sessions
   ),
@@ -28,7 +28,9 @@ export const AGENT_CTE_SQL = `
     LEFT JOIN (SELECT DISTINCT agent_id FROM task_comments) tc ON tc.agent_id = a.id
     LEFT JOIN (SELECT DISTINCT agent_id FROM agent_logs) al ON al.agent_id = a.id
   )
-  SELECT a.*, ls.status as session_status, ls.started_at as session_started_at, ml.last_log_at, ah.has_history
+  SELECT a.*, ls.status as session_status, ls.started_at as session_started_at,
+    CASE WHEN ls.status = 'started' THEN COALESCE(ls.tokens_in, 0) + COALESCE(ls.tokens_out, 0) ELSE NULL END as session_tokens,
+    ml.last_log_at, ah.has_history
   FROM agents a
   LEFT JOIN latest_sessions ls ON ls.agent_id = a.id AND ls.rn = 1
   LEFT JOIN max_logs ml ON ml.agent_id = a.id

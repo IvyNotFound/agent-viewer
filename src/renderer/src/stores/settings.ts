@@ -200,10 +200,10 @@ export const useSettingsStore = defineStore('settings', () => {
     localStorage.setItem('enabledClis', JSON.stringify(enabledClis.value))
   }
 
-  async function refreshCliDetection(): Promise<void> {
+  async function refreshCliDetection(forceRefresh = false): Promise<void> {
     detectingClis.value = true
     try {
-      const raw = await window.electronAPI.getCliInstances(undefined, true) as CliInstance[]
+      const raw = await window.electronAPI.getCliInstances(undefined, forceRefresh) as CliInstance[]
       allCliInstances.value = raw
     } catch {
       allCliInstances.value = []

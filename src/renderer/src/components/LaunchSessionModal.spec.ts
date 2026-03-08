@@ -97,7 +97,7 @@ describe('LaunchSessionModal', () => {
 
     const backdrop = wrapper.find('.fixed.inset-0')
     await backdrop.trigger('click')
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
   it('emits close when close button (✕) is clicked', async () => {
@@ -113,9 +113,9 @@ describe('LaunchSessionModal', () => {
     await flushPromises()
 
     const closeBtn = wrapper.findAll('button').find(b => b.text().trim() === '✕')
-    expect(closeBtn).toBeDefined()
+    expect(closeBtn?.exists()).toBe(true)
     await closeBtn!.trigger('click')
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
   it('calls addTerminal on launch', async () => {
@@ -147,7 +147,7 @@ describe('LaunchSessionModal', () => {
       const text = b.text().toLowerCase()
       return text.includes('lancer') || text.includes('launch')
     })
-    expect(launchBtn).toBeDefined()
+    expect(launchBtn?.exists()).toBe(true)
     await launchBtn!.trigger('click')
     await flushPromises()
     expect(tabsStore.addTerminal).toHaveBeenCalled()
@@ -196,6 +196,71 @@ describe('LaunchSessionModal', () => {
   })
 })
 
+// ── Warmup cache (T1118) ──────────────────────────────────────────────────────
+
+describe('LaunchSessionModal — warmup cache (T1118)', () => {
+  const mockAgent = {
+    id: 1, name: 'review-master', type: 'global', perimetre: null,
+    system_prompt: null, system_prompt_suffix: null, thinking_mode: null,
+    allowed_tools: null, created_at: '2026-01-01', session_statut: null, session_started_at: null,
+  }
+  const teleportStub = { Teleport: { template: '<div><slot /></div>' } }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
+    api.getCliInstances.mockResolvedValue([])
+    api.getAgentSystemPrompt.mockResolvedValue({ success: true, systemPrompt: null, systemPromptSuffix: null, thinkingMode: 'auto' })
+    api.queryDb.mockResolvedValue([])
+    api.buildAgentPrompt.mockResolvedValue('test prompt')
+  })
+
+  it('skips getCliInstances when cache is pre-populated (T1118)', async () => {
+    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
+    shallowMount(LaunchSessionModal, {
+      props: { agent: mockAgent as never },
+      global: {
+        plugins: [createTestingPinia({
+          stubActions: false,
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: {
+              enabledClis: ['claude'],
+              allCliInstances: [{ cli: 'claude', distro: 'Ubuntu', version: '2.1.0', isDefault: true, type: 'wsl' }],
+            },
+          },
+        }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    await flushPromises()
+    // Cache was pre-populated — should NOT call getCliInstances
+    expect(api.getCliInstances).not.toHaveBeenCalled()
+  })
+
+  it('calls getCliInstances when cache is empty (T1118)', async () => {
+    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
+    shallowMount(LaunchSessionModal, {
+      props: { agent: mockAgent as never },
+      global: {
+        plugins: [createTestingPinia({
+          stubActions: false,
+          initialState: {
+            tasks: { dbPath: '/p/.claude/db' },
+            settings: { enabledClis: ['claude'], allCliInstances: [] },
+          },
+        }), i18n],
+        stubs: teleportStub,
+      },
+    })
+    await flushPromises()
+    // Cache was empty — should call getCliInstances without forceRefresh
+    expect(api.getCliInstances).toHaveBeenCalledWith(undefined, false)
+  })
+})
+
+
 // ── Auto-select by cli:distro (T1090) ────────────────────────────────────────
 
 describe('LaunchSessionModal — auto-select cli:distro (T1090)', () => {
@@ -243,7 +308,7 @@ describe('LaunchSessionModal — auto-select cli:distro (T1090)', () => {
       const text = b.text().toLowerCase()
       return text.includes('lancer') || text.includes('launch')
     })
-    expect(launchBtn).toBeDefined()
+    expect(launchBtn?.exists()).toBe(true)
     expect(launchBtn!.attributes('disabled')).toBeUndefined()
   })
 
@@ -420,7 +485,7 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
       const text = b.text().toLowerCase()
       return text.includes('désactivé') || text.includes('disabled')
     })
-    expect(disabledBtn).toBeDefined()
+    expect(disabledBtn?.exists()).toBe(true)
 
     // Click it
     await disabledBtn!.trigger('click')
@@ -628,7 +693,7 @@ describe('LaunchSessionModal — capabilities (T1036)', () => {
       const text = b.text().toLowerCase()
       return text.includes('lancer') || text.includes('launch')
     })
-    expect(launchBtn).toBeDefined()
+    expect(launchBtn?.exists()).toBe(true)
     expect(launchBtn!.attributes('disabled')).toBeDefined()
 
     // Help message should be visible

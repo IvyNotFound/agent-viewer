@@ -296,7 +296,8 @@
     "multiInstance": "Multi-instance / Isolated worktree",
     "multiInstanceNote": "Creates a dedicated git worktree (ADR-006) — allows running multiple instances of the same agent in parallel without conflicts",
     "multiInstanceError": "Failed to create worktree: {error}",
-    "instance": "Instance"
+    "instance": "Instance",
+    "refreshDetection": "Refresh"
   },
   "cli": {
     "claude": "Claude Code",

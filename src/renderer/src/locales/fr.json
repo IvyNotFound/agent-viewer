@@ -296,7 +296,8 @@
     "instance": "Instance",
     "multiInstance": "Multi-instance / Worktree isolé",
     "multiInstanceNote": "Crée un git worktree dédié (ADR-006) — plusieurs instances du même agent en parallèle sans conflits",
-    "multiInstanceError": "Échec de création du worktree : {error}"
+    "multiInstanceError": "Échec de création du worktree : {error}",
+    "refreshDetection": "Actualiser"
   },
   "titleBar": {
     "searchTitle": "Rechercher une tâche (Ctrl+K)",
