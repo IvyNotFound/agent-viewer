@@ -41,11 +41,25 @@ const { startHookServer, setHookWindow } = await import('./hookServer')
 /**
  * Start a server on a random port.
  * startHookServer() internally calls server.listen(HOOK_PORT).
- * We close+relisten on port 0 to avoid port conflicts across tests.
+ * We wait for the first listen() to settle (listening or EADDRINUSE) before
+ * re-listening on port 0 to avoid the race where the EADDRINUSE error from
+ * the initial listen gets caught by the second listen's error handler.
  */
 async function createTestServer(): Promise<[http.Server, number]> {
   const server = startHookServer()
-  // Close the initial listen (may be on HOOK_PORT or already failed EADDRINUSE)
+  // Wait for the initial listen(HOOK_PORT) to settle: either 'listening' or 'error'
+  await new Promise<void>((resolve) => {
+    if (server.listening) { resolve(); return }
+    const onListening = () => { cleanup(); resolve() }
+    const onError = () => { cleanup(); resolve() } // EADDRINUSE is handled by hookServer
+    const cleanup = () => {
+      server.removeListener('listening', onListening)
+      server.removeListener('error', onError)
+    }
+    server.once('listening', onListening)
+    server.once('error', onError)
+  })
+  // Now close if still listening, then relisten on a random port
   await new Promise<void>((resolve) => {
     if (!server.listening) { resolve(); return }
     server.close(() => resolve())

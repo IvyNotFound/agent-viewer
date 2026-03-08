@@ -40,6 +40,19 @@ const { startHookServer, setHookWindow } = await import('./hookServer')
 
 async function createTestServer(): Promise<[http.Server, number]> {
   const server = startHookServer()
+  // Wait for the initial listen(HOOK_PORT) to settle: either 'listening' or 'error'
+  await new Promise<void>((resolve) => {
+    if (server.listening) { resolve(); return }
+    const onListening = () => { cleanup(); resolve() }
+    const onError = () => { cleanup(); resolve() } // EADDRINUSE is handled by hookServer
+    const cleanup = () => {
+      server.removeListener('listening', onListening)
+      server.removeListener('error', onError)
+    }
+    server.once('listening', onListening)
+    server.once('error', onError)
+  })
+  // Now close if still listening, then relisten on a random port
   await new Promise<void>((resolve) => {
     if (!server.listening) { resolve(); return }
     server.close(() => resolve())
