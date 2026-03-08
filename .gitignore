@@ -56,6 +56,12 @@ tsconfig.web.tsbuildinfo
 SELECT
 .claude/project-db
 .claude/project_db
+.claude/worktrees/
+
+# Local debug/memory dumps
+mem-dump-*.json
+mem-dump-*.txt
+scripts/mem-dump.ps1
 
 # Accidental tilde-expansion artefact
 ~/
