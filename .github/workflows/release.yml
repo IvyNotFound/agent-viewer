@@ -52,7 +52,7 @@ jobs:
           cache: ''
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Run ESLint
         run: npm run lint
@@ -68,40 +68,12 @@ jobs:
           node-version: 22
           cache: ''
 
-      - name: Pre-install dir check
-        run: |
-          echo "PWD=$PWD"
-          echo "=== /home/runner/work/agent-viewer/ ==="
-          ls -la /home/runner/work/agent-viewer/
-          echo "=== project dir ==="
-          ls -la .
-          echo "=== node_modules exists? ==="
-          ls -d node_modules 2>/dev/null && echo "YES" || echo "NO"
-
       - name: Install dependencies
         run: |
-          set +e
-          npm ci
-          NPM_EXIT=$?
-          set -e
-          if [ "$NPM_EXIT" -ne 0 ]; then
-            NPM_LOG=$(ls -t /home/runner/.npm/_logs/*.log 2>/dev/null | head -1)
-            if [ -n "$NPM_LOG" ]; then
-              echo "=== npm log lines mentioning remove/delete/rm/unlink ==="
-              grep -in "remove\|delete\|unlink\|reify\|rm\b" "$NPM_LOG" | head -40 || echo "none"
-              echo "=== Last 30 lines ==="
-              tail -30 "$NPM_LOG"
-            fi
-          fi
-          exit "$NPM_EXIT"
-
-      - name: Post-install dir check
-        if: always()
-        run: |
-          echo "=== /home/runner/work/agent-viewer/ ==="
-          ls -la /home/runner/work/agent-viewer/ 2>/dev/null || echo "PARENT GONE"
-          echo "=== project dir ==="
-          ls -la . 2>/dev/null || echo "PROJECT DIR GONE"
+          npm ci --ignore-scripts
+          node node_modules/esbuild/install.js
+          node node_modules/vitest/node_modules/esbuild/install.js 2>/dev/null || true
+          node node_modules/vue-demi/scripts/postinstall.js || true
 
       - name: Run unit tests with coverage
         run: npm run test:coverage -- --reporter=verbose
@@ -136,7 +108,10 @@ jobs:
           cache: ''
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci --ignore-scripts
+          node node_modules/esbuild/install.js
+          node node_modules/vue-demi/scripts/postinstall.js || true
 
       - name: Download Electron binary (needed for E2E)
         env:
@@ -234,7 +209,10 @@ jobs:
           cache: ''
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci --ignore-scripts
+          node node_modules/esbuild/install.js
+          node node_modules/vue-demi/scripts/postinstall.js || true
 
       - name: Download Electron binary (needed for E2E)
         env:
@@ -308,7 +286,10 @@ jobs:
           cache: ''
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci --ignore-scripts
+          node node_modules/esbuild/install.js
+          node node_modules/vue-demi/scripts/postinstall.js || true
 
       - name: Download sqlite3 binary
         run: node scripts/download-sqlite3.js
@@ -337,7 +318,10 @@ jobs:
           cache: ''
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci --ignore-scripts
+          node node_modules/esbuild/install.js
+          node node_modules/vue-demi/scripts/postinstall.js || true
 
       - name: Download sqlite3 binary
         run: node scripts/download-sqlite3.js
