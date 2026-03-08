@@ -4,6 +4,66 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.30.0] - 2026-03-08
+
+### Features
+- feat(front-vuejs): add worktree isolation toggle in agent modal and settings (T1143) (788ce78)
+- feat(ci): add ESLint gate to release pipeline and script (T1139) (a062d9b)
+- feat(back-electron): migrate sql.js to better-sqlite3 + WAL mode (T1157) (4409094)
+- feat(back-electron): add worktree_enabled column to agents + worktree_default config (T1142) (92d2ebb)
+
+### Bug Fixes
+- fix(front-vuejs): escape HTML entity in SuccessRateChart + update snapshots and comments (e245cec)
+- fix(front): repair 4 failing tests — T1162 (abc66a8)
+- fix(back-electron): correctifs T1161 — FK sessions ref + readline mocks + telemetry (f88c3c8)
+- fix(back-electron): fix step() multi-row iteration + update CLAUDE.md (T1157) (5011e30)
+- fix(back-electron): await initial listen() settle in createTestServer() to prevent EADDRINUSE race (T1159) (9143571)
+- fix(front-vuejs): handle launch errors and restore maxFileLines in modal (T1152) (4fe323a)
+- fix(back-electron): move db.close() to finally + rewrite dbw test for Vitest (T1155) (ab8c6ca)
+- fix(back-electron): support multi-statement SQL in dbw.js (T1155) (5211c57)
+- fix(back-electron): recycle sql.js WASM module to prevent 9.5 GB memory leak (T1154) (4dea18d)
+- fix(back-electron): resolve .cmd wrapper to bypass cmd.exe JSON corruption (T1151) (a7ca445)
+- fix(front-vuejs): guard localStorage access for Node 25+ test compat (T1149) (bcd8177)
+- fix(back-electron): add worktreeEnabled to getAgentSystemPrompt type contract (T1150) (915d58d)
+- fix(front-vuejs): add error rollback in setWorktreeDefault store setter (T1147) (ace34a6)
+- fix(back-electron): use .gitignore rules in telemetry scan instead of hardcoded IGNORE_DIRS (T1144) (f2118fe)
+- fix(front-vuejs): update StreamView-eviction test assertions for MAX_EVENTS_HIDDEN=10 (T1135) (51bac05)
+- fix(deps): upgrade dompurify 3.3.1 → 3.3.2 (GHSA-v2wj-7wpq-c8vv) (T1123) (4874aaa)
+- fix(back-electron): add security test for assertProjectPathAllowed in telemetry:scan (T1115) (3af0de5)
+
+### Performance
+- perf(front-vuejs): reduce StreamView hidden-tab eviction + clear _html + limit active tasks (T1135) (59fb296)
+- perf(front-vuejs): replace Math.min spread with reduce in TimelineView rangeStart (b2e5a7c)
+- perf(back-electron): reduce DB cache TTL and add default query LIMIT (T1136) (0151de2)
+
+### Refactoring
+- refactor(front-vuejs): unify session launch paths into single composable (T1152) (c1d8177)
+- refactor(front-vuejs): uniformiser le style des onglets dashboard sur TelemetryView (2312560)
+
+### Tests
+- test(back): add HTTP server coverage for hookServer.ts — 34 new tests (T1101) (b02aa07)
+
+### CI
+- ci(release): npm audit critical + slack notify on failure (0880cb0)
+- ci: timeouts + concurrency + coverage summary + dependabot + badges (52a207a)
+- ci(release): add unit-tests gate + group CHANGELOG by conventional commit type (b820c63)
+- ci: remove standalone e2e workflow — E2E now runs in release pipeline only (3fd142c)
+
+### Documentation
+- docs(global): update sql.js references to better-sqlite3 (T1158) (b278f37)
+
+### Chores
+- chore(deps): update package-lock.json (6eb3c01)
+- chore(i18n): add missing worktree keys to 16 non-EN/FR locales (T1143) (bd51431)
+- chore: ignore project.db.test_* files in .claude/ (345741c)
+- chore(test-back): split spec files > 400 lines into smaller modules (T1132) (a3800fd)
+- chore(test-front): split spec files > 400 lines into smaller modules (T1134) (f9db53e)
+- chore(front-vuejs): split source files > 400 lines (T1133) (e081480)
+- chore(test): move CURRENT_SCHEMA_VERSION test to migration-runner-2 to keep both files under 400 lines (T1129) (d159569)
+- chore(back-electron): split source files > 400 lines (T1131) (0dbca45)
+- chore(test): split migration-runner-2.spec.ts — v20+ to migration-runner-3.spec.ts (4b42715)
+- chore(release): update end message — release is now auto-published (838e99c)
+
 ## [0.29.2] - 2026-03-08
 
 ### Changes
