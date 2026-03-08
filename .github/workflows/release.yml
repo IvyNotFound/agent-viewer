@@ -69,7 +69,21 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          set +e
+          npm ci
+          NPM_EXIT=$?
+          set -e
+          if [ "$NPM_EXIT" -ne 0 ]; then
+            NPM_LOG=$(ls -t /home/runner/.npm/_logs/*.log 2>/dev/null | head -1)
+            if [ -n "$NPM_LOG" ]; then
+              echo "=== npm debug log: lines with 'runScript\\|spawn\\|script\\|lifecycle\\|ENOENT' ==="
+              grep -n "runScript\|lifecycle\|ENOENT\|spawn.*node\|run-script\|hasInstallScript" "$NPM_LOG" || echo "none"
+              echo "=== Last 50 log lines ==="
+              tail -50 "$NPM_LOG"
+            fi
+          fi
+          exit "$NPM_EXIT"
 
       - name: Run unit tests with coverage
         run: npm run test:coverage -- --reporter=verbose
