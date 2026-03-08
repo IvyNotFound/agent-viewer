@@ -37,22 +37,20 @@ function getPlatformConfig() {
   }
 
   if (platform === 'darwin') {
-    if (arch === 'arm64') {
-      console.warn(
-        'Warning: SQLite.org does not provide native arm64 binaries for macOS. Downloading x86_64 (runs via Rosetta 2).',
-      )
+    // sqlite.org does not reliably provide prebuilt macOS CLI binaries.
+    // Fall back to the system sqlite3 (pre-installed on macOS and CI runners).
+    const systemSqlite = '/usr/bin/sqlite3'
+    const fs2 = require('fs')
+    if (fs2.existsSync(systemSqlite)) {
+      const destFile = path.join(DEST_DIR, 'sqlite3')
+      fs2.mkdirSync(DEST_DIR, { recursive: true })
+      fs2.copyFileSync(systemSqlite, destFile)
+      fs2.chmodSync(destFile, 0o755)
+      console.log(`sqlite3 copied from system (${systemSqlite}) to ${destFile}`)
+      process.exit(0)
     }
-    return {
-      zipName: `sqlite-tools-osx-x86-${SQLITE_VERSION}.zip`,
-      binaryName: 'sqlite3',
-      extract: (zipPath, destDir) => {
-        execSync(`unzip -o "${zipPath}" "*/sqlite3" -d "${destDir}"`)
-        execSync(
-          `find "${destDir}" -name sqlite3 ! -path "${path.join(destDir, 'sqlite3')}" -exec mv {} "${path.join(destDir, 'sqlite3')}" \\;`,
-        )
-      },
-      chmod: true,
-    }
+    console.warn('Warning: system sqlite3 not found at /usr/bin/sqlite3, skipping.')
+    process.exit(0)
   }
 
   if (platform === 'linux') {
@@ -60,7 +58,8 @@ function getPlatformConfig() {
       zipName: `sqlite-tools-linux-x64-${SQLITE_VERSION}.zip`,
       binaryName: 'sqlite3',
       extract: (zipPath, destDir) => {
-        execSync(`unzip -o "${zipPath}" "*/sqlite3" -d "${destDir}"`)
+        // Extract all files; handle both subdirectory and flat zip structures
+        execSync(`unzip -o "${zipPath}" -d "${destDir}"`)
         execSync(
           `find "${destDir}" -name sqlite3 ! -path "${path.join(destDir, 'sqlite3')}" -exec mv {} "${path.join(destDir, 'sqlite3')}" \\;`,
         )
