@@ -14,7 +14,7 @@ describe('StreamView — hidden-tab eviction (T962)', () => {
     vi.restoreAllMocks()
   })
 
-  it('evicts events to MAX_EVENTS_HIDDEN (50) when tab becomes inactive', async () => {
+  it('evicts events to MAX_EVENTS_HIDDEN (10) when tab becomes inactive', async () => {
     let streamCallback: ((e: Record<string, unknown>) => void) | null = null
     vi.mocked(mockElectronAPI.agentCreate).mockResolvedValue('agent-stream-1')
     vi.mocked(mockElectronAPI.onAgentStream).mockReset()
@@ -68,7 +68,7 @@ describe('StreamView — hidden-tab eviction (T962)', () => {
     await flushPromises()
     expect(store.activeTabId).toBe('other-tab')
 
-    expect(wrapper.findAll('[data-testid="block-result"]').length).toBeLessThanOrEqual(50)
+    expect(wrapper.findAll('[data-testid="block-result"]').length).toBeLessThanOrEqual(10)
     wrapper.unmount()
   })
 })
