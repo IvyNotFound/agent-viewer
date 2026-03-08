@@ -162,6 +162,18 @@ export function registerAgentStreamHandlers(): void {
     }
     webContentsAgents.get(wcId)!.add(id)
 
+    // ── Worktree isolation (created first so path can be injected into system prompt — T1124) ──
+    let worktreeInfo: WorktreeInfo | undefined
+    if (opts.worktree !== false && opts.projectPath && Number.isInteger(opts.sessionId) && opts.sessionId! > 0) {
+      try {
+        worktreeInfo = await createWorktree(opts.projectPath, opts.sessionId!)
+        logDebug(`worktree created: ${worktreeInfo.path} (branch ${worktreeInfo.branch})`)
+      } catch (err) {
+        // Non-fatal: log and fall back to projectPath
+        console.warn('[agent-stream] worktree creation failed, falling back to projectPath:', err)
+      }
+    }
+
     // T772: Inject active tasks context into system prompt (DB-first, ultra-compact).
     let effectiveSystemPrompt = opts.systemPrompt ?? ''
     if (opts.dbPath && Number.isInteger(opts.sessionId) && opts.sessionId! > 0) {
@@ -176,24 +188,20 @@ export function registerAgentStreamHandlers(): void {
       } catch { /* never block spawn on context injection failure */ }
     }
 
+    // T1124: Inject worktree path + branch so the agent knows its working directory explicitly.
+    if (worktreeInfo) {
+      const wtLine = `Worktree: ${worktreeInfo.path} (branch: ${worktreeInfo.branch})`
+      effectiveSystemPrompt = effectiveSystemPrompt
+        ? effectiveSystemPrompt + '\n\n' + wtLine
+        : wtLine
+    }
+
     // Write system prompt to a Windows temp file so the child process reads it directly —
     // avoids command-line serialization issues on both WSL (T705) and Windows native (T916).
     let spTempFile: string | undefined
     if (effectiveSystemPrompt) {
       spTempFile = join(tmpdir(), `claude-sp-${id}.txt`)
       writeFileSync(spTempFile, effectiveSystemPrompt, 'utf-8')
-    }
-
-    // ── Worktree isolation ─────────────────────────────────────────────────────
-    let worktreeInfo: WorktreeInfo | undefined
-    if (opts.worktree !== false && opts.projectPath && Number.isInteger(opts.sessionId) && opts.sessionId! > 0) {
-      try {
-        worktreeInfo = await createWorktree(opts.projectPath, opts.sessionId!)
-        logDebug(`worktree created: ${worktreeInfo.path} (branch ${worktreeInfo.branch})`)
-      } catch (err) {
-        // Non-fatal: log and fall back to projectPath
-        console.warn('[agent-stream] worktree creation failed, falling back to projectPath:', err)
-      }
     }
 
     // ── Spawn: local Windows vs WSL / Linux / macOS ────────────────────────────

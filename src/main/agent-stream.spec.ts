@@ -717,6 +717,32 @@ describe('agent-stream', () => {
 
       expect(mockRemoveWorktree).toHaveBeenCalledWith('C:\\projects\\foo', 7)
     })
+
+    it('injects worktree path and branch into system prompt when worktree is created (T1124)', async () => {
+      mockCreateWorktree.mockResolvedValueOnce({ path: '/tmp/wt/session-7', branch: 'session-7' })
+      const handler = handlers.get('agent:create')!
+      await handler({ sender: mockSender }, {
+        projectPath: 'C:\\projects\\foo',
+        systemPrompt: 'Base prompt',
+        wslDistro: 'Ubuntu',
+        sessionId: 7,
+      })
+
+      const spCall = mockWriteFileSync.mock.calls.find(([p]: [unknown]) => String(p).includes('claude-sp'))
+      expect(spCall?.[1]).toContain('Worktree: /tmp/wt/session-7 (branch: session-7)')
+    })
+
+    it('does not inject worktree info into system prompt when no worktree created (T1124)', async () => {
+      const handler = handlers.get('agent:create')!
+      await handler({ sender: mockSender }, {
+        systemPrompt: 'Base prompt',
+        sessionId: 7,
+        // no projectPath → no worktree
+      })
+
+      const spCall = mockWriteFileSync.mock.calls.find(([p]: [unknown]) => String(p).includes('claude-sp'))
+      expect(spCall?.[1]).toBe('Base prompt')
+    })
   })
 
   // ── killAgent: Windows taskkill (L62) ─────────────────────────────────────
