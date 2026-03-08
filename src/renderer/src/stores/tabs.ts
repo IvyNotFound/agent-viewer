@@ -14,7 +14,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { CliType } from '@shared/cli-types'
 
-export type TabType = 'backlog' | 'terminal' | 'explorer' | 'file' | 'dashboard' | 'hooks' | 'workload' | 'topology' | 'timeline' | 'telemetry'
+export type TabType = 'backlog' | 'terminal' | 'explorer' | 'file' | 'dashboard' | 'hooks' | 'workload' | 'topology' | 'timeline'
 
 export interface Tab {
   id: string
@@ -66,7 +66,6 @@ export const useTabsStore = defineStore('tabs', () => {
     { id: 'backlog', type: 'backlog', title: 'Backlog', ptyId: null, agentName: null, wslDistro: null, autoSend: null, systemPrompt: null, thinkingMode: null, permanent: true },
     { id: 'dashboard', type: 'dashboard', title: 'Dashboard', ptyId: null, agentName: null, wslDistro: null, autoSend: null, systemPrompt: null, thinkingMode: null, permanent: true, logsAgentId: null },
     { id: 'timeline',  type: 'timeline',  title: 'Timeline',  ptyId: null, agentName: null, wslDistro: null, autoSend: null, systemPrompt: null, thinkingMode: null, permanent: true },
-    { id: 'telemetry', type: 'telemetry', title: 'Telemetry', ptyId: null, agentName: null, wslDistro: null, autoSend: null, systemPrompt: null, thinkingMode: null, permanent: true },
   ])
   const activeTabId = ref<string>('backlog')
 

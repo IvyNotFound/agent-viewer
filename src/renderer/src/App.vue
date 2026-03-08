@@ -17,7 +17,6 @@ const StreamView = defineAsyncComponent(() => import('@renderer/components/Strea
 const FileView = defineAsyncComponent(() => import('@renderer/components/FileView.vue'))
 const DashboardView = defineAsyncComponent(() => import('@renderer/components/DashboardView.vue'))
 const TimelineView = defineAsyncComponent(() => import('@renderer/components/TimelineView.vue'))
-const TelemetryView = defineAsyncComponent(() => import('@renderer/components/TelemetryView.vue'))
 const ExplorerView = defineAsyncComponent(() => import('@renderer/components/ExplorerView.vue'))
 const CommandPalette = defineAsyncComponent(() => import('@renderer/components/CommandPalette.vue'))
 const SetupWizard = defineAsyncComponent(() => import('@renderer/components/SetupWizard.vue'))
@@ -98,10 +97,6 @@ defineExpose({
           <!-- Timeline tab (vue gantt des tâches par agent) -->
           <template v-else-if="tabsStore.activeTab.type === 'timeline'">
             <TimelineView class="flex-1" />
-          </template>
-          <!-- Telemetry tab (LOC et langages du projet) -->
-          <template v-else-if="tabsStore.activeTab.type === 'telemetry'">
-            <TelemetryView class="flex-1" />
           </template>
           <!-- Terminal tabs (keep mounted to preserve session, hide inactive) -->
           <template v-for="tab in tabsStore.tabs.filter(t => t.type === 'terminal')" :key="tab.id">

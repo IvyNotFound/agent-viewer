@@ -532,7 +532,8 @@
     "testRatio": "de tests",
     "scan": "Scanner",
     "notScanned": "Pas encore scanné — cliquer pour scanner",
-    "others": "Autres"
+    "others": "Autres",
+    "telemetryTab": "Télémétrie"
   },
   "status": {
     "todo": "à faire",

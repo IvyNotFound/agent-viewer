@@ -540,7 +540,8 @@
     "testRatio": "tests",
     "scan": "Scan",
     "notScanned": "Not scanned yet — click to scan",
-    "others": "Others"
+    "others": "Others",
+    "telemetryTab": "Telemetry"
   },
   "status": {
     "todo": "todo",
