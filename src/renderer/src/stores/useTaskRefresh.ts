@@ -57,6 +57,7 @@ export function useTaskRefresh(deps: TaskRefreshDeps) {
           LEFT JOIN agents c ON c.id = t.agent_creator_id
           WHERE t.status IN ('todo', 'in_progress')
           ORDER BY t.updated_at DESC
+          LIMIT 500
         `),
         deps.query<Task>(`
           SELECT t.*, a.name as agent_name, a.scope as agent_scope,

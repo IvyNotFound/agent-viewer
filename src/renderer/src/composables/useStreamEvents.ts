@@ -11,7 +11,7 @@ import { renderMarkdown } from '@renderer/utils/renderMarkdown'
 import type { StreamEvent } from '@renderer/types/stream'
 
 export const MAX_EVENTS = 500
-export const MAX_EVENTS_HIDDEN = 50
+export const MAX_EVENTS_HIDDEN = 10
 
 export function useStreamEvents(terminalId: string) {
   const tabsStore = useTabsStore()
@@ -80,13 +80,38 @@ export function useStreamEvents(terminalId: string) {
     nextTick(() => { if (scrollContainer.value) scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight })
   }
 
-  // ── Hidden-tab eviction (T962) ──────────────────────────────────────────────
+  // ── Hidden-tab eviction (T962) + _html clearing (T1135) ─────────────────────
   watch(() => tabsStore.activeTabId === terminalId, (isActive) => {
-    if (!isActive && events.value.length > MAX_EVENTS_HIDDEN) {
-      const evicted = events.value.splice(0, events.value.length - MAX_EVENTS_HIDDEN)
-      const evictedIds = new Set(evicted.map(e => e._id))
-      for (const key of Object.keys(collapsed.value)) {
-        if (evictedIds.has(parseInt(key.split('-')[0], 10))) delete collapsed.value[key]
+    if (!isActive) {
+      // Clear rendered _html on remaining events — will be re-rendered on activate (T1135)
+      for (const ev of events.value) {
+        if (ev.message?.content) {
+          for (const block of ev.message.content) {
+            block._html = undefined
+          }
+        }
+      }
+      if (events.value.length > MAX_EVENTS_HIDDEN) {
+        const evicted = events.value.splice(0, events.value.length - MAX_EVENTS_HIDDEN)
+        const evictedIds = new Set(evicted.map(e => e._id))
+        for (const key of Object.keys(collapsed.value)) {
+          if (evictedIds.has(parseInt(key.split('-')[0], 10))) delete collapsed.value[key]
+        }
+      }
+    } else {
+      // Re-render _html when tab becomes active again (T1135)
+      for (const ev of events.value) {
+        if (ev.message?.content) {
+          for (const block of ev.message.content) {
+            if (block.type === 'text' && block.text != null && !block._html) {
+              block._html = renderMarkdown(block.text)
+            } else if (block.type === 'tool_result' && !block._html) {
+              const raw = !block.content ? '' : typeof block.content === 'string' ? block.content : Array.isArray(block.content) ? block.content.map(c => c.text ?? '').join('\n') : String(block.content)
+              const stripped = raw.replace(/\x1B\[[0-9;]*[mGKHF]/g, '')
+              block._html = renderMarkdown(stripped)
+            }
+          }
+        }
       }
     }
   })
