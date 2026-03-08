@@ -43,7 +43,7 @@ fi
 echo ""
 echo "=== Pre-release Checks ==="
 echo "Running npm install..."
-npm install --silent 2>/dev/null
+npm install --silent
 
 echo "Checking i18n completeness..."
 node scripts/check-i18n.js || { echo "ERROR: i18n check failed. Fix missing keys before releasing."; exit 1; }
@@ -72,12 +72,25 @@ fi
     echo "## [$NEW_VERSION] - $(date +%Y-%m-%d)"
     echo ""
 
+    REPO=$(gh repo --json nameWithOwner --jq '.nameWithOwner' 2>/dev/null || echo '')
     COMMITS=$(git log --pretty=format:"%s|||%h" "v$CURRENT_VERSION"..HEAD 2>/dev/null)
+
+    format_commit() {
+        if [ -n "$REPO" ]; then
+            sed "s/|||/ ([/;s|$|](https://github.com/$REPO/commit/\0))|" | sed 's|\[.*\](.*\(.\{40\}\).*)| [\1]|'
+            # simpler: just linkify the hash
+        fi
+    }
 
     print_section() {
         local title="$1"; local pattern="$2"
         local lines
-        lines=$(echo "$COMMITS" | grep -E "^$pattern" | sed "s/|||/ (/;s/$/)/" | sed 's/^/- /')
+        if [ -n "$REPO" ]; then
+            lines=$(echo "$COMMITS" | grep -E "^$pattern" | \
+                sed 's/\(.*\)|||\([0-9a-f]*\)/- \1 ([\2](https:\/\/github.com\/'"$REPO"'\/commit\/\2))/')
+        else
+            lines=$(echo "$COMMITS" | grep -E "^$pattern" | sed "s/|||/ (/;s/$/)/" | sed 's/^/- /')
+        fi
         if [ -n "$lines" ]; then
             echo "### $title"
             echo "$lines"
@@ -99,7 +112,12 @@ fi
         print_section "Documentation"  "docs"
         print_section "Chores"         "chore"
         # Catch-all for commits that don't follow conventional format
-        OTHER=$(echo "$COMMITS" | grep -vE "^(feat|fix|perf|refactor|test|ci|docs|chore)" | sed "s/|||/ (/;s/$/)/" | sed 's/^/- /')
+        if [ -n "$REPO" ]; then
+            OTHER=$(echo "$COMMITS" | grep -vE "^(feat|fix|perf|refactor|test|ci|docs|chore)" | \
+                sed 's/\(.*\)|||\([0-9a-f]*\)/- \1 ([\2](https:\/\/github.com\/'"$REPO"'\/commit\/\2))/')
+        else
+            OTHER=$(echo "$COMMITS" | grep -vE "^(feat|fix|perf|refactor|test|ci|docs|chore)" | sed "s/|||/ (/;s/$/)/" | sed 's/^/- /')
+        fi
         if [ -n "$OTHER" ]; then
             echo "### Other"
             echo "$OTHER"

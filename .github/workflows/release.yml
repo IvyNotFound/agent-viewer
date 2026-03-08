@@ -11,6 +11,10 @@ on:
         required: true
         type: string
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
@@ -45,12 +49,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm test
+      - name: Run unit tests with coverage
+        run: npm run test:coverage -- --reporter=verbose
+
+      - name: Upload coverage summary to GitHub Summary
+        if: always()
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            node -e "
+              const s = require('./coverage/coverage-summary.json').total;
+              const fmt = (v) => v.pct.toFixed(1) + '%';
+              console.log('## Coverage');
+              console.log('| Metric | Coverage |');
+              console.log('|--------|----------|');
+              console.log('| Statements | ' + fmt(s.statements) + ' |');
+              console.log('| Branches   | ' + fmt(s.branches)   + ' |');
+              console.log('| Functions  | ' + fmt(s.functions)  + ' |');
+              console.log('| Lines      | ' + fmt(s.lines)      + ' |');
+            " >> \$GITHUB_STEP_SUMMARY
+          fi
 
   e2e-linux:
     needs: [i18n-check]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -94,6 +116,7 @@ jobs:
   e2e-windows:
     needs: [i18n-check]
     runs-on: windows-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -131,6 +154,7 @@ jobs:
   e2e-mac:
     needs: [i18n-check]
     runs-on: macos-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
