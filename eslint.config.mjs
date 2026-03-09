@@ -76,6 +76,14 @@ export default [
     }
   },
 
+  // main/ — no-explicit-any promoted to error (all any eliminated)
+  {
+    files: ['src/main/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+    }
+  },
+
   // Shared files
   {
     files: ['src/shared/**/*.ts'],

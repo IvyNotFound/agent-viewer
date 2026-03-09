@@ -15,6 +15,22 @@ import { readFileSync, writeFileSync } from 'fs'
 import { randomBytes } from 'crypto'
 import { execSync } from 'child_process'
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface HookEntry {
+  type: string
+  url?: string
+  headers?: Record<string, string>
+}
+
+interface HookGroup {
+  hooks?: HookEntry[]
+}
+
+interface ClaudeSettings {
+  hooks?: Record<string, HookGroup[]>
+}
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 export const HOOK_PORT = 27182
@@ -64,12 +80,11 @@ export function initHookSecret(userDataPath?: string): void {
 export async function injectHookSecret(settingsPath: string): Promise<void> {
   try {
     const raw = await readFile(settingsPath, 'utf-8')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const settings = JSON.parse(raw) as any
+    const settings = JSON.parse(raw) as ClaudeSettings
     if (!settings.hooks) return
     let changed = false
-    for (const eventGroups of Object.values(settings.hooks as Record<string, unknown[]>)) {
-      for (const group of eventGroups as Array<{ hooks?: Array<{ type: string; headers?: Record<string, string> }> }>) {
+    for (const eventGroups of Object.values(settings.hooks)) {
+      for (const group of eventGroups) {
         if (!Array.isArray(group.hooks)) continue
         for (const hook of group.hooks) {
           if (hook.type === 'http') {
@@ -122,8 +137,7 @@ export function detectWslGatewayIp(): string | null {
  * Best-effort: silently skips on unrecoverable errors.
  */
 export async function injectHookUrls(settingsPath: string, ip: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let settings: any = {}
+  let settings: ClaudeSettings = {}
   let fileExists = true
 
   try {
@@ -153,7 +167,7 @@ export async function injectHookUrls(settingsPath: string, ip: string): Promise<
       changed = true
     } else {
       // Event exists (e.g. peon-ping command hooks) — add http hook if not already present
-      const groups = settings.hooks[event] as Array<{ hooks?: Array<{ type: string; url?: string }> }>
+      const groups = settings.hooks[event]
       const hasHttp = groups.some(g => Array.isArray(g.hooks) && g.hooks.some(h => h.type === 'http'))
       if (!hasHttp) {
         groups.push({ hooks: [{ type: 'http', url: `http://${ip}:${HOOK_PORT}${path}` }] })
@@ -163,8 +177,8 @@ export async function injectHookUrls(settingsPath: string, ip: string): Promise<
   }
 
   // Update host in existing http hook URLs
-  for (const eventGroups of Object.values(settings.hooks as Record<string, unknown[]>)) {
-    for (const group of eventGroups as Array<{ hooks?: Array<{ type: string; url?: string }> }>) {
+  for (const eventGroups of Object.values(settings.hooks)) {
+    for (const group of eventGroups) {
       if (!Array.isArray(group.hooks)) continue
       for (const hook of group.hooks) {
         if (hook.type === 'http' && hook.url) {
@@ -199,14 +213,13 @@ export async function injectHookUrls(settingsPath: string, ip: string): Promise<
  */
 async function injectIntoDistroViaWsl(distro: string, wslIp: string | null): Promise<void> {
   // Read current settings via wsl.exe (cat returns '{}' if file missing)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let settings: any = {}
+  let settings: ClaudeSettings = {}
   try {
     const raw = execSync(
       `wsl.exe -d "${distro}" -- bash -c "cat ~/.claude/settings.json 2>/dev/null || echo '{}'"`,
       { timeout: 5000, encoding: 'utf-8' }
     ) as string
-    settings = JSON.parse(raw.trim() || '{}')
+    settings = JSON.parse(raw.trim() || '{}') as ClaudeSettings
   } catch {
     settings = {}
   }
@@ -215,8 +228,8 @@ async function injectIntoDistroViaWsl(distro: string, wslIp: string | null): Pro
 
   // Inject hook auth secret into existing http hooks
   if (settings.hooks && hookSecret) {
-    for (const eventGroups of Object.values(settings.hooks as Record<string, unknown[]>)) {
-      for (const group of eventGroups as Array<{ hooks?: Array<{ type: string; headers?: Record<string, string> }> }>) {
+    for (const eventGroups of Object.values(settings.hooks)) {
+      for (const group of eventGroups) {
         if (!Array.isArray(group.hooks)) continue
         for (const hook of group.hooks) {
           if (hook.type === 'http') {
@@ -234,14 +247,14 @@ async function injectIntoDistroViaWsl(distro: string, wslIp: string | null): Pro
   // Inject hook URLs for the WSL gateway IP
   if (wslIp) {
     if (!settings.hooks) settings.hooks = {}
-    const hooks = settings.hooks as Record<string, unknown[]>
+    const hooks = settings.hooks
 
     for (const [event, path] of Object.entries(HOOK_ROUTES)) {
       if (!hooks[event]) {
         hooks[event] = [{ hooks: [{ type: 'http', url: `http://${wslIp}:${HOOK_PORT}${path}` }] }]
         changed = true
       } else {
-        const groups = hooks[event] as Array<{ hooks?: Array<{ type: string; url?: string }> }>
+        const groups = hooks[event]
         const hasHttp = groups.some(g => Array.isArray(g.hooks) && g.hooks.some(h => h.type === 'http'))
         if (!hasHttp) {
           groups.push({ hooks: [{ type: 'http', url: `http://${wslIp}:${HOOK_PORT}${path}` }] })
@@ -252,11 +265,11 @@ async function injectIntoDistroViaWsl(distro: string, wslIp: string | null): Pro
 
     // Update host in existing http hook URLs
     for (const eventGroups of Object.values(hooks)) {
-      for (const group of eventGroups as Array<{ hooks?: Array<{ type: string; url?: string }> }>) {
+      for (const group of eventGroups) {
         if (!Array.isArray(group.hooks)) continue
         for (const hook of group.hooks) {
           if (hook.type === 'http' && hook.url) {
-            const updated = (hook.url as string).replace(
+            const updated = hook.url.replace(
               /^http:\/\/[^/]+\/hooks\//,
               `http://${wslIp}:${HOOK_PORT}/hooks/`
             )

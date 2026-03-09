@@ -17,6 +17,21 @@ export interface TokenCounts {
   cacheWrite: number
 }
 
+// ── Internal types ────────────────────────────────────────────────────────────
+
+interface JournalEntry {
+  type?: string
+  message?: {
+    stop_reason?: string | null
+    usage?: {
+      input_tokens?: number
+      output_tokens?: number
+      cache_read_input_tokens?: number
+      cache_creation_input_tokens?: number
+    }
+  }
+}
+
 // ── JSONL parsing ─────────────────────────────────────────────────────────────
 
 /**
@@ -41,8 +56,7 @@ export function parseTokensFromJSONL(content: string): TokenCounts {
     const trimmed = line.trim()
     if (!trimmed) continue
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const obj = JSON.parse(trimmed) as any
+      const obj = JSON.parse(trimmed) as JournalEntry
       if (obj.type !== 'assistant') continue
       if (!obj.message?.usage || obj.message.stop_reason == null) continue
       const u = obj.message.usage
@@ -68,8 +82,7 @@ export function parseTokensFromJSONLStream(transcriptPath: string): Promise<Toke
       const trimmed = line.trim()
       if (!trimmed) return
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const obj = JSON.parse(trimmed) as any
+        const obj = JSON.parse(trimmed) as JournalEntry
         if (obj.type !== 'assistant') return
         if (!obj.message?.usage || obj.message.stop_reason == null) return
         const u = obj.message.usage

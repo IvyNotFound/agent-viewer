@@ -125,8 +125,7 @@ async function handleStop(payload: StopPayload): Promise<void> {
   try {
     await writeDb(dbPath, (db) => {
       // 1. Try to find session by conv_id
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const byConvId = db.prepare('SELECT id FROM sessions WHERE claude_conv_id = ?') as any
+      const byConvId = db.prepare('SELECT id FROM sessions WHERE claude_conv_id = ?')
       byConvId.bind([convId])
       let sessionId: number | null = null
       if (byConvId.step()) {
@@ -138,8 +137,7 @@ async function handleStop(payload: StopPayload): Promise<void> {
       if (sessionId === null) {
         const fallback = db.prepare(
           "SELECT id FROM sessions WHERE (tokens_in = 0 OR tokens_in IS NULL) AND status IN ('started','completed') ORDER BY id DESC LIMIT 1"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ) as any
+        )
         if (fallback.step()) {
           sessionId = (fallback.getAsObject() as { id: number }).id
           console.warn(`[hookServer] Fallback: using session ${sessionId} (conv_id ${convId} not found)`)
@@ -199,8 +197,7 @@ async function handleLifecycleEvent(
 
   try {
     await writeDb(dbPath, (db) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const stmt = db.prepare('SELECT s.id, s.agent_id FROM sessions s WHERE s.claude_conv_id = ?') as any
+      const stmt = db.prepare('SELECT s.id, s.agent_id FROM sessions s WHERE s.claude_conv_id = ?')
       stmt.bind([convId])
       let sessionId: number | null = null
       let agentId: number | null = null
