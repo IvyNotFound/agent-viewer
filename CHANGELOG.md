@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.31.2] - 2026-03-09
+
+### Bug Fixes
+- fix(front-vuejs): exempt task-creator from no-task auto-close (d5b2ef0)
+
+### Documentation
+- docs(global): rename agent-viewer → KanbAgent in README, CLAUDE.md, ADRs and skills (T1211) (782714f)
+
+### Chores
+- chore(global): ignore npm-placeholder directory (dc85c39)
+- chore(back-electron): rename agent-viewer → KanbAgent in src/shared/cli-types.ts (T1209) (bba8093)
+- chore(back-electron): rename agent-viewer → KanbAgent in src/main and config (T1209) (fea5216)
+- chore(global): rename GitHub repo from agent-viewer to KanbAgent (7663e25)
+
 ## [0.31.1] - 2026-03-09
 
 ### Features
