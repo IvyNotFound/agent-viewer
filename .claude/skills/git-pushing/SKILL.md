@@ -5,7 +5,7 @@ description: Automatically stage, commit with conventional commit messages, and 
 
 # Git Pushing Skill
 
-Handle git operations with conventional commit messages, following the agent-viewer project standards.
+Handle git operations with conventional commit messages, following the KanbAgent project standards.
 
 ## When to Use
 
@@ -46,7 +46,7 @@ If changes span multiple concerns, split into separate commits:
 - `chore`: build, config, deps
 - `perf`: performance improvement
 
-**Scopes for agent-viewer:**
+**Scopes for KanbAgent:**
 - `kanban`: Kanban board UI
 - `agents`: agent orchestration logic
 - `db`: SQLite schema or queries

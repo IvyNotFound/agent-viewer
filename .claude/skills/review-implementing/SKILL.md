@@ -56,7 +56,7 @@ After all fixes:
 ### 5. Report
 Summary of what was implemented, what was deferred, and why.
 
-## Special Cases for agent-viewer
+## Special Cases for KanbAgent
 
 ### When feedback comes from a `security` agent:
 - Treat all security findings as Critical regardless of severity label
@@ -70,4 +70,4 @@ Summary of what was implemented, what was deferred, and why.
 
 ### When feedback comes from a `rd` (R&D) agent:
 - These are suggestions/experiments, not mandatory
-- Flag each one as a potential ticket in agent-viewer itself
+- Flag each one as a potential ticket in KanbAgent itself

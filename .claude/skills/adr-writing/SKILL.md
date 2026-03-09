@@ -1,6 +1,6 @@
 ---
 name: adr-writing
-description: Write an Architecture Decision Record (ADR) for agent-viewer following the project's existing format. Activates when a structural decision needs to be documented, when agent arch completes a design decision, or when user says "ADR", "architecture decision", "document this choice", "documenter la décision".
+description: Write an Architecture Decision Record (ADR) for KanbAgent following the project's existing format. Activates when a structural decision needs to be documented, when agent arch completes a design decision, or when user says "ADR", "architecture decision", "document this choice", "documenter la décision".
 ---
 
 # ADR Writing Skill

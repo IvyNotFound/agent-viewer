@@ -1,11 +1,11 @@
 ---
 name: migration-creating
-description: Create a versioned SQLite migration for agent-viewer. Activates when the DB schema needs to change, when user says "add a column", "create a table", "migration", "alter schema", "ajouter une colonne", "modifier le schéma". Follows the existing migration pattern with idempotency and better-sqlite3 compatibility.
+description: Create a versioned SQLite migration for KanbAgent. Activates when the DB schema needs to change, when user says "add a column", "create a table", "migration", "alter schema", "ajouter une colonne", "modifier le schéma". Follows the existing migration pattern with idempotency and better-sqlite3 compatibility.
 ---
 
 # Migration Creating Skill
 
-Creates properly versioned, idempotent SQLite migrations for agent-viewer following the established pattern in `src/main/migrations/`.
+Creates properly versioned, idempotent SQLite migrations for KanbAgent following the established pattern in `src/main/migrations/`.
 
 ## When to Use
 

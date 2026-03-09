@@ -66,7 +66,7 @@ Column `thinking_mode TEXT` on `agents` with values **`auto | disabled`** (NULL 
 - Column `thinking_mode` on `agents`: CHECK constraint → `('auto', 'disabled')` — `budget_tokens` removed
 - `terminal.ts`: inject `--settings '{"alwaysThinkingEnabled":false}'` when `thinkingMode === 'disabled'`
 - `LaunchSessionModal.vue`: 2-button UI — Auto / Disabled ("Budget" button removed)
-- `CLAUDE_CODE_EFFORT_LEVEL` out of scope for agent-viewer (Opus only, not exposed via IPC)
+- `CLAUDE_CODE_EFFORT_LEVEL` out of scope for KanbAgent (Opus only, not exposed via IPC)
 
 ---
 

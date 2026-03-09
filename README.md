@@ -1,7 +1,7 @@
-# agent-viewer
+# KanbAgent
 
-![Version](https://img.shields.io/github/v/release/IvyNotFound/agent-viewer?label=version)
-![Release](https://github.com/IvyNotFound/agent-viewer/actions/workflows/release.yml/badge.svg)
+![Version](https://img.shields.io/github/v/release/IvyNotFound/KanbAgent?label=version)
+![Release](https://github.com/IvyNotFound/KanbAgent/actions/workflows/release.yml/badge.svg)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 
 Desktop interface in Trello/Jira style for real-time visualization of Claude agent tasks from a local SQLite database. The application manages agents, launches Claude sessions in external WSL terminals, and monitors activity in real time.
@@ -60,7 +60,7 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 - **File Explorer**: `ExplorerView` + `FileView` — project file navigation and syntax-highlighted display with CodeMirror 6
 - **Git Commit List**: `GitCommitList` — browse recent commits with diff preview via IPC `git:getCommits` / `git:getDiff` (accessible from Dashboard)
 - **Hook Events View**: `HookEventsView` + `HookEventPayloadModal` — live hook events feed with payload inspection; events persisted in SQLite (accessible from Dashboard); supports 7 hook routes including `InstructionsLoaded` (Claude Code 2.1.69+)
-- **Peon-ping coexistence**: HTTP hooks injected into `settings.json` even when the event already contains other hooks (e.g. peon-ping command hooks) — existing entries are preserved and the agent-viewer http hook is appended
+- **Peon-ping coexistence**: HTTP hooks injected into `settings.json` even when the event already contains other hooks (e.g. peon-ping command hooks) — existing entries are preserved and the KanbAgent http hook is appended
 
 ### Stream & Session
 - **Improved StreamView**: User message bubbles, live thinking preview, collapsible `tool_use` / `tool_result` / `thinking` blocks (auto-collapse >15 lines), ANSI stripping, markdown rendering
@@ -117,8 +117,8 @@ Desktop interface in Trello/Jira style for real-time visualization of Claude age
 
 ```bash
 # Clone the project
-git clone https://github.com/IvyNotFound/agent-viewer.git
-cd agent-viewer
+git clone https://github.com/IvyNotFound/KanbAgent.git
+cd KanbAgent
 
 # Install dependencies
 npm install
@@ -169,7 +169,7 @@ The `download-sqlite3.js` pre-build script auto-detects `process.platform` and d
 ## Architecture
 
 ```
-agent-viewer/
+KanbAgent/
 ├── src/
 │   ├── shared/                      # Types shared between main and renderer
 │   │   └── cli-types.ts             # CliType, CliInstance, CliAdapter, SpawnSpec, LaunchOpts (ADR-010)
@@ -202,7 +202,7 @@ agent-viewer/
 │   │   ├── migrations/              # Versioned schema migrations
 │   │   │   └── v5-agent-worktree.ts # Add worktree_enabled column to agents
 │   │   ├── seed.ts                  # Demo data for project.db
-│   │   ├── default-agents.ts        # GENERIC_AGENTS (new projects) + DEFAULT_AGENTS (agent-viewer)
+│   │   ├── default-agents.ts        # GENERIC_AGENTS (new projects) + DEFAULT_AGENTS (KanbAgent)
 │   │   ├── adapters/                # CliAdapter implementations (ADR-010)
 │   │   │   ├── claude.ts            # Claude Code adapter (stream-json, ADR-009)
 │   │   │   ├── codex.ts             # OpenAI Codex adapter (full-auto approval)
@@ -283,17 +283,17 @@ The file `src/main/default-agents.ts` exports:
 | Export | Type | Usage |
 |--------|------|-------|
 | `AgentLanguage` | `'fr' \| 'en'` | Language discriminant for agent prompt selection. |
-| `GENERIC_AGENTS` | `DefaultAgent[]` | FR generic agents inserted into **every new project** created via `create-project-db`. No agent-viewer-specific references — designed to work on any project using the agent workflow. |
+| `GENERIC_AGENTS` | `DefaultAgent[]` | FR generic agents inserted into **every new project** created via `create-project-db`. No KanbAgent-specific references — designed to work on any project using the agent workflow. |
 | `GENERIC_AGENTS_BY_LANG` | `Record<AgentLanguage, DefaultAgent[]>` | Language-indexed map of generic agents. Passed a `lang` parameter (`'fr'` or `'en'`) from the `create-project-db` IPC handler to seed agents in the user's preferred language. |
-| `DEFAULT_AGENTS` | `DefaultAgent[]` | Agents specific to the **agent-viewer** project (dev-front-vuejs, dev-back-electron, arch, secu, perf, etc.). Inserted only during this project's initialization. |
+| `DEFAULT_AGENTS` | `DefaultAgent[]` | Agents specific to the **KanbAgent** project (dev-front-vuejs, dev-back-electron, arch, secu, perf, etc.). Inserted only during this project's initialization. |
 
-When creating a new project via the `create-project-db` IPC handler, `GENERIC_AGENTS_BY_LANG[lang]` is used: `dev`, `review`, `test`, `doc`, `task-creator` — in FR or EN depending on the user's language setting. This gives a fully functional project immediately, without agents tied to the agent-viewer scope.
+When creating a new project via the `create-project-db` IPC handler, `GENERIC_AGENTS_BY_LANG[lang]` is used: `dev`, `review`, `test`, `doc`, `task-creator` — in FR or EN depending on the user's language setting. This gives a fully functional project immediately, without agents tied to the KanbAgent scope.
 
 > ⚠️ **Sync rule**: `GENERIC_AGENTS_BY_LANG` contains parallel FR and EN versions of the same agents. Whenever a prompt changes in one language, the other language must be updated too.
 
 ### Multi-CLI Support (`src/main/adapters/` + `src/shared/cli-types.ts`)
 
-agent-viewer can launch and stream any supported coding agent CLI, not just Claude Code. Each CLI has a dedicated `CliAdapter` in `src/main/adapters/<cli>.ts` (ADR-010).
+KanbAgent can launch and stream any supported coding agent CLI, not just Claude Code. Each CLI has a dedicated `CliAdapter` in `src/main/adapters/<cli>.ts` (ADR-010).
 
 **Phase 1 CLIs:**
 

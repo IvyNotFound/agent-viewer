@@ -1,11 +1,11 @@
 ---
 name: agent-log-writing
-description: Write agent_logs entries correctly in agent-viewer. Activates when an agent needs to log an action, when completing a task, starting a session, or when agent_logs entries are missing. Triggers on "log this", "insert agent_log", "ajouter un log", or any task_started/task_done/session_end event.
+description: Write agent_logs entries correctly in KanbAgent. Activates when an agent needs to log an action, when completing a task, starting a session, or when agent_logs entries are missing. Triggers on "log this", "insert agent_log", "ajouter un log", or any task_started/task_done/session_end event.
 ---
 
 # Agent Log Writing Skill
 
-Correct insertion of `agent_logs` entries for agent-viewer. Mandatory at minimum for 2 events per task.
+Correct insertion of `agent_logs` entries for KanbAgent. Mandatory at minimum for 2 events per task.
 
 ## Mandatory Events (minimum per task)
 

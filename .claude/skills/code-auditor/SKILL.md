@@ -5,7 +5,7 @@ description: Comprehensive codebase analysis covering architecture, code quality
 
 # Code Auditor Skill
 
-Full audit of the agent-viewer codebase across 5 dimensions, adapted to the Electron + Vue 3 + TypeScript + SQLite stack.
+Full audit of the KanbAgent codebase across 5 dimensions, adapted to the Electron + Vue 3 + TypeScript + SQLite stack.
 
 ## When to Use
 
@@ -52,7 +52,7 @@ Full audit of the agent-viewer codebase across 5 dimensions, adapted to the Elec
 ## Output Format
 
 ```
-## Code Audit — agent-viewer
+## Code Audit — KanbAgent
 Date: [date]
 
 ### Summary

@@ -5,7 +5,7 @@ description: Break down feature requests into detailed, implementable plans with
 
 # Feature Planning Skill
 
-Decompose feature requests into structured, actionable implementation plans tailored to the agent-viewer stack (Electron + Vue 3 + TypeScript + SQLite).
+Decompose feature requests into structured, actionable implementation plans tailored to the KanbAgent stack (Electron + Vue 3 + TypeScript + SQLite).
 
 ## When to Use
 

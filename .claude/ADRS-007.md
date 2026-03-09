@@ -10,7 +10,7 @@
 
 ### Context
 
-Currently, agent-viewer can only launch Claude Code sessions via WSL (`wsl.exe` → `node-pty`). The need is to also support launching Claude Code installed natively on Windows (npm global → `claude.cmd`), without WSL.
+Currently, KanbAgent can only launch Claude Code sessions via WSL (`wsl.exe` → `node-pty`). The need is to also support launching Claude Code installed natively on Windows (npm global → `claude.cmd`), without WSL.
 
 **Existing code analysis:**
 

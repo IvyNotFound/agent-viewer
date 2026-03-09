@@ -1,4 +1,4 @@
-# CLAUDE.md — agent-viewer
+# CLAUDE.md — KanbAgent
 
 > Lecture seule sauf `setup` (init) et `arch` (révisions structurantes). État vivant → `.claude/project.db`. Refs → `.claude/ADRS.md` · `.claude/WORKFLOW.md`
 
@@ -12,7 +12,7 @@ MODE: solo · LANG_CONV: français · LANG_CODE: english · Solo: `review` = `re
 
 ## Projet
 
-**agent-viewer** — Interface desktop Trello/Jira visualisant les tâches agents Claude (SQLite). Electron, dark mode, pas d'auth.
+**KanbAgent** — Interface desktop Trello/Jira visualisant les tâches agents Claude (SQLite). Electron, dark mode, pas d'auth.
 
 Périmètres: `front-vuejs` (`renderer/`, Vue 3 + TS + Tailwind, clés: `App.vue`, `vite.config.ts`) · `back-electron` (`main/`, Electron + Node + SQLite, clés: `index.ts`, `ipc.ts`)
 

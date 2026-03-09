@@ -10,7 +10,7 @@
 
 ### Context
 
-agent-viewer currently supports only Claude Code (`claude` CLI) for agent sessions. The multi-CLI coding agent ecosystem has matured significantly (2025–2026), making it practical to support additional CLIs with the same integration level: auto-detection, launch from modal, stdout streaming, system prompt injection, and session tracking.
+KanbAgent currently supports only Claude Code (`claude` CLI) for agent sessions. The multi-CLI coding agent ecosystem has matured significantly (2025–2026), making it practical to support additional CLIs with the same integration level: auto-detection, launch from modal, stdout streaming, system prompt injection, and session tracking.
 
 **Coding agent CLI landscape (2026-03-06):**
 

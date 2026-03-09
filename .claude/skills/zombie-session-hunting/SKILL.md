@@ -1,6 +1,6 @@
 ---
 name: zombie-session-hunting
-description: Diagnose and clean up zombie sessions in agent-viewer. Activates when sessions are stuck, dbstart returns unexpected errors, or user says "sessions bloquées", "nettoyer la DB", "kill zombie sessions", "sessions stuck".
+description: Diagnose and clean up zombie sessions in KanbAgent. Activates when sessions are stuck, dbstart returns unexpected errors, or user says "sessions bloquées", "nettoyer la DB", "kill zombie sessions", "sessions stuck".
 ---
 
 # Zombie Session Hunting Skill

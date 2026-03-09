@@ -1,11 +1,11 @@
 ---
 name: ticket-completing
-description: Complete a task ticket in agent-viewer following the mandatory order. Activates when an agent finishes work on a task, when user says "mark as done", "ticket terminé", "fermer le ticket", "close task". Enforces comment-first then done order, session closure, and backlog check.
+description: Complete a task ticket in KanbAgent following the mandatory order. Activates when an agent finishes work on a task, when user says "mark as done", "ticket terminé", "fermer le ticket", "close task". Enforces comment-first then done order, session closure, and backlog check.
 ---
 
 # Ticket Completing Skill
 
-Handles the mandatory completion sequence for agent-viewer tickets. Order is critical — deviating from it causes data integrity issues (cf. T430, T437, T438).
+Handles the mandatory completion sequence for KanbAgent tickets. Order is critical — deviating from it causes data integrity issues (cf. T430, T437, T438).
 
 ## When to Use
 

@@ -1,11 +1,11 @@
 ---
 name: release-checklist
-description: Execute a release in agent-viewer following the full devops + review protocol. Activates when agent devops receives a release ticket, when user says "release", "publier la version", "bump version", "npm run release". Covers prérequis, version bump, CI wait, GitHub Release publication.
+description: Execute a release in KanbAgent following the full devops + review protocol. Activates when agent devops receives a release ticket, when user says "release", "publier la version", "bump version", "npm run release". Covers prérequis, version bump, CI wait, GitHub Release publication.
 ---
 
 # Release Checklist Skill
 
-Step-by-step release process for agent-viewer, extracted from devops and review system prompts.
+Step-by-step release process for KanbAgent, extracted from devops and review system prompts.
 
 ## Who Uses This
 
