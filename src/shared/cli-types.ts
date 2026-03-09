@@ -1,5 +1,5 @@
 /**
- * Shared types for multi-CLI support in agent-viewer.
+ * Shared types for multi-CLI support in KanbAgent.
  *
  * Defines the CliAdapter contract, CliInstance shape, and all CLI-specific types.
  * Used by both the main process (adapters, ipc-wsl) and the renderer (LaunchSessionModal).
