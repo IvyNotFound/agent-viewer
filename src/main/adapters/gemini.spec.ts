@@ -105,3 +105,19 @@ describe('geminiAdapter.buildCommand', () => {
     expect(spec.command).toBe('gemini')
   })
 })
+
+// ── geminiAdapter.formatStdinMessage ─────────────────────────────────────────
+
+describe('geminiAdapter.formatStdinMessage', () => {
+  it('returns plain text with trailing newline', () => {
+    expect(geminiAdapter.formatStdinMessage?.('hello')).toBe('hello\n')
+  })
+
+  it('preserves internal whitespace', () => {
+    expect(geminiAdapter.formatStdinMessage?.('hello world')).toBe('hello world\n')
+  })
+
+  it('handles empty string', () => {
+    expect(geminiAdapter.formatStdinMessage?.('')).toBe('\n')
+  })
+})

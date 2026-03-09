@@ -50,6 +50,11 @@ export const geminiAdapter: CliAdapter = {
     }
   },
 
+  formatStdinMessage(text: string): string {
+    // Gemini CLI interactive mode expects plain text input, not Claude JSONL format.
+    return text + '\n'
+  },
+
   parseLine(line: string): StreamEvent | null {
     if (!line.trim()) return null
     // Attempt JSON parse; fallback to text wrapping.
