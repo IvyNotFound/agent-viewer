@@ -9,12 +9,13 @@ import http from 'http'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockWriteDb, mockInitHookSecret, mockGetHookSecret, mockWebContentsSend } = vi.hoisted(
+const { mockWriteDb, mockInitHookSecret, mockGetHookSecret, mockWebContentsSend, mockDetectWslGatewayIp } = vi.hoisted(
   () => ({
     mockWriteDb: vi.fn(),
     mockInitHookSecret: vi.fn(),
     mockGetHookSecret: vi.fn().mockReturnValue('test-secret-abc123'),
     mockWebContentsSend: vi.fn(),
+    mockDetectWslGatewayIp: vi.fn().mockReturnValue(null),
   })
 )
 
@@ -29,6 +30,7 @@ vi.mock('./hookServer-inject', async (importOriginal) => {
     HOOK_PORT: actual.HOOK_PORT,
     initHookSecret: mockInitHookSecret,
     getHookSecret: mockGetHookSecret,
+    detectWslGatewayIp: mockDetectWslGatewayIp,
   }
 })
 
@@ -170,6 +172,12 @@ describe('startHookServer', () => {
 
   it('calls initHookSecret on startup', () => {
     expect(mockInitHookSecret).toHaveBeenCalled()
+  })
+
+  it('listens on 127.0.0.1 when no WSL gateway is detected', () => {
+    const addr = server.address() as { address: string; port: number } | null
+    expect(addr).not.toBeNull()
+    expect(addr!.address).toBe('127.0.0.1')
   })
 
   it('returns 404 for GET /hooks/stop', async () => {

@@ -20,8 +20,8 @@
 import http from 'http'
 import { join } from 'path'
 import type { BrowserWindow } from 'electron'
-import { writeDb } from './db'
-import { HOOK_PORT, getHookSecret, initHookSecret } from './hookServer-inject'
+import { writeDb, assertDbPathAllowed } from './db'
+import { HOOK_PORT, getHookSecret, initHookSecret, detectWslGatewayIp } from './hookServer-inject'
 import { parseTokensFromJSONLStream, type TokenCounts } from './hookServer-tokens'
 
 // Re-exports for backward compatibility
@@ -116,6 +116,13 @@ async function handleStop(payload: StopPayload): Promise<void> {
   const dbPath = join(cwd, '.claude', 'project.db')
 
   try {
+    assertDbPathAllowed(dbPath)
+  } catch {
+    console.warn('[hookServer] handleStop: cwd not in allowlist, ignoring', cwd)
+    return
+  }
+
+  try {
     await writeDb(dbPath, (db) => {
       // 1. Try to find session by conv_id
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -182,6 +189,13 @@ async function handleLifecycleEvent(
   if (!convId || !cwd) return
 
   const dbPath = join(cwd, '.claude', 'project.db')
+
+  try {
+    assertDbPathAllowed(dbPath)
+  } catch {
+    console.warn('[hookServer] handleLifecycleEvent: cwd not in allowlist, ignoring', cwd)
+    return
+  }
 
   try {
     await writeDb(dbPath, (db) => {
@@ -308,10 +322,16 @@ export function startHookServer(userDataPath?: string): http.Server {
     }
   })
 
-  server.listen(HOOK_PORT, () => {
+  // Bind to loopback by default to avoid exposing the hook server to the LAN.
+  // On Windows with WSL, bind to the WSL gateway IP so WSL processes can reach the server
+  // via the Windows vEthernet WSL interface (127.0.0.1 is not reachable from inside WSL).
+  // NOTE: 0.0.0.0 is intentionally avoided — Bearer secret is the only auth layer
+  // and binding to all interfaces unnecessarily enlarges the attack surface.
+  const listenHost = detectWslGatewayIp() ?? '127.0.0.1'
+  server.listen(HOOK_PORT, listenHost, () => {
     const addr = server.address()
     const port = typeof addr === 'object' && addr !== null ? addr.port : HOOK_PORT
-    console.log(`[hookServer] Listening on 0.0.0.0:${port}`)
+    console.log(`[hookServer] Listening on ${listenHost}:${port}`)
   })
 
   return server
