@@ -157,6 +157,8 @@ git add -A && git commit -m "chore: work done — T<task_id>"
 ```
 
 > Branch is kept for merge by review — do not push directly to main.
+> The agent **MUST** include the commit hash in their exit comment so review can identify the work without reconstructing the branch name:
+> `commit <sha> — <short description>`
 
 **Multi-instance only — worktree cleanup:**
 
@@ -170,6 +172,37 @@ git worktree remove .claude/worktrees/s<session_id>
 > **⚠ Tokens required**: record tokens BEFORE closing (`tokens_in`, `tokens_out`, `tokens_cache_read`, `tokens_cache_write`). Values are displayed by Claude Code at the end of each conversation. If the value is unknown (interrupted session), set to 0.
 
 ### 6. Review validates or rejects
+
+**Multi-instance only — find and validate the agent branch first:**
+
+The agent branch name is derived from the task's `session_id`:
+`branch = agent/<agent-name>/s<session_id>`
+
+```bash
+# Step 1: retrieve session_id and agent name from the task
+node scripts/dbq.js "SELECT t.session_id, a.name AS agent, t.id FROM tasks t JOIN agents a ON a.id = t.agent_assigned_id WHERE t.id = <TASK_ID>"
+
+# Step 2: inspect changed files on the agent branch vs main (without checking out)
+git diff --name-only main...agent/<agent-name>/s<session_id>
+
+# Step 3: review specific files from the agent branch
+git show agent/<agent-name>/s<session_id>:src/path/to/file.ts
+
+# Alternatively: if the exit comment includes the commit hash (recommended), use it directly
+git show <sha>:src/path/to/file.ts
+git diff main..<sha> --name-only
+
+# Step 4a: validation OK — cherry-pick to main, then archive
+git checkout main
+git cherry-pick <commit-hash>
+# If cherry-pick fails (complex history): git merge --squash agent/<agent-name>/s<session_id> && git commit
+git push origin main
+# then archive the task (SQL below)
+
+# Step 4b: validation KO — reject only (SQL below, DO NOT merge)
+```
+
+> **Note**: if `session_id` is NULL on the task (agent didn't record it), use the commit hash from the exit comment: `git show <sha> --stat`.
 
 ```sql
 -- OK: archive

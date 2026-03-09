@@ -85,6 +85,8 @@ Quand un worktree dédié est actif (`.claude/worktrees/s<sessionId>/`) :
 - **DB (scripts/)** → `cd <repo-principal> && node scripts/dbq.js ...` — toujours depuis le dépôt principal
 - Ne jamais modifier les fichiers sources depuis le dépôt principal quand un worktree est actif
 
+**Review** : lors de la validation d'un ticket worktree, ne pas chercher les fichiers sur `main` — ils sont sur la branche agent. Inspecter via `git diff --name-only main...agent/<name>/s<session_id>` ou `git show <sha>:path` (hash dans le commentaire de sortie de l'agent). Merger vers main **uniquement si** validation OK (voir WORKFLOW.md étape 6).
+
 ---
 
 ## Règles inter-agents
