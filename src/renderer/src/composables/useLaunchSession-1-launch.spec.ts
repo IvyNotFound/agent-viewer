@@ -25,6 +25,7 @@ const api = {
   showConfirmDialog: vi.fn().mockResolvedValue(true),
   migrateDb: vi.fn().mockResolvedValue({ success: true }),
   findProjectDb: vi.fn().mockResolvedValue(null),
+  worktreeCreate: vi.fn().mockResolvedValue({ success: true, workDir: '/worktrees/s123/dev-front-vuejs' }),
 }
 
 Object.defineProperty(window, 'electronAPI', { value: api, writable: true })
@@ -191,6 +192,128 @@ describe('composables/useLaunchSession', () => {
       const tabsStore = useTabsStore()
       const terminal = tabsStore.tabs.find(t => t.type === 'terminal') as Tab | undefined
       expect(terminal?.wslDistro).toBe('Ubuntu-24.04')
+    })
+
+    // T1240 — worktree cascade resolution
+    describe('worktree cascade (T1240)', () => {
+      function setProjectPath(path: string | null) {
+        const tasksStore = useTasksStore()
+        ;(tasksStore as unknown as { projectPath: string | null }).projectPath = path
+      }
+
+      it('creates worktree via cascade when worktreeDefault=true and no opts', async () => {
+        setProjectPath('/repo')
+        const settingsStore = useSettingsStore()
+        settingsStore.worktreeDefault = true
+
+        const { launchAgentTerminal } = useLaunchSession()
+        await launchAgentTerminal(makeAgent({ worktree_enabled: null }), makeTask())
+
+        expect(api.worktreeCreate).toHaveBeenCalledWith('/repo', expect.any(String), 'dev-front-vuejs')
+        const tabsStore = useTabsStore()
+        const terminal = tabsStore.tabs.find(t => t.type === 'terminal')
+        expect(terminal?.workDir).toBe('/worktrees/s123/dev-front-vuejs')
+      })
+
+      it('skips worktree when worktreeDefault=false and agent.worktree_enabled=null', async () => {
+        setProjectPath('/repo')
+        const settingsStore = useSettingsStore()
+        settingsStore.worktreeDefault = false
+
+        const { launchAgentTerminal } = useLaunchSession()
+        await launchAgentTerminal(makeAgent({ worktree_enabled: null }), makeTask())
+
+        expect(api.worktreeCreate).not.toHaveBeenCalled()
+        const tabsStore = useTabsStore()
+        const terminal = tabsStore.tabs.find(t => t.type === 'terminal')
+        expect(terminal?.workDir).toBeNull()
+      })
+
+      it('agent.worktree_enabled=1 forces worktree even when worktreeDefault=false', async () => {
+        setProjectPath('/repo')
+        const settingsStore = useSettingsStore()
+        settingsStore.worktreeDefault = false
+
+        const { launchAgentTerminal } = useLaunchSession()
+        await launchAgentTerminal(makeAgent({ worktree_enabled: 1 }), makeTask())
+
+        expect(api.worktreeCreate).toHaveBeenCalled()
+        const tabsStore = useTabsStore()
+        const terminal = tabsStore.tabs.find(t => t.type === 'terminal')
+        expect(terminal?.workDir).toBe('/worktrees/s123/dev-front-vuejs')
+      })
+
+      it('agent.worktree_enabled=0 disables worktree even when worktreeDefault=true', async () => {
+        setProjectPath('/repo')
+        const settingsStore = useSettingsStore()
+        settingsStore.worktreeDefault = true
+
+        const { launchAgentTerminal } = useLaunchSession()
+        await launchAgentTerminal(makeAgent({ worktree_enabled: 0 }), makeTask())
+
+        expect(api.worktreeCreate).not.toHaveBeenCalled()
+        const tabsStore = useTabsStore()
+        const terminal = tabsStore.tabs.find(t => t.type === 'terminal')
+        expect(terminal?.workDir).toBeNull()
+      })
+
+      it('falls back to project root (no workDir) when worktreeCreate fails', async () => {
+        setProjectPath('/repo')
+        const settingsStore = useSettingsStore()
+        settingsStore.worktreeDefault = true
+        api.worktreeCreate.mockResolvedValueOnce({ success: false, error: 'git error' })
+
+        const { launchAgentTerminal } = useLaunchSession()
+        const result = await launchAgentTerminal(makeAgent({ worktree_enabled: null }), makeTask())
+
+        expect(result).toBe('ok')
+        const tabsStore = useTabsStore()
+        const terminal = tabsStore.tabs.find(t => t.type === 'terminal')
+        expect(terminal?.workDir).toBeNull()
+      })
+
+      it('opts with explicit workDir bypasses cascade (modal override)', async () => {
+        setProjectPath('/repo')
+        const settingsStore = useSettingsStore()
+        settingsStore.worktreeDefault = true
+
+        const { launchAgentTerminal } = useLaunchSession()
+        await launchAgentTerminal(makeAgent({ worktree_enabled: null }), makeTask(), {
+          workDir: '/explicit/path'
+        })
+
+        expect(api.worktreeCreate).not.toHaveBeenCalled()
+        const tabsStore = useTabsStore()
+        const terminal = tabsStore.tabs.find(t => t.type === 'terminal')
+        expect(terminal?.workDir).toBe('/explicit/path')
+      })
+
+      it('opts with workDir: undefined bypasses cascade (modal explicitly disabled)', async () => {
+        setProjectPath('/repo')
+        const settingsStore = useSettingsStore()
+        settingsStore.worktreeDefault = true
+
+        const { launchAgentTerminal } = useLaunchSession()
+        await launchAgentTerminal(makeAgent({ worktree_enabled: null }), makeTask(), {
+          workDir: undefined
+        })
+
+        expect(api.worktreeCreate).not.toHaveBeenCalled()
+        const tabsStore = useTabsStore()
+        const terminal = tabsStore.tabs.find(t => t.type === 'terminal')
+        expect(terminal?.workDir).toBeNull()
+      })
+
+      it('skips cascade when projectPath is null', async () => {
+        setProjectPath(null)
+        const settingsStore = useSettingsStore()
+        settingsStore.worktreeDefault = true
+
+        const { launchAgentTerminal } = useLaunchSession()
+        await launchAgentTerminal(makeAgent({ worktree_enabled: null }), makeTask())
+
+        expect(api.worktreeCreate).not.toHaveBeenCalled()
+      })
     })
 
   })

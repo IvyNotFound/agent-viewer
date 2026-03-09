@@ -166,6 +166,31 @@ export function useLaunchSession() {
       const resolvedTaskId = opts?.taskId ?? task?.id
       const activate = opts?.activate ?? false
 
+      // Worktree cascade resolution — applies to drag-drop and relaunch paths (T1240)
+      // When opts explicitly includes 'workDir' (even as undefined), the caller manages worktree.
+      // Otherwise, resolve via agent setting → global default cascade.
+      let resolvedWorkDir: string | undefined = opts?.workDir
+      const workDirExplicit = opts !== undefined && 'workDir' in opts
+      if (!workDirExplicit) {
+        const agentWorktree = agent.worktree_enabled
+        const useWorktree = agentWorktree !== null && agentWorktree !== undefined
+          ? agentWorktree === 1
+          : settingsStore.worktreeDefault
+
+        if (useWorktree && tasksStore.projectPath) {
+          const sessionNonce = Date.now().toString()
+          const result = await window.electronAPI.worktreeCreate(
+            tasksStore.projectPath,
+            sessionNonce,
+            agent.name
+          )
+          if (result.success) {
+            resolvedWorkDir = result.workDir
+          }
+          // Non-fatal: if worktree creation fails, fall back to project root
+        }
+      }
+
       tabsStore.addTerminal(
         agent.name,
         resolvedInstance?.distro,
@@ -178,7 +203,7 @@ export function useLaunchSession() {
         resolvedTaskId,
         'stream',
         resolvedCli,
-        opts?.workDir
+        resolvedWorkDir
       )
 
       return 'ok'
