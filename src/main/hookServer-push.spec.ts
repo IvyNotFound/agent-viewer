@@ -267,7 +267,7 @@ describe('pushHookEvent and truncateHookPayload', () => {
 
     expect(mockWebContentsSend).toHaveBeenCalledWith(
       'hook:event',
-      expect.objectContaining({ event: 'preToolUse', ts: expect.any(Number) })
+      expect.objectContaining({ event: 'PreToolUse', ts: expect.any(Number) })
     )
   })
 
@@ -329,7 +329,7 @@ describe('pushHookEvent and truncateHookPayload', () => {
 
     expect(mockWebContentsSend).toHaveBeenCalledWith(
       'hook:event',
-      expect.objectContaining({ event: 'postToolUse' })
+      expect.objectContaining({ event: 'PostToolUse' })
     )
   })
 
@@ -342,7 +342,7 @@ describe('pushHookEvent and truncateHookPayload', () => {
 
     expect(mockWebContentsSend).toHaveBeenCalledWith(
       'hook:event',
-      expect.objectContaining({ event: 'instructionsLoaded' })
+      expect.objectContaining({ event: 'InstructionsLoaded' })
     )
   })
 })

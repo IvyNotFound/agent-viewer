@@ -39,15 +39,17 @@ describe('hookServer constants', () => {
 
   it('route-to-eventName conversion matches expected values', () => {
     // Inline the same conversion used in startHookServer
-    const convert = (url: string) =>
-      url.replace('/hooks/', '').replace(/-./g, (m) => m[1].toUpperCase())
+    const convert = (url: string) => {
+      const raw = url.replace('/hooks/', '').replace(/-./g, (m) => m[1].toUpperCase())
+      return raw.charAt(0).toUpperCase() + raw.slice(1)
+    }
 
-    expect(convert('/hooks/session-start')).toBe('sessionStart')
-    expect(convert('/hooks/subagent-start')).toBe('subagentStart')
-    expect(convert('/hooks/subagent-stop')).toBe('subagentStop')
-    expect(convert('/hooks/pre-tool-use')).toBe('preToolUse')
-    expect(convert('/hooks/post-tool-use')).toBe('postToolUse')
-    expect(convert('/hooks/instructions-loaded')).toBe('instructionsLoaded')
+    expect(convert('/hooks/session-start')).toBe('SessionStart')
+    expect(convert('/hooks/subagent-start')).toBe('SubagentStart')
+    expect(convert('/hooks/subagent-stop')).toBe('SubagentStop')
+    expect(convert('/hooks/pre-tool-use')).toBe('PreToolUse')
+    expect(convert('/hooks/post-tool-use')).toBe('PostToolUse')
+    expect(convert('/hooks/instructions-loaded')).toBe('InstructionsLoaded')
   })
 })
 

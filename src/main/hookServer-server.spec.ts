@@ -140,7 +140,7 @@ describe('setHookWindow', () => {
 
     expect(mockWebContentsSend).toHaveBeenCalledWith(
       'hook:event',
-      expect.objectContaining({ event: 'preToolUse' })
+      expect.objectContaining({ event: 'PreToolUse' })
     )
   })
 

@@ -295,7 +295,8 @@ export function startHookServer(userDataPath?: string): http.Server {
           )
         } else if (url in LIFECYCLE_ROUTES) {
           const persistDb = LIFECYCLE_ROUTES[url]
-          const eventName = url.replace('/hooks/', '').replace(/-./g, m => m[1].toUpperCase())
+          const raw = url.replace('/hooks/', '').replace(/-./g, m => m[1].toUpperCase())
+          const eventName = raw.charAt(0).toUpperCase() + raw.slice(1)
           handleLifecycleEvent(eventName, payload, persistDb).catch(err =>
             console.error(`[hookServer] handleLifecycleEvent(${eventName}) error:`, err)
           )
