@@ -85,7 +85,15 @@ Quand un worktree dédié est actif (`.claude/worktrees/s<sessionId>/`) :
 - **DB (scripts/)** → `cd <repo-principal> && node scripts/dbq.js ...` — toujours depuis le dépôt principal
 - Ne jamais modifier les fichiers sources depuis le dépôt principal quand un worktree est actif
 
-**Review** : lors de la validation d'un ticket worktree, ne pas chercher les fichiers sur `main` — ils sont sur la branche agent. Inspecter via `git diff --name-only main...agent/<name>/s<session_id>` ou `git show <sha>:path` (hash dans le commentaire de sortie de l'agent). Merger vers main **uniquement si** validation OK (voir WORKFLOW.md étape 6).
+**Review** : lors de la validation d'un ticket worktree, ne pas chercher les fichiers sur `main` — ils sont sur la branche agent.
+
+Protocole d'inspection (dans l'ordre) :
+1. Hash SHA dans le commentaire de sortie → `git cat-file -t <sha>` pour confirmer l'existence
+2. Si la branche agent existe : `git diff --name-only main...agent/<name>/s<session_id>` · `git show <sha>:path`
+3. Si le commit est orphelin (worktree supprimé sans push) : `git show <sha>:path` fonctionne directement tant que l'objet n'est pas garbage-collecté. Pour retrouver un sha inconnu : `git fsck --lost-found 2>&1 | grep "dangling commit"` puis filtrer par message.
+4. **Ne jamais rejeter "fichier absent" sans avoir vérifié le sha** via `git cat-file -t <sha>`.
+
+Merger vers main **uniquement si** validation OK (voir WORKFLOW.md étape 6).
 
 ---
 
