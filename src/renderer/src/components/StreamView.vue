@@ -166,6 +166,8 @@ onMounted(async () => {
       claudeCommand: tab.claudeCommand ?? undefined,
       convId: tab.convId ?? undefined,
       cli: tab.cli ?? undefined,
+      // For CLIs that use positional args (e.g. opencode), pass the initial message at spawn time.
+      initialMessage: tab.autoSend ?? undefined,
     })
     ptyId.value = id
     tabsStore.setPtyId(props.terminalId, id)
@@ -184,7 +186,11 @@ onMounted(async () => {
       assignEventId(autoEvent)
       events.value.push(autoEvent)
       scrollToBottom(true)
-      await window.electronAPI.agentSend(id, tab.autoSend)
+      // opencode: initial message was passed as positional arg via agentCreate(initialMessage) —
+      // skip agentSend to avoid writing to stdin of a one-shot process.
+      if (tab.cli !== 'opencode') {
+        await window.electronAPI.agentSend(id, tab.autoSend)
+      }
     }
   } catch (err) {
     const e: StreamEvent = { type: 'system', subtype: 'init', session_id: `Erreur agent: ${String(err)}` }

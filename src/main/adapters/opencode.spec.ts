@@ -120,6 +120,23 @@ describe('opencodeAdapter.buildCommand', () => {
     const spec = opencodeAdapter.buildCommand({ binaryName: 'opencode' })
     expect(spec.command).toBe('opencode')
   })
+
+  it('appends initialMessage as positional arg when provided', () => {
+    const spec = opencodeAdapter.buildCommand({ initialMessage: 'hello world' })
+    expect(spec.args[spec.args.length - 1]).toBe('hello world')
+  })
+
+  it('does not append positional arg when initialMessage is absent', () => {
+    const spec = opencodeAdapter.buildCommand({})
+    // args: ['run', '--format', 'json'] — no extra positional
+    expect(spec.args.length).toBe(3)
+  })
+
+  it('initialMessage is passed as a single arg (not split on spaces)', () => {
+    const spec = opencodeAdapter.buildCommand({ initialMessage: 'fix the bug in app.ts' })
+    const positionalArgs = spec.args.slice(3)
+    expect(positionalArgs).toEqual(['fix the bug in app.ts'])
+  })
 })
 
 // ── opencodeAdapter.parseLine ─────────────────────────────────────────────────
@@ -174,6 +191,18 @@ describe('opencodeAdapter.parseLine', () => {
     const raw = '{"type":"text","other":"field"}'
     const event = opencodeAdapter.parseLine(raw)
     expect(event).toEqual({ type: 'text', text: raw })
+  })
+
+  it('maps type:error with nested error.data.message (opencode v1.2+ format)', () => {
+    const line = '{"type":"error","timestamp":1000,"sessionID":"s1","error":{"name":"ProviderAuthError","data":{"providerID":"google","message":"API key is missing"}}}'
+    const event = opencodeAdapter.parseLine(line)
+    expect(event).toEqual({ type: 'error', text: 'API key is missing' })
+  })
+
+  it('falls back to raw line for type:error with unknown nested structure', () => {
+    const raw = '{"type":"error","error":{"name":"UnknownError"}}'
+    const event = opencodeAdapter.parseLine(raw)
+    expect(event).toEqual({ type: 'error', text: raw })
   })
 })
 

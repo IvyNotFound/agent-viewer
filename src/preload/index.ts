@@ -252,6 +252,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     dbPath?: string
     sessionId?: number
     cli?: string
+    /** Initial message — for CLIs that take prompts as positional args (e.g. opencode). Skips the need for a separate agentSend call. */
+    initialMessage?: string
   }): Promise<string> =>
     ipcRenderer.invoke('agent:create', opts ?? {}),
 

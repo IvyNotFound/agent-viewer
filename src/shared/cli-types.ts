@@ -85,6 +85,8 @@ export interface LaunchOpts {
   systemPromptFile?: string
   /** Custom binary name (e.g. `"claude-pro2"`). Validated by caller. */
   binaryName?: string
+  /** Initial user message to pass at spawn time (used by adapters that take prompts as positional args, e.g. opencode). */
+  initialMessage?: string
 }
 
 /**

@@ -195,6 +195,7 @@ export function registerAgentStreamHandlers(): void {
           permissionMode: opts.permissionMode,
           systemPromptFile: spTempFile,
           binaryName: opts.claudeCommand,
+          initialMessage: opts.initialMessage,
         })
         logDebug(`spawn attempt (local Windows, ${adapter.cli}): ${spec.command} ${spec.args.join(' ')}`)
         proc = spawn(spec.command, spec.args, {
@@ -240,6 +241,7 @@ export function registerAgentStreamHandlers(): void {
           permissionMode: opts.permissionMode,
           systemPromptFile: spTempFile ? toWslPath(spTempFile) : undefined,
           binaryName: opts.claudeCommand,
+          initialMessage: opts.initialMessage,
         })
         const bashLine = [spec.command, ...spec.args].map(a =>
           /[\s'"\\$`!]/.test(a) ? `'${a.replace(/'/g, "'\\''")}'` : a

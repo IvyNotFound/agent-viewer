@@ -130,6 +130,8 @@ export interface AgentCreateOpts {
   sessionId?: number
   claudeBinaryPath?: string
   worktree?: boolean
+  /** Initial user message — passed as positional arg for CLIs that don't use stdin (e.g. opencode). */
+  initialMessage?: string
 }
 
 // ── Test-only exports ─────────────────────────────────────────────────────────

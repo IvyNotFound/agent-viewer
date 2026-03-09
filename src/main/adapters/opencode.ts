@@ -7,7 +7,8 @@
  *
  * Limitations:
  * - System prompt injection is not supported via CLI flags; configure via opencode config.
- * - Initial prompt is delivered via piped stdin (opencode run reads stdin as the message).
+ * - Initial prompt is delivered as a positional argument: `opencode run "message" --format json`.
+ *   Multi-turn follow-ups require re-spawning with --continue (not currently supported).
  *
  * @module adapters/opencode
  */
@@ -48,6 +49,12 @@ export const opencodeAdapter: CliAdapter = {
     // opts.systemPromptFile is intentionally ignored here; configure system
     // prompt via opencode's project config file instead.
 
+    // opencode run takes the prompt as a positional argument array (not via stdin).
+    // Passing it here ensures opencode processes the message immediately on spawn.
+    if (opts.initialMessage) {
+      args.push(opts.initialMessage)
+    }
+
     return { command: cmd, args }
   },
 
@@ -71,9 +78,16 @@ export const opencodeAdapter: CliAdapter = {
         return { type: 'text', text: typeof parsed.text === 'string' ? parsed.text : line }
       }
       if (evType === 'error') {
-        // Error events — prefer message field, fallback to text or raw line
+        // Error events — handle both flat {message} and nested {error:{data:{message}}} formats (v1.2+)
+        const errObj = typeof parsed.error === 'object' && parsed.error !== null
+          ? parsed.error as Record<string, unknown>
+          : null
+        const errData = errObj && typeof errObj.data === 'object' && errObj.data !== null
+          ? errObj.data as Record<string, unknown>
+          : null
         const msg = typeof parsed.message === 'string' ? parsed.message
           : typeof parsed.text === 'string' ? parsed.text
+          : typeof errData?.message === 'string' ? errData.message
           : line
         return { type: 'error', text: msg }
       }
