@@ -383,6 +383,31 @@ describe('StreamView', () => {
     expect(block.text()).toContain('bash: command not found: claude')
   })
 
+  it('renders type:text event as text block (T1197)', async () => {
+    const event: StreamEvent = { type: 'text', text: 'Hello from Gemini!' }
+    const { wrapper } = await mountStream([event])
+    await nextTick()
+    const block = wrapper.find('[data-testid="block-text-raw"]')
+    expect(block.exists()).toBe(true)
+    expect(block.text()).toContain('Hello from Gemini!')
+  })
+
+  it('renders type:error event as red error block (T1197)', async () => {
+    const event: StreamEvent = { type: 'error', text: 'OpenCode error occurred' }
+    const { wrapper } = await mountStream([event])
+    await nextTick()
+    const block = wrapper.find('[data-testid="block-error-raw"]')
+    expect(block.exists()).toBe(true)
+    expect(block.text()).toContain('OpenCode error occurred')
+  })
+
+  it('shows streaming indicator while last event is type:text (T1197)', async () => {
+    const event: StreamEvent = { type: 'text', text: 'Streaming output line…' }
+    const { wrapper } = await mountStream([event])
+    await nextTick()
+    expect(wrapper.find('[data-testid="streaming-indicator"]').exists()).toBe(true)
+  })
+
   it('normal assistant/user/result blocks unaffected by error types (T694)', async () => {
     const assistant: StreamEvent = {
       type: 'assistant',

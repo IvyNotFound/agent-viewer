@@ -17,7 +17,7 @@ export interface StreamContentBlock {
 }
 
 export interface StreamEvent {
-  type: 'system' | 'user' | 'assistant' | 'result' | 'error:spawn' | 'error:stderr' | 'error:exit'
+  type: 'system' | 'user' | 'assistant' | 'result' | 'text' | 'error' | 'error:spawn' | 'error:stderr' | 'error:exit'
   subtype?: string
   session_id?: string
   message?: {
@@ -27,10 +27,14 @@ export interface StreamEvent {
   cost_usd?: number
   num_turns?: number
   duration_ms?: number
+  /** Raw text for non-Claude CLI output (type: 'text' or 'error') — T1197 */
+  text?: string
   /** Error message for error:spawn / error:exit events */
   error?: string
   /** Full stderr buffer captured on abnormal exit (error:exit only, T697) */
   stderr?: string
   /** Stable monotonic ID assigned on push — used as collapse key (T823). */
   _id?: number
+  /** Pre-rendered HTML for type: 'text' events — computed once in flushEvents() (T1197) */
+  _html?: string
 }

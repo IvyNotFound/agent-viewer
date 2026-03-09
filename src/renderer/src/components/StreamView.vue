@@ -58,7 +58,8 @@ const agentStopped = ref(false)
 
 const isStreaming = computed(() => {
   if (events.value.length === 0) return false
-  return events.value[events.value.length - 1].type === 'assistant'
+  const last = events.value[events.value.length - 1]
+  return last.type === 'assistant' || last.type === 'text'
 })
 
 const activeThinkingText = computed<string | null>(() => {
@@ -324,6 +325,25 @@ onUnmounted(() => {
           <span v-if="event.cost_usd !== undefined">${{ event.cost_usd.toFixed(4) }}</span>
           <span v-if="event.duration_ms !== undefined">{{ (event.duration_ms / 1000).toFixed(1) }}s</span>
           <span v-if="event.session_id" class="ml-auto font-mono text-content-faint">{{ event.session_id.slice(0, 8) }}…</span>
+        </div>
+
+        <!-- text block — plain text output from non-Claude CLIs (T1197) -->
+        <div
+          v-if="event.type === 'text'"
+          class="stream-markdown rounded-lg px-4 py-3 border border-l-4 leading-relaxed select-text cursor-text"
+          :style="{ backgroundColor: accentBg, borderColor: accentBorder, borderLeftColor: accentFg }"
+          data-testid="block-text-raw"
+          v-html="event._html ?? event.text ?? ''"
+        />
+
+        <!-- error block — error events from non-Claude CLIs (T1197) -->
+        <div
+          v-if="event.type === 'error'"
+          class="flex items-start gap-2 bg-red-950 border border-red-800 rounded-lg px-4 py-3 text-red-300 text-xs font-mono"
+          data-testid="block-error-raw"
+        >
+          <span class="shrink-0 text-red-400">⚠</span>
+          <span class="whitespace-pre-wrap select-text cursor-text">{{ event.text }}</span>
         </div>
       </template>
 

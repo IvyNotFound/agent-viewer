@@ -48,6 +48,10 @@ export function useStreamEvents(terminalId: string) {
           }
         }
       }
+      // Pre-render markdown for top-level text events (non-Claude CLIs) — T1197
+      if (e.type === 'text' && e.text != null) {
+        e._html = renderMarkdown(e.text)
+      }
       events.value.push(e)
     }
     pendingEvents = []
@@ -92,6 +96,7 @@ export function useStreamEvents(terminalId: string) {
             block._html = undefined
           }
         }
+        if (ev.type === 'text') ev._html = undefined
       }
       if (events.value.length > MAX_EVENTS_HIDDEN) {
         const evicted = events.value.splice(0, events.value.length - MAX_EVENTS_HIDDEN)
@@ -113,6 +118,9 @@ export function useStreamEvents(terminalId: string) {
               block._html = renderMarkdown(stripped)
             }
           }
+        }
+        if (ev.type === 'text' && ev.text != null && !ev._html) {
+          ev._html = renderMarkdown(ev.text)
         }
       }
     }
