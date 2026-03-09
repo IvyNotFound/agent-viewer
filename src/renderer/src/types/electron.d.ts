@@ -11,6 +11,7 @@ declare global {
       watchDb(dbPath: string): Promise<void>
       unwatchDb(): Promise<void>
       onDbChanged(callback: () => void): () => void
+      onSessionsCompleted(callback: (agentIds: number[]) => void): () => void
       showConfirmDialog(opts: { title: string; message: string; detail?: string }): Promise<boolean>
       selectNewProjectDir(): Promise<string | null>
       initNewProject(projectPath: string): Promise<{ success: boolean; error?: string }>
