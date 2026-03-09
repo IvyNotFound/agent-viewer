@@ -58,6 +58,10 @@ extraResources:
       - dblock.js
       - capture-tokens-hook.js
 
+files:
+  - "**/*"
+  - "!node_modules/@rollup/rollup-win32-x64-msvc/**"
+
 directories:
   output: dist
   buildResources: build
