@@ -61,6 +61,7 @@ extraResources:
 files:
   - "**/*"
   - "!node_modules/@rollup/rollup-win32-x64-msvc/**"
+  - "!.claude/**"
 
 directories:
   output: dist
