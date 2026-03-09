@@ -68,6 +68,14 @@ export default [
     }
   },
 
+  // Renderer: no-explicit-any elevated to error (migration complete)
+  {
+    files: ['src/renderer/**/*.{ts,vue}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error'
+    }
+  },
+
   // Shared files
   {
     files: ['src/shared/**/*.ts'],
