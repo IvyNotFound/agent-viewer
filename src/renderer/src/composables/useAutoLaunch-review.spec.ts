@@ -373,16 +373,18 @@ describe('composables/useAutoLaunch', () => {
       tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
       await nextTick()
 
+      // Terminal linked to task 1 so Chemin 1 handles it with 5-min lookback (T1249)
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
       const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
+      termTab.taskId = 1
       termTab.streamId = 'stream-race'
 
       // Task transitions to done — agent session was already completed (race condition)
       tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 10 })]
       await nextTick()
 
-      // Past debounce + immediate poll → lookback window covers the completed session
+      // Past debounce + immediate poll → 5-min lookback window covers the completed session
       await vi.advanceTimersByTimeAsync(150)
 
       expect(api.agentKill).toHaveBeenCalledWith('stream-race')

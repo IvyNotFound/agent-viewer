@@ -6,7 +6,12 @@
  *   until the agent session reaches status='completed' (Option B — robust).
  *   Falls back to force-close after FALLBACK_CLOSE_MS if the session never
  *   terminates on its own.
+ * - For no-task agents (review, doc…): polls for session completion with no
+ *   fallback (T1246) and a 30s post-complete delay (T1249).
  * - Launches a review session when done-task count reaches threshold (T341)
+ *
+ * Each tab is tracked independently by tabId (T1249). Chemin 1 links tab to
+ * task via taskId; Chemin 2 handles tabs without a taskId (no-task agents).
  *
  * NOTE: Auto-launch on new task creation was removed in T345.
  * Sessions are now launched via board drag & drop (todo → in_progress).
@@ -16,6 +21,7 @@
 
 import { watch, type Ref } from 'vue'
 import { useTabsStore } from '@renderer/stores/tabs'
+import type { Tab } from '@renderer/stores/tabs'
 import { useSettingsStore } from '@renderer/stores/settings'
 import { useLaunchSession } from '@renderer/composables/useLaunchSession'
 import type { Task, Agent } from '@renderer/types'
@@ -26,14 +32,15 @@ const POLL_INTERVAL_MS = 5_000
 /** Fallback delay (ms): force-close terminal if session never reaches 'completed' (1 min) */
 const FALLBACK_CLOSE_MS = 60 * 1000
 
-/**
- * Fallback delay (ms) for agents with no assigned tasks (task-creator, review, test, perf…).
- * Longer window because these agents may run long sessions without any task transitions.
- */
-const FALLBACK_CLOSE_NOTASK_MS = 5 * 60 * 1000
-
 /** Delay (ms) between agentKill signal and closeTab (allows the process to flush) */
 const KILL_DELAY_MS = 2_000
+
+/**
+ * Post-complete delay (ms) for no-task tabs (review, doc…).
+ * Longer window because these agents may output a final summary after session ends.
+ * No fallback is set for these tabs (T1246): duration is too unpredictable.
+ */
+const NO_TASK_POST_COMPLETE_DELAY_MS = 30_000
 
 /**
  * Lookback window (ms) subtracted from notBefore when scheduling a close (T835).
@@ -54,21 +61,24 @@ interface AutoLaunchOptions {
 
 interface PendingClose {
   intervalId: ReturnType<typeof setInterval>
-  fallbackId: ReturnType<typeof setTimeout>
+  fallbackId: ReturnType<typeof setTimeout> | null
+  postCompleteDelayMs: number
 }
 
 /**
  * Watch task transitions and manage auto-close / auto-review behaviours.
  *
- * - When a task moves to `done`, polls the DB until the agent session reaches
- *   `completed`, then closes the terminal tab (with a fallback timeout).
+ * - Chemin 1: When a task moves to `done`, finds the specific terminal tab linked
+ *   to that task (agentName + taskId) and schedules a close with DB polling.
+ * - Chemin 2: For tabs without a taskId (review, doc…), polls for session
+ *   completion without a fallback timer (T1246).
  * - When the number of `done` tasks reaches a configurable threshold, auto-launches
  *   a review session (subject to cooldown).
  *
+ * Each tab is keyed by its unique tabId so multiple tabs for the same agent
+ * are tracked independently (T1249).
+ *
  * @param options - Reactive refs for tasks, agents and the current database path.
- * @param options.tasks - Ref to the full task list (watched for status transitions).
- * @param options.agents - Ref to the agent list (used to resolve review agent).
- * @param options.dbPath - Ref to the active database path (guards all operations).
  * @returns void — side-effects only (watchers, timers).
  */
 export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): void {
@@ -78,9 +88,9 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
 
   /** Track tasks that were not 'done' to detect transitions to 'done' */
   let previousStatuses = new Map<number, string>()
-  /** Pending close pollers keyed by agent name */
+  /** Pending close pollers keyed by tabId (unique per tab — T1249) */
   const pendingCloses = new Map<string, PendingClose>()
-  /** Guard: prevents duplicate immediate polls when watch fires rapidly for the same agent */
+  /** Guard: prevents duplicate immediate polls when watch fires rapidly for the same tab */
   const pendingImmediatePolls = new Set<string>()
   /** Flag: skip first watch trigger (initial load) */
   let initialized = false
@@ -108,45 +118,37 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
       debounceId = null
       const current = tasks.value
 
-      // --- Auto-close on done transition ---
       if (settingsStore.autoLaunchAgentSessions) {
+        // --- Chemin 1: task → done, find specific tab by agentName + taskId ---
         for (const task of current) {
           const prevStatus = previousStatuses.get(task.id)
           if (prevStatus && prevStatus !== 'done' && task.status === 'done' && task.agent_assigned_id) {
             const agent = agents.value.find(a => a.id === task.agent_assigned_id)
-            if (agent && agent.auto_launch !== 0 && tabsStore.hasAgentTerminal(agent.name)) {
-              scheduleClose(agent.name, agent.id)
-            }
+            if (!agent || agent.auto_launch === 0) continue
+            if (agent.name === 'task-creator') continue // never auto-close: interactive agent
+            // Find the specific tab linked to this task (T1249)
+            const tab = tabsStore.tabs.find(t =>
+              t.type === 'terminal' &&
+              t.agentName === agent.name &&
+              t.taskId === task.id
+            )
+            if (tab) scheduleClose(tab, agent.id)
           }
         }
-      }
 
-      // --- Auto-close agents with no assigned tasks (review, test, perf…) ---
-      // Covers agents that never receive assigned tasks: their terminal stays open indefinitely
-      // unless we poll their session status independently of any task transition. (T646)
-      // Exception: task-creator is exempt — it runs interactively and may stay open indefinitely.
-      if (settingsStore.autoLaunchAgentSessions) {
-        for (const agent of agents.value) {
-          if (agent.name === 'task-creator') continue // never auto-close: runs interactively
-          if (agent.auto_launch === 0) continue
-          if (!tabsStore.hasAgentTerminal(agent.name)) continue
-          const hasActiveTasks = current.some(
-            t =>
-              t.agent_assigned_id === agent.id &&
-              (t.status === 'todo' || t.status === 'in_progress')
-          )
-          if (hasActiveTasks) {
-            // Cancel any pending close — agent received active work (T1241 / T1242)
-            const pending = pendingCloses.get(agent.name)
-            if (pending) {
-              clearInterval(pending.intervalId)
-              clearTimeout(pending.fallbackId)
-              pendingCloses.delete(agent.name)
-            }
-          } else if (!pendingCloses.has(agent.name)) {
-            // lookbackMs=0: only match sessions that completed AFTER this schedule
-            // (prevents false positives from old sessions on terminal reopen — T1242)
-            scheduleClose(agent.name, agent.id, FALLBACK_CLOSE_NOTASK_MS, 0)
+        // --- Chemin 2: tabs without taskId (review, doc…) ---
+        // Iterate over open terminal tabs; skip task-linked tabs (handled by Chemin 1).
+        // No fallback timer (T1246): session duration is unpredictable for these agents.
+        for (const tab of tabsStore.tabs.filter(t => t.type === 'terminal')) {
+          if (!tab.agentName) continue
+          if (tab.agentName === 'task-creator') continue // never auto-close: runs interactively
+          const agent = agents.value.find(a => a.name === tab.agentName)
+          if (!agent || agent.auto_launch === 0) continue
+          if (tab.taskId) continue // task-linked tab: handled by Chemin 1
+          if (!pendingCloses.has(tab.id)) {
+            // lookbackMs=0: only match sessions that completed AFTER this schedule (T1242 Fix 3)
+            // fallbackMs=0: no forced close (T1246)
+            scheduleClose(tab, agent.id, 0, 0, NO_TASK_POST_COMPLETE_DELAY_MS)
           }
         }
       }
@@ -172,7 +174,7 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     }
     for (const pending of pendingCloses.values()) {
       clearInterval(pending.intervalId)
-      clearTimeout(pending.fallbackId)
+      if (pending.fallbackId) clearTimeout(pending.fallbackId)
     }
     pendingCloses.clear()
   })
@@ -194,22 +196,21 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     launchReviewSession(reviewAgent, currentTasks.filter(t => t.status === 'done'))
   }
 
-  function doClose(agentName: string): void {
-    const pending = pendingCloses.get(agentName)
-    if (pending) {
-      clearInterval(pending.intervalId)
-      clearTimeout(pending.fallbackId)
-      pendingCloses.delete(agentName)
-    }
+  function doClose(tabId: string): void {
+    if (!pendingCloses.has(tabId)) return // T1243 race guard
+    const pending = pendingCloses.get(tabId)!
+    clearInterval(pending.intervalId)
+    if (pending.fallbackId) clearTimeout(pending.fallbackId)
+    pendingCloses.delete(tabId)
 
-    const tab = tabsStore.tabs.find(t => t.type === 'terminal' && t.agentName === agentName)
+    const tab = tabsStore.tabs.find(t => t.id === tabId)
     if (tab) {
       if (tab.streamId) window.electronAPI.agentKill(tab.streamId).catch(() => {})
-      setTimeout(() => tabsStore.closeTab(tab.id), KILL_DELAY_MS)
+      setTimeout(() => tabsStore.closeTab(tab.id), pending.postCompleteDelayMs)
     }
   }
 
-  async function pollSessionStatus(agentName: string, agentId: number, path: string, notBefore: string): Promise<void> {
+  async function pollSessionStatus(tabId: string, agentId: number, path: string, notBefore: string): Promise<void> {
     try {
       // Only detect sessions that completed AFTER the close was scheduled, preventing
       // false positives from previous sessions completed within the last few minutes.
@@ -219,18 +220,19 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
         [agentId, notBefore]
       ) as { id: number }[]
       if (rows.length > 0) {
-        doClose(agentName)
+        doClose(tabId)
       }
     } catch {
       // Ignore transient poll errors
     }
   }
 
-  function scheduleClose(agentName: string, agentId: number, fallbackMs: number = FALLBACK_CLOSE_MS, lookbackMs: number = SCHEDULE_LOOKBACK_MS): void {
-    const existing = pendingCloses.get(agentName)
+  function scheduleClose(tab: Tab, agentId: number, fallbackMs: number = FALLBACK_CLOSE_MS, lookbackMs: number = SCHEDULE_LOOKBACK_MS, postCompleteDelayMs: number = KILL_DELAY_MS): void {
+    const key = tab.id
+    const existing = pendingCloses.get(key)
     if (existing) {
       clearInterval(existing.intervalId)
-      clearTimeout(existing.fallbackId)
+      if (existing.fallbackId) clearTimeout(existing.fallbackId)
     }
 
     const path = dbPath.value
@@ -250,23 +252,24 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     const notBefore = new Date(Date.now() - lookbackMs).toISOString().replace('T', ' ').slice(0, 19)
 
     // Immediate poll — guarded to prevent N parallel polls when watch fires rapidly
-    if (!pendingImmediatePolls.has(agentName)) {
-      pendingImmediatePolls.add(agentName)
+    if (!pendingImmediatePolls.has(key)) {
+      pendingImmediatePolls.add(key)
       setTimeout(() => {
-        pendingImmediatePolls.delete(agentName)
-        pollSessionStatus(agentName, agentId, path, notBefore)
+        pendingImmediatePolls.delete(key)
+        pollSessionStatus(key, agentId, path, notBefore)
       }, 0)
     }
 
     const intervalId = setInterval(
-      () => pollSessionStatus(agentName, agentId, path, notBefore),
+      () => pollSessionStatus(key, agentId, path, notBefore),
       POLL_INTERVAL_MS
     )
 
-    const fallbackId = setTimeout(() => {
-      doClose(agentName)
-    }, fallbackMs)
+    // fallbackMs=0 means no fallback (T1246: no forced close for no-task agents)
+    const fallbackId = fallbackMs > 0 ? setTimeout(() => {
+      doClose(key)
+    }, fallbackMs) : null
 
-    pendingCloses.set(agentName, { intervalId, fallbackId })
+    pendingCloses.set(key, { intervalId, fallbackId, postCompleteDelayMs })
   }
 }

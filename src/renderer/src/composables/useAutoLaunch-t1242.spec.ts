@@ -49,7 +49,7 @@ function makeAgent(overrides: Partial<Agent> = {}): Agent {
   } as Agent
 }
 
-describe('useAutoLaunch T1242: Fix 1 — cancel pending close when agent gets active tasks', () => {
+describe('useAutoLaunch T1249: multi-tab independence — same agent, different tasks', () => {
   let tasks: ReturnType<typeof ref<Task[]>>
   let agents: ReturnType<typeof ref<Agent[]>>
   let dbPath: ReturnType<typeof ref<string | null>>
@@ -63,8 +63,7 @@ describe('useAutoLaunch T1242: Fix 1 — cancel pending close when agent gets ac
     testIndex++
     vi.setSystemTime(new Date(2026, 5, 1, 0, testIndex * 10, 0))
 
-    // Default: no completed session found
-    api.queryDb.mockResolvedValue([])
+    api.queryDb.mockResolvedValue([{ id: 1 }]) // session completed by default
 
     tasks = ref<Task[]>([])
     agents = ref<Agent[]>([])
@@ -76,103 +75,125 @@ describe('useAutoLaunch T1242: Fix 1 — cancel pending close when agent gets ac
 
   afterEach(() => { vi.useRealTimers() })
 
-  it('should cancel pending close when agent receives a new in_progress task', async () => {
-    const agent = makeAgent({ id: 20, name: 'test-agent-cancel' })
+  it('should close only the tab linked to the done task, not the other tab for the same agent', async () => {
+    // dev-front-vuejs open on task 58 AND task 74 simultaneously.
+    // When task 74 transitions to done, only tab 74 should close. Tab 58 stays open.
+    const agent = makeAgent({ id: 20, name: 'dev-front-vuejs' })
     agents.value = [agent]
-    useAutoLaunch({ tasks, agents, dbPath })
-
-    tasks.value = []
-    await nextTick()
-
-    const tabsStore = useTabsStore()
-    tabsStore.addTerminal('test-agent-cancel', 'Ubuntu-24.04')
-    const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    termTab.streamId = 'stream-cancel-test'
-
-    // No active tasks for agent 20 → no-task path schedules close
-    tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
-    await nextTick()
-    await vi.advanceTimersByTimeAsync(100) // debounce fires, scheduleClose called
-
-    // Now agent receives an in_progress task → pending close must be cancelled
-    tasks.value = [makeTask({ id: 2, status: 'in_progress', agent_assigned_id: 20 })]
-    await nextTick()
-    await vi.advanceTimersByTimeAsync(100) // debounce fires again, cancel logic runs
-
-    // Advance well past the 5-minute fallback — tab must NOT be closed
-    await vi.advanceTimersByTimeAsync(5 * 60 * 1000 + 2000)
-
-    expect(api.agentKill).not.toHaveBeenCalled()
-    expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(1)
-  })
-
-  it('should cancel pending close when agent receives a todo task', async () => {
-    const agent = makeAgent({ id: 20, name: 'test-agent-todo' })
-    agents.value = [agent]
-    useAutoLaunch({ tasks, agents, dbPath })
-
-    tasks.value = []
-    await nextTick()
-
-    const tabsStore = useTabsStore()
-    tabsStore.addTerminal('test-agent-todo', 'Ubuntu-24.04')
-    const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    termTab.streamId = 'stream-cancel-todo'
-
-    // No active tasks → close scheduled
-    tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
-    await nextTick()
-    await vi.advanceTimersByTimeAsync(100)
-
-    // Agent gets a todo task → cancel close
-    tasks.value = [makeTask({ id: 2, status: 'todo', agent_assigned_id: 20 })]
-    await nextTick()
-    await vi.advanceTimersByTimeAsync(100)
-
-    await vi.advanceTimersByTimeAsync(5 * 60 * 1000 + 2000)
-
-    expect(api.agentKill).not.toHaveBeenCalled()
-    expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(1)
-  })
-
-  it('should still close tab when session completes after a cancelled+rescheduled close', async () => {
-    // Regression: Fix 1 must not break the normal close flow when tasks go done again
-    const agent = makeAgent({ id: 20, name: 'test-agent-reschedule' })
-    agents.value = [agent]
-
-    // Step 1 immediate poll: no session yet. Step 3 poll (task-done): session found.
-    // Note: step 2 (task active) cancels the close → no poll is made at that point.
-    api.queryDb
-      .mockResolvedValueOnce([])        // step 1 no-task poll → no session
-      .mockResolvedValue([{ id: 1 }])   // step 3 task-done poll → session found → close
 
     useAutoLaunch({ tasks, agents, dbPath })
 
-    tasks.value = []
+    // Seed: both tasks in_progress
+    tasks.value = [
+      makeTask({ id: 58, status: 'in_progress', agent_assigned_id: 20 }),
+      makeTask({ id: 74, status: 'in_progress', agent_assigned_id: 20 }),
+    ]
     await nextTick()
 
     const tabsStore = useTabsStore()
-    tabsStore.addTerminal('test-agent-reschedule', 'Ubuntu-24.04')
-    const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    termTab.streamId = 'stream-reschedule'
 
-    // Step 1: No active tasks → no-task close scheduled, immediate poll returns []
-    tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
-    await nextTick()
-    await vi.advanceTimersByTimeAsync(100)
+    // Tab for task 58
+    tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
+    const tab58 = tabsStore.tabs.find(t => t.type === 'terminal')!
+    tab58.taskId = 58
+    tab58.streamId = 'stream-task-58'
 
-    // Step 2: Agent gets in_progress task → cancel close
-    tasks.value = [makeTask({ id: 2, status: 'in_progress', agent_assigned_id: 20 })]
-    await nextTick()
-    await vi.advanceTimersByTimeAsync(100)
+    // Tab for task 74 (second terminal for same agent)
+    tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
+    const tab74 = tabsStore.tabs.filter(t => t.type === 'terminal')[1]!
+    tab74.taskId = 74
+    tab74.streamId = 'stream-task-74'
 
-    // Step 3: Task transitions to done → task-done path re-schedules close; poll finds session
-    tasks.value = [makeTask({ id: 2, status: 'done', agent_assigned_id: 20 })]
+    // Task 74 transitions to done (task 58 still in_progress)
+    tasks.value = [
+      makeTask({ id: 58, status: 'in_progress', agent_assigned_id: 20 }),
+      makeTask({ id: 74, status: 'done', agent_assigned_id: 20 }),
+    ]
     await nextTick()
-    // debounce (80ms) + immediate poll (0ms) + queryDb resolves + kill delay (2000ms)
+    // debounce (80ms) + immediate poll + kill delay (2000ms)
     await vi.advanceTimersByTimeAsync(200 + 2000)
 
-    expect(api.agentKill).toHaveBeenCalledWith('stream-reschedule')
+    // Tab 74 must be closed
+    expect(api.agentKill).toHaveBeenCalledWith('stream-task-74')
+    expect(tabsStore.tabs.find(t => t.streamId === 'stream-task-74')).toBeUndefined()
+
+    // Tab 58 must remain open
+    expect(api.agentKill).not.toHaveBeenCalledWith('stream-task-58')
+    expect(tabsStore.tabs.find(t => t.streamId === 'stream-task-58')).toBeDefined()
+  })
+
+  it('T1243: doClose called after pendingCloses cleared should be a no-op (race guard)', async () => {
+    // Regression: if the immediate poll fires asynchronously after the pending was
+    // cleared (e.g., by a prior doClose call), it must not close the tab again.
+    const agent = makeAgent({ id: 20, name: 'dev-front-vuejs' })
+    agents.value = [agent]
+
+    // queryDb returns session on first call only
+    api.queryDb
+      .mockResolvedValueOnce([{ id: 1 }]) // immediate poll → triggers close
+      .mockResolvedValue([{ id: 2 }])     // subsequent polls → would close again if guard absent
+
+    useAutoLaunch({ tasks, agents, dbPath })
+
+    tasks.value = [makeTask({ id: 58, status: 'in_progress', agent_assigned_id: 20 })]
+    await nextTick()
+
+    const tabsStore = useTabsStore()
+    tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
+    const tab = tabsStore.tabs.find(t => t.type === 'terminal')!
+    tab.taskId = 58
+    tab.streamId = 'stream-race-guard'
+
+    // Task done → scheduleClose → immediate poll finds session → doClose (clears pendingCloses)
+    tasks.value = [makeTask({ id: 58, status: 'done', agent_assigned_id: 20 })]
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(200 + 2000) // debounce + poll + kill delay
+
+    // Tab closed once
+    expect(api.agentKill).toHaveBeenCalledTimes(2) // doClose + closeTab internal kill
+    expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(0)
+
+    // Subsequent interval polls fire — T1243 guard prevents second close attempt
+    await vi.advanceTimersByTimeAsync(5_000 + 5_000)
+    // agentKill must not have been called additional times beyond the initial 2
+    expect(api.agentKill).toHaveBeenCalledTimes(2)
+  })
+
+  it('no-task tab (review) should close on session completed with 30s post-complete delay', async () => {
+    // Tab without taskId (review) → Chemin 2. Session completes → close after 30s.
+    const agent = makeAgent({ id: 30, name: 'review-master', type: 'review' })
+    agents.value = [agent]
+
+    api.queryDb.mockResolvedValue([]) // no session initially
+
+    useAutoLaunch({ tasks, agents, dbPath })
+    tasks.value = []
+    await nextTick()
+
+    const tabsStore = useTabsStore()
+    tabsStore.addTerminal('review-master', 'Ubuntu-24.04')
+    const reviewTab = tabsStore.tabs.find(t => t.type === 'terminal')!
+    reviewTab.streamId = 'stream-review-30s'
+    // no taskId — Chemin 2 path
+
+    // Trigger watch to schedule no-task close
+    tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(200) // debounce + immediate poll (no session yet)
+
+    expect(api.agentKill).not.toHaveBeenCalled()
+
+    // Session completes → next poll detects it
+    api.queryDb.mockResolvedValue([{ id: 99 }])
+    await vi.advanceTimersByTimeAsync(5_000 + 100) // poll interval
+
+    // agentKill fired immediately by doClose
+    expect(api.agentKill).toHaveBeenCalledWith('stream-review-30s')
+
+    // Tab still open — closeTab fires after 30s post-complete delay
+    expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(1)
+
+    await vi.advanceTimersByTimeAsync(30_000)
     expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(0)
   })
 })

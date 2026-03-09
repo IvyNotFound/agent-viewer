@@ -113,7 +113,7 @@ describe('useAutoLaunch T1105: dbPath guard', () => {
   })
 })
 
-describe('useAutoLaunch T1105: FALLBACK_CLOSE_NOTASK_MS (5 minutes)', () => {
+describe('useAutoLaunch T1105: no-task close — no fallback (T1246)', () => {
   let tasks: ReturnType<typeof ref<Task[]>>
   let agents: ReturnType<typeof ref<Agent[]>>
   let dbPath: ReturnType<typeof ref<string | null>>
@@ -136,7 +136,7 @@ describe('useAutoLaunch T1105: FALLBACK_CLOSE_NOTASK_MS (5 minutes)', () => {
 
   afterEach(() => { vi.useRealTimers() })
 
-  it('should NOT force-close no-task agent after 1min (it uses 5min fallback)', async () => {
+  it('should NOT force-close no-task agent after 1min (no fallback for no-task tabs — T1246)', async () => {
     const noTaskAgent = makeAgent({ id: 20, name: 'review-master', type: 'review' })
     agents.value = [noTaskAgent]
     useAutoLaunch({ tasks, agents, dbPath })
@@ -147,18 +147,20 @@ describe('useAutoLaunch T1105: FALLBACK_CLOSE_NOTASK_MS (5 minutes)', () => {
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('review-master', 'Ubuntu-24.04')
     const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    termTab.streamId = 'stream-notask-5min'
+    termTab.streamId = 'stream-notask-1min'
 
     tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
     await nextTick()
 
-    // 1 minute: regular task fallback would fire, but no-task uses 5min → no kill
+    // 1 minute: no fallback for no-task tabs → no kill
     await vi.advanceTimersByTimeAsync(60 * 1000 + 200)
 
     expect(api.agentKill).not.toHaveBeenCalled()
   })
 
-  it('should force-close no-task agent after 5 minutes (FALLBACK_CLOSE_NOTASK_MS)', async () => {
+  it('should NOT force-close no-task agent even after 5 minutes (T1246: fallback removed)', async () => {
+    // T1246: no fallback timer for no-task agents — they close only when session completes.
+    // queryDb always returns [] → session never found → tab stays open indefinitely.
     const noTaskAgent = makeAgent({ id: 20, name: 'review-master', type: 'review' })
     agents.value = [noTaskAgent]
     useAutoLaunch({ tasks, agents, dbPath })
@@ -169,14 +171,16 @@ describe('useAutoLaunch T1105: FALLBACK_CLOSE_NOTASK_MS (5 minutes)', () => {
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('review-master', 'Ubuntu-24.04')
     const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    termTab.streamId = 'stream-notask-5min-force'
+    termTab.streamId = 'stream-notask-no-fallback'
 
     tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
     await nextTick()
 
+    // Past 5 minutes — no force-close since fallback was removed
     await vi.advanceTimersByTimeAsync(80 + 5 * 60 * 1000 + 1000)
 
-    expect(api.agentKill).toHaveBeenCalledWith('stream-notask-5min-force')
+    expect(api.agentKill).not.toHaveBeenCalled()
+    expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(1)
   })
 
   it('should NEVER auto-close task-creator (exempt from no-task close)', async () => {
@@ -264,6 +268,54 @@ describe('useAutoLaunch T1105: no-task path guards', () => {
 
     // No additional queryDb call from no-task path (it was skipped)
     expect(api.queryDb.mock.calls.length).toBe(firstCallCount)
+  })
+})
+
+describe('useAutoLaunch T1254: task-creator guard in Chemin 1', () => {
+  let tasks: ReturnType<typeof ref<Task[]>>
+  let agents: ReturnType<typeof ref<Agent[]>>
+  let dbPath: ReturnType<typeof ref<string | null>>
+  let testIndex = 0
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+    vi.useFakeTimers()
+    testIndex++
+    vi.setSystemTime(new Date(2026, 2, 5, 0, testIndex * 10, 0))
+    api.queryDb.mockResolvedValue([])
+    tasks = ref<Task[]>([])
+    agents = ref<Agent[]>([])
+    dbPath = ref<string | null>('/test/db')
+    const tasksStore = useTasksStore()
+    ;(tasksStore as unknown as { dbPath: string | null }).dbPath = '/test/db'
+  })
+
+  afterEach(() => { vi.useRealTimers() })
+
+  it('should NOT close task-creator tab when its task transitions to done (Chemin 1)', async () => {
+    const taskCreator = makeAgent({ id: 30, name: 'task-creator', type: 'dev', auto_launch: 1 })
+    agents.value = [taskCreator]
+    useAutoLaunch({ tasks, agents, dbPath })
+
+    tasks.value = [makeTask({ id: 5, status: 'in_progress', agent_assigned_id: 30 })]
+    await nextTick()
+
+    const tabsStore = useTabsStore()
+    // Open a terminal tab linked to task id=5 (taskId set)
+    tabsStore.addTerminal('task-creator', 'Ubuntu-24.04', undefined, undefined, undefined, undefined, undefined, true, 5)
+    const termTab = tabsStore.tabs.find(t => t.type === 'terminal' && t.agentName === 'task-creator')!
+    termTab.streamId = 'stream-task-creator-chemin1'
+
+    // Task transitions to done
+    tasks.value = [makeTask({ id: 5, status: 'done', agent_assigned_id: 30 })]
+    await nextTick()
+
+    // Well past 1-minute fallback — tab must remain open
+    await vi.advanceTimersByTimeAsync(80 + 70 * 1000)
+
+    expect(api.agentKill).not.toHaveBeenCalled()
   })
 })
 

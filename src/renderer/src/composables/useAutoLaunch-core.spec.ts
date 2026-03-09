@@ -150,10 +150,11 @@ describe('composables/useAutoLaunch', () => {
     tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
     await nextTick()
 
-    // Simulate an existing terminal for this agent
+    // Simulate an existing terminal for this agent, linked to task 1 (T1249)
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
     const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
+    termTab.taskId = 1
     termTab.streamId = 'stream-123'
 
     // Task transitions to done
@@ -219,9 +220,11 @@ describe('composables/useAutoLaunch', () => {
     tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
     await nextTick()
 
+    // Terminal linked to task 1 — Chemin 1 applies with 60s fallback (T1249)
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
     const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
+    termTab.taskId = 1
     termTab.streamId = 'stream-fallback'
 
     // Task transitions to done

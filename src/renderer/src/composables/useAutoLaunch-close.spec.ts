@@ -164,9 +164,11 @@ describe('composables/useAutoLaunch', () => {
       tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
       await nextTick()
 
-      // Add terminal WITHOUT setting streamId
+      // Add terminal WITHOUT setting streamId, but with taskId (Chemin 1 — T1249)
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
+      const termTabNoStream = tabsStore.tabs.find(t => t.type === 'terminal')!
+      termTabNoStream.taskId = 1
 
       // Task transitions to done
       tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 10 })]
@@ -191,9 +193,11 @@ describe('composables/useAutoLaunch', () => {
       tasks.value = [makeTask({ id: 1, status: 'in_progress', agent_assigned_id: 10 })]
       await nextTick()
 
+      // Terminal linked to task 1 (Chemin 1 — T1249)
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
       const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
+      termTab.taskId = 1
       termTab.streamId = 'stream-456'
 
       // First done transition
