@@ -63,6 +63,10 @@ SELECT
 mem-dump-*.json
 mem-dump-*.txt
 scripts/mem-dump.ps1
+scripts/run-lint.ps1
+
+# Audit reports (generated locally)
+AUDIT-*.md
 
 # Accidental tilde-expansion artefact
 ~/
