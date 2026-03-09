@@ -41,6 +41,14 @@ export default defineConfig({
         'dist/**',
         '**/*.d.ts',
       ],
+      // Progressive coverage gate — thresholds set at ~5% below current coverage (2026-03-09).
+      // Raise gradually as test coverage improves. Current baseline: lines=73.9, fn=60.7, branch=62.7, stmt=76.7
+      thresholds: {
+        lines: 68,
+        functions: 55,
+        branches: 57,
+        statements: 71,
+      },
     },
   },
   resolve: {
