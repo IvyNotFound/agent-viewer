@@ -126,6 +126,16 @@ export const useTasksStore = defineStore('tasks', () => {
     startWatching(dPath)
   }
 
+  /**
+   * Opens a native directory picker to change the current project.
+   *
+   * If terminal tabs are open, prompts the user for confirmation before closing them all.
+   * Distinguishes WSL sessions from native terminal sessions in the confirmation message.
+   * If the selected directory has no `.claude/project.db`, redirects to the setup wizard.
+   *
+   * @returns A promise that resolves when the project is selected and loaded, or immediately
+   *   if the user cancels the dialog or the confirmation prompt.
+   */
   async function selectProject(): Promise<void> {
     const tabsStore = useTabsStore()
     const openTerminals = tabsStore.tabs.filter(t => t.type === 'terminal')
@@ -210,6 +220,18 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
+  /**
+   * Selects a task and loads its associated data in parallel.
+   *
+   * Fetches three data sets concurrently via `Promise.all`:
+   * - Task comments with agent names (via SQL JOIN on `agents`)
+   * - Task links (dependency relationships between tasks)
+   * - Task assignees (agents assigned to the task)
+   *
+   * Errors in individual fetches are silently ignored to avoid blocking the UI.
+   *
+   * @param task - The task to open and display in the detail panel.
+   */
   async function openTask(task: Task): Promise<void> {
     selectedTask.value = task
     taskComments.value = []

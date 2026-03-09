@@ -69,8 +69,21 @@ export function dotStatus(agent: AgentRow): DotStatus {
 // ── Hierarchical layout (recursive, post-order) ───────────────────────────────
 
 /**
- * Build the layout for a group tree node.
- * Post-order: children are positioned first, parent size is derived from them.
+ * Recursively builds the layout for a group tree node using a post-order traversal.
+ *
+ * Post-order: children are fully positioned before the parent derives its own dimensions.
+ * Direct agents are laid out in a horizontal row inside the group padding.
+ * Child sub-groups are placed below the agent row, advancing left-to-right.
+ * The group width and height are computed from the maximum of the agent row width
+ * and the total children width, plus nesting padding on both sides.
+ *
+ * @param group - The agent group tree node to lay out (may contain nested children).
+ * @param x - Absolute x position of the group's top-left corner on the canvas.
+ * @param y - Absolute y position of the group's top-left corner on the canvas.
+ * @param agentsByGroup - Map from group ID to its direct agent rows.
+ * @param depth - Current nesting depth (0 = root group).
+ * @returns A `LayoutGroup` with absolute `x`, `y`, computed `w` (width), `h` (height),
+ *   and recursively laid-out `children` and `agents`.
  */
 export function buildGroupLayout(
   group: AgentGroup,
@@ -128,7 +141,19 @@ export function buildGroupLayout(
 
 // ── Flat layout (scope-based fallback, no children) ───────────────────────────
 
-/** Build a single-level group layout (no children). Used for scope fallback. */
+/**
+ * Builds a single-level group layout without children (scope-based fallback).
+ *
+ * Used when agents are grouped by scope string rather than the hierarchical group tree.
+ * All agents are laid out in a single horizontal row inside the group.
+ *
+ * @param key - Unique key for the group (typically the scope string).
+ * @param label - Display label shown in the group header.
+ * @param groupAgents - List of agents belonging to this group.
+ * @param x - Absolute x position of the group's top-left corner on the canvas.
+ * @param y - Absolute y position of the group's top-left corner on the canvas.
+ * @returns A `LayoutGroup` with computed dimensions, agent nodes, and no children.
+ */
 export function buildFlatGroup(
   key: string,
   label: string,
