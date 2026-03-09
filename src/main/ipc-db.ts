@@ -9,6 +9,7 @@
 
 import { ipcMain, BrowserWindow } from 'electron'
 import { watch, type FSWatcher } from 'fs'
+import { dirname, basename } from 'path'
 import {
   assertDbPathAllowed,
   FORBIDDEN_WRITE_PATTERN,
@@ -82,7 +83,10 @@ export function registerDbHandlers(): void {
     assertDbPathAllowed(dbPath)
     if (watcher) { watcher.close(); watcher = null }
     try {
-      watcher = watch(dbPath, () => {
+      // Watch the parent directory to capture WAL-mode SQLite changes
+      // (project.db-wal is written on each commit; main file only updated at checkpoint)
+      watcher = watch(dirname(dbPath), { persistent: false }, (_event, filename) => {
+        if (!filename || !filename.startsWith(basename(dbPath))) return
         if (debounceTimer) clearTimeout(debounceTimer)
         debounceTimer = setTimeout(() => notifyRenderer(), 300)
       })

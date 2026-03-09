@@ -273,11 +273,11 @@ describe('IPC DB handlers', () => {
         .rejects.toThrow('DB_PATH_NOT_ALLOWED')
     })
 
-    it('should call fs.watch on the provided path', async () => {
+    it('should call fs.watch on the parent directory (WAL-mode coverage)', async () => {
       const { watch } = await import('fs')
       vi.mocked(watch).mockClear()
       await callHandler('watch-db', '/fake/project.db')
-      expect(watch).toHaveBeenCalledWith('/fake/project.db', expect.any(Function))
+      expect(watch).toHaveBeenCalledWith('/fake', { persistent: false }, expect.any(Function))
     })
 
     it('should close previous watcher before creating new one', async () => {

@@ -142,8 +142,8 @@ export function useTaskRefresh(deps: TaskRefreshDeps) {
 
   function startPolling(): void {
     stopPolling()
-    pollInterval = setInterval(refresh, 300000)
-    agentPollInterval = setInterval(() => agentsStore.agentRefresh(), 300000)
+    pollInterval = setInterval(refresh, 30000)
+    agentPollInterval = setInterval(() => agentsStore.agentRefresh(), 30000)
   }
 
   function stopPolling(): void {
