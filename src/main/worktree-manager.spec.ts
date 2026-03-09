@@ -1,6 +1,7 @@
 /**
  * Unit tests for worktree-manager.ts
- * Covers createWorktree, removeWorktree, pruneWorktrees, removeWorktreeByPath.
+ * Covers createWorktree, removeWorktree, pruneWorktrees, removeWorktreeByPath,
+ * and pruneOrphanedWorktrees.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -15,7 +16,15 @@ vi.mock('child_process', () => ({
   execFile: mockExecFile,
 }))
 
-import { createWorktree, removeWorktree, pruneWorktrees, removeWorktreeByPath } from './worktree-manager'
+// ── db mock ───────────────────────────────────────────────────────────────────
+
+const mockQueryLive = vi.hoisted(() => vi.fn())
+
+vi.mock('./db', () => ({
+  queryLive: mockQueryLive,
+}))
+
+import { createWorktree, removeWorktree, pruneWorktrees, removeWorktreeByPath, pruneOrphanedWorktrees } from './worktree-manager'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -243,6 +252,170 @@ describe('worktree-manager', () => {
       await expect(removeWorktreeByPath(REPO, WT_PATH)).resolves.toBeUndefined()
       // list + worktree remove (no branch -D since list failed)
       expect(mockExecFile).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  // ── pruneOrphanedWorktrees ─────────────────────────────────────────────────
+
+  describe('pruneOrphanedWorktrees', () => {
+    const DB_PATH = '/fake/.claude/project.db'
+
+    /** Build a git worktree list --porcelain output string. */
+    function porcelainOutput(worktrees: Array<{ path: string; branch?: string }>): string {
+      return worktrees
+        .map(wt => [
+          `worktree ${wt.path}`,
+          'HEAD abc123',
+          ...(wt.branch ? [`branch refs/heads/${wt.branch}`] : ['detached']),
+        ].join('\n'))
+        .join('\n\n')
+    }
+
+    type ExecFileCbWithStdout = (err: Error | null, stdout?: string, stderr?: string) => void
+
+    beforeEach(() => {
+      mockQueryLive.mockResolvedValue([])
+    })
+
+    it('removes worktree for completed session', async () => {
+      const output = porcelainOutput([
+        { path: REPO, branch: 'main' },
+        { path: '/fake/agent-worktrees/10', branch: 'agent/10' },
+      ])
+      mockQueryLive.mockResolvedValueOnce([{ ended_at: '2024-01-01 12:00:00', status: 'completed' }])
+      let callCount = 0
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: ExecFileCbWithStdout) => {
+        callCount++
+        if (callCount === 1) cb(null, output) // list --porcelain
+        else cb(null)
+      })
+
+      await pruneOrphanedWorktrees(REPO, DB_PATH)
+
+      // list + removeWorktree (worktree remove + branch -D) + pruneWorktrees
+      expect(mockExecFile).toHaveBeenCalledTimes(4)
+      const [, removeArgs] = mockExecFile.mock.calls[1] as [string, string[], ExecFileCbWithStdout]
+      expect(removeArgs).toContain('remove')
+      const [, branchArgs] = mockExecFile.mock.calls[2] as [string, string[], ExecFileCbWithStdout]
+      expect(branchArgs).toContain('-D')
+      expect(branchArgs).toContain('agent/10')
+    })
+
+    it('removes worktree whose session has ended_at set', async () => {
+      const output = porcelainOutput([
+        { path: '/fake/agent-worktrees/20', branch: 'agent/20' },
+      ])
+      mockQueryLive.mockResolvedValueOnce([{ ended_at: '2024-01-01 10:00:00', status: 'started' }])
+      let callCount = 0
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: ExecFileCbWithStdout) => {
+        callCount++
+        if (callCount === 1) cb(null, output)
+        else cb(null)
+      })
+
+      await pruneOrphanedWorktrees(REPO, DB_PATH)
+
+      expect(mockQueryLive).toHaveBeenCalledWith(DB_PATH, expect.stringContaining('sessions'), [20])
+      // list + worktree remove + branch -D + prune
+      expect(mockExecFile).toHaveBeenCalledTimes(4)
+    })
+
+    it('removes worktree orphaned (session absent from DB)', async () => {
+      const output = porcelainOutput([
+        { path: '/fake/agent-worktrees/99', branch: 'agent/99' },
+      ])
+      mockQueryLive.mockResolvedValueOnce([]) // no session in DB
+      let callCount = 0
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: ExecFileCbWithStdout) => {
+        callCount++
+        if (callCount === 1) cb(null, output)
+        else cb(null)
+      })
+
+      await pruneOrphanedWorktrees(REPO, DB_PATH)
+
+      // list + worktree remove + branch -D + prune
+      expect(mockExecFile).toHaveBeenCalledTimes(4)
+    })
+
+    it('preserves worktree for started session without ended_at', async () => {
+      const output = porcelainOutput([
+        { path: '/fake/agent-worktrees/5', branch: 'agent/5' },
+      ])
+      mockQueryLive.mockResolvedValueOnce([{ ended_at: null, status: 'started' }])
+      let callCount = 0
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: ExecFileCbWithStdout) => {
+        callCount++
+        if (callCount === 1) cb(null, output)
+        else cb(null)
+      })
+
+      await pruneOrphanedWorktrees(REPO, DB_PATH)
+
+      // list + prune only (no removeWorktree)
+      expect(mockExecFile).toHaveBeenCalledTimes(2)
+    })
+
+    it('skips non-agent branches (main worktree, other branches)', async () => {
+      const output = porcelainOutput([
+        { path: REPO, branch: 'main' },
+        { path: '/fake/agent-worktrees/other', branch: 'feature/something' },
+      ])
+      let callCount = 0
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: ExecFileCbWithStdout) => {
+        callCount++
+        if (callCount === 1) cb(null, output)
+        else cb(null)
+      })
+
+      await pruneOrphanedWorktrees(REPO, DB_PATH)
+
+      expect(mockQueryLive).not.toHaveBeenCalled()
+      // list + prune only
+      expect(mockExecFile).toHaveBeenCalledTimes(2)
+    })
+
+    it('returns early without error when git list fails', async () => {
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: ExecFileCbWithStdout) => {
+        cb(new Error('not a git repo'))
+      })
+
+      await expect(pruneOrphanedWorktrees(REPO, DB_PATH)).resolves.toBeUndefined()
+      expect(mockQueryLive).not.toHaveBeenCalled()
+    })
+
+    it('continues processing other worktrees when DB query fails for one', async () => {
+      const output = porcelainOutput([
+        { path: '/fake/agent-worktrees/7', branch: 'agent/7' },
+        { path: '/fake/agent-worktrees/8', branch: 'agent/8' },
+      ])
+      mockQueryLive
+        .mockRejectedValueOnce(new Error('DB locked')) // session 7 fails
+        .mockResolvedValueOnce([])                     // session 8: orphan → remove
+
+      let callCount = 0
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: ExecFileCbWithStdout) => {
+        callCount++
+        if (callCount === 1) cb(null, output)
+        else cb(null)
+      })
+
+      await pruneOrphanedWorktrees(REPO, DB_PATH)
+
+      // Only session 8 removed: list + worktree remove + branch -D + prune
+      expect(mockExecFile).toHaveBeenCalledTimes(4)
+    })
+
+    it('calls git worktree prune at the end', async () => {
+      mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: ExecFileCbWithStdout) => {
+        cb(null, '')
+      })
+
+      await pruneOrphanedWorktrees(REPO, DB_PATH)
+
+      const lastCall = mockExecFile.mock.calls[mockExecFile.mock.calls.length - 1] as [string, string[], ExecFileCbWithStdout]
+      const [, lastArgs] = lastCall
+      expect(lastArgs).toContain('prune')
     })
   })
 })

@@ -156,10 +156,15 @@ function parseWorktreeList(output: string): Array<{ path: string; branch: string
  * @param dbPath   - Registered path to the project SQLite database.
  */
 export async function pruneOrphanedWorktrees(repoRoot: string, dbPath: string): Promise<void> {
+  // Uses a manual Promise wrapper (not execFileAsync) to reliably capture stdout as a string.
   let stdout: string
   try {
-    const result = await execFileAsync('git', ['-C', repoRoot, 'worktree', 'list', '--porcelain']) as unknown as { stdout: string }
-    stdout = result.stdout
+    stdout = await new Promise<string>((resolve, reject) => {
+      execFile('git', ['-C', repoRoot, 'worktree', 'list', '--porcelain'], (err, out) => {
+        if (err) reject(err)
+        else resolve(out)
+      })
+    })
   } catch (err) {
     console.warn('[pruneOrphanedWorktrees] git worktree list failed:', err)
     return

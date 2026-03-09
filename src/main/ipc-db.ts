@@ -18,6 +18,7 @@ import {
   clearDbCacheEntry,
 } from './db'
 import { startSessionCloser, stopSessionCloser } from './session-closer'
+import { pruneOrphanedWorktrees } from './worktree-manager'
 
 // ── Default LIMIT for user queries (T1136) ────────────────────────────────────
 
@@ -98,6 +99,11 @@ export function registerDbHandlers(): void {
           if (!w.isDestroyed()) w.webContents.send('session:agents-completed', agentIds)
         }
       })
+      const dbParentDir = dirname(dbPath)
+      const repoRoot = basename(dbParentDir) === '.claude' ? dirname(dbParentDir) : dbParentDir
+      void pruneOrphanedWorktrees(repoRoot, dbPath).catch((err) =>
+        console.warn('[watch-db] pruneOrphanedWorktrees error:', err)
+      )
     } catch (err) {
       console.error('[IPC watch-db]', err)
     }
