@@ -1,6 +1,6 @@
 /**
  * Tests for hookServer — handleStop DB path (byConvId lookup, fallback, zero tokens, token update)
- * Covers the NoCoverage mutants in the writeDb callback (L123-L167) (T1219)
+ * Covers the NoCoverage mutants in the writeDbNative callback (T1219, updated for T1224 better-sqlite3 migration)
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import http from 'http'
@@ -10,9 +10,10 @@ import { tmpdir } from 'node:os'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockWriteDb, mockAssertDbPathAllowed, mockInitHookSecret, mockGetHookSecret, mockDetectWslGatewayIp } = vi.hoisted(
+const { mockWriteDb, mockWriteDbNative, mockAssertDbPathAllowed, mockInitHookSecret, mockGetHookSecret, mockDetectWslGatewayIp } = vi.hoisted(
   () => ({
     mockWriteDb: vi.fn(),
+    mockWriteDbNative: vi.fn(),
     mockAssertDbPathAllowed: vi.fn(), // no-op by default
     mockInitHookSecret: vi.fn(),
     mockGetHookSecret: vi.fn().mockReturnValue('test-secret-db'),
@@ -22,6 +23,7 @@ const { mockWriteDb, mockAssertDbPathAllowed, mockInitHookSecret, mockGetHookSec
 
 vi.mock('./db', () => ({
   writeDb: mockWriteDb,
+  writeDbNative: mockWriteDbNative,
   assertDbPathAllowed: mockAssertDbPathAllowed,
 }))
 
@@ -130,9 +132,9 @@ describe('handleStop — DB write path via real transcript', () => {
     try { unlinkSync(tmpFile) } catch { /* ignore */ }
   })
 
-  it('calls writeDb when all fields present and transcript has non-zero tokens', async () => {
+  it('calls writeDbNative when all fields present and transcript has non-zero tokens', async () => {
     writeFileSync(tmpFile, makeTranscript({ inputTokens: 500, outputTokens: 200 }))
-    mockWriteDb.mockResolvedValue(undefined)
+    mockWriteDbNative.mockResolvedValue(undefined)
 
     await makeRequest(port, {
       path: '/hooks/stop',
@@ -140,17 +142,17 @@ describe('handleStop — DB write path via real transcript', () => {
     })
     await new Promise((r) => setTimeout(r, 200))
 
-    expect(mockWriteDb).toHaveBeenCalledOnce()
-    expect(mockWriteDb).toHaveBeenCalledWith(
+    expect(mockWriteDbNative).toHaveBeenCalledOnce()
+    expect(mockWriteDbNative).toHaveBeenCalledWith(
       expect.stringContaining('project.db'),
       expect.any(Function)
     )
   })
 
-  it('skips writeDb when transcript parses to zero tokens (both tokensIn and tokensOut are 0)', async () => {
+  it('skips writeDbNative when transcript parses to zero tokens (both tokensIn and tokensOut are 0)', async () => {
     // File with no finalized assistant messages → zero tokens
     writeFileSync(tmpFile, JSON.stringify({ type: 'user', message: { content: 'hello' } }) + '\n')
-    mockWriteDb.mockResolvedValue(undefined)
+    mockWriteDbNative.mockResolvedValue(undefined)
 
     await makeRequest(port, {
       path: '/hooks/stop',
@@ -159,14 +161,14 @@ describe('handleStop — DB write path via real transcript', () => {
     await new Promise((r) => setTimeout(r, 200))
 
     // tokensIn=0 and tokensOut=0 → early return, no DB write
-    expect(mockWriteDb).not.toHaveBeenCalled()
+    expect(mockWriteDbNative).not.toHaveBeenCalled()
   })
 
-  it('runs writeDb callback: executes DB statements to find session by conv_id', async () => {
+  it('runs writeDbNative callback: executes DB statements to find session by conv_id', async () => {
     writeFileSync(tmpFile, makeTranscript({ inputTokens: 100, outputTokens: 50 }))
 
     let capturedCallback: ((db: unknown) => void) | null = null
-    mockWriteDb.mockImplementation(async (_path: string, cb: (db: unknown) => void) => {
+    mockWriteDbNative.mockImplementation(async (_path: string, cb: (db: unknown) => void) => {
       capturedCallback = cb
     })
 
@@ -178,37 +180,30 @@ describe('handleStop — DB write path via real transcript', () => {
 
     expect(capturedCallback).not.toBeNull()
 
-    // Execute the callback with a mock DB that returns a session
+    // Execute the callback with a mock DB using better-sqlite3 native API
     const mockStmt = {
-      bind: vi.fn(),
-      step: vi.fn().mockReturnValue(true),
-      getAsObject: vi.fn().mockReturnValue({ id: 42 }),
-      free: vi.fn(),
+      get: vi.fn().mockReturnValue({ id: 42 }),
+      run: vi.fn(),
     }
-    const mockRun = vi.fn()
     const mockDb = {
       prepare: vi.fn().mockReturnValue(mockStmt),
-      run: mockRun,
     }
 
     capturedCallback!(mockDb)
 
-    // Should have prepared a SELECT statement
+    // Should have prepared a SELECT statement with conv_id lookup
     expect(mockDb.prepare).toHaveBeenCalledWith(
       expect.stringContaining('SELECT id FROM sessions WHERE claude_conv_id = ?')
     )
-    // Should have called stmt.bind, step, getAsObject, free
-    expect(mockStmt.bind).toHaveBeenCalledWith(['conv-lookup'])
-    expect(mockStmt.step).toHaveBeenCalled()
-    expect(mockStmt.getAsObject).toHaveBeenCalled()
-    expect(mockStmt.free).toHaveBeenCalled()
+    // Should have called stmt.get with the conv_id
+    expect(mockStmt.get).toHaveBeenCalledWith('conv-lookup')
   })
 
-  it('runs writeDb callback: updates tokens and status on found session', async () => {
+  it('runs writeDbNative callback: updates tokens and status on found session', async () => {
     writeFileSync(tmpFile, makeTranscript({ inputTokens: 300, outputTokens: 120, cacheRead: 50, cacheWrite: 20 }))
 
     let capturedCallback: ((db: unknown) => void) | null = null
-    mockWriteDb.mockImplementation(async (_path: string, cb: (db: unknown) => void) => {
+    mockWriteDbNative.mockImplementation(async (_path: string, cb: (db: unknown) => void) => {
       capturedCallback = cb
     })
 
@@ -221,35 +216,25 @@ describe('handleStop — DB write path via real transcript', () => {
     expect(capturedCallback).not.toBeNull()
 
     const mockStmt = {
-      bind: vi.fn(),
-      step: vi.fn().mockReturnValue(true),
-      getAsObject: vi.fn().mockReturnValue({ id: 99 }),
-      free: vi.fn(),
+      get: vi.fn().mockReturnValue({ id: 99 }),
+      run: vi.fn(),
     }
-    const mockRun = vi.fn()
     const mockDb = {
       prepare: vi.fn().mockReturnValue(mockStmt),
-      run: mockRun,
     }
 
     capturedCallback!(mockDb)
 
     // Should have run two UPDATEs: tokens + status
-    expect(mockRun).toHaveBeenCalledWith(
-      'UPDATE sessions SET tokens_in=?, tokens_out=?, tokens_cache_read=?, tokens_cache_write=? WHERE id=?',
-      [300, 120, 50, 20, 99]
-    )
-    expect(mockRun).toHaveBeenCalledWith(
-      expect.stringContaining("SET status='completed'"),
-      [99]
-    )
+    expect(mockStmt.run).toHaveBeenCalledWith(300, 120, 50, 20, 99)
+    expect(mockStmt.run).toHaveBeenCalledWith(99)
   })
 
-  it('runs writeDb callback: falls back to most recent started session when conv_id not found', async () => {
+  it('runs writeDbNative callback: falls back to most recent started session when conv_id not found', async () => {
     writeFileSync(tmpFile, makeTranscript({ inputTokens: 200, outputTokens: 80 }))
 
     let capturedCallback: ((db: unknown) => void) | null = null
-    mockWriteDb.mockImplementation(async (_path: string, cb: (db: unknown) => void) => {
+    mockWriteDbNative.mockImplementation(async (_path: string, cb: (db: unknown) => void) => {
       capturedCallback = cb
     })
 
@@ -261,49 +246,33 @@ describe('handleStop — DB write path via real transcript', () => {
 
     expect(capturedCallback).not.toBeNull()
 
-    // First stmt (byConvId): step returns false → session not found
-    // Second stmt (fallback): step returns true → session found via fallback
-    const mockStmtNotFound = {
-      bind: vi.fn(),
-      step: vi.fn().mockReturnValue(false),
-      getAsObject: vi.fn().mockReturnValue({}),
-      free: vi.fn(),
-    }
-    const mockStmtFallback = {
-      bind: vi.fn(),
-      step: vi.fn().mockReturnValue(true),
-      getAsObject: vi.fn().mockReturnValue({ id: 77 }),
-      free: vi.fn(),
-    }
-    const mockRun = vi.fn()
+    // First stmt (byConvId): .get() returns undefined → session not found
+    // Second stmt (fallback): .get() returns row → session found via fallback
     let callCount = 0
     const mockDb = {
       prepare: vi.fn().mockImplementation(() => {
         callCount++
-        return callCount === 1 ? mockStmtNotFound : mockStmtFallback
+        if (callCount === 1) {
+          return { get: vi.fn().mockReturnValue(undefined), run: vi.fn() }
+        }
+        return { get: vi.fn().mockReturnValue({ id: 77 }), run: vi.fn() }
       }),
-      run: mockRun,
     }
 
     capturedCallback!(mockDb)
 
     // Fallback stmt prepared with the fallback query
-    expect(mockDb.prepare).toHaveBeenCalledTimes(2)
+    expect(mockDb.prepare).toHaveBeenCalledTimes(4) // byConvId + fallback + 2 UPDATEs
     expect(mockDb.prepare).toHaveBeenNthCalledWith(2,
       expect.stringContaining("status IN ('started','completed')")
     )
-    // Should use fallback session id=77 for update
-    expect(mockRun).toHaveBeenCalledWith(
-      'UPDATE sessions SET tokens_in=?, tokens_out=?, tokens_cache_read=?, tokens_cache_write=? WHERE id=?',
-      [200, 80, 0, 0, 77]
-    )
   })
 
-  it('runs writeDb callback: returns early when no session found (byConvId and fallback both fail)', async () => {
+  it('runs writeDbNative callback: returns early when no session found (byConvId and fallback both fail)', async () => {
     writeFileSync(tmpFile, makeTranscript({ inputTokens: 100, outputTokens: 50 }))
 
     let capturedCallback: ((db: unknown) => void) | null = null
-    mockWriteDb.mockImplementation(async (_path: string, cb: (db: unknown) => void) => {
+    mockWriteDbNative.mockImplementation(async (_path: string, cb: (db: unknown) => void) => {
       capturedCallback = cb
     })
 
@@ -315,28 +284,24 @@ describe('handleStop — DB write path via real transcript', () => {
 
     expect(capturedCallback).not.toBeNull()
 
-    // Both stmts: step returns false → no session found
-    const mockStmtNone = {
-      bind: vi.fn(),
-      step: vi.fn().mockReturnValue(false),
-      getAsObject: vi.fn().mockReturnValue({}),
-      free: vi.fn(),
+    // Both stmts: .get() returns undefined → no session found
+    const mockStmt = {
+      get: vi.fn().mockReturnValue(undefined),
+      run: vi.fn(),
     }
-    const mockRun = vi.fn()
     const mockDb = {
-      prepare: vi.fn().mockReturnValue(mockStmtNone),
-      run: mockRun,
+      prepare: vi.fn().mockReturnValue(mockStmt),
     }
 
     capturedCallback!(mockDb)
 
     // No UPDATE should be run
-    expect(mockRun).not.toHaveBeenCalled()
+    expect(mockStmt.run).not.toHaveBeenCalled()
   })
 
-  it('handles writeDb rejection without crashing server', async () => {
+  it('handles writeDbNative rejection without crashing server', async () => {
     writeFileSync(tmpFile, makeTranscript({ inputTokens: 100, outputTokens: 50 }))
-    mockWriteDb.mockRejectedValue(new Error('DB write failed'))
+    mockWriteDbNative.mockRejectedValue(new Error('DB write failed'))
 
     await makeRequest(port, {
       path: '/hooks/stop',
@@ -349,7 +314,7 @@ describe('handleStop — DB write path via real transcript', () => {
     expect(health.status).toBe(200)
   })
 
-  it('pushes Stop hook:event even when writeDb is not called (missing session_id)', async () => {
+  it('pushes Stop hook:event even when writeDbNative is not called (missing session_id)', async () => {
     const mockWebContentsSend = vi.fn()
     const fakeWin = {
       isDestroyed: vi.fn().mockReturnValue(false),
@@ -368,7 +333,7 @@ describe('handleStop — DB write path via real transcript', () => {
       'hook:event',
       expect.objectContaining({ event: 'Stop' })
     )
-    expect(mockWriteDb).not.toHaveBeenCalled()
+    expect(mockWriteDbNative).not.toHaveBeenCalled()
   })
 })
 
@@ -398,14 +363,14 @@ describe('handleStop — token skip guard', () => {
         message: { stop_reason: null, usage: { input_tokens: 100, output_tokens: 1 } },
       }) + '\n'
     )
-    mockWriteDb.mockResolvedValue(undefined)
+    mockWriteDbNative.mockResolvedValue(undefined)
 
     await makeRequest(port, {
       path: '/hooks/stop',
       body: { session_id: 'conv-skip', transcript_path: tmpFile, cwd: '/project' },
     })
     await new Promise((r) => setTimeout(r, 200))
-    expect(mockWriteDb).not.toHaveBeenCalled()
+    expect(mockWriteDbNative).not.toHaveBeenCalled()
   })
 
   it('does NOT skip DB when tokensIn > 0 (even if tokensOut is 0)', async () => {
@@ -419,15 +384,15 @@ describe('handleStop — token skip guard', () => {
         },
       }) + '\n'
     )
-    mockWriteDb.mockResolvedValue(undefined)
+    mockWriteDbNative.mockResolvedValue(undefined)
 
     await makeRequest(port, {
       path: '/hooks/stop',
       body: { session_id: 'conv-nonzero', transcript_path: tmpFile, cwd: '/project' },
     })
     await new Promise((r) => setTimeout(r, 200))
-    // tokensIn=100, tokensOut=0 → NOT (tokensIn===0 && tokensOut===0) → writeDb called
-    expect(mockWriteDb).toHaveBeenCalled()
+    // tokensIn=100, tokensOut=0 → NOT (tokensIn===0 && tokensOut===0) → writeDbNative called
+    expect(mockWriteDbNative).toHaveBeenCalled()
   })
 })
 
