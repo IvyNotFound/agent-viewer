@@ -104,15 +104,6 @@ async function handleStop(payload: StopPayload): Promise<void> {
     return
   }
 
-  let tokens: TokenCounts
-  try {
-    tokens = await parseTokensFromJSONLStream(transcriptPath)
-  } catch (err) {
-    console.warn('[hookServer] Cannot read transcript:', err)
-    return
-  }
-  if (tokens.tokensIn === 0 && tokens.tokensOut === 0) return
-
   const dbPath = join(cwd, '.claude', 'project.db')
 
   try {
@@ -121,6 +112,15 @@ async function handleStop(payload: StopPayload): Promise<void> {
     console.warn('[hookServer] handleStop: cwd not in allowlist, ignoring', cwd)
     return
   }
+
+  let tokens: TokenCounts
+  try {
+    tokens = await parseTokensFromJSONLStream(transcriptPath)
+  } catch (err) {
+    console.warn('[hookServer] Cannot read transcript:', err)
+    return
+  }
+  if (tokens.tokensIn === 0 && tokens.tokensOut === 0) return
 
   try {
     await writeDb(dbPath, (db) => {

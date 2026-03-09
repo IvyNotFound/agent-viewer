@@ -9,9 +9,10 @@ import http from 'http'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockWriteDb, mockInitHookSecret, mockGetHookSecret, mockWebContentsSend } = vi.hoisted(
+const { mockWriteDb, mockAssertDbPathAllowed, mockInitHookSecret, mockGetHookSecret, mockWebContentsSend } = vi.hoisted(
   () => ({
     mockWriteDb: vi.fn(),
+    mockAssertDbPathAllowed: vi.fn(), // no-op by default — allows all paths
     mockInitHookSecret: vi.fn(),
     mockGetHookSecret: vi.fn().mockReturnValue('test-secret-abc123'),
     mockWebContentsSend: vi.fn(),
@@ -20,6 +21,7 @@ const { mockWriteDb, mockInitHookSecret, mockGetHookSecret, mockWebContentsSend 
 
 vi.mock('./db', () => ({
   writeDb: mockWriteDb,
+  assertDbPathAllowed: mockAssertDbPathAllowed,
 }))
 
 vi.mock('./hookServer-inject', async (importOriginal) => {
@@ -217,6 +219,18 @@ describe('handleLifecycleEvent via HTTP', () => {
       body: { session_id: 'conv-abc', cwd: '/project' },
     })
     await new Promise((r) => setTimeout(r, 50))
+    expect(mockWriteDb).not.toHaveBeenCalled()
+  })
+
+  it('skips writeDb when cwd is not in the allowlist (T1175)', async () => {
+    mockAssertDbPathAllowed.mockImplementationOnce(() => {
+      throw new Error('DB_PATH_NOT_ALLOWED: /evil/.claude/project.db')
+    })
+    await makeRequest(port, {
+      path: '/hooks/session-start',
+      body: { session_id: 'conv-abc', cwd: '/evil' },
+    })
+    await new Promise((r) => setTimeout(r, 100))
     expect(mockWriteDb).not.toHaveBeenCalled()
   })
 })
