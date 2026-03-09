@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.31.7] - 2026-03-09
+
+### Bug Fixes
+- fix: corriger les fermetures intempestives d'onglets agents (c4ebff1)
+- fix(back-electron): cleanup automatique des worktrees orphelins au démarrage (T1232) (c9c276d)
+
+### Refactoring
+- refactor(back-electron): migrer hookServer vers l'API better-sqlite3 native (T1224) (f95c44b)
+
+### Tests
+- test(back-electron): renforcer assertions ipc-project.ts T1226 (2d39e6f)
+- test(back-electron): renforcer tests ipc-cli-detect.ts (T1225) (b2da255)
+- test(back-electron): update hookServer-db.spec.ts for writeDbNative migration (T1224) (03519be)
+- test(front-vuejs): add mutation-killing tests for utils/cliCapabilities.ts (T1235) (21e6eb9)
+- test(back-electron): strengthen worktree-manager mutation coverage (T1228) (4b05b2b)
+- test(back-electron): renforcer les tests hookServer + hookServer-inject (T1219) (959bced)
+- test(front-vuejs): ajouter couverture useTabBarGroups (T1223) (65f097c)
+
+### Documentation
+- docs(back-electron): merge IPC-REFERENCE.md (T1236) (3c40339)
+- docs(back-electron): créer la référence IPC centralisée (T1236) (9ceb707)
+
+### Chores
+- chore(build): exclure .claude/ du bundle electron-builder (9166a2d)
+- chore(back-electron): migrate no-explicit-any from warn to error in main/ (126c557)
+- chore(ci): add progressive coverage gate in vitest.config.ts (T1230) (9abe390)
+- chore(front-vuejs): élever no-explicit-any en error pour le renderer (T1233) (79cabfd)
+- chore(release): sync CLAUDE.md version on release + fix current version to 0.31.4 (11945fd)
+
 ## [0.31.6] - 2026-03-09
 
 ### Bug Fixes
