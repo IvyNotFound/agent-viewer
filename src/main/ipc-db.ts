@@ -66,6 +66,9 @@ export function registerDbHandlers(): void {
       console.warn('[IPC query-db] Blocked write keyword:', matchedKeyword[1], 'in query:', query.substring(0, 100))
       return { success: false, error: 'Write operations (INSERT/UPDATE/DELETE/DROP/etc.) are not allowed from the renderer. Use dedicated IPC handlers for write operations.', rows: [] }
     }
+    if (!Array.isArray(params) || params.some(p => p !== null && typeof p !== 'string' && typeof p !== 'number' && typeof p !== 'boolean' && !(p instanceof Uint8Array))) {
+      return { success: false, error: 'Invalid params: each element must be string, number, boolean, null, or Uint8Array.', rows: [] }
+    }
     try {
       const safeQuery = addDefaultLimit(query)
       return await queryLive(dbPath, safeQuery, params)

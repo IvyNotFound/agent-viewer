@@ -206,6 +206,62 @@ describe('IPC DB handlers', () => {
     })
   })
 
+  // ── query-db : params validation (T1178) ──────────────────────────────────
+
+  describe('query-db — params validation (T1178)', () => {
+    const dbPath = '/fake/project.db'
+
+    it('should accept valid string param', async () => {
+      vi.mocked(mockedQueryLive).mockResolvedValueOnce([])
+      await expect(callHandler('query-db', dbPath, 'SELECT ? AS v', ['hello'])).resolves.toEqual([])
+    })
+
+    it('should accept valid number param', async () => {
+      vi.mocked(mockedQueryLive).mockResolvedValueOnce([])
+      await expect(callHandler('query-db', dbPath, 'SELECT ? AS v', [42])).resolves.toEqual([])
+    })
+
+    it('should accept valid boolean param', async () => {
+      vi.mocked(mockedQueryLive).mockResolvedValueOnce([])
+      await expect(callHandler('query-db', dbPath, 'SELECT ? AS v', [true])).resolves.toEqual([])
+    })
+
+    it('should accept null param', async () => {
+      vi.mocked(mockedQueryLive).mockResolvedValueOnce([])
+      await expect(callHandler('query-db', dbPath, 'SELECT ? AS v', [null])).resolves.toEqual([])
+    })
+
+    it('should accept Uint8Array param', async () => {
+      vi.mocked(mockedQueryLive).mockResolvedValueOnce([])
+      await expect(callHandler('query-db', dbPath, 'SELECT ? AS v', [new Uint8Array([1, 2, 3])])).resolves.toEqual([])
+    })
+
+    it('should reject plain object param', async () => {
+      const result = await callHandler('query-db', dbPath, 'SELECT ? AS v', [{ evil: true }])
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('Invalid params') })
+    })
+
+    it('should reject function param', async () => {
+      const result = await callHandler('query-db', dbPath, 'SELECT ? AS v', [() => 'crash'])
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('Invalid params') })
+    })
+
+    it('should reject Symbol param', async () => {
+      const result = await callHandler('query-db', dbPath, 'SELECT ? AS v', [Symbol('evil')])
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('Invalid params') })
+    })
+
+    it('should reject non-array params (object)', async () => {
+      const result = await callHandler('query-db', dbPath, 'SELECT 1', { length: 0 } as unknown as unknown[])
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('Invalid params') })
+    })
+
+    it('should reject object with throwing valueOf', async () => {
+      const result = await callHandler('query-db', dbPath, 'SELECT ? AS v', [{ valueOf: () => { throw new Error('crash') } }])
+      expect(result).toMatchObject({ success: false, error: expect.stringContaining('Invalid params') })
+    })
+  })
+
   // ── migrate-db ────────────────────────────────────────────────────────────
 
   describe('migrate-db handler', () => {
