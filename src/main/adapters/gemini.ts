@@ -1,7 +1,9 @@
 /**
  * Google Gemini CLI adapter for agent-viewer.
  *
- * Gemini runs in non-interactive mode via `-p`/`--prompt` (confirmed).
+ * Gemini's `-p`/`--prompt` flag requires a non-empty prompt value (single-turn mode).
+ * Since no initial prompt is available at spawn time (delivered via stdin via agent:send),
+ * we spawn without `-p` so Gemini enters its interactive stdin mode.
  * System prompt injection via `--system-prompt <file>` (to be confirmed).
  * Output: plain text — wrapped as StreamEvent for phase 1 (T1012).
  *
@@ -29,9 +31,7 @@ export const geminiAdapter: CliAdapter = {
       ? opts.binaryName
       : 'gemini'
 
-    const args: string[] = [
-      '-p', '',  // non-interactive mode; actual prompt delivered via stdin
-    ]
+    const args: string[] = []
 
     if (opts.systemPromptFile) {
       // TODO: confirm flag name — may be --system-prompt, --context, or --instructions

@@ -225,8 +225,8 @@ describe('codexAdapter', () => {
 
 describe('geminiAdapter', () => {
   it('has cli = "gemini"', () => expect(geminiAdapter.cli).toBe('gemini'))
-  it('buildCommand includes -p (non-interactive mode)', () => {
-    expect(geminiAdapter.buildCommand({}).args).toContain('-p')
+  it('buildCommand has no -p by default (would crash with empty value)', () => {
+    expect(geminiAdapter.buildCommand({}).args).not.toContain('-p')
   })
   it('parseLine wraps text lines as { type: "text" }', () => {
     expect(geminiAdapter.parseLine('output')).toEqual({ type: 'text', text: 'output' })

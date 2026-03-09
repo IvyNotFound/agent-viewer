@@ -78,14 +78,14 @@ describe('geminiAdapter.buildCommand', () => {
     expect(spec.command).toBe('gemini-dev')
   })
 
-  it('args array is non-empty (at least -p flag)', () => {
+  it('args are empty by default (no -p: requires non-empty value, prompt via stdin)', () => {
     const spec = geminiAdapter.buildCommand({})
-    expect(spec.args.length).toBeGreaterThan(0)
+    expect(spec.args).toEqual([])
   })
 
-  it('args contain -p by default (non-interactive mode)', () => {
+  it('does not include -p by default (would crash with empty value)', () => {
     const spec = geminiAdapter.buildCommand({})
-    expect(spec.args).toContain('-p')
+    expect(spec.args).not.toContain('-p')
   })
 
   it('includes --system-prompt <file> when systemPromptFile provided', () => {
