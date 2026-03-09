@@ -60,6 +60,27 @@ describe('session-closer', () => {
       expect(writeDb).toHaveBeenCalledTimes(1)
       expect(writeDb).toHaveBeenCalledWith('/fake/project2.db', expect.any(Function))
     })
+
+    it('should invoke onSessionsClosed callback with agent_ids when sessions are closed', async () => {
+      const mockDb = {
+        exec: vi.fn().mockReturnValue([{ columns: ['agent_id'], values: [[5], [7]] }]),
+        run: vi.fn(),
+        getRowsModified: vi.fn().mockReturnValue(2),
+      }
+      vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => { fn(mockDb); return undefined })
+      const onSessionsClosed = vi.fn()
+      startSessionCloser('/fake/project.db', onSessionsClosed)
+      await vi.advanceTimersByTimeAsync(30_000)
+      expect(onSessionsClosed).toHaveBeenCalledWith([5, 7])
+    })
+
+    it('should NOT invoke onSessionsClosed when no sessions are closed', async () => {
+      // default mock resolves without calling the callback → closedAgentIds stays []
+      const onSessionsClosed = vi.fn()
+      startSessionCloser('/fake/project.db', onSessionsClosed)
+      await vi.advanceTimersByTimeAsync(30_000)
+      expect(onSessionsClosed).not.toHaveBeenCalled()
+    })
   })
 
   describe('closeZombieSessions', () => {
@@ -81,7 +102,12 @@ describe('session-closer', () => {
     })
 
     it('should pass a callback that runs the UPDATE query with agent_id logic', async () => {
-      const mockDb = { run: vi.fn(), getRowsModified: vi.fn().mockReturnValue(0) }
+      // exec returns one agent_id so the UPDATE path is reached
+      const mockDb = {
+        exec: vi.fn().mockReturnValue([{ columns: ['agent_id'], values: [[1]] }]),
+        run: vi.fn(),
+        getRowsModified: vi.fn().mockReturnValue(1),
+      }
       vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => {
         fn(mockDb)
         return undefined
@@ -110,8 +136,27 @@ describe('session-closer', () => {
       )
     })
 
+    it('callback returns false when no eligible sessions (T1110 skip-write signal)', async () => {
+      const mockDb = {
+        exec: vi.fn().mockReturnValue([]),
+        run: vi.fn(),
+        getRowsModified: vi.fn().mockReturnValue(0),
+      }
+      let callbackResult: unknown
+      vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => {
+        callbackResult = fn(mockDb)
+        return callbackResult
+      })
+      await closeZombieSessions('/fake/project.db')
+      expect(callbackResult).toBe(false)
+    })
+
     it('callback returns false when getRowsModified() === 0 (T1110 skip-write signal)', async () => {
-      const mockDb = { run: vi.fn(), getRowsModified: vi.fn().mockReturnValue(0) }
+      const mockDb = {
+        exec: vi.fn().mockReturnValue([{ columns: ['agent_id'], values: [[1]] }]),
+        run: vi.fn(),
+        getRowsModified: vi.fn().mockReturnValue(0),
+      }
       let callbackResult: unknown
       vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => {
         callbackResult = fn(mockDb)
@@ -122,7 +167,11 @@ describe('session-closer', () => {
     })
 
     it('callback returns true when getRowsModified() > 0 (T1110 write proceeds)', async () => {
-      const mockDb = { run: vi.fn(), getRowsModified: vi.fn().mockReturnValue(2) }
+      const mockDb = {
+        exec: vi.fn().mockReturnValue([{ columns: ['agent_id'], values: [[1]] }]),
+        run: vi.fn(),
+        getRowsModified: vi.fn().mockReturnValue(2),
+      }
       let callbackResult: unknown
       vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => {
         callbackResult = fn(mockDb)
@@ -130,6 +179,28 @@ describe('session-closer', () => {
       })
       await closeZombieSessions('/fake/project.db')
       expect(callbackResult).toBe(true)
+    })
+
+    it('returns the closed agent_ids', async () => {
+      const mockDb = {
+        exec: vi.fn().mockReturnValue([{ columns: ['agent_id'], values: [[3], [9]] }]),
+        run: vi.fn(),
+        getRowsModified: vi.fn().mockReturnValue(2),
+      }
+      vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => { fn(mockDb); return undefined })
+      const result = await closeZombieSessions('/fake/project.db')
+      expect(result).toEqual([3, 9])
+    })
+
+    it('returns empty array when no sessions are eligible', async () => {
+      const mockDb = {
+        exec: vi.fn().mockReturnValue([]),
+        run: vi.fn(),
+        getRowsModified: vi.fn().mockReturnValue(0),
+      }
+      vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => { fn(mockDb); return undefined })
+      const result = await closeZombieSessions('/fake/project.db')
+      expect(result).toEqual([])
     })
   })
 })

@@ -93,7 +93,11 @@ export function registerDbHandlers(): void {
         if (debounceTimer) clearTimeout(debounceTimer)
         debounceTimer = setTimeout(() => notifyRenderer(), 300)
       })
-      startSessionCloser(dbPath)
+      startSessionCloser(dbPath, (agentIds) => {
+        for (const w of BrowserWindow.getAllWindows()) {
+          if (!w.isDestroyed()) w.webContents.send('session:agents-completed', agentIds)
+        }
+      })
     } catch (err) {
       console.error('[IPC watch-db]', err)
     }

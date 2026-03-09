@@ -56,6 +56,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.off('db-changed', handler)
   },
 
+  /** Subscribe to session auto-close notifications (session-closer cycle). Returns unsubscribe fn. */
+  onSessionsCompleted: (callback: (agentIds: number[]) => void): (() => void) => {
+    const handler = (_: unknown, agentIds: number[]) => callback(agentIds)
+    ipcRenderer.on('session:agents-completed', handler)
+    return () => ipcRenderer.off('session:agents-completed', handler)
+  },
+
   showConfirmDialog: (opts: { title: string; message: string; detail?: string }): Promise<boolean> =>
     ipcRenderer.invoke('show-confirm-dialog', opts),
 
