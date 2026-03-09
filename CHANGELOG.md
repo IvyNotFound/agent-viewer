@@ -4,6 +4,49 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.31.1] - 2026-03-09
+
+### Features
+- feat(back-electron): extend pruneOrphanedWorktrees to new-format worktrees (T1207) (85dccbb)
+- feat(back-electron): prune orphaned worktrees on project load (T1206) (6144ec0)
+- feat(front-vuejs): display text/error events in StreamView for non-Claude CLIs (T1197) (d98c61b)
+
+### Bug Fixes
+- fix(back-electron): ensure worktree removal on tab close (T1205) (9178a45)
+- fix(front-vuejs): align ProjectPopup style with other modals (T1202) (fa7b014)
+- fix(back-electron): session-closer detects manually-closed sessions (T1204) (9f0fb0f)
+- fix(front-vuejs): replace anglicisms scope/Scopes with périmètre/Périmètres in fr.json (T1203) (ee06b92)
+- fix(back-electron): emit PascalCase hook event names to match renderer expectations (T1200) (5ac8c8a)
+- fix(front-vuejs): fix SettingsModal height to be constant across sections (T1201) (bf80dd7)
+- fix(back-electron): add formatStdinMessage to gemini adapter (T1198) (0fe349a)
+- fix(back-electron): pass settings file path directly to --settings on Windows (T1195) (ea6a07c)
+
+### Documentation
+- docs(front-vuejs): add JSDoc to selectProject, openTask and layout functions (T1189) (3ff01b9)
+- docs(back-electron): add inline comments in ipc-agent-tasks context builder (T1187) (0bf939c)
+
+### Chores
+- chore(global): ignore audit reports and local PS1 scripts in gitignore (107a137)
+- chore(deps-dev): bump @pinia/testing 0.1.7→1.0.3 + pinia 2→3 (T1193) (eddc9dc)
+- chore(deps-dev): bump electron in the electron group (e7c3064)
+- chore(deps-dev): bump the vue group with 2 updates (2779094)
+- chore(deps-dev): bump @codemirror/lang-javascript from 6.2.4 to 6.2.5 (5bb6912)
+- chore(deps): bump actions/setup-node from 4 to 6 (010c529)
+- chore(deps): bump actions/upload-artifact from 4 to 7 (96bcab8)
+- chore(deps): bump actions/checkout from 4 to 6 (80ff7c0)
+- chore(deps-dev): bump marked from 17.0.3 to 17.0.4 (343d219)
+- chore(deps): bump actions/download-artifact from 4 to 8 (7daeea1)
+
+### Other
+- Merge pull request #5 from IvyNotFound/dependabot/github_actions/actions/upload-artifact-7 (65566e8)
+- Merge pull request #4 from IvyNotFound/dependabot/github_actions/actions/checkout-6 (092dcb9)
+- Merge pull request #3 from IvyNotFound/dependabot/github_actions/actions/setup-node-6 (a48393d)
+- Merge pull request #2 from IvyNotFound/dependabot/github_actions/actions/download-artifact-8 (33a1ef6)
+- Merge pull request #6 from IvyNotFound/dependabot/npm_and_yarn/electron-071b959d73 (77ace7b)
+- Merge pull request #9 from IvyNotFound/dependabot/npm_and_yarn/codemirror/lang-javascript-6.2.5 (a1de7b9)
+- Merge pull request #7 from IvyNotFound/dependabot/npm_and_yarn/vue-5a201692e0 (12e79e7)
+- Merge pull request #8 from IvyNotFound/dependabot/npm_and_yarn/marked-17.0.4 (274c550)
+
 ## [0.31.0] - 2026-03-09
 
 ### Features
