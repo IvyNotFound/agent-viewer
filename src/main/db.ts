@@ -108,6 +108,21 @@ const writeMutex = new Map<string, Promise<unknown>>()
  * @throws If the mutation fails
  */
 export async function writeDb<T = void>(dbPath: string, fn: (db: MigrationDb) => T): Promise<T> {
+  return writeDbNative(dbPath, (db) => fn(createMigrationAdapter(db)))
+}
+
+/**
+ * Native write helper — opens a connection, runs mutation via raw better-sqlite3 Database.
+ * Uses per-path mutex and cross-process advisory lock for concurrency safety.
+ *
+ * Use this for code that uses the native better-sqlite3 API directly (stmt.get/run/all).
+ *
+ * @param dbPath - Absolute path to the SQLite database file
+ * @param fn - Callback receiving a native better-sqlite3 Database instance
+ * @returns The value returned by the callback
+ * @throws If the mutation fails
+ */
+export async function writeDbNative<T = void>(dbPath: string, fn: (db: Database.Database) => T): Promise<T> {
   const prev = writeMutex.get(dbPath) ?? Promise.resolve()
   let release: () => void
   const gate = new Promise<void>((r) => { release = r })
@@ -118,8 +133,7 @@ export async function writeDb<T = void>(dbPath: string, fn: (db: MigrationDb) =>
     const lockPath = await acquireWriteLock(dbPath)
     try {
       const db = getDb(dbPath)
-      const adapter = createMigrationAdapter(db)
-      const result = fn(adapter)
+      const result = fn(db)
       return result
     } finally {
       await releaseWriteLock(lockPath)

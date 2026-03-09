@@ -20,7 +20,7 @@ const { mockWriteDb, mockAssertDbPathAllowed, mockInitHookSecret, mockGetHookSec
 )
 
 vi.mock('./db', () => ({
-  writeDb: mockWriteDb,
+  writeDbNative: mockWriteDb,
   assertDbPathAllowed: mockAssertDbPathAllowed,
 }))
 
@@ -116,10 +116,9 @@ describe('handleLifecycleEvent via HTTP', () => {
     mockWriteDb.mockImplementation(async (_path: string, cb: (db: unknown) => void) => {
       cb({
         prepare: vi.fn().mockReturnValue({
-          bind: vi.fn(), step: vi.fn().mockReturnValue(true),
-          getAsObject: vi.fn().mockReturnValue({ id: 42, agent_id: 7 }), free: vi.fn(),
+          get: vi.fn().mockReturnValue({ id: 42, agent_id: 7 }),
+          run: vi.fn(),
         }),
-        run: vi.fn(),
       })
     })
     await makeRequest(port, {
@@ -163,10 +162,9 @@ describe('handleLifecycleEvent via HTTP', () => {
     mockWriteDb.mockImplementation(async (_path: string, cb: (db: unknown) => void) => {
       cb({
         prepare: vi.fn().mockReturnValue({
-          bind: vi.fn(), step: vi.fn().mockReturnValue(false),
-          getAsObject: vi.fn().mockReturnValue({}), free: vi.fn(),
+          get: vi.fn().mockReturnValue(undefined),
+          run: vi.fn(),
         }),
-        run: vi.fn(),
       })
     })
     await makeRequest(port, {
@@ -181,10 +179,9 @@ describe('handleLifecycleEvent via HTTP', () => {
     mockWriteDb.mockImplementation(async (_path: string, cb: (db: unknown) => void) => {
       cb({
         prepare: vi.fn().mockReturnValue({
-          bind: vi.fn(), step: vi.fn().mockReturnValue(true),
-          getAsObject: vi.fn().mockReturnValue({ id: 10, agent_id: 3 }), free: vi.fn(),
+          get: vi.fn().mockReturnValue({ id: 10, agent_id: 3 }),
+          run: vi.fn(),
         }),
-        run: vi.fn(),
       })
     })
     await makeRequest(port, {

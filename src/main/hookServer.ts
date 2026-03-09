@@ -20,7 +20,7 @@
 import http from 'http'
 import { join } from 'path'
 import type { BrowserWindow } from 'electron'
-import { writeDb, assertDbPathAllowed } from './db'
+import { writeDbNative, assertDbPathAllowed } from './db'
 import { HOOK_PORT, getHookSecret, initHookSecret, detectWslGatewayIp } from './hookServer-inject'
 import { parseTokensFromJSONLStream, type TokenCounts } from './hookServer-tokens'
 
@@ -123,26 +123,20 @@ async function handleStop(payload: StopPayload): Promise<void> {
   if (tokens.tokensIn === 0 && tokens.tokensOut === 0) return
 
   try {
-    await writeDb(dbPath, (db) => {
+    await writeDbNative(dbPath, (db) => {
       // 1. Try to find session by conv_id
-      const byConvId = db.prepare('SELECT id FROM sessions WHERE claude_conv_id = ?')
-      byConvId.bind([convId])
-      let sessionId: number | null = null
-      if (byConvId.step()) {
-        sessionId = (byConvId.getAsObject() as { id: number }).id
-      }
-      byConvId.free()
+      const byConvIdRow = db.prepare('SELECT id FROM sessions WHERE claude_conv_id = ?').get(convId) as { id: number } | undefined
+      let sessionId: number | null = byConvIdRow?.id ?? null
 
       // 2. Fallback: most recent started/completed session with no tokens
       if (sessionId === null) {
-        const fallback = db.prepare(
+        const fallbackRow = db.prepare(
           "SELECT id FROM sessions WHERE (tokens_in = 0 OR tokens_in IS NULL) AND status IN ('started','completed') ORDER BY id DESC LIMIT 1"
-        )
-        if (fallback.step()) {
-          sessionId = (fallback.getAsObject() as { id: number }).id
+        ).get() as { id: number } | undefined
+        if (fallbackRow) {
+          sessionId = fallbackRow.id
           console.warn(`[hookServer] Fallback: using session ${sessionId} (conv_id ${convId} not found)`)
         }
-        fallback.free()
       }
 
       if (sessionId === null) {
@@ -150,18 +144,14 @@ async function handleStop(payload: StopPayload): Promise<void> {
         return
       }
 
-      db.run(
-        'UPDATE sessions SET tokens_in=?, tokens_out=?, tokens_cache_read=?, tokens_cache_write=? WHERE id=?',
-        [tokens.tokensIn, tokens.tokensOut, tokens.cacheRead, tokens.cacheWrite, sessionId]
-      )
-      db.run(
-        "UPDATE sessions SET status='completed', ended_at=datetime('now') WHERE id=? AND status='started'",
-        [sessionId]
-      )
+      db.prepare('UPDATE sessions SET tokens_in=?, tokens_out=?, tokens_cache_read=?, tokens_cache_write=? WHERE id=?')
+        .run(tokens.tokensIn, tokens.tokensOut, tokens.cacheRead, tokens.cacheWrite, sessionId)
+      db.prepare("UPDATE sessions SET status='completed', ended_at=datetime('now') WHERE id=? AND status='started'")
+        .run(sessionId)
       console.log(`[hookServer] session ${sessionId}: in=${tokens.tokensIn} out=${tokens.tokensOut} cacheR=${tokens.cacheRead} cacheW=${tokens.cacheWrite} → completed`)
     })
   } catch (err) {
-    console.error('[hookServer] writeDb failed:', err)
+    console.error('[hookServer] writeDbNative failed:', err)
   }
 }
 
@@ -196,24 +186,12 @@ async function handleLifecycleEvent(
   }
 
   try {
-    await writeDb(dbPath, (db) => {
-      const stmt = db.prepare('SELECT s.id, s.agent_id FROM sessions s WHERE s.claude_conv_id = ?')
-      stmt.bind([convId])
-      let sessionId: number | null = null
-      let agentId: number | null = null
-      if (stmt.step()) {
-        const row = stmt.getAsObject() as { id: number; agent_id: number }
-        sessionId = row.id
-        agentId = row.agent_id
-      }
-      stmt.free()
+    await writeDbNative(dbPath, (db) => {
+      const row = db.prepare('SELECT s.id, s.agent_id FROM sessions s WHERE s.claude_conv_id = ?').get(convId) as { id: number; agent_id: number } | undefined
+      if (!row) return
 
-      if (sessionId === null || agentId === null) return
-
-      db.run(
-        'INSERT INTO agent_logs (session_id, agent_id, level, action, detail, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))',
-        [sessionId, agentId, 'info', eventName, JSON.stringify(payload)]
-      )
+      db.prepare('INSERT INTO agent_logs (session_id, agent_id, level, action, detail, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))')
+        .run(row.id, row.agent_id, 'info', eventName, JSON.stringify(payload))
     })
   } catch (err) {
     console.warn(`[hookServer] agent_logs insert failed for ${eventName}:`, err)

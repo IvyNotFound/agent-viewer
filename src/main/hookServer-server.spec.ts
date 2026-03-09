@@ -21,7 +21,7 @@ const { mockWriteDb, mockAssertDbPathAllowed, mockInitHookSecret, mockGetHookSec
 )
 
 vi.mock('./db', () => ({
-  writeDb: mockWriteDb,
+  writeDbNative: mockWriteDb,
   assertDbPathAllowed: mockAssertDbPathAllowed,
 }))
 
