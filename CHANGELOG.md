@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.32.0] - 2026-03-10
+
+### Features
+- feat(back-electron): forwarder stderr en temps réel pour CLIs non-Claude (T1248) (6e13b9b)
+- feat(back-electron): validation runtime zod sur handlers IPC critiques (T1227) (915805c)
+
+### Bug Fixes
+- fix(back-electron): close stdin immediately for opencode on spawn (T1244) (55994b2)
+- fix(back-electron): corriger gemini sans réponse dans streamview (fc640e9)
+
+### Refactoring
+- refactor(back-electron): extraire les stratégies spawn de agent-stream.ts (37a2237)
+
+### Tests
+- test(back-electron): recover 4 spec files from orphan commit (T1221) (54012ff)
+- test(back-electron): kill mutation survivors in agent-stream.ts — StringLiteral/Conditional/Logical (T1218) (23a5e3b)
+- test(back-electron): améliorer couverture mutation migration-runner.ts (T1229) (f11eff5)
+- test(front-vuejs): améliorer couverture mutation parseDate.ts et créer i18n.spec.ts (T1237) (19c09b2)
+- test(front-vuejs): ajouter tests T1220 pour useStreamEvents.ts (44 tests) (2d328fc)
+
+### Documentation
+- docs(global): documenter la validation worktree dans agents et WORKFLOW.md (7c69df6)
+- docs(global): créer le diagramme ERD du schéma DB v6 (T1238) (c5509c2)
+- docs(global): mettre à jour README et JSDoc pour release 0.31.6 (T1252) (22ccd01)
+
+### Chores
+- chore(front-vuejs): élever no-explicit-any en error pour le renderer (T1233) (0d3d410)
+
 ## [0.31.8] - 2026-03-10
 
 ### Bug Fixes
