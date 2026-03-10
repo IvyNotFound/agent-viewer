@@ -6,7 +6,9 @@
 
 ## Configuration
 
-MODE: solo · LANG_CONV: français · LANG_CODE: english · Solo: `review` = `review-master`.
+MODE: solo · LANG_CONV: français · LANG_CODE: english · LANG_COMMIT: english · Solo: `review` = `review-master`.
+
+> `LANG_COMMIT: english` — commit messages (subject + body) et CHANGELOG générés automatiquement sont toujours en anglais.
 
 ---
 
@@ -16,7 +18,7 @@ MODE: solo · LANG_CONV: français · LANG_CODE: english · Solo: `review` = `re
 
 Périmètres: `front-vuejs` (`renderer/`, Vue 3 + TS + Tailwind, clés: `App.vue`, `vite.config.ts`) · `back-electron` (`main/`, Electron + Node + SQLite, clés: `index.ts`, `ipc.ts`)
 
-Conventions: français (conv) · anglais (code) · tests obligatoires · Conventional Commits
+Conventions: français (conv) · anglais (code + commits) · tests obligatoires · Conventional Commits
 
 **Version: `0.35.0`** | Lead: IvyNotFound → `main` | `npm run dev/build/test/release` | Bêta: MAJOR → validation `arch` + lead.
 
