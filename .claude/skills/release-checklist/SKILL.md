@@ -1,6 +1,6 @@
 ---
 name: release-checklist
-description: Execute a release in KanbAgent following the full devops + review protocol. Activates when agent devops receives a release ticket, when user says "release", "publier la version", "bump version", "npm run release". Covers prérequis, version bump, CI wait, GitHub Release publication.
+description: Execute a release in KanbAgent following the full devops + review protocol. Activates when agent devops receives a release ticket, when user says "release", "publish version", "bump version", "npm run release". Covers prerequisites, version bump, CI wait, GitHub Release publication.
 ---
 
 # Release Checklist Skill
@@ -29,7 +29,7 @@ Review creates the release ticket with:
 | At least one feat | minor (0.X.Y → 0.X+1.0) |
 | Breaking change or arch validation | major — requires human confirmation (IvyNotFound) |
 
-## Step 1 — Prérequis (devops checks before anything)
+## Step 1 — Prerequisites (devops checks before anything)
 
   # 1. Must be on main, clean working tree
   git status
@@ -46,7 +46,7 @@ Review creates the release ticket with:
   # Verify the run for current HEAD has conclusion=success
   # (release.sh will check this automatically — step is here for manual verification)
 
-If any prérequis fails → stop, comment the ticket, set status=blocked.
+If any prerequisite fails → stop, comment the ticket, set status=blocked.
 Never release with open tickets, a broken build, or failing/pending E2E tests on HEAD.
 
 ## Step 2 — Version Bump
@@ -110,6 +110,6 @@ Replace VERSION with the actual version number (e.g., 0.25.0).
 
 ## Blocked States
 
-If CI fails or prérequis not met:
+If CI fails or prerequisites not met:
   UPDATE sessions SET status='blocked', ended_at=datetime('now'),
     summary='Blocked:release vX.Y.Z — <reason>. Waiting:<what>.' WHERE id=<session_id>;

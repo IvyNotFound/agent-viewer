@@ -1,6 +1,6 @@
 ---
 name: ipc-handler-creating
-description: Create a new typed IPC handler in KanbAgent following the full stack pattern. Activates when user or agent needs to add a new IPC channel, expose a new API to the renderer, or wire a new feature across main/preload/renderer. Triggers on "add IPC", "new handler", "expose to renderer", "nouveau canal IPC", "créer un handler".
+description: Create a new typed IPC handler in KanbAgent following the full stack pattern. Activates when user or agent needs to add a new IPC channel, expose a new API to the renderer, or wire a new feature across main/preload/renderer. Triggers on "add IPC", "new handler", "expose to renderer", "new IPC channel", "create a handler".
 ---
 
 # IPC Handler Creating Skill

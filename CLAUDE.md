@@ -1,26 +1,26 @@
 # CLAUDE.md — KanbAgent
 
-> Lecture seule sauf `setup` (init) et `arch` (révisions structurantes). État vivant → `.claude/project.db`. Refs → `.claude/ADRS.md` · `.claude/WORKFLOW.md`
+> Read-only except `setup` (init) and `arch` (structural revisions). Living state → `.claude/project.db`. Refs → `.claude/ADRS.md` · `.claude/WORKFLOW.md`
 
 ---
 
 ## Configuration
 
-MODE: solo · LANG_CONV: français · LANG_CODE: english · LANG_COMMIT: english · Solo: `review` = `review-master`.
+MODE: solo · LANG_CONV: english · LANG_CODE: english · LANG_COMMIT: english · Solo: `review` = `review-master`.
 
-> `LANG_COMMIT: english` — commit messages (subject + body) et CHANGELOG générés automatiquement sont toujours en anglais.
+> `LANG_COMMIT: english` — commit messages (subject + body) and auto-generated CHANGELOG are always in English.
 
 ---
 
-## Projet
+## Project
 
-**KanbAgent** — Interface desktop Trello/Jira visualisant les tâches agents Claude (SQLite). Electron, dark mode, pas d'auth.
+**KanbAgent** — Desktop interface Trello/Jira visualizing Claude agent tasks (SQLite). Electron, dark mode, no auth.
 
-Périmètres: `front-vuejs` (`renderer/`, Vue 3 + TS + Tailwind, clés: `App.vue`, `vite.config.ts`) · `back-electron` (`main/`, Electron + Node + SQLite, clés: `index.ts`, `ipc.ts`)
+Scopes: `front-vuejs` (`renderer/`, Vue 3 + TS + Tailwind, key files: `App.vue`, `vite.config.ts`) · `back-electron` (`main/`, Electron + Node + SQLite, key files: `index.ts`, `ipc.ts`)
 
-Conventions: français (conv) · anglais (code + commits) · tests obligatoires · Conventional Commits
+Conventions: english (conv & code) · mandatory tests · Conventional Commits
 
-**Version: `0.35.0`** | Lead: IvyNotFound → `main` | `npm run dev/build/test/release` | Bêta: MAJOR → validation `arch` + lead.
+**Version: `0.35.0`** | Lead: IvyNotFound → `main` | `npm run dev/build/test/release` | Beta: MAJOR → `arch` + lead validation.
 
 ---
 
@@ -28,79 +28,79 @@ Conventions: français (conv) · anglais (code + commits) · tests obligatoires 
 
 `npm run release` (patch) · `npm run release:patch/minor/major`
 
-**Prérequis :** branche `main` propre · 0 ticket `todo`/`in_progress` · `npm run build` OK
+**Prerequisites:** clean `main` branch · 0 `todo`/`in_progress` tickets · `npm run build` OK
 
-**Le script effectue :** vérif branche → build + lint → bump version → CHANGELOG → commit + tag → push → draft GitHub Release
+**Script actions:** branch check → build + lint → version bump → CHANGELOG → commit + tag → push → draft GitHub Release
 
-**Post-release :** publier le draft manuellement → attacher binaires (.exe, .dmg) si disponibles
+**Post-release:** publish draft manually → attach binaries (.exe, .dmg) if available
 
-| Type | Quand |
+| Type | When |
 |---|---|
-| PATCH | fix, perf, refactor (sans breaking change) |
-| MINOR | feat rétrocompatible |
-| MAJOR | breaking change (schéma DB, refonte IPC) — validation `arch` + lead obligatoire |
+| PATCH | fix, perf, refactor (no breaking change) |
+| MINOR | backward-compatible feat |
+| MAJOR | breaking change (DB schema, IPC refactor) — `arch` + lead validation mandatory |
 
 ---
 
 ## Agents
 
-Globaux: **review-master** (audit global) · **review** (périmètre) · **devops** (CI/CD) · **arch** (ADR, IPC, CLAUDE.md) · **doc** (README/JSDoc) · **setup** (init unique) · **infra-prod** (prod, validation humaine obligatoire)
+Global: **review-master** (global audit) · **review** (scope) · **devops** (CI/CD) · **arch** (ADR, IPC, CLAUDE.md) · **doc** (README/JSDoc) · **setup** (one-time init) · **infra-prod** (prod, mandatory human validation)
 
-Scopés: `dev-front-vuejs` (Vue) · `dev-back-electron` (IPC/SQLite) · `test-front-vuejs` · `test-back-electron` · `ux-front-vuejs`
+Scoped: `dev-front-vuejs` (Vue) · `dev-back-electron` (IPC/SQLite) · `test-front-vuejs` · `test-back-electron` · `ux-front-vuejs`
 
-Thinking mode (DB `thinking_mode`, NULL=auto): `test/doc/devops` → disabled · autres → auto. Valeurs: `auto | disabled`. Injection: `--settings '{"alwaysThinkingEnabled":false}'` (ADR-002).
+Thinking mode (DB `thinking_mode`, NULL=auto): `test/doc/devops` → disabled · others → auto. Values: `auto | disabled`. Injection: `--settings '{"alwaysThinkingEnabled":false}'` (ADR-002).
 
 ---
 
-## Accès DB
+## DB Access
 
-⚠️ **NE JAMAIS modifier le schéma de la DB directement** (`ALTER TABLE`, `CREATE TABLE`, `DROP TABLE`) — uniquement via les migrations versionnées dans `migration-runner.ts`. Les writes data (`INSERT`, `UPDATE`) via `dbw.js` passent par better-sqlite3 (accès fichier direct, WAL mode).
+⚠️ **NEVER modify DB schema directly** (`ALTER TABLE`, `CREATE TABLE`, `DROP TABLE`) — only via versioned migrations in `migration-runner.ts`. Data writes (`INSERT`, `UPDATE`) via `dbw.js` use better-sqlite3 (direct file access, WAL mode).
 
-`node scripts/dbq.js "<SQL>"` (lecture) · `node scripts/dbw.js "<SQL>"` (écriture)
+`node scripts/dbq.js "<SQL>"` (read) · `node scripts/dbw.js "<SQL>"` (write)
 
-SQL simple : argument direct. SQL complexe (quotes, `$()`, multiligne) → **heredoc obligatoire** :
+Simple SQL: direct argument. Complex SQL (quotes, `$()`, multiline) → **heredoc required**:
 ```
 node scripts/dbw.js <<'SQL'
-INSERT INTO task_comments (task_id, agent_id, content) VALUES (1, 2, 'texte');
+INSERT INTO task_comments (task_id, agent_id, content) VALUES (1, 2, 'text');
 SQL
 ```
-Démarrage session : `node scripts/dbstart.js <agent-name>` — crée session, affiche tâches.
+Session start: `node scripts/dbstart.js <agent-name>` — creates session, displays tasks.
 
 ---
 
-## Workflow tickets
+## Ticket workflow
 
-`todo` → `in_progress` → `done` → `archived` (rejeté → retour `todo`)
+`todo` → `in_progress` → `done` → `archived` (rejected → back to `todo`)
 
-1. **review** crée ticket (titre + description + commentaire risques)
-2. Agent démarre immédiatement sur ses tickets assignés
-3. Agent écrit commentaire de sortie **EN PREMIER** · puis `done`
-4. **review** archive ou rejette (`todo` + motif précis)
-
----
-
-## Worktree agent
-
-Quand un worktree dédié est actif (`.claude/worktrees/s<sessionId>/`) :
-
-- **Dev (src/)** → travailler exclusivement depuis `primaryWorkingDirectory` (= `.claude/worktrees/s<sessionId>/`)
-- **DB (scripts/)** → `cd <repo-principal> && node scripts/dbq.js ...` — toujours depuis le dépôt principal
-- Ne jamais modifier les fichiers sources depuis le dépôt principal quand un worktree est actif
-
-**Review** : lors de la validation d'un ticket worktree, ne pas chercher les fichiers sur `main` — ils sont sur la branche agent.
-
-Protocole d'inspection (dans l'ordre) :
-1. Hash SHA dans le commentaire de sortie → `git cat-file -t <sha>` pour confirmer l'existence
-2. Si la branche agent existe : `git diff --name-only main...agent/<name>/s<session_id>` · `git show <sha>:path`
-3. Si le commit est orphelin (worktree supprimé sans push) : `git show <sha>:path` fonctionne directement tant que l'objet n'est pas garbage-collecté. Pour retrouver un sha inconnu : `git fsck --lost-found 2>&1 | grep "dangling commit"` puis filtrer par message.
-4. **Ne jamais rejeter "fichier absent" sans avoir vérifié le sha** via `git cat-file -t <sha>`.
-
-Merger vers main **uniquement si** validation OK (voir WORKFLOW.md étape 6).
+1. **review** creates ticket (title + description + risk comment)
+2. Agent starts immediately on assigned tickets
+3. Agent writes exit comment **FIRST** · then `done`
+4. **review** archives or rejects (`todo` + precise reason)
 
 ---
 
-## Règles inter-agents
+## Agent worktree
 
-- Un agent = un périmètre — ne jamais déborder sans signaler
-- Interfaces IPC Electron ↔ Vue → passer par `arch` avant d'implémenter
-- `infra-prod`: confirmation humaine explicite avant toute action
+When a dedicated worktree is active (`.claude/worktrees/s<sessionId>/`):
+
+- **Dev (src/)** → work exclusively from `primaryWorkingDirectory` (= `.claude/worktrees/s<sessionId>/`)
+- **DB (scripts/)** → `cd <main-repo> && node scripts/dbq.js ...` — always from the main repo
+- Never modify source files from the main repo when a worktree is active
+
+**Review**: when validating a worktree ticket, do not look for files on `main` — they are on the agent branch.
+
+Inspection protocol (in order):
+1. SHA hash in exit comment → `git cat-file -t <sha>` to confirm existence
+2. If agent branch exists: `git diff --name-only main...agent/<name>/s<session_id>` · `git show <sha>:path`
+3. If commit is orphaned (worktree removed without push): `git show <sha>:path` works directly as long as the object is not garbage-collected. To find an unknown sha: `git fsck --lost-found 2>&1 | grep "dangling commit"` then filter by message.
+4. **Never reject "file absent" without checking the sha** via `git cat-file -t <sha>`.
+
+Merge to main **only if** validation OK (see WORKFLOW.md step 6).
+
+---
+
+## Inter-agent rules
+
+- One agent = one scope — never overflow without signaling
+- IPC Electron ↔ Vue interfaces → go through `arch` before implementing
+- `infra-prod`: explicit human confirmation before any action

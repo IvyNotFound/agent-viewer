@@ -1,6 +1,6 @@
 ---
 name: adr-writing
-description: Write an Architecture Decision Record (ADR) for KanbAgent following the project's existing format. Activates when a structural decision needs to be documented, when agent arch completes a design decision, or when user says "ADR", "architecture decision", "document this choice", "documenter la décision".
+description: Write an Architecture Decision Record (ADR) for KanbAgent following the project's existing format. Activates when a structural decision needs to be documented, when agent arch completes a design decision, or when user says "ADR", "architecture decision", "document this choice".
 ---
 
 # ADR Writing Skill
@@ -31,39 +31,39 @@ ADRs are grouped by number range. Add to the latest group file or create a new o
 ```markdown
 ## ADR-<NNN> — <Short title>
 
-**Date:** YYYY-MM-DD  
-**Status:** Accepted | Superseded by ADR-NNN | Deprecated  
-**Décideur:** arch  
+**Date:** YYYY-MM-DD
+**Status:** Accepted | Superseded by ADR-NNN | Deprecated
+**Decider:** arch
 **Ticket:** T<id>
 
-### Contexte
+### Context
 
 [What situation prompted this decision? What problem are we solving?
 Be factual — describe the current state and constraints.]
 
-### Décision
+### Decision
 
 [What was decided, precisely. One clear sentence ideally.
 Then explain the implementation if needed.]
 
-### Alternatives rejetées
+### Rejected alternatives
 
-| Alternative | Raison du rejet |
+| Alternative | Reason for rejection |
 |---|---|
 | Option A | [Why not] |
 | Option B | [Why not] |
 
-### Conséquences
+### Consequences
 
-**Positives :**
+**Positives:**
 - [Benefit 1]
 - [Benefit 2]
 
-**Négatives / compromis :**
+**Negatives / trade-offs:**
 - [Tradeoff 1]
 - [Constraint introduced]
 
-### Impacte sur les agents
+### Agent impact
 
 | Agent | Impact |
 |---|---|
@@ -82,8 +82,8 @@ After writing the ADR, add a line to `.claude/ADRS.md`:
 
 ## Rules
 
-- Language: French for context/decisions, English for code snippets
+- Language: English (conv & code)
 - Be specific — vague ADRs are useless 6 months later
 - Always list at least 2 rejected alternatives
-- "Conséquences négatives" is mandatory — no decision is perfect
+- "Negative consequences" is mandatory — no decision is perfect
 - One ADR per structural decision — don't bundle unrelated choices

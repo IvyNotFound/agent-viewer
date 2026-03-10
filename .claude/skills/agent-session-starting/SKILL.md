@@ -1,6 +1,6 @@
 ---
 name: agent-session-starting
-description: Start an agent session correctly in KanbAgent. Activates when an agent needs to begin work, when user says "start a session", "launch agent X", "démarrer une session", or when an agent role is invoked and no active session exists. Ensures correct startup sequence: dbstart → read tasks → begin work.
+description: Start an agent session correctly in KanbAgent. Activates when an agent needs to begin work, when user says "start a session", "launch agent X", "begin session", or when an agent role is invoked and no active session exists. Ensures correct startup sequence: dbstart → read tasks → begin work.
 ---
 
 # Agent Session Starting Skill
@@ -10,7 +10,7 @@ Handles the full startup sequence for any agent in the KanbAgent multi-agent wor
 ## When to Use
 
 - An agent is about to begin work on a task
-- User says "start session", "démarrer session", "lance l'agent X"
+- User says "start session", "launch agent X"
 - A new Claude Code session opens and the context references an agent role
 - After a session interruption that needs to be resumed
 
