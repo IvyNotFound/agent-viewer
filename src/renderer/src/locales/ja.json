@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(グローバル: {status})"
   },
   "dbSelector": {
-    "tagline": "Claude エージェントのタスクをリアルタイムで確認。",
+    "tagline": "AI エージェントのタスクをリアルタイムで確認。",
     "open": "開く",
     "existingProject": "既存プロジェクト",
     "createNew": "作成",

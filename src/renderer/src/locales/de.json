@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
-    "tagline": "Aufgaben Ihrer Claude-Agenten in Echtzeit anzeigen.",
+    "tagline": "Aufgaben Ihrer KI-Agenten in Echtzeit anzeigen.",
     "open": "Öffnen",
     "existingProject": "Vorhandenes Projekt",
     "createNew": "Erstellen",

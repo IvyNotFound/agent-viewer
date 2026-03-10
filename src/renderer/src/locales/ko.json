@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(전역: {status})"
   },
   "dbSelector": {
-    "tagline": "Claude 에이전트 작업을 실시간으로 확인하세요.",
+    "tagline": "AI 에이전트 작업을 실시간으로 확인하세요.",
     "open": "열기",
     "existingProject": "기존 프로젝트",
     "createNew": "생성",

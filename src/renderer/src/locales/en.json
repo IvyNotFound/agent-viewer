@@ -394,7 +394,7 @@
     }
   },
   "dbSelector": {
-    "tagline": "View your Claude agents' tasks in real time.",
+    "tagline": "View your AI agents' tasks in real time.",
     "open": "Open",
     "existingProject": "Existing project",
     "createNew": "Create",

@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(genel: {status})"
   },
   "dbSelector": {
-    "tagline": "Claude ajan görevlerini gerçek zamanlı izleyin.",
+    "tagline": "AI ajan görevlerini gerçek zamanlı izleyin.",
     "open": "Aç",
     "existingProject": "Mevcut proje",
     "createNew": "Oluştur",

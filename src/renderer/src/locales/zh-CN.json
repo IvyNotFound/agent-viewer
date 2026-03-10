@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "（全局：{status}）"
   },
   "dbSelector": {
-    "tagline": "实时查看您的 Claude Agent 任务。",
+    "tagline": "实时查看您的 AI Agent 任务。",
     "open": "打开",
     "existingProject": "现有项目",
     "createNew": "创建",

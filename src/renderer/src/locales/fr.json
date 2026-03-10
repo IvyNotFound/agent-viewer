@@ -386,7 +386,7 @@
     }
   },
   "dbSelector": {
-    "tagline": "Visualisez les tâches de vos agents Claude en temps réel.",
+    "tagline": "Visualisez les tâches de vos agents IA en temps réel.",
     "open": "Ouvrir",
     "existingProject": "Projet existant",
     "createNew": "Créer",

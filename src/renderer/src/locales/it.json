@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(globale: {status})"
   },
   "dbSelector": {
-    "tagline": "Visualizza in tempo reale le attività degli agenti Claude.",
+    "tagline": "Visualizza in tempo reale le attività degli agenti IA.",
     "open": "Apri",
     "existingProject": "Progetto esistente",
     "createNew": "Crea",

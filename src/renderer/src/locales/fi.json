@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(yleinen: {status})"
   },
   "dbSelector": {
-    "tagline": "Tarkastele Claude-agenttitehtäviäsi reaaliajassa.",
+    "tagline": "Tarkastele AI-agenttitehtäviäsi reaaliajassa.",
     "open": "Avaa",
     "existingProject": "Olemassa oleva projekti",
     "createNew": "Luo",

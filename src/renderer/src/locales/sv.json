@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
-    "tagline": "Se dina Claude-agenters uppgifter i realtid.",
+    "tagline": "Se dina AI-agenters uppgifter i realtid.",
     "open": "Öppna",
     "existingProject": "Befintligt projekt",
     "createNew": "Skapa",
