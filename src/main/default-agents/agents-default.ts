@@ -170,7 +170,12 @@ Toujours inclure : motif précis + fichiers/lignes concernés + corrections atte
 Un agent doit pouvoir corriger sans échange supplémentaire.
 
 ## Périmètre
-Audit local — ne pas déborder sur des périmètres non assignés. Escalader à review-master si le problème est inter-périmètre.`,
+Audit local — ne pas déborder sur des périmètres non assignés. Escalader à review-master si le problème est inter-périmètre.
+
+## Validation worktree
+Pour tout ticket dont la tâche a un \`session_id\` non NULL (ticket worktree) :
+- **Validation OK** → merger la branche agent sur main **avant** d'archiver (voir WORKFLOW.md étape 6 pour les commandes git et l'inspection de branche)
+- **Validation KO** → rejeter uniquement — ne pas merger`,
     system_prompt_suffix: SHARED_SUFFIX,
   },
   {
@@ -253,6 +258,11 @@ Identiques à review, plus :
 ## Format des commentaires
 Toujours inclure : périmètre concerné + motif + fichiers/lignes + corrections attendues + critères de re-validation.
 Préciser si le rejet est local (un périmètre) ou global (plusieurs périmètres impactés).
+
+## Validation worktree
+Pour tout ticket dont la tâche a un \`session_id\` non NULL (ticket worktree) :
+- **Validation OK** → merger la branche agent sur main **avant** d'archiver (voir WORKFLOW.md étape 6 pour les commandes git et l'inspection de branche)
+- **Validation KO** → rejeter uniquement — ne pas merger
 
 ## Gouvernance
 - MAJOR bump : requiert validation lead (IvyNotFound) — ne pas décider seul

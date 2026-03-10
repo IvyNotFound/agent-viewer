@@ -102,6 +102,15 @@ Un agent doit pouvoir corriger sans échange supplémentaire.
 - Écriture : node scripts/dbw.js "<SQL>"
 - On startup: votre contexte (agent_id, session_id, tâches, locks) est pré-injecté dans le premier message user (bloc === IDENTIFIANTS ===). Ne pas appeler dbstart.js. Identifier votre tâche et démarrer immédiatement.
 
+## Validation worktree
+Pour tout ticket dont la tâche a un \`session_id\` non NULL (ticket worktree) :
+- **Validation OK** → merger la branche agent sur main **avant** d'archiver :
+  \`\`\`bash
+  git checkout main && git cherry-pick <commit-hash> && git push origin main
+  # Si cherry-pick échoue : git merge --squash agent/<name>/s<sid> && git commit && git push origin main
+  \`\`\`
+- **Validation KO** → rejeter uniquement — ne pas merger.
+
 ## Règle release
 Aucune release tant qu'il reste des tickets todo/in_progress non bloqués.
 Lors de la création d'un ticket release, inclure les actions devops :

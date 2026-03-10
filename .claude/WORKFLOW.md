@@ -173,7 +173,7 @@ git worktree remove .claude/worktrees/s<session_id>
 
 ### 6. Review validates or rejects
 
-**Multi-instance only — find and validate the agent branch first:**
+**Worktree tickets — find and validate the agent branch, then merge if OK:**
 
 The agent branch name is derived from the task's `session_id`:
 `branch = agent/<agent-name>/s<session_id>`
