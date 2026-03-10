@@ -8,14 +8,9 @@
  */
 
 import { ipcMain } from 'electron'
-import { z } from 'zod'
 import { assertDbPathAllowed, writeDb } from './db'
 import { registerAgentTaskQueryHandlers } from './ipc-agent-tasks-query'
-
-// ── Zod validation schemas ────────────────────────────────────────────────────
-
-const PositiveIntSchema = z.number().int().positive()
-const NonEmptyStringSchema = z.string().min(1).max(200)
+import { PositiveIdSchema, AgentDisplayNameSchema } from '../shared/ipc-schemas'
 
 // ── Handler registration ─────────────────────────────────────────────────────
 
@@ -31,7 +26,7 @@ export function registerAgentTaskHandlers(): void {
    * @returns {{ success: boolean, error?: string }}
    */
   ipcMain.handle('close-agent-sessions', async (_event, dbPath: string, agentName: string) => {
-    if (!NonEmptyStringSchema.safeParse(agentName).success) {
+    if (!AgentDisplayNameSchema.safeParse(agentName).success) {
       return { success: false, error: 'Invalid agentName: must be a non-empty string (max 200 chars)' }
     }
     try {
@@ -61,10 +56,10 @@ export function registerAgentTaskHandlers(): void {
    * @returns {{ success: boolean, error?: string }}
    */
   ipcMain.handle('update-perimetre', async (_event, dbPath: string, id: number, oldName: string, newName: string, description: string) => {
-    if (!PositiveIntSchema.safeParse(id).success) {
+    if (!PositiveIdSchema.safeParse(id).success) {
       return { success: false, error: 'Invalid id: must be a positive integer' }
     }
-    if (!NonEmptyStringSchema.safeParse(newName).success) {
+    if (!AgentDisplayNameSchema.safeParse(newName).success) {
       return { success: false, error: 'Invalid newName: must be a non-empty string (max 200 chars)' }
     }
     try {

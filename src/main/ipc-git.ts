@@ -7,14 +7,8 @@
  */
 
 import { ipcMain } from 'electron'
-import { z } from 'zod'
 import { assertProjectPathAllowed } from './db'
-
-// ── Zod validation schemas ────────────────────────────────────────────────────
-
-const SessionIdSchema = z.string().regex(/^[\w-]+$/, 'sessionId must be alphanumeric with hyphens only')
-const AgentNameSchema = z.string().regex(/^[\w-]+$/, 'agentName must be alphanumeric with hyphens only')
-const WorkDirSchema = z.string().min(1).refine(s => s.trim().length > 0, { message: 'workDir must not be whitespace-only' })
+import { SessionIdSchema, AgentWorktreeNameSchema, WorkDirSchema } from '../shared/ipc-schemas'
 
 /** Register git IPC handlers. */
 export function registerGitHandlers(): void {
@@ -29,7 +23,7 @@ export function registerGitHandlers(): void {
   ipcMain.handle('git:worktree-create', async (_event, projectPath: string, sessionId: string, agentName: string) => {
     assertProjectPathAllowed(projectPath)
     if (!SessionIdSchema.safeParse(sessionId).success) return { success: false, error: 'Invalid sessionId' }
-    if (!AgentNameSchema.safeParse(agentName).success) return { success: false, error: 'Invalid agentName' }
+    if (!AgentWorktreeNameSchema.safeParse(agentName).success) return { success: false, error: 'Invalid agentName' }
 
     const { join } = await import('path')
     const { execFile } = await import('child_process')
