@@ -27,8 +27,17 @@ export const AGENT_CTE_SQL = `
     LEFT JOIN (SELECT DISTINCT agent_id FROM task_comments) tc ON tc.agent_id = a.id
     LEFT JOIN (SELECT DISTINCT agent_id FROM agent_logs) al ON al.agent_id = a.id
   )
-  SELECT a.*, ls.status as session_status, ls.started_at as session_started_at,
-    CASE WHEN ls.status = 'started' THEN COALESCE(ls.tokens_in, 0) + COALESCE(ls.tokens_out, 0) ELSE NULL END as session_tokens,
+  SELECT a.*,
+    CASE
+      WHEN ls.status = 'started' AND ls.started_at < datetime('now', '-60 minutes') THEN NULL
+      ELSE ls.status
+    END as session_status,
+    ls.started_at as session_started_at,
+    CASE
+      WHEN ls.status = 'started' AND ls.started_at >= datetime('now', '-60 minutes')
+        THEN COALESCE(ls.tokens_in, 0) + COALESCE(ls.tokens_out, 0)
+      ELSE NULL
+    END as session_tokens,
     ml.last_log_at, ah.has_history
   FROM agents a
   LEFT JOIN latest_sessions ls ON ls.agent_id = a.id AND ls.rn = 1
