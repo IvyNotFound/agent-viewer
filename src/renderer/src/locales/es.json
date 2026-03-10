@@ -278,9 +278,9 @@
   },
   "launch": {
     "title": "Iniciar sesión",
-    "noInstanceMac": "No CLI detected. Install your AI CLI via npm or brew.",
+    "noInstanceMac": "No se detectó ningún CLI. Instala tu CLI de IA via npm o brew.",
     "noInstanceLinux": "No se detectó CLI. Asegúrate de que el binario CLI esté en tu PATH.",
-    "noInstanceWin": "No CLI detected. Install a CLI natively or inside a WSL distro.",
+    "noInstanceWin": "No se detectó ningún CLI. Instala un CLI de forma nativa o dentro de una distro WSL.",
     "defaultBadge": "por defecto",
     "prevSession": "Sesión anterior",
     "resume": "Reanudar conversación ({resume})",

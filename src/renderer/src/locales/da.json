@@ -278,9 +278,9 @@
   },
   "launch": {
     "title": "Start session",
-    "noInstanceMac": "No CLI detected. Install your AI CLI via npm or brew.",
+    "noInstanceMac": "Ingen CLI registreret. Installer din AI CLI via npm eller brew.",
     "noInstanceLinux": "Ingen CLI registreret. Sørg for at CLI-filen er i din PATH.",
-    "noInstanceWin": "No CLI detected. Install a CLI natively or inside a WSL distro.",
+    "noInstanceWin": "Ingen CLI registreret. Installer en CLI native eller inde i en WSL-distro.",
     "defaultBadge": "standard",
     "prevSession": "Forrige session",
     "resume": "Genoptag samtale ({resume})",

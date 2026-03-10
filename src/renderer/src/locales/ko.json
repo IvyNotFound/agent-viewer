@@ -278,9 +278,9 @@
   },
   "launch": {
     "title": "세션 시작",
-    "noInstanceMac": "No CLI detected. Install your AI CLI via npm or brew.",
+    "noInstanceMac": "CLI가 감지되지 않았습니다. npm 또는 brew를 통해 AI CLI를 설치하세요.",
     "noInstanceLinux": "CLI가 감지되지 않습니다. CLI 바이너리가 PATH에 있는지 확인하세요.",
-    "noInstanceWin": "No CLI detected. Install a CLI natively or inside a WSL distro.",
+    "noInstanceWin": "CLI가 감지되지 않았습니다. CLI를 네이티브로 설치하거나 WSL 배포판 안에 설치하세요.",
     "defaultBadge": "기본",
     "prevSession": "이전 세션",
     "resume": "대화 재개 ({resume})",

@@ -278,9 +278,9 @@
   },
   "launch": {
     "title": "Käynnistä istunto",
-    "noInstanceMac": "No CLI detected. Install your AI CLI via npm or brew.",
+    "noInstanceMac": "CLI:tä ei havaittu. Asenna AI CLI npm:n tai brewin kautta.",
     "noInstanceLinux": "CLI:tä ei havaittu. Varmista, että CLI-binääri on PATH-muuttujassasi.",
-    "noInstanceWin": "No CLI detected. Install a CLI natively or inside a WSL distro.",
+    "noInstanceWin": "CLI:tä ei havaittu. Asenna CLI natiivisti tai WSL-distron sisälle.",
     "defaultBadge": "oletus",
     "prevSession": "Edellinen istunto",
     "resume": "Jatka keskustelua ({resume})",

@@ -278,9 +278,9 @@
   },
   "launch": {
     "title": "启动会话",
-    "noInstanceMac": "No CLI detected. Install your AI CLI via npm or brew.",
+    "noInstanceMac": "未检测到CLI。请通过npm或brew安装您的AI CLI。",
     "noInstanceLinux": "未检测到 CLI。请确保 CLI 可执行文件在您的 PATH 中。",
-    "noInstanceWin": "No CLI detected. Install a CLI natively or inside a WSL distro.",
+    "noInstanceWin": "未检测到CLI。请在本地安装CLI或在WSL发行版中安装。",
     "defaultBadge": "默认",
     "prevSession": "上次会话",
     "resume": "恢复对话（{resume}）",
