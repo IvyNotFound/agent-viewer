@@ -79,7 +79,7 @@ VALUES (42, 1, 'App.vue:L1-50 · Added new component · Next: add tests');
 
 | Category | Convention |
 |----------|------------|
-| TypeScript | Strict, no implicit `any` |
+| TypeScript | Strict, `no-explicit-any` set to `error` (renderer + main) |
 | ESLint | v9 config (flat config) — `eslint.config.mjs` |
 | Vue | Composition API only |
 | CSS | Tailwind CSS v4 (utility classes) |

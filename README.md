@@ -196,7 +196,8 @@ KanbAgent/
 │   │   ├── agent-stream-registry.ts # Agent stream process registry and kill helpers
 │   │   ├── hookServer-inject.ts     # Hook URL injection into Claude Code settings
 │   │   ├── hookServer-tokens.ts     # JSONL transcript parsing and token counting
-│   │   ├── db.ts                    # SQLite utilities (queryLive, writeLive)
+│   │   ├── db.ts                    # SQLite utilities (queryLive, writeDb, writeDbNative — native better-sqlite3)
+│   │   ├── worktree-cleanup.ts      # Startup cleanup of orphaned git worktrees (cleanupOrphanWorktreesAtStartup)
 │   │   ├── claude-md.ts             # CLAUDE.md manipulation (agent insertion)
 │   │   ├── migration.ts             # Numbered SQLite migrations (SAVEPOINT atomicity)
 │   │   ├── migrations/              # Versioned schema migrations
