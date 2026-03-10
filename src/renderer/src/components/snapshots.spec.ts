@@ -1,9 +1,9 @@
 /**
- * Snapshot tests for key UI components (T984)
+ * Snapshot tests for key UI components (T984, T1283)
  * Run `npx vitest run --update-snapshots` to regenerate after intentional changes.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { shallowMount } from '@vue/test-utils'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { shallowMount, mount, flushPromises } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
 import i18n from '@renderer/plugins/i18n'
@@ -265,6 +265,179 @@ describe('TabBar — snapshots', () => {
         }), i18n],
       },
     })
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+})
+
+// ── TitleBar ──────────────────────────────────────────────────────────────────
+
+import TitleBar from '@renderer/components/TitleBar.vue'
+
+describe('TitleBar — snapshots', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
+    api.windowIsMaximized.mockResolvedValue(false)
+    api.onWindowStateChange.mockReturnValue(vi.fn())
+  })
+
+  it('matches snapshot: not maximized', async () => {
+    const wrapper = shallowMount(TitleBar, {
+      global: { plugins: [i18n] },
+    })
+    await flushPromises()
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+
+  it('matches snapshot: maximized', async () => {
+    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
+    api.windowIsMaximized.mockResolvedValue(true)
+    const wrapper = shallowMount(TitleBar, {
+      global: { plugins: [i18n] },
+    })
+    await flushPromises()
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+})
+
+// ── ContextMenu ───────────────────────────────────────────────────────────────
+
+import ContextMenu from '@renderer/components/ContextMenu.vue'
+
+describe('ContextMenu — snapshots', () => {
+  const teleportStub = { Teleport: { template: '<div><slot /></div>' } }
+
+  it('matches snapshot: simple items (no separator)', () => {
+    const wrapper = shallowMount(ContextMenu, {
+      props: {
+        x: 100,
+        y: 200,
+        items: [
+          { label: 'Rename', action: () => {} },
+          { label: 'Delete', action: () => {} },
+        ],
+      },
+      global: { stubs: teleportStub },
+    })
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+
+  it('matches snapshot: items with separator', () => {
+    const wrapper = shallowMount(ContextMenu, {
+      props: {
+        x: 50,
+        y: 80,
+        items: [
+          { label: 'Edit', action: () => {} },
+          { label: 'Add subgroup', action: () => {} },
+          { separator: true, label: '', action: () => {} },
+          { label: 'Delete', action: () => {} },
+        ],
+      },
+      global: { stubs: teleportStub },
+    })
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+})
+
+// ── ConfirmDialog ─────────────────────────────────────────────────────────────
+
+import ConfirmDialog from '@renderer/components/ConfirmDialog.vue'
+import { useConfirmDialog } from '@renderer/composables/useConfirmDialog'
+
+describe('ConfirmDialog — snapshots', () => {
+  const teleportStub = { Teleport: { template: '<div><slot /></div>' } }
+
+  afterEach(() => {
+    const { cancel } = useConfirmDialog()
+    cancel()
+  })
+
+  it('matches snapshot: danger dialog', async () => {
+    const { confirm } = useConfirmDialog()
+    confirm({ title: 'Delete agent?', message: 'This action is irreversible.', type: 'danger', confirmLabel: 'Delete', cancelLabel: 'Cancel' })
+    const wrapper = shallowMount(ConfirmDialog, {
+      global: { plugins: [i18n], stubs: { ...teleportStub, Transition: false } },
+    })
+    await flushPromises()
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+
+  it('matches snapshot: info dialog', async () => {
+    const { confirm } = useConfirmDialog()
+    confirm({ title: 'Confirm action?', message: 'Do you want to proceed?', type: 'info', confirmLabel: 'OK', cancelLabel: 'Cancel' })
+    const wrapper = shallowMount(ConfirmDialog, {
+      global: { plugins: [i18n], stubs: { ...teleportStub, Transition: false } },
+    })
+    await flushPromises()
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+})
+
+// ── ToastContainer ────────────────────────────────────────────────────────────
+
+import ToastContainer from '@renderer/components/ToastContainer.vue'
+import { useToast } from '@renderer/composables/useToast'
+
+describe('ToastContainer — snapshots', () => {
+  beforeEach(() => {
+    const { toasts } = useToast()
+    toasts.value.splice(0, toasts.value.length)
+  })
+
+  afterEach(() => {
+    const { toasts } = useToast()
+    toasts.value.splice(0, toasts.value.length)
+  })
+
+  it('matches snapshot: empty (no toasts)', () => {
+    const wrapper = mount(ToastContainer)
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+
+  it('matches snapshot: three toast types (error, warn, info)', async () => {
+    const { toasts } = useToast()
+    // Inject toasts directly to avoid auto-dismiss timers and dynamic IDs
+    toasts.value.push(
+      { id: 1001, message: 'Connection failed', type: 'error' },
+      { id: 1002, message: 'Slow response detected', type: 'warn' },
+      { id: 1003, message: 'Changes saved', type: 'info' },
+    )
+    const wrapper = mount(ToastContainer)
+    await flushPromises()
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+})
+
+// ── DbSelector ────────────────────────────────────────────────────────────────
+
+import DbSelector from '@renderer/components/DbSelector.vue'
+
+describe('DbSelector — snapshots', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
+    api.getWslUsers.mockResolvedValue([])
+  })
+
+  it('matches snapshot: home screen (no project selected)', async () => {
+    const wrapper = shallowMount(DbSelector, {
+      global: {
+        plugins: [createTestingPinia({ initialState: { tasks: { dbPath: null, error: null } } }), i18n],
+      },
+    })
+    await flushPromises()
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+
+  it('matches snapshot: home screen with error', async () => {
+    const wrapper = shallowMount(DbSelector, {
+      global: {
+        plugins: [createTestingPinia({ initialState: { tasks: { dbPath: null, error: 'DB not found' } } }), i18n],
+      },
+    })
+    await flushPromises()
     expect(wrapper.html()).toMatchSnapshot()
   })
 })
