@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.34.0] - 2026-03-10
+
+### Bug Fixes
+- fix(front-vuejs): supprimer la mention Claude dans la tagline (T1269) (98f5189)
+
+### Refactoring
+- refactor(front-vuejs): migrer composants vers sous-stores directs (T1280) (119f1f6)
+- refactor(back-electron): typer le preload avec schemas Zod partagés (T1278) (3016633)
+
+### Tests
+- test(front-vuejs): couvrir useStreamEvents et useTaskRefresh — mutation P2 (T1282) (96e984b)
+- test(front-vuejs): quick wins mutation — agentColor, sidebar composables + exclude main.ts (T1286) (df20735)
+- test(front-vuejs): couvrir gaps mutation stores tabs/settings/agents/hookEvents/tasks (T1285) (eb6ebb9)
+- test(front-vuejs): snapshots visuels 10 composants principaux (T1283) (c40726a)
+- test(back-electron): add mutation-killing tests for worktree-manager (T1273) (893a593)
+- test(back-electron): add mutation-killing tests for spawn-wsl, spawn-windows, stream-handlers (T1273) (0f23ea1)
+- test(back-electron): améliorer la couverture mutation des IPC agents T1268 (f4380e7)
+- test(back-electron): améliorer couverture mutation hookServer et hookServer-inject (T1267) (08988d3)
+
+### Documentation
+- docs: update README for release 0.34.0 (T1290) (3e88eeb)
+- docs(global): JSDoc et README pour la release 0.33.0 (T1265) (b5e5f0d)
+
+### Chores
+- chore(deps-dev): bump jsdom from 26.1.0 to 28.1.0 (#13) (14e1e4b)
+- chore(deps-dev): bump autoprefixer from 10.4.24 to 10.4.27 (#16) (e341d08)
+
 ## [0.33.0] - 2026-03-10
 
 ### Features
