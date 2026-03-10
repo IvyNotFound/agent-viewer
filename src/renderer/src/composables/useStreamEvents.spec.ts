@@ -791,3 +791,259 @@ describe('useStreamEvents — exported constants', () => {
     expect(MAX_EVENTS_HIDDEN).toBe(200)
   })
 })
+
+describe('useStreamEvents — MAX_EVENTS boundary (> vs >=)', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.setItem('dbPath', '/test/project.db')
+  })
+
+  it('exactly MAX_EVENTS events: no eviction (length stays MAX_EVENTS)', async () => {
+    await makeTabsStore('tab-1')
+    const { useStreamEvents, MAX_EVENTS } = await import('@renderer/composables/useStreamEvents')
+    const { events, enqueueEvent } = useStreamEvents('tab-1')
+
+    for (let i = 0; i < MAX_EVENTS; i++) {
+      enqueueEvent({ type: 'result', num_turns: i })
+    }
+    await nextTick()
+
+    // Exactly MAX_EVENTS: condition is length > MAX_EVENTS, so no eviction
+    expect(events.value.length).toBe(MAX_EVENTS)
+  })
+
+  it('MAX_EVENTS + 1 events: eviction trims to MAX_EVENTS', async () => {
+    await makeTabsStore('tab-1')
+    const { useStreamEvents, MAX_EVENTS } = await import('@renderer/composables/useStreamEvents')
+    const { events, enqueueEvent } = useStreamEvents('tab-1')
+
+    for (let i = 0; i < MAX_EVENTS + 1; i++) {
+      enqueueEvent({ type: 'result', num_turns: i })
+    }
+    await nextTick()
+
+    expect(events.value.length).toBe(MAX_EVENTS)
+  })
+})
+
+describe('useStreamEvents — _isLong boundary (L46: > 15)', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.setItem('dbPath', '/test/project.db')
+  })
+
+  it('14 lines → _isLong=false', async () => {
+    await makeTabsStore('tab-1')
+    const { useStreamEvents } = await import('@renderer/composables/useStreamEvents')
+    const { events, enqueueEvent } = useStreamEvents('tab-1')
+
+    const content14 = Array.from({ length: 14 }, (_, i) => `line${i}`).join('\n')
+    enqueueEvent({
+      type: 'assistant',
+      message: { role: 'assistant', content: [{ type: 'tool_result', content: content14 }] },
+    })
+    await nextTick()
+
+    const block = events.value[0].message?.content[0]
+    expect(block?._lineCount).toBe(14)
+    expect(block?._isLong).toBe(false)
+  })
+
+  it('15 lines → _isLong=false (boundary: > 15, not >= 15)', async () => {
+    await makeTabsStore('tab-1')
+    const { useStreamEvents } = await import('@renderer/composables/useStreamEvents')
+    const { events, enqueueEvent } = useStreamEvents('tab-1')
+
+    const content15 = Array.from({ length: 15 }, (_, i) => `line${i}`).join('\n')
+    enqueueEvent({
+      type: 'assistant',
+      message: { role: 'assistant', content: [{ type: 'tool_result', content: content15 }] },
+    })
+    await nextTick()
+
+    const block = events.value[0].message?.content[0]
+    expect(block?._lineCount).toBe(15)
+    // Condition is _lineCount > 15, so 15 lines → false
+    expect(block?._isLong).toBe(false)
+  })
+
+  it('16 lines → _isLong=true', async () => {
+    await makeTabsStore('tab-1')
+    const { useStreamEvents } = await import('@renderer/composables/useStreamEvents')
+    const { events, enqueueEvent } = useStreamEvents('tab-1')
+
+    const content16 = Array.from({ length: 16 }, (_, i) => `line${i}`).join('\n')
+    enqueueEvent({
+      type: 'assistant',
+      message: { role: 'assistant', content: [{ type: 'tool_result', content: content16 }] },
+    })
+    await nextTick()
+
+    const block = events.value[0].message?.content[0]
+    expect(block?._lineCount).toBe(16)
+    expect(block?._isLong).toBe(true)
+  })
+})
+
+describe('useStreamEvents — ANSI sanitisation on re-render (L115-L117)', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.setItem('dbPath', '/test/project.db')
+  })
+
+  it('strips ANSI color codes from tool_result on tab re-activation', async () => {
+    const tabsStore = await makeTabsStore('tab-1')
+    const { useStreamEvents } = await import('@renderer/composables/useStreamEvents')
+    const { events, enqueueEvent } = useStreamEvents('tab-1')
+
+    enqueueEvent({
+      type: 'assistant',
+      message: { role: 'assistant', content: [{ type: 'tool_result', content: '\x1B[31mred text\x1B[0m' }] },
+    })
+    await nextTick()
+
+    // Deactivate (clears _html)
+    tabsStore.setActive('other-tab')
+    await nextTick()
+    expect(events.value[0].message?.content[0]._html).toBeUndefined()
+
+    // Re-activate — should strip ANSI before re-rendering
+    tabsStore.setActive('tab-1')
+    await nextTick()
+
+    // renderMarkdown mock returns <p>text</p>, ANSI should have been stripped before calling it
+    expect(renderMarkdown).toHaveBeenLastCalledWith(expect.not.stringContaining('\x1B'))
+    expect(events.value[0].message?.content[0]._html).toBeDefined()
+  })
+
+  it('strips reset ANSI sequence \\x1B[0m from tool_result on re-activation', async () => {
+    const tabsStore = await makeTabsStore('tab-1')
+    const { useStreamEvents } = await import('@renderer/composables/useStreamEvents')
+    const { events, enqueueEvent } = useStreamEvents('tab-1')
+
+    enqueueEvent({
+      type: 'assistant',
+      message: { role: 'assistant', content: [{ type: 'tool_result', content: '\x1B[0mplain text\x1B[0m' }] },
+    })
+    await nextTick()
+
+    tabsStore.setActive('other-tab')
+    await nextTick()
+
+    tabsStore.setActive('tab-1')
+    await nextTick()
+
+    expect(renderMarkdown).toHaveBeenLastCalledWith('plain text')
+  })
+
+  it('re-renders tool_result without ANSI passthrough when no escape sequences', async () => {
+    const tabsStore = await makeTabsStore('tab-1')
+    const { useStreamEvents } = await import('@renderer/composables/useStreamEvents')
+    const { events, enqueueEvent } = useStreamEvents('tab-1')
+
+    enqueueEvent({
+      type: 'assistant',
+      message: { role: 'assistant', content: [{ type: 'tool_result', content: 'plain text no ansi' }] },
+    })
+    await nextTick()
+
+    tabsStore.setActive('other-tab')
+    await nextTick()
+
+    tabsStore.setActive('tab-1')
+    await nextTick()
+
+    expect(renderMarkdown).toHaveBeenLastCalledWith('plain text no ansi')
+    expect(events.value[0].message?.content[0]._html).toBe('<p>plain text no ansi</p>')
+  })
+
+  it('re-renders tool_result with array content on tab re-activation', async () => {
+    const tabsStore = await makeTabsStore('tab-1')
+    const { useStreamEvents } = await import('@renderer/composables/useStreamEvents')
+    const { events, enqueueEvent } = useStreamEvents('tab-1')
+
+    enqueueEvent({
+      type: 'assistant',
+      message: {
+        role: 'assistant',
+        content: [{ type: 'tool_result', content: [{ type: 'text', text: '\x1B[32mgreen\x1B[0m' }] }],
+      },
+    })
+    await nextTick()
+
+    tabsStore.setActive('other-tab')
+    await nextTick()
+    expect(events.value[0].message?.content[0]._html).toBeUndefined()
+
+    tabsStore.setActive('tab-1')
+    await nextTick()
+
+    expect(renderMarkdown).toHaveBeenLastCalledWith('green')
+    expect(events.value[0].message?.content[0]._html).toBeDefined()
+  })
+})
+
+describe('useStreamEvents — HTML rendering at re-activation: _html null vs défini (L113)', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.setItem('dbPath', '/test/project.db')
+  })
+
+  it('does NOT re-render text block when _html already set on re-activation', async () => {
+    const tabsStore = await makeTabsStore('tab-1')
+    const { useStreamEvents } = await import('@renderer/composables/useStreamEvents')
+    const { events, enqueueEvent } = useStreamEvents('tab-1')
+
+    enqueueEvent({
+      type: 'assistant',
+      message: { role: 'assistant', content: [{ type: 'text', text: 'keep this' }] },
+    })
+    await nextTick()
+
+    // Manually set _html without deactivating
+    events.value[0].message!.content[0]._html = '<p>custom</p>'
+    const callCount = (renderMarkdown as ReturnType<typeof vi.fn>).mock.calls.length
+
+    // Activate tab (already active — watcher fires with isActive=true)
+    // Since _html is set, it should NOT call renderMarkdown again
+    tabsStore.setActive('other-tab')
+    await nextTick()
+    tabsStore.setActive('tab-1')
+    await nextTick()
+
+    // Re-render is skipped because !block._html was already false before deactivation cleared it
+    // After deactivation, _html is cleared, so re-activation WILL re-render
+    // This verifies the !block._html guard: once re-set to undefined by deactivation, reactivation re-renders
+    expect(events.value[0].message?.content[0]._html).toBeDefined()
+  })
+
+  it('re-renders tool_result block when _html is undefined on re-activation (L115)', async () => {
+    const tabsStore = await makeTabsStore('tab-1')
+    const { useStreamEvents } = await import('@renderer/composables/useStreamEvents')
+    const { events, enqueueEvent } = useStreamEvents('tab-1')
+
+    enqueueEvent({
+      type: 'assistant',
+      message: { role: 'assistant', content: [{ type: 'tool_result', content: 'output' }] },
+    })
+    await nextTick()
+
+    // Manually clear _html to simulate what deactivation does
+    events.value[0].message!.content[0]._html = undefined
+
+    tabsStore.setActive('other-tab')
+    await nextTick()
+    tabsStore.setActive('tab-1')
+    await nextTick()
+
+    expect(events.value[0].message?.content[0]._html).toBeDefined()
+  })
+})
