@@ -321,5 +321,32 @@ describe('session-closer', () => {
       const result = await detectManuallyClosed('/fake/project.db', '2026-01-01 00:00:00')
       expect(result).toEqual([])
     })
+
+    it('should exclude agents with an in_progress task (T1297 guard)', async () => {
+      // SQL guard must be present — queryLive would return nothing for such agents
+      vi.mocked(queryLive).mockResolvedValueOnce([])
+      const result = await detectManuallyClosed('/fake/project.db', '2026-01-01 00:00:00')
+      // Verify the SQL includes the task guard
+      expect(queryLive).toHaveBeenCalledWith(
+        '/fake/project.db',
+        expect.stringContaining("t.status IN ('todo', 'in_progress')"),
+        expect.any(Array)
+      )
+      expect(result).toEqual([])
+    })
+
+    it('should include agents whose tasks are all done (T1297 — existing behavior preserved)', async () => {
+      // Agent with task 'done' — SQL guard does not filter it out → queryLive returns the agent
+      vi.mocked(queryLive).mockResolvedValueOnce([{ agent_id: 3 }])
+      const result = await detectManuallyClosed('/fake/project.db', '2026-01-01 00:00:00')
+      expect(result).toEqual([3])
+    })
+
+    it('should include agents with no tasks (review, doc — T1297 — existing behavior preserved)', async () => {
+      // Agent with no task — NOT EXISTS on empty set is true → queryLive returns the agent
+      vi.mocked(queryLive).mockResolvedValueOnce([{ agent_id: 42 }])
+      const result = await detectManuallyClosed('/fake/project.db', '2026-01-01 00:00:00')
+      expect(result).toEqual([42])
+    })
   })
 })

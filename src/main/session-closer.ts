@@ -133,6 +133,11 @@ export async function detectManuallyClosed(dbPath: string, since: string): Promi
          SELECT 1 FROM sessions s2
          WHERE s2.agent_id = sessions.agent_id
            AND s2.status = 'started'
+       )
+       AND NOT EXISTS (
+         SELECT 1 FROM tasks t
+         WHERE t.agent_assigned_id = sessions.agent_id
+           AND t.status IN ('todo', 'in_progress')
        )`,
     [since]
   )
