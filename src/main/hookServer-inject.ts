@@ -213,7 +213,7 @@ export async function injectHookUrls(settingsPath: string, ip: string): Promise<
  */
 async function injectIntoDistroViaWsl(distro: string, wslIp: string | null): Promise<void> {
   // Read current settings via wsl.exe (cat returns '{}' if file missing)
-  let settings: ClaudeSettings = {}
+  let settings: ClaudeSettings
   try {
     const raw = execSync(
       `wsl.exe -d "${distro}" -- bash -c "cat ~/.claude/settings.json 2>/dev/null || echo '{}'"`,

@@ -54,7 +54,7 @@ export async function acquireWriteLock(dbPath: string): Promise<string> {
       }
 
       if (Date.now() - start > LOCK_TIMEOUT_MS) {
-        throw new Error(`db-lock: write lock timeout after ${LOCK_TIMEOUT_MS}ms (${lockPath})`)
+        throw new Error(`db-lock: write lock timeout after ${LOCK_TIMEOUT_MS}ms (${lockPath})`, { cause: e })
       }
 
       await sleep(LOCK_RETRY_MIN + Math.random() * (LOCK_RETRY_MAX - LOCK_RETRY_MIN))
