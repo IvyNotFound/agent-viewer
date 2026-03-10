@@ -11,11 +11,17 @@ import { createReadStream } from 'fs'
 import { createInterface } from 'readline'
 import { join, dirname } from 'path'
 import { homedir } from 'os'
+import { z } from 'zod'
 import { assertDbPathAllowed, queryLive, writeDb } from './db'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+// ── Zod validation schemas ────────────────────────────────────────────────────
+
+const ConvIdSchema = z.string().regex(UUID_REGEX, 'convId must be a valid UUID')
+const AgentNameSchema = z.string().min(1).max(200)
 
 // ── Token parsing helpers (T518) ──────────────────────────────────────────────
 
@@ -99,6 +105,9 @@ export function registerAgentSessionHandlers(): void {
   ipcMain.handle('session:setConvId', async (_event, dbPath: string, agentId: number, convId: string) => {
     if (!dbPath || typeof agentId !== 'number' || !convId) {
       return { success: false, error: 'Invalid arguments' }
+    }
+    if (!ConvIdSchema.safeParse(convId).success) {
+      return { success: false, error: 'Invalid convId: must be a valid UUID' }
     }
     try {
       assertDbPathAllowed(dbPath)
@@ -229,6 +238,9 @@ export function registerAgentSessionHandlers(): void {
    */
   ipcMain.handle('session:collectTokens', async (_event, dbPath: string, agentName: string) => {
     if (!dbPath || !agentName) return { success: false, error: 'Invalid arguments' }
+    if (!AgentNameSchema.safeParse(agentName).success) {
+      return { success: false, error: 'Invalid agentName: must be a non-empty string (max 200 chars)' }
+    }
     try {
       assertDbPathAllowed(dbPath)
       const resolvedProjectPath = projectPathFromDb(dbPath)

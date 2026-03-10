@@ -9,8 +9,41 @@
 import { ipcMain } from 'electron'
 import { readFile, writeFile, rename } from 'fs/promises'
 import { join } from 'path'
+import { z } from 'zod'
 import { assertDbPathAllowed, assertProjectPathAllowed, queryLive, writeDb } from './db'
 import { insertAgentIntoClaudeMd } from './claude-md'
+
+// ── Zod validation schemas ────────────────────────────────────────────────────
+
+const AgentIdSchema = z.number().int().positive()
+const AgentNameSchema = z.string().min(1).max(200)
+
+const CreateAgentDataSchema = z.object({
+  name: z.string().min(1).max(200),
+  type: z.string().min(1).max(100),
+  scope: z.string().max(200).nullable().optional(),
+  perimetre: z.string().max(200).nullable().optional(),
+  thinkingMode: z.string().nullable().optional(),
+  systemPrompt: z.string().max(100_000).nullable().optional(),
+  description: z.string().max(2000).optional(),
+})
+
+const UpdateAgentDataSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  type: z.string().min(1).max(100).optional(),
+  scope: z.string().max(200).nullable().optional(),
+  perimetre: z.string().max(200).nullable().optional(),
+  thinkingMode: z.string().nullable().optional(),
+  allowedTools: z.string().max(10_000).nullable().optional(),
+  systemPrompt: z.string().max(100_000).nullable().optional(),
+  systemPromptSuffix: z.string().max(100_000).nullable().optional(),
+  autoLaunch: z.boolean().optional(),
+  permissionMode: z.enum(['default', 'auto']).nullable().optional(),
+  maxSessions: z.number().int().refine(v => v >= 1 || v === -1, {
+    message: 'maxSessions must be an integer >= 1 or -1 (unlimited)',
+  }).optional(),
+  worktreeEnabled: z.boolean().nullable().optional(),
+})
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -38,6 +71,12 @@ export function registerAgentCrudHandlers(): void {
    * @returns {{ success: boolean, error?: string }}
    */
   ipcMain.handle('rename-agent', async (_event, dbPath: string, agentId: number, newName: string) => {
+    if (!AgentIdSchema.safeParse(agentId).success) {
+      return { success: false, error: 'Invalid agentId: must be a positive integer' }
+    }
+    if (!AgentNameSchema.safeParse(newName).success) {
+      return { success: false, error: 'Invalid newName: must be a non-empty string (max 200 chars)' }
+    }
     try {
       assertDbPathAllowed(dbPath)
       await writeDb(dbPath, (db) => {
@@ -58,6 +97,12 @@ export function registerAgentCrudHandlers(): void {
    * @returns {{ success: boolean, error?: string }}
    */
   ipcMain.handle('update-agent-system-prompt', async (_event, dbPath: string, agentId: number, systemPrompt: string) => {
+    if (!AgentIdSchema.safeParse(agentId).success) {
+      return { success: false, error: 'Invalid agentId: must be a positive integer' }
+    }
+    if (!z.string().max(100_000).safeParse(systemPrompt).success) {
+      return { success: false, error: 'Invalid systemPrompt: must be a string (max 100 000 chars)' }
+    }
     try {
       assertDbPathAllowed(dbPath)
       await writeDb(dbPath, (db) => {
@@ -147,10 +192,16 @@ export function registerAgentCrudHandlers(): void {
     maxSessions?: number
     worktreeEnabled?: boolean | null
   }) => {
-    if (updates.maxSessions !== undefined) {
-      if (!Number.isInteger(updates.maxSessions) || (updates.maxSessions < 1 && updates.maxSessions !== -1)) {
+    if (!AgentIdSchema.safeParse(agentId).success) {
+      return { success: false, error: 'Invalid agentId: must be a positive integer' }
+    }
+    const updatesResult = UpdateAgentDataSchema.safeParse(updates)
+    if (!updatesResult.success) {
+      const issue = updatesResult.error.issues[0]
+      if (issue && issue.path[0] === 'maxSessions') {
         return { success: false, error: `Invalid maxSessions value: ${updates.maxSessions}. Must be an integer >= 1 or -1 (unlimited).` }
       }
+      return { success: false, error: 'Invalid updates: ' + updatesResult.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ') }
     }
     try {
       assertDbPathAllowed(dbPath)
@@ -234,6 +285,10 @@ export function registerAgentCrudHandlers(): void {
     projectPath: string,
     data: { name: string; type: string; perimetre?: string | null; scope?: string | null; thinkingMode: string | null; systemPrompt: string | null; description: string }
   ) => {
+    const dataResult = CreateAgentDataSchema.safeParse(data)
+    if (!dataResult.success) {
+      return { success: false, error: 'Invalid args: ' + dataResult.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ') }
+    }
     try {
       assertDbPathAllowed(dbPath)
       assertProjectPathAllowed(projectPath)
