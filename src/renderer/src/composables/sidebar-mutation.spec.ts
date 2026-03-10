@@ -45,10 +45,10 @@ describe('useSidebarGroups mutation coverage (T1286)', () => {
   })
 
   it('confirmRename() with whitespace-only name does NOT call store.renameAgentGroup', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarGroups } = await import('@renderer/composables/useSidebarGroups')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     const spy = vi.spyOn(store, 'renameAgentGroup').mockResolvedValue(undefined)
 
     const { renamingGroupId, renameGroupName, confirmRename } = useSidebarGroups()
@@ -86,10 +86,10 @@ describe('useSidebarGroups mutation coverage (T1286)', () => {
   })
 
   it('confirmCreateGroup() calls store.createAgentGroup and resets creatingGroup', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarGroups } = await import('@renderer/composables/useSidebarGroups')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     const spy = vi.spyOn(store, 'createAgentGroup').mockResolvedValue(null)
 
     const { creatingGroup, newGroupName, confirmCreateGroup } = useSidebarGroups()
@@ -127,10 +127,10 @@ describe('useSidebarGroups mutation coverage (T1286)', () => {
   })
 
   it('confirmCreateSubgroup() with valid name calls store.createAgentGroup with parentId', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarGroups } = await import('@renderer/composables/useSidebarGroups')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     const spy = vi.spyOn(store, 'createAgentGroup').mockResolvedValue(null)
 
     const { creatingSubgroupForId, newSubgroupName, confirmCreateSubgroup } = useSidebarGroups()
@@ -144,10 +144,10 @@ describe('useSidebarGroups mutation coverage (T1286)', () => {
   })
 
   it('confirmCreateSubgroup() with empty name does NOT call store.createAgentGroup', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarGroups } = await import('@renderer/composables/useSidebarGroups')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     const spy = vi.spyOn(store, 'createAgentGroup').mockResolvedValue(null)
 
     const { creatingSubgroupForId, newSubgroupName, confirmCreateSubgroup } = useSidebarGroups()
@@ -161,10 +161,10 @@ describe('useSidebarGroups mutation coverage (T1286)', () => {
   })
 
   it('confirmCreateSubgroup() with null parentId does NOT call store.createAgentGroup', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarGroups } = await import('@renderer/composables/useSidebarGroups')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     const spy = vi.spyOn(store, 'createAgentGroup').mockResolvedValue(null)
 
     const { creatingSubgroupForId, newSubgroupName, confirmCreateSubgroup } = useSidebarGroups()
@@ -177,10 +177,10 @@ describe('useSidebarGroups mutation coverage (T1286)', () => {
   })
 
   it('handleDeleteGroup() without members calls store.deleteAgentGroup immediately', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarGroups } = await import('@renderer/composables/useSidebarGroups')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     store.agentGroups = [{ id: 20, name: 'EmptyGroup', sort_order: 0, created_at: '', members: [] }]
     const deleteSpy = vi.spyOn(store, 'deleteAgentGroup').mockResolvedValue(undefined)
 
@@ -193,10 +193,10 @@ describe('useSidebarGroups mutation coverage (T1286)', () => {
   })
 
   it('handleDeleteGroup() for unknown groupId (no members found) calls deleteAgentGroup', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarGroups } = await import('@renderer/composables/useSidebarGroups')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     store.agentGroups = [] // group not in list → members is [] via ?? []
     const deleteSpy = vi.spyOn(store, 'deleteAgentGroup').mockResolvedValue(undefined)
 
@@ -207,10 +207,10 @@ describe('useSidebarGroups mutation coverage (T1286)', () => {
   })
 
   it('onConfirmDeleteGroup() is a no-op when confirmDeleteGroup is null', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarGroups } = await import('@renderer/composables/useSidebarGroups')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     const deleteSpy = vi.spyOn(store, 'deleteAgentGroup').mockResolvedValue(undefined)
 
     const { confirmDeleteGroup, onConfirmDeleteGroup } = useSidebarGroups()
@@ -301,10 +301,10 @@ describe('useSidebarDragDrop mutation coverage (T1286)', () => {
   })
 
   it('onGroupDrop() with group-id reparents correctly', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarDragDrop } = await import('@renderer/composables/useSidebarDragDrop')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     const setParentSpy = vi.spyOn(store, 'setGroupParent').mockResolvedValue(undefined)
 
     const { dragGroupId, onGroupDrop } = useSidebarDragDrop()
@@ -318,10 +318,10 @@ describe('useSidebarDragDrop mutation coverage (T1286)', () => {
   })
 
   it('onGroupDrop() with group-id=targetGroupId does NOT reparent (same group guard)', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarDragDrop } = await import('@renderer/composables/useSidebarDragDrop')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     const setParentSpy = vi.spyOn(store, 'setGroupParent').mockResolvedValue(undefined)
 
     const { onGroupDrop } = useSidebarDragDrop()
@@ -333,10 +333,10 @@ describe('useSidebarDragDrop mutation coverage (T1286)', () => {
   })
 
   it('onGroupDrop() with group-id="0" (falsy) does NOT call setGroupParent', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarDragDrop } = await import('@renderer/composables/useSidebarDragDrop')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     const setParentSpy = vi.spyOn(store, 'setGroupParent').mockResolvedValue(undefined)
     const setAgentSpy = vi.spyOn(store, 'setAgentGroup').mockResolvedValue(undefined)
 
@@ -352,10 +352,10 @@ describe('useSidebarDragDrop mutation coverage (T1286)', () => {
   })
 
   it('onGroupDrop() resets dragOverGroupId to null on drop', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarDragDrop } = await import('@renderer/composables/useSidebarDragDrop')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     vi.spyOn(store, 'setAgentGroup').mockResolvedValue(undefined)
 
     const { dragOverGroupId, onGroupDrop } = useSidebarDragDrop()
@@ -384,10 +384,10 @@ describe('useSidebarDragDrop mutation coverage (T1286)', () => {
   })
 
   it('onGroupDrop() with null targetGroupId moves agent to ungrouped', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarDragDrop } = await import('@renderer/composables/useSidebarDragDrop')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     const setAgentSpy = vi.spyOn(store, 'setAgentGroup').mockResolvedValue(undefined)
 
     const { onGroupDrop } = useSidebarDragDrop()
@@ -399,10 +399,10 @@ describe('useSidebarDragDrop mutation coverage (T1286)', () => {
   })
 
   it('onGroupDrop() after group reparent: dragGroupId is cleared to null', async () => {
-    const { useTasksStore } = await import('@renderer/stores/tasks')
+    const { useAgentsStore } = await import('@renderer/stores/agents')
     const { useSidebarDragDrop } = await import('@renderer/composables/useSidebarDragDrop')
 
-    const store = useTasksStore()
+    const store = useAgentsStore()
     vi.spyOn(store, 'setGroupParent').mockResolvedValue(undefined)
 
     const { dragGroupId, onGroupDrop } = useSidebarDragDrop()
