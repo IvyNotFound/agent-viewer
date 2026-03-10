@@ -278,7 +278,7 @@
   },
   "launch": {
     "title": "세션 시작",
-    "noInstanceMac": "No CLI detected. Install Claude Code via npm or brew.",
+    "noInstanceMac": "No CLI detected. Install your AI CLI via npm or brew.",
     "noInstanceLinux": "CLI가 감지되지 않습니다. CLI 바이너리가 PATH에 있는지 확인하세요.",
     "noInstanceWin": "No CLI detected. Install a CLI natively or inside a WSL distro.",
     "defaultBadge": "기본",
@@ -458,7 +458,7 @@
     "duplicateAgent": "에이전트 복제",
     "move": "이동",
     "addPerimeterTitle": "스코프 추가",
-    "addPerimeterMessage": "새 스코프를 생성하기 위해 Claude Code 세션이 시작됩니다.",
+    "addPerimeterMessage": "새 스코프를 생성하기 위해 CLI 세션이 시작됩니다.",
     "addPerimeterDetail": "arch 에이전트가 설정을 안내합니다. 계속하시겠습니까?"
   },
   "quality": {

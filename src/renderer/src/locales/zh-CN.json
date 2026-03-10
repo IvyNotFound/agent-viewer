@@ -278,7 +278,7 @@
   },
   "launch": {
     "title": "启动会话",
-    "noInstanceMac": "No CLI detected. Install Claude Code via npm or brew.",
+    "noInstanceMac": "No CLI detected. Install your AI CLI via npm or brew.",
     "noInstanceLinux": "未检测到 CLI。请确保 CLI 可执行文件在您的 PATH 中。",
     "noInstanceWin": "No CLI detected. Install a CLI natively or inside a WSL distro.",
     "defaultBadge": "默认",
@@ -458,7 +458,7 @@
     "duplicateAgent": "复制 Agent",
     "move": "移动",
     "addPerimeterTitle": "添加Scope",
-    "addPerimeterMessage": "将启动 Claude Code 会话以创建新Scope。",
+    "addPerimeterMessage": "将启动 CLI 会话以创建新Scope。",
     "addPerimeterDetail": "arch Agent 将引导配置过程。是否继续？"
   },
   "quality": {

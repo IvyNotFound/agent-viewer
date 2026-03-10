@@ -278,7 +278,7 @@
   },
   "launch": {
     "title": "Lancer une session",
-    "noInstanceMac": "Aucun CLI détecté. Installez Claude Code via npm ou brew.",
+    "noInstanceMac": "Aucun CLI détecté. Installez votre CLI IA via npm ou brew.",
     "noInstanceLinux": "Aucun CLI détecté. Vérifiez que le binaire est dans votre PATH.",
     "noInstanceWin": "Aucun CLI détecté. Installez un CLI nativement ou dans une distro WSL.",
     "defaultBadge": "défaut",
@@ -458,7 +458,7 @@
     "duplicateAgent": "Dupliquer l'agent",
     "move": "Déplacer",
     "addPerimeterTitle": "Ajouter un périmètre",
-    "addPerimeterMessage": "Une session Claude Code va être lancée pour créer le nouveau périmètre.",
+    "addPerimeterMessage": "Une session CLI va être lancée pour créer le nouveau périmètre.",
     "addPerimeterDetail": "L'agent arch guidera la configuration. Continuer ?"
   },
   "quality": {

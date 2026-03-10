@@ -278,7 +278,7 @@
   },
   "launch": {
     "title": "Launch session",
-    "noInstanceMac": "No CLI detected. Install Claude Code via npm or brew.",
+    "noInstanceMac": "No CLI detected. Install your AI CLI via npm or brew.",
     "noInstanceLinux": "No CLI detected. Ensure the CLI binary is in your PATH.",
     "noInstanceWin": "No CLI detected. Install a CLI natively or inside a WSL distro.",
     "defaultBadge": "default",
@@ -466,7 +466,7 @@
     "duplicateAgent": "Duplicate agent",
     "move": "Move",
     "addPerimeterTitle": "Add scope",
-    "addPerimeterMessage": "A Claude Code session will be launched to create the new scope.",
+    "addPerimeterMessage": "A CLI session will be launched to create the new scope.",
     "addPerimeterDetail": "The arch agent will guide the configuration. Continue?"
   },
   "quality": {

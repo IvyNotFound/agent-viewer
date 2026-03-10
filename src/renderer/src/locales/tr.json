@@ -278,7 +278,7 @@
   },
   "launch": {
     "title": "Oturum başlat",
-    "noInstanceMac": "No CLI detected. Install Claude Code via npm or brew.",
+    "noInstanceMac": "No CLI detected. Install your AI CLI via npm or brew.",
     "noInstanceLinux": "CLI algılanamadı. CLI ikili dosyasının PATH'inizde olduğundan emin olun.",
     "noInstanceWin": "No CLI detected. Install a CLI natively or inside a WSL distro.",
     "defaultBadge": "Varsayılan",
@@ -458,7 +458,7 @@
     "duplicateAgent": "Ajanı kopyala",
     "move": "Taşı",
     "addPerimeterTitle": "Scope ekle",
-    "addPerimeterMessage": "Yeni bir scope oluşturmak için Claude Code oturumu başlatılacak.",
+    "addPerimeterMessage": "Yeni bir scope oluşturmak için CLI oturumu başlatılacak.",
     "addPerimeterDetail": "arch ajanı yapılandırmayı yönlendirecek. Devam etmek istiyor musunuz?"
   },
   "quality": {

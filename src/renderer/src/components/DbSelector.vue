@@ -156,7 +156,7 @@ async function create() {
 
       <!-- Explication -->
       <div class="px-3 py-3 rounded-lg bg-surface-secondary/60 border border-edge-default/50 text-xs text-content-muted leading-relaxed space-y-1">
-        <p>Le <code class="text-violet-600 dark:text-violet-300 bg-surface-primary px-1 rounded">CLAUDE.md</code> maître sera téléchargé depuis le dépôt de référence et copié dans le dossier choisi.</p>
+        <p>Le <code class="text-violet-600 dark:text-violet-300 bg-surface-primary px-1 rounded">CLAUDE.md</code> sera initialisé dans le dossier choisi.</p>
         <p>Un terminal <span class="text-violet-600 dark:text-violet-300 font-mono">setup</span> sera lancé automatiquement pour initialiser le projet.</p>
       </div>
 

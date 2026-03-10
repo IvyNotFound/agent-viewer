@@ -278,7 +278,7 @@
   },
   "launch": {
     "title": "تشغيل الجلسة",
-    "noInstanceMac": "No CLI detected. Install Claude Code via npm or brew.",
+    "noInstanceMac": "No CLI detected. Install your AI CLI via npm or brew.",
     "noInstanceLinux": "لم يتم اكتشاف CLI. تأكد من أن ملف CLI الثنائي موجود في PATH.",
     "noInstanceWin": "No CLI detected. Install a CLI natively or inside a WSL distro.",
     "defaultBadge": "افتراضي",
@@ -458,7 +458,7 @@
     "duplicateAgent": "نسخ الوكيل",
     "move": "نقل",
     "addPerimeterTitle": "إضافة نطاق",
-    "addPerimeterMessage": "سيتم تشغيل جلسة Claude Code لإنشاء النطاق الجديد.",
+    "addPerimeterMessage": "سيتم تشغيل جلسة CLI لإنشاء النطاق الجديد.",
     "addPerimeterDetail": "سيُرشد وكيل arch عملية الإعداد. هل تريد المتابعة؟"
   },
   "quality": {
