@@ -208,7 +208,7 @@
     "notifications": "데스크톱 알림",
     "notificationsDesc": "작업이 진행 중이거나 완료될 때 알림을 보냅니다",
     "about": "앱 정보",
-    "aboutDesc": "Claude 에이전트 작업을 표시하는 데스크톱 인터페이스",
+    "aboutDesc": "에이전트 작업을 표시하는 데스크톱 인터페이스",
     "database": "데이터베이스",
     "fermer": "닫기",
     "exportData": "데이터",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(전역: {status})"
   },
   "dbSelector": {
-    "tagline": "Claude 에이전트 작업을 실시간으로 확인하세요.",
+    "tagline": "에이전트 작업을 실시간으로 확인하세요.",
     "open": "열기",
     "existingProject": "기존 프로젝트",
     "createNew": "생성",

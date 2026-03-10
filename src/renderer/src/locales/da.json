@@ -208,7 +208,7 @@
     "notifications": "Skrivebordsnotifikationer",
     "notificationsDesc": "Giv besked når en opgave bliver i gang eller færdig",
     "about": "Om",
-    "aboutDesc": "Skrivebordsgrænseflade til visning af Claude agent-opgaver",
+    "aboutDesc": "Skrivebordsgrænseflade til visning af agent-opgaver",
     "database": "Database",
     "fermer": "Luk",
     "exportData": "Data",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
-    "tagline": "Se dine Claude agent-opgaver i realtid.",
+    "tagline": "Se dine agent-opgaver i realtid.",
     "open": "Åbn",
     "existingProject": "Eksisterende projekt",
     "createNew": "Opret",

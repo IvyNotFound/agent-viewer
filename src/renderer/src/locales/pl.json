@@ -208,7 +208,7 @@
     "notifications": "Powiadomienia pulpitu",
     "notificationsDesc": "Powiadamiaj, gdy zadanie staje się w toku lub gotowe",
     "about": "O programie",
-    "aboutDesc": "Interfejs pulpitu do przeglądania zadań agentów Claude",
+    "aboutDesc": "Interfejs pulpitu do przeglądania zadań agentów",
     "database": "Baza danych",
     "fermer": "Zamknij",
     "exportData": "Dane",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(globalny: {status})"
   },
   "dbSelector": {
-    "tagline": "Przeglądaj zadania agentów Claude w czasie rzeczywistym.",
+    "tagline": "Przeglądaj zadania agentów w czasie rzeczywistym.",
     "open": "Otwórz",
     "existingProject": "Istniejący projekt",
     "createNew": "Utwórz",

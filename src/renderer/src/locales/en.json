@@ -210,7 +210,7 @@
     "notifications": "Desktop notifications",
     "notificationsDesc": "Notify when a task becomes in-progress or done",
     "about": "About",
-    "aboutDesc": "Desktop interface to view Claude agent tasks",
+    "aboutDesc": "Desktop interface to view agent tasks",
     "database": "Database",
     "fermer": "Close",
     "exportData": "Data",
@@ -394,7 +394,7 @@
     }
   },
   "dbSelector": {
-    "tagline": "View your Claude agents' tasks in real time.",
+    "tagline": "View your agents' tasks in real time.",
     "open": "Open",
     "existingProject": "Existing project",
     "createNew": "Create",

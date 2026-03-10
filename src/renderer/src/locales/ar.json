@@ -208,7 +208,7 @@
     "notifications": "إشعارات سطح المكتب",
     "notificationsDesc": "إرسال إشعار عند تغيير حالة المهمة إلى قيد التنفيذ أو مكتمل",
     "about": "حول",
-    "aboutDesc": "واجهة سطح مكتب لعرض مهام وكلاء Claude",
+    "aboutDesc": "واجهة سطح مكتب لعرض مهام الوكلاء",
     "database": "قاعدة البيانات",
     "fermer": "إغلاق",
     "exportData": "البيانات",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(عام: {status})"
   },
   "dbSelector": {
-    "tagline": "عرض مهام وكلاء Claude الخاصة بك في الوقت الفعلي.",
+    "tagline": "عرض مهام الوكلاء الخاصة بك في الوقت الفعلي.",
     "open": "فتح",
     "existingProject": "مشروع موجود",
     "createNew": "إنشاء",

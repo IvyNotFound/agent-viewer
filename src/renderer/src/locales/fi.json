@@ -208,7 +208,7 @@
     "notifications": "Työpöytäilmoitukset",
     "notificationsDesc": "Ilmoita, kun tehtävä siirtyy tilaan käynnissä tai valmis",
     "about": "Tietoja",
-    "aboutDesc": "Työpöytäliittymä Claude-agenttitehtävien tarkasteluun",
+    "aboutDesc": "Työpöytäliittymä agenttitehtävien tarkasteluun",
     "database": "Tietokanta",
     "fermer": "Sulje",
     "exportData": "Tiedot",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(yleinen: {status})"
   },
   "dbSelector": {
-    "tagline": "Tarkastele Claude-agenttitehtäviäsi reaaliajassa.",
+    "tagline": "Tarkastele agenttitehtäviäsi reaaliajassa.",
     "open": "Avaa",
     "existingProject": "Olemassa oleva projekti",
     "createNew": "Luo",

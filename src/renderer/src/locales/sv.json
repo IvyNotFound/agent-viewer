@@ -208,7 +208,7 @@
     "notifications": "Skrivbordsaviseringar",
     "notificationsDesc": "Meddela när en uppgift blir pågående eller klar",
     "about": "Om",
-    "aboutDesc": "Skrivbordsgränssnitt för att visa Claude-agentuppgifter",
+    "aboutDesc": "Skrivbordsgränssnitt för att visa agentuppgifter",
     "database": "Databas",
     "fermer": "Stäng",
     "exportData": "Data",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
-    "tagline": "Se dina Claude-agenters uppgifter i realtid.",
+    "tagline": "Se dina agenters uppgifter i realtid.",
     "open": "Öppna",
     "existingProject": "Befintligt projekt",
     "createNew": "Skapa",

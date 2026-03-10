@@ -208,7 +208,7 @@
     "notifications": "Notificaciones de escritorio",
     "notificationsDesc": "Notificar cuando una tarea pase a en progreso o completada",
     "about": "Acerca de",
-    "aboutDesc": "Interfaz de escritorio para ver tareas de agentes Claude",
+    "aboutDesc": "Interfaz de escritorio para ver tareas de agentes",
     "database": "Base de datos",
     "fermer": "Cerrar",
     "exportData": "Datos",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
-    "tagline": "Visualiza las tareas de tus agentes Claude en tiempo real.",
+    "tagline": "Visualiza las tareas de tus agentes en tiempo real.",
     "open": "Abrir",
     "existingProject": "Proyecto existente",
     "createNew": "Crear",

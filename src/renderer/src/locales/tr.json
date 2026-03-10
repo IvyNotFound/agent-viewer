@@ -208,7 +208,7 @@
     "notifications": "Masaüstü bildirimleri",
     "notificationsDesc": "Görev devam ediyor veya tamamlandığında bildirim gönder",
     "about": "Hakkında",
-    "aboutDesc": "Claude ajan görevlerini gösteren masaüstü arayüzü",
+    "aboutDesc": "Ajan görevlerini gösteren masaüstü arayüzü",
     "database": "Veritabanı",
     "fermer": "Kapat",
     "exportData": "Veri",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(genel: {status})"
   },
   "dbSelector": {
-    "tagline": "Claude ajan görevlerini gerçek zamanlı izleyin.",
+    "tagline": "Ajan görevlerini gerçek zamanlı izleyin.",
     "open": "Aç",
     "existingProject": "Mevcut proje",
     "createNew": "Oluştur",

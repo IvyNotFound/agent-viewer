@@ -208,7 +208,7 @@
     "notifications": "デスクトップ通知",
     "notificationsDesc": "タスクが進行中または完了になったときに通知する",
     "about": "このアプリについて",
-    "aboutDesc": "Claudeエージェントのタスクを表示するデスクトップインターフェース",
+    "aboutDesc": "エージェントのタスクを表示するデスクトップインターフェース",
     "database": "データベース",
     "fermer": "閉じる",
     "exportData": "データ",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(グローバル: {status})"
   },
   "dbSelector": {
-    "tagline": "Claude エージェントのタスクをリアルタイムで確認。",
+    "tagline": "エージェントのタスクをリアルタイムで確認。",
     "open": "開く",
     "existingProject": "既存プロジェクト",
     "createNew": "作成",

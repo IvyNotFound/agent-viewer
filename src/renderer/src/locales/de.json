@@ -208,7 +208,7 @@
     "notifications": "Desktop-Benachrichtigungen",
     "notificationsDesc": "Benachrichtigen, wenn eine Aufgabe in Bearbeitung oder erledigt ist",
     "about": "Über",
-    "aboutDesc": "Desktop-Oberfläche zur Anzeige von Claude-Agenten-Aufgaben",
+    "aboutDesc": "Desktop-Oberfläche zur Anzeige von Agenten-Aufgaben",
     "database": "Datenbank",
     "fermer": "Schließen",
     "exportData": "Daten",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
-    "tagline": "Aufgaben Ihrer Claude-Agenten in Echtzeit anzeigen.",
+    "tagline": "Aufgaben Ihrer Agenten in Echtzeit anzeigen.",
     "open": "Öffnen",
     "existingProject": "Vorhandenes Projekt",
     "createNew": "Erstellen",

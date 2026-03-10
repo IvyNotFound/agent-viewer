@@ -208,7 +208,7 @@
     "notifications": "桌面通知",
     "notificationsDesc": "当任务变为进行中或完成时发送通知",
     "about": "关于",
-    "aboutDesc": "用于查看 Claude Agent 任务的桌面界面",
+    "aboutDesc": "用于查看 Agent 任务的桌面界面",
     "database": "数据库",
     "fermer": "关闭",
     "exportData": "数据",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "（全局：{status}）"
   },
   "dbSelector": {
-    "tagline": "实时查看您的 Claude Agent 任务。",
+    "tagline": "实时查看您的 Agent 任务。",
     "open": "打开",
     "existingProject": "现有项目",
     "createNew": "创建",

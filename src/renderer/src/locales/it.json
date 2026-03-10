@@ -208,7 +208,7 @@
     "notifications": "Notifiche desktop",
     "notificationsDesc": "Notifica quando un'attività diventa in corso o completata",
     "about": "Informazioni",
-    "aboutDesc": "Interfaccia desktop per visualizzare le attività degli agenti Claude",
+    "aboutDesc": "Interfaccia desktop per visualizzare le attività degli agenti",
     "database": "Database",
     "fermer": "Chiudi",
     "exportData": "Dati",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(globale: {status})"
   },
   "dbSelector": {
-    "tagline": "Visualizza in tempo reale le attività degli agenti Claude.",
+    "tagline": "Visualizza in tempo reale le attività degli agenti.",
     "open": "Apri",
     "existingProject": "Progetto esistente",
     "createNew": "Crea",

@@ -208,7 +208,7 @@
     "notifications": "Skrivebordsvarslinger",
     "notificationsDesc": "Varsle når en oppgave blir pågående eller ferdig",
     "about": "Om",
-    "aboutDesc": "Skrivebordgrensesnitt for å vise Claude-agentoppgaver",
+    "aboutDesc": "Skrivebordgrensesnitt for å vise agentoppgaver",
     "database": "Database",
     "fermer": "Lukk",
     "exportData": "Data",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
-    "tagline": "Se Claude-agentoppgavene dine i sanntid.",
+    "tagline": "Se agentoppgavene dine i sanntid.",
     "open": "Åpne",
     "existingProject": "Eksisterende prosjekt",
     "createNew": "Opprett",

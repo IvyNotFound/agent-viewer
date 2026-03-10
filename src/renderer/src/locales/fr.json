@@ -210,7 +210,7 @@
     "notifications": "Notifications desktop",
     "notificationsDesc": "Notifier quand une tâche passe en cours ou est terminée",
     "about": "À propos",
-    "aboutDesc": "Interface desktop pour visualiser les tâches des agents Claude",
+    "aboutDesc": "Interface desktop pour visualiser les tâches des agents",
     "database": "Base de données",
     "fermer": "Fermer",
     "exportData": "Données",
@@ -386,7 +386,7 @@
     }
   },
   "dbSelector": {
-    "tagline": "Visualisez les tâches de vos agents Claude en temps réel.",
+    "tagline": "Visualisez les tâches de vos agents en temps réel.",
     "open": "Ouvrir",
     "existingProject": "Projet existant",
     "createNew": "Créer",

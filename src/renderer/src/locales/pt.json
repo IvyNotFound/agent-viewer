@@ -208,7 +208,7 @@
     "notifications": "Notificações do ambiente de trabalho",
     "notificationsDesc": "Notificar quando uma tarefa passa a em progresso ou concluída",
     "about": "Sobre",
-    "aboutDesc": "Interface de ambiente de trabalho para visualizar tarefas de agentes Claude",
+    "aboutDesc": "Interface de ambiente de trabalho para visualizar tarefas de agentes",
     "database": "Base de dados",
     "fermer": "Fechar",
     "exportData": "Dados",
@@ -386,7 +386,7 @@
     "worktreeCurrentGlobal": "(global: {status})"
   },
   "dbSelector": {
-    "tagline": "Visualize as tarefas dos seus agentes Claude em tempo real.",
+    "tagline": "Visualize as tarefas dos seus agentes em tempo real.",
     "open": "Abrir",
     "existingProject": "Projeto existente",
     "createNew": "Criar",
