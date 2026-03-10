@@ -1,11 +1,12 @@
 /**
- * Deep mutation-killing tests for the gemini adapter (T1070).
+ * Deep mutation-killing tests for the gemini adapter (T1070, T1245).
  *
  * Targets:
  * - GEMINI_CMD_REGEX: anchors, suffix pattern, invalid chars
  * - buildCommand: binaryName guard (falsy, valid, invalid)
- * - buildCommand: args array contains -p flag (non-interactive mode)
- * - buildCommand: systemPromptFile flag wiring
+ * - buildCommand: headless mode via -p + --output-format stream-json
+ * - parseLine: stream-json format (init, message, result)
+ * - singleShotStdin flag
  */
 
 import { describe, it, expect, vi } from 'vitest'
@@ -78,31 +79,55 @@ describe('geminiAdapter.buildCommand', () => {
     expect(spec.command).toBe('gemini-dev')
   })
 
-  it('args are empty by default (no -p: requires non-empty value, prompt via stdin)', () => {
+  it('args are empty by default (no initialMessage → interactive fallback)', () => {
     const spec = geminiAdapter.buildCommand({})
     expect(spec.args).toEqual([])
   })
 
-  it('does not include -p by default (would crash with empty value)', () => {
+  it('does not include -p by default (no initialMessage provided)', () => {
     const spec = geminiAdapter.buildCommand({})
     expect(spec.args).not.toContain('-p')
   })
 
-  it('includes --system-prompt <file> when systemPromptFile provided', () => {
-    const spec = geminiAdapter.buildCommand({ systemPromptFile: '/tmp/sp.txt' })
-    const idx = spec.args.indexOf('--system-prompt')
+  it('includes --output-format stream-json when initialMessage is provided', () => {
+    const spec = geminiAdapter.buildCommand({ initialMessage: 'hello' })
+    const idx = spec.args.indexOf('--output-format')
     expect(idx).toBeGreaterThan(-1)
-    expect(spec.args[idx + 1]).toBe('/tmp/sp.txt')
+    expect(spec.args[idx + 1]).toBe('stream-json')
   })
 
-  it('does not include --system-prompt when systemPromptFile is absent', () => {
-    const spec = geminiAdapter.buildCommand({})
+  it('includes -p <initialMessage> when initialMessage is provided', () => {
+    const spec = geminiAdapter.buildCommand({ initialMessage: 'fix the bug' })
+    const idx = spec.args.indexOf('-p')
+    expect(idx).toBeGreaterThan(-1)
+    expect(spec.args[idx + 1]).toBe('fix the bug')
+  })
+
+  it('--output-format appears before -p in args', () => {
+    const spec = geminiAdapter.buildCommand({ initialMessage: 'test' })
+    const fmtIdx = spec.args.indexOf('--output-format')
+    const pIdx = spec.args.indexOf('-p')
+    expect(fmtIdx).toBeGreaterThan(-1)
+    expect(pIdx).toBeGreaterThan(-1)
+    expect(fmtIdx).toBeLessThan(pIdx)
+  })
+
+  it('does not include --system-prompt (flag does not exist in gemini CLI)', () => {
+    const spec = geminiAdapter.buildCommand({ systemPromptFile: '/tmp/sp.txt' })
     expect(spec.args).not.toContain('--system-prompt')
   })
 
   it('binaryName exact name is in returned command field', () => {
     const spec = geminiAdapter.buildCommand({ binaryName: 'gemini' })
     expect(spec.command).toBe('gemini')
+  })
+})
+
+// ── geminiAdapter.singleShotStdin ─────────────────────────────────────────────
+
+describe('geminiAdapter.singleShotStdin', () => {
+  it('is true (gemini exits after one -p response)', () => {
+    expect(geminiAdapter.singleShotStdin).toBe(true)
   })
 })
 
@@ -119,5 +144,79 @@ describe('geminiAdapter.formatStdinMessage', () => {
 
   it('handles empty string', () => {
     expect(geminiAdapter.formatStdinMessage?.('')).toBe('\n')
+  })
+})
+
+// ── geminiAdapter.parseLine ───────────────────────────────────────────────────
+
+describe('geminiAdapter.parseLine', () => {
+  // Blank lines
+  it('returns null for empty string', () => {
+    expect(geminiAdapter.parseLine('')).toBeNull()
+  })
+
+  it('returns null for whitespace-only line', () => {
+    expect(geminiAdapter.parseLine('   ')).toBeNull()
+  })
+
+  // init event
+  it('returns null for type:init (session metadata)', () => {
+    const line = JSON.stringify({ type: 'init', session_id: 'abc', model: 'gemini-3' })
+    expect(geminiAdapter.parseLine(line)).toBeNull()
+  })
+
+  // message events — user role
+  it('returns null for type:message role:user (echo of input)', () => {
+    const line = JSON.stringify({ type: 'message', role: 'user', content: 'hello' })
+    expect(geminiAdapter.parseLine(line)).toBeNull()
+  })
+
+  // message events — assistant role (delta chunks)
+  it('returns text event for type:message role:assistant delta:true', () => {
+    const line = JSON.stringify({ type: 'message', role: 'assistant', content: 'Hello,', delta: true })
+    expect(geminiAdapter.parseLine(line)).toEqual({ type: 'text', text: 'Hello,' })
+  })
+
+  it('returns text event for type:message role:assistant without delta flag', () => {
+    const line = JSON.stringify({ type: 'message', role: 'assistant', content: 'Hello world!' })
+    expect(geminiAdapter.parseLine(line)).toEqual({ type: 'text', text: 'Hello world!' })
+  })
+
+  it('returns null for type:message role:assistant with empty content', () => {
+    const line = JSON.stringify({ type: 'message', role: 'assistant', content: '' })
+    expect(geminiAdapter.parseLine(line)).toBeNull()
+  })
+
+  // result events
+  it('returns null for type:result status:success', () => {
+    const line = JSON.stringify({ type: 'result', status: 'success', stats: { total_tokens: 100 } })
+    expect(geminiAdapter.parseLine(line)).toBeNull()
+  })
+
+  it('returns error event for type:result status:error with string error', () => {
+    const line = JSON.stringify({ type: 'result', status: 'error', error: 'rate limit exceeded' })
+    const result = geminiAdapter.parseLine(line)
+    expect(result).toEqual({ type: 'error', text: 'rate limit exceeded' })
+  })
+
+  it('returns error event for type:result status:error with no error field', () => {
+    const line = JSON.stringify({ type: 'result', status: 'error' })
+    const result = geminiAdapter.parseLine(line)
+    expect(result?.type).toBe('error')
+    expect(result?.text).toContain('error')
+  })
+
+  // Unknown type
+  it('returns null for unknown event types (lifecycle metadata)', () => {
+    const line = JSON.stringify({ type: 'tool_use', name: 'shell' })
+    expect(geminiAdapter.parseLine(line)).toBeNull()
+  })
+
+  // Non-JSON fallback
+  it('returns text event for non-JSON lines (e.g. "Loaded cached credentials.")', () => {
+    expect(geminiAdapter.parseLine('Loaded cached credentials.')).toEqual({
+      type: 'text',
+      text: 'Loaded cached credentials.',
+    })
   })
 })

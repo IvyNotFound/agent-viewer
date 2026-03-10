@@ -187,9 +187,9 @@ onMounted(async () => {
       assignEventId(autoEvent)
       events.value.push(autoEvent)
       scrollToBottom(true)
-      // opencode: initial message was passed as positional arg via agentCreate(initialMessage) —
+      // opencode/gemini: initial message was passed as positional arg via agentCreate(initialMessage) —
       // skip agentSend to avoid writing to stdin of a one-shot process.
-      if (tab.cli !== 'opencode') {
+      if (tab.cli !== 'opencode' && tab.cli !== 'gemini') {
         await window.electronAPI.agentSend(id, tab.autoSend)
       }
     }
