@@ -14,41 +14,34 @@
  * - proc.stdin.write() for multi-turn messages (no respawn)
  * - convId extracted from system:init event (no banner scanning needed)
  *
+ * Spawn strategies are in src/main/spawn/. Stream handlers in src/main/spawn/stream-handlers.ts.
+ *
  * @module agent-stream
  */
-import { ipcMain, webContents, app } from 'electron'
-import { spawn, type ChildProcess } from 'child_process'
-import { createInterface } from 'readline'
-import { writeFileSync, unlinkSync } from 'fs'
+import { ipcMain, app } from 'electron'
+import { writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
-import { toWslPath } from './utils/wsl'
 import { queryLive, assertDbPathAllowed } from './db'
 import {
   CLAUDE_CMD_REGEX,
   UUID_REGEX,
-  MAX_STDERR_BUFFER_SIZE,
   logDebug,
-  buildEnv,
-  buildWindowsEnv,
-  buildClaudeCmd,
-  buildWindowsPS1Script,
   getActiveTasksLine,
 } from './agent-stream-helpers'
 import type { CliAdapter } from '../shared/cli-types'
 import { getAdapter } from './adapters/index'
-import { createWorktree, removeWorktree, type WorktreeInfo } from './worktree-manager'
+import { createWorktree, type WorktreeInfo } from './worktree-manager'
 import {
   agents,
   webContentsAgents,
   incrementAgentId,
-  pushStreamEvent,
-  cleanupStreamBatch,
-  sendTerminalEvent,
   killAgent,
   killAllAgents,
   type AgentCreateOpts,
 } from './agent-stream-registry'
+import { resolveSpawnFn } from './spawn/index'
+import { attachStreamHandlers } from './spawn/stream-handlers'
 
 // Re-export _testing for backward compat with spec files
 export { _testing } from './agent-stream-registry'
@@ -152,214 +145,23 @@ export function registerAgentStreamHandlers(): void {
       writeFileSync(spTempFile, effectiveSystemPrompt, 'utf-8')
     }
 
-    // ── Spawn: local Windows vs WSL / Linux / macOS ────────────────────────────
-    const isLocalWindows = process.platform === 'win32' && opts.wslDistro === 'local'
-    let scriptTempFile: string | undefined
-    let proc: ChildProcess
-
     // T1107: Write settings JSON to a temp file for Windows native (.cmd wrapper bypass).
     let settingsTempFile: string | undefined
-    if (isLocalWindows && opts.thinkingMode === 'disabled') {
+    if (process.platform === 'win32' && opts.wslDistro === 'local' && opts.thinkingMode === 'disabled') {
       settingsTempFile = join(tmpdir(), `claude-settings-${id}.json`)
       writeFileSync(settingsTempFile, JSON.stringify({ alwaysThinkingEnabled: false }), 'utf-8')
     }
 
-    if (isLocalWindows) {
-      if (adapter.cli === 'claude') {
-        const ps1Content = buildWindowsPS1Script({
-          claudeCommand: opts.claudeCommand,
-          convId: validConvId,
-          spTempFile,
-          thinkingMode: opts.thinkingMode,
-          permissionMode: opts.permissionMode,
-          claudeBinaryPath: opts.claudeBinaryPath,
-          settingsTempFile,
-        })
-        scriptTempFile = join(tmpdir(), `claude-start-${id}.ps1`)
-        writeFileSync(scriptTempFile, ps1Content, 'utf-8')
-
-        logDebug(`spawn attempt (local Windows): powershell.exe -File ${scriptTempFile}`)
-        console.log('[agent-stream] spawn local Windows', scriptTempFile)
-
-        proc = spawn('powershell.exe', [
-          '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptTempFile,
-        ], {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          env: buildWindowsEnv(),
-          cwd: worktreeInfo?.path ?? opts.workDir ?? opts.projectPath ?? undefined,
-        })
-      } else {
-        const spec = adapter.buildCommand({
-          convId: validConvId,
-          thinkingMode: opts.thinkingMode,
-          permissionMode: opts.permissionMode,
-          systemPromptFile: spTempFile,
-          binaryName: opts.claudeCommand,
-          initialMessage: opts.initialMessage,
-        })
-        logDebug(`spawn attempt (local Windows, ${adapter.cli}): ${spec.command} ${spec.args.join(' ')}`)
-        proc = spawn(spec.command, spec.args, {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          shell: true,
-          env: { ...buildWindowsEnv(), ...spec.env },
-          cwd: worktreeInfo?.path ?? opts.workDir ?? opts.projectPath ?? undefined,
-        })
-      }
-    } else {
-      // WSL / Linux / macOS path
-      const wslArgs: string[] = []
-      if (opts.wslDistro && opts.wslDistro !== 'local') wslArgs.push('-d', opts.wslDistro)
-      const effectiveCwd = worktreeInfo?.path ?? opts.workDir ?? opts.projectPath
-      if (effectiveCwd) wslArgs.push('--cd', toWslPath(effectiveCwd))
-
-      // Resolve wsl.exe via absolute path to avoid ENOENT in packaged app (Fix T692).
-      const wslExe = process.env.SystemRoot
-        ? join(process.env.SystemRoot, 'System32', 'wsl.exe')
-        : 'C:\\Windows\\System32\\wsl.exe'
-
-      if (adapter.cli === 'claude') {
-        const claudeCmd = buildClaudeCmd({
-          claudeCommand: opts.claudeCommand,
-          convId: validConvId,
-          systemPromptFile: spTempFile ? toWslPath(spTempFile) : undefined,
-          thinkingMode: opts.thinkingMode,
-          permissionMode: opts.permissionMode,
-        })
-        scriptTempFile = join(tmpdir(), `claude-start-${id}.sh`)
-        writeFileSync(scriptTempFile, `#!/bin/bash\nexec ${claudeCmd}\n`, 'utf-8')
-        const scriptWslPath = toWslPath(scriptTempFile)
-        logDebug(`spawn attempt: exe=${wslExe} script=${scriptWslPath} args=${JSON.stringify([...wslArgs, '--', 'bash', '-l', scriptWslPath])}`)
-        console.log('[agent-stream] spawn', wslExe, wslArgs)
-        proc = spawn(wslExe, [...wslArgs, '--', 'bash', '-l', scriptWslPath], {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          env: buildEnv(),
-        })
-      } else {
-        const spec = adapter.buildCommand({
-          convId: validConvId,
-          thinkingMode: opts.thinkingMode,
-          permissionMode: opts.permissionMode,
-          systemPromptFile: spTempFile ? toWslPath(spTempFile) : undefined,
-          binaryName: opts.claudeCommand,
-          initialMessage: opts.initialMessage,
-        })
-        const bashLine = [spec.command, ...spec.args].map(a =>
-          /[\s'"\\$`!]/.test(a) ? `'${a.replace(/'/g, "'\\''")}'` : a
-        ).join(' ')
-        scriptTempFile = join(tmpdir(), `${adapter.cli}-start-${id}.sh`)
-        writeFileSync(scriptTempFile, `#!/bin/bash\n[ -f ~/.bashrc ] && source ~/.bashrc\nexec ${bashLine}\n`, 'utf-8')
-        const scriptWslPath = toWslPath(scriptTempFile)
-        logDebug(`spawn attempt (${adapter.cli}): exe=${wslExe} script=${scriptWslPath}`)
-        proc = spawn(wslExe, [...wslArgs, '--', 'bash', '-l', scriptWslPath], {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          env: { ...buildEnv(), ...spec.env },
-        })
-      }
-    }
+    // ── Spawn: delegate to platform strategy ─────────────────────────────────
+    const spawnFn = resolveSpawnFn(process.platform, opts.wslDistro)
+    const { proc, scriptTempFile } = spawnFn({ id, adapter, validConvId, opts, worktreeInfo, spTempFile, settingsTempFile })
 
     agents.set(id, proc)
     agentAdapters.set(id, adapter)
 
-    let eventsReceived = 0
-    let stderrBuffer = ''
-    // Buffer non-JSON stdout lines for error context (WSL errors go to stdout, not stderr).
-    let stdoutErrorBuffer = ''
-
-    // Buffer stderr — do NOT emit line-by-line to avoid spamming the renderer (T697).
-    proc.stderr!.on('data', (chunk: Buffer) => {
-      stderrBuffer = (stderrBuffer + chunk.toString()).slice(-MAX_STDERR_BUFFER_SIZE)
-    })
-
-    // readline on stdout → parsed events via adapter, 0 ANSI corruption
-    const rl = createInterface({ input: proc.stdout! })
-    rl.on('line', (line) => {
-      const clean = line.trim()
-      if (!clean) return
-      if (eventsReceived === 0) logDebug(`first stdout line (raw): ${line.slice(0, 200)}`)
-
-      const event = adapter.parseLine(clean)
-      if (event === null) {
-        // Non-parseable line — buffer for diagnostics.
-        const readable = clean.replace(/\x00/g, '').replace(/  +/g, ' ').trim()
-        if (readable) {
-          stdoutErrorBuffer = (stdoutErrorBuffer + '\n' + readable).slice(-1000)
-        }
-        return
-      }
-
-      eventsReceived++
-
-      // Extract convId if adapter supports it (Claude: system:init event)
-      const convId = adapter.extractConvId?.(event) ?? null
-      if (convId) {
-        const wc = webContents.fromId(wcId)
-        if (wc && !wc.isDestroyed()) {
-          wc.send(`agent:convId:${id}`, convId)
-        }
-      }
-
-      if (!webContents.fromId(wcId) || webContents.fromId(wcId)!.isDestroyed()) {
-        killAgent(id)
-        return
-      }
-      pushStreamEvent(id, wcId, event)
-    })
-
-    proc.on('error', (err) => {
-      logDebug(`spawn error id=${id}: ${err.message} (code=${(err as NodeJS.ErrnoException).code})`)
-      console.error(`[agent-stream] spawn error id=${id}:`, err)
-      rl.close()
-      agents.delete(id)
-      agentAdapters.delete(id)
-      webContentsAgents.get(wcId)?.delete(id)
-      sendTerminalEvent(id, wcId, { type: 'error:spawn', error: err.message })
-    })
-
-    proc.on('close', (exitCode) => {
-      rl.close()
-      agents.delete(id)
-      agentAdapters.delete(id)
-      webContentsAgents.get(wcId)?.delete(id)
-      if (spTempFile) try { unlinkSync(spTempFile) } catch { /* cleanup best-effort */ }
-      if (settingsTempFile) try { unlinkSync(settingsTempFile) } catch { /* cleanup best-effort */ }
-      if (scriptTempFile) try { unlinkSync(scriptTempFile) } catch { /* cleanup best-effort */ }
-      if (worktreeInfo && opts.projectPath) {
-        removeWorktree(opts.projectPath, opts.sessionId!).catch(() => { /* best-effort */ })
-      }
-
-      logDebug(`close id=${id}: exitCode=${exitCode} eventsReceived=${eventsReceived} stderr=${stderrBuffer.slice(0, 200)} stdout_error=${stdoutErrorBuffer.slice(0, 200)}`)
-
-      if (eventsReceived === 0) {
-        const isAbnormalExit = exitCode === -1 || exitCode === 4294967295
-        const stdoutCtx = stdoutErrorBuffer.trim()
-        let msg: string
-        if (isAbnormalExit && stdoutCtx) {
-          msg = `Process exited abnormally (code ${exitCode}): ${stdoutCtx}`
-        } else if (isAbnormalExit) {
-          msg = `Process exited abnormally (code ${exitCode}).`
-        } else if (exitCode !== 0) {
-          msg = stdoutCtx
-            ? `Process exited with code ${exitCode}: ${stdoutCtx}`
-            : `Process exited with code ${exitCode}`
-        } else {
-          msg = `Process exited without producing any output (code ${exitCode})`
-        }
-        sendTerminalEvent(id, wcId, {
-          type: 'error:exit',
-          error: msg,
-          stderr: stderrBuffer.trim() || undefined,
-        })
-      } else {
-        // Flush residual buffered events before the exit signal
-        cleanupStreamBatch(id, wcId)
-      }
-      stderrBuffer = ''
-      stdoutErrorBuffer = ''
-
-      const wc = webContents.fromId(wcId)
-      if (wc && !wc.isDestroyed()) {
-        wc.send(`agent:exit:${id}`, exitCode)
-      }
+    attachStreamHandlers({
+      proc, id, wcId, adapter, worktreeInfo, spTempFile, settingsTempFile, scriptTempFile,
+      sessionId: opts.sessionId, projectPath: opts.projectPath, agentAdapters,
     })
 
     return id
