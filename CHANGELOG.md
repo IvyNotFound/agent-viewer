@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.33.0] - 2026-03-10
+
+### Features
+- feat(back-electron): bundle templates locally for init-new-project (T1261) (e91f066)
+
+### Bug Fixes
+- fix(front-vuejs): rendre les messages d'onboarding agnostiques au CLI (T1260) (a237904)
+
+### Other
+- ux(front-vuejs): déplacer le sélecteur de langue en bas de la card (T1259) (7fb404d)
+
 ## [0.32.0] - 2026-03-10
 
 ### Features
