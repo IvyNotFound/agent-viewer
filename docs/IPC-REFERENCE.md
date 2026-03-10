@@ -1,4 +1,4 @@
-# KanbAgent — Référence IPC (v0.31.5)
+# KanbAgent — Référence IPC (v0.35.0)
 
 > Document généré manuellement à partir de `src/preload/index.ts` et des handlers `src/main/ipc-*.ts`.
 > **À vérifier après chaque release mineure** — les canaux peuvent évoluer.

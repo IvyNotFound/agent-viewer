@@ -155,7 +155,7 @@ Yes, this is 100% vibe code — and no, the quality didn't suffer. The trick is 
 - **Default Claude Code Profile**: Configure a default Claude Code instance/profile per agent in Settings; stored in `localStorage` via `defaultClaudeProfile`
 
 ### Security & Data
-- **DOMPurify 3.3.1**: XSS protection upgraded — GHSA-v8jm-5vwx-cfxm patched, regression tests included
+- **DOMPurify 3.3.2**: XSS protection upgraded — GHSA-v8jm-5vwx-cfxm patched, regression tests included
 - **IPC Path Guard**: All IPC file handlers protected by `assertDbPathAllowed` / `assertProjectPathAllowed` — prevents path traversal to unauthorized paths
 - **Secure GitHub Token**: OS-level encryption via Electron `safeStorage` (DPAPI Windows / Keychain macOS)
 - **Auto-Update**: In-app updates from GitHub Releases (private repo); token baked at build time by GitHub Actions (`GH_TOKEN_UPDATER` secret) with `safeStorage` fallback; `UpdateNotification` banner with download progress bar and one-click install (`useUpdater` composable)
@@ -352,7 +352,7 @@ KanbAgent/
 │           │   ├── useToolStats.ts        # Tool usage stats aggregation
 │           │   ├── useUpdater.ts          # Auto-update state machine (singleton, IPC events)
 │           │   └── useHookEventDisplay.ts # Hook event formatting helpers
-│           ├── locales/             # i18n translations (fr.json, en.json)
+│           ├── locales/             # i18n translations (18 locales : fr, en, es, de, it, pt, pt-BR, ru, pl, sv, no, da, fi, tr, ar, zh-CN, ja, ko)
 │           ├── utils/               # Utilities (agentColor, buildTree, renderMarkdown…)
 │           └── types/
 │               ├── index.ts         # Shared TypeScript types
@@ -450,9 +450,9 @@ SQL
 | Desktop framework | Electron 40 |
 | Build tool | electron-vite 5 |
 | Frontend | Vue 3 + TypeScript 5 |
-| State management | Pinia 2 |
+| State management | Pinia 3 |
 | CSS | Tailwind CSS v4 (`@tailwindcss/postcss`) |
-| i18n | vue-i18n 9 (FR/EN) |
+| i18n | vue-i18n 11 (18 locales) |
 | Database | better-sqlite3 (native SQLite binding, WAL mode) |
 | Tests | Vitest 4 |
 | Code editor | CodeMirror 6 |
