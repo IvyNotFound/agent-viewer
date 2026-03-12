@@ -281,6 +281,66 @@ describe('getWslDistros', () => {
     const result = await getWslDistros()
     expect(result).toHaveLength(0)
   })
+
+  it('skips empty lines (empty string alone triggers skip)', async () => {
+    // Tests the !line branch of the L90 LogicalOperator guard
+    const output = 'NAME\t\tSTATE\t\tVERSION\n\n  Ubuntu\t\tRunning\t\t2\n\n'
+    execFileMock.mockResolvedValue({ stdout: output })
+
+    const result = await getWslDistros()
+    expect(result).toHaveLength(1)
+    expect(result[0].distro).toBe('Ubuntu')
+  })
+
+  it('skips header-only line even when output has no empty lines', async () => {
+    // Tests the /^NAME\\s+STATE/i branch of the L90 LogicalOperator guard
+    const output = 'NAME\t\tSTATE\t\tVERSION\n  Ubuntu\t\tRunning\t\t2'
+    execFileMock.mockResolvedValue({ stdout: output })
+
+    const result = await getWslDistros()
+    expect(result.every(d => d.distro !== 'NAME')).toBe(true)
+    expect(result).toHaveLength(1)
+  })
+
+  it('skips line when both empty AND header pattern match (combined condition)', async () => {
+    // Ensures both conditions in the L90 guard independently skip lines
+    const output = '\nNAME\t\tSTATE\t\tVERSION\n  Ubuntu\t\tRunning\t\t2\n'
+    execFileMock.mockResolvedValue({ stdout: output })
+
+    const result = await getWslDistros()
+    expect(result).toHaveLength(1)
+    expect(result[0].distro).toBe('Ubuntu')
+  })
+
+  it('does not crash when parts[1] is undefined (malformed line without state)', async () => {
+    // Tests the L95 OptionalChaining guard: parts[1]?.toLowerCase()
+    // A line with only a distro name and no state column
+    const output = 'NAME\t\tSTATE\t\tVERSION\n  Ubuntu\n'
+    execFileMock.mockResolvedValue({ stdout: output })
+
+    // Should not throw — optional chaining prevents crash on undefined
+    await expect(getWslDistros()).resolves.toBeDefined()
+  })
+
+  it('does not include distro when parts[1] is undefined (state guard filters it out)', async () => {
+    // Malformed line has no state → state is undefined → not 'running' nor 'stopped' → excluded
+    const output = 'NAME\t\tSTATE\t\tVERSION\n  Ubuntu\n  Debian\t\tRunning\t\t2'
+    execFileMock.mockResolvedValue({ stdout: output })
+
+    const result = await getWslDistros()
+    expect(result).toHaveLength(1)
+    expect(result[0].distro).toBe('Debian')
+  })
+
+  it('lowercases the state value from parts[1]', async () => {
+    // Tests that parts[1]?.toLowerCase() correctly normalises casing
+    const output = 'NAME\t\tSTATE\t\tVERSION\n  Ubuntu\t\tRUNNING\t\t2'
+    execFileMock.mockResolvedValue({ stdout: output })
+
+    const result = await getWslDistros()
+    expect(result).toHaveLength(1)
+    expect(result[0].distro).toBe('Ubuntu')
+  })
 })
 
 // ── registerWslHandlers — wsl:openTerminal ────────────────────────────────────
@@ -304,6 +364,20 @@ describe('registerWslHandlers', () => {
     const result = await handlers['wsl:openTerminal'](null) as { success: boolean }
     expect(result.success).toBe(true)
     expect(fakeChild.unref).toHaveBeenCalled()
+  })
+
+  it('wsl:openTerminal spawns wt.exe with windowsHide: false', async () => {
+    const fakeChild = { unref: vi.fn() }
+    spawnMock.mockReturnValue(fakeChild)
+
+    registerWslHandlers()
+    await handlers['wsl:openTerminal'](null)
+
+    expect(spawnMock).toHaveBeenCalledWith(
+      'wt.exe',
+      ['wsl'],
+      expect.objectContaining({ windowsHide: false })
+    )
   })
 
   it('wsl:openTerminal falls back to wsl:// URI when wt.exe throws', async () => {
