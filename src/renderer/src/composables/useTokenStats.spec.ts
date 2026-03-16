@@ -629,3 +629,97 @@ describe('agentStyles', () => {
     expect(agentStyles.value.has('agent-b')).toBe(true)
   })
 })
+
+// ─── Tests: whereClause and andOrWhere (T1344) ────────────────────────────────
+
+describe('whereClause', () => {
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('"all" period sends SQL with no WHERE clause for main query', async () => {
+    const mockQueryDb = vi.fn().mockResolvedValue([])
+    ;(window.electronAPI as Record<string, unknown>).queryDb = mockQueryDb
+
+    await setupComposable({ localStoragePeriod: 'all', dbPath: '/test/db' })
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    const calls = mockQueryDb.mock.calls as [string, string][]
+    const globalQuery = calls[0]?.[1] ?? ''
+    expect(globalQuery).not.toContain('WHERE started_at >=')
+  })
+
+  it('"24h" period includes WHERE started_at >= in SQL', async () => {
+    const mockQueryDb = vi.fn().mockResolvedValue([])
+    ;(window.electronAPI as Record<string, unknown>).queryDb = mockQueryDb
+
+    await setupComposable({ localStoragePeriod: '24h', dbPath: '/test/db' })
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    const calls = mockQueryDb.mock.calls as [string, string][]
+    const globalQuery = calls[0]?.[1] ?? ''
+    expect(globalQuery).toContain('WHERE started_at >=')
+  })
+})
+
+// ─── Tests: andOrWhere (T1344) ────────────────────────────────────────────────
+
+describe('andOrWhere', () => {
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('"all" period uses plain WHERE for session filter (no started_at)', async () => {
+    const mockQueryDb = vi.fn().mockResolvedValue([])
+    ;(window.electronAPI as Record<string, unknown>).queryDb = mockQueryDb
+
+    await setupComposable({ localStoragePeriod: 'all', dbPath: '/test/db' })
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    const calls = mockQueryDb.mock.calls as [string, string][]
+    const sessionQuery = calls[2]?.[1] ?? ''
+    expect(sessionQuery).not.toContain('started_at >=')
+    expect(sessionQuery).toContain('WHERE')
+  })
+
+  it('"7d" period uses WHERE started_at >= ... AND ... for session filter', async () => {
+    const mockQueryDb = vi.fn().mockResolvedValue([])
+    ;(window.electronAPI as Record<string, unknown>).queryDb = mockQueryDb
+
+    await setupComposable({ localStoragePeriod: '7d', dbPath: '/test/db' })
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    const calls = mockQueryDb.mock.calls as [string, string][]
+    const sessionQuery = calls[2]?.[1] ?? ''
+    expect(sessionQuery).toContain('WHERE started_at >=')
+    expect(sessionQuery).toContain(' AND ')
+  })
+})
+
+// ─── Tests: fetchStats error handling (T1344) ─────────────────────────────────
+
+describe('fetchStats error handling', () => {
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('does not throw when queryDb rejects — globalStats stays at default', async () => {
+    const mockQueryDb = vi.fn().mockRejectedValue(new Error('db error'))
+    ;(window.electronAPI as Record<string, unknown>).queryDb = mockQueryDb
+
+    const result = await setupComposable({ dbPath: '/test/db' })
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(result.globalStats.value.total).toBe(0)
+  })
+
+  it('skips fetch when dbPath is falsy', async () => {
+    const mockQueryDb = vi.fn().mockResolvedValue([])
+    ;(window.electronAPI as Record<string, unknown>).queryDb = mockQueryDb
+
+    await setupComposable({ dbPath: '' })
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(mockQueryDb).not.toHaveBeenCalled()
+  })
+})
