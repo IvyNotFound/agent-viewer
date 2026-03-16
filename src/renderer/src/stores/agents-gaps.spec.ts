@@ -240,3 +240,107 @@ describe('stores/agents — setGroupParent direct', () => {
     expect(store.agentGroups).toHaveLength(1)
   })
 })
+
+
+// ─── T1319: buildGroupTree mutation killers ───────────────────────────────────
+
+import { buildGroupTree } from '@renderer/stores/agents'
+import type { AgentGroup } from '@renderer/types'
+
+const makeG = (id: number, parentId: number | null | undefined = null, sortOrder = 0): AgentGroup => ({
+  id, name: `g${id}`, sort_order: sortOrder, parent_id: parentId, created_at: '', members: [],
+})
+
+describe('buildGroupTree — parent_id undefined treated as root (T1319)', () => {
+  // Kills: LogicalOperator || -> && in (parent_id === null || parent_id === undefined)
+  it('group with parent_id undefined becomes a root (not nested)', () => {
+    const flat = [makeG(1, undefined), makeG(2, null)]
+    const tree = buildGroupTree(flat)
+    expect(tree).toHaveLength(2)
+    // Both should be roots, not nested under anyone
+    expect(tree.every(g => !g.children?.length)).toBe(true)
+  })
+
+  it('group with parent_id pointing to non-existent parent becomes root', () => {
+    const flat = [makeG(1, 999)]
+    const tree = buildGroupTree(flat)
+    expect(tree).toHaveLength(1)
+    expect(tree[0].id).toBe(1)
+  })
+})
+
+describe('buildGroupTree — sort direction (T1319)', () => {
+  // Kills: ArithmeticOperator a.sort_order - b.sort_order -> b.sort_order - a.sort_order
+  // and MethodExpression sort() mutants
+
+  it('children sorted ascending by sort_order (high -> low input must come out low -> high)', () => {
+    const flat = [
+      makeG(1, null, 0),              // root
+      makeG(4, 1, 100),               // child with highest sort_order
+      makeG(2, 1, 0),                 // child with lowest sort_order
+      makeG(3, 1, 50),                // child with middle sort_order
+    ]
+    const tree = buildGroupTree(flat)
+    const childIds = tree[0].children!.map(c => c.id)
+    expect(childIds).toEqual([2, 3, 4])
+  })
+
+  it('top-level roots sorted ascending by sort_order', () => {
+    const flat = [
+      makeG(3, null, 10),
+      makeG(1, null, 0),
+      makeG(2, null, 5),
+    ]
+    const tree = buildGroupTree(flat)
+    expect(tree.map(g => g.id)).toEqual([1, 2, 3])
+  })
+
+  it('recursive sort: grandchildren also sorted ascending', () => {
+    const flat = [
+      makeG(1, null, 0),
+      makeG(2, 1, 0),         // child of 1
+      makeG(5, 2, 30),        // grandchild high
+      makeG(4, 2, 10),        // grandchild mid
+      makeG(3, 2, 0),         // grandchild low
+    ]
+    const tree = buildGroupTree(flat)
+    const grandchildIds = tree[0].children![0].children!.map(c => c.id)
+    expect(grandchildIds).toEqual([3, 4, 5])
+  })
+})
+
+describe('buildGroupTree — setAgentGroup no-op branch (T1319)', () => {
+  // Kills: filtered.length !== g.members.length (mutation: !== -> ===)
+  // This branch returns the group unchanged when the agent was not a member
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+  })
+
+  it('group not containing agent is returned unchanged when setAgentGroup targets another group', async () => {
+    localStorage.setItem('dbPath', '/test/project.db')
+    const store = useAgentsStore()
+    store.agentGroups = [
+      { id: 1, name: 'Group A', sort_order: 0, created_at: '', members: [{ agent_id: 10, sort_order: 0 }] },
+      { id: 2, name: 'Group B', sort_order: 1, created_at: '', members: [] },
+    ]
+    // Move agent 10 to group 2 — group B has no member to remove (filtered.length === members.length)
+    await store.setAgentGroup(10, 2, 0)
+    expect(store.agentGroups[0].members).toHaveLength(0) // agent 10 removed from group A
+    expect(store.agentGroups[1].members).toHaveLength(1) // agent 10 added to group B
+    expect(store.agentGroups[1].members[0].agent_id).toBe(10)
+  })
+
+  it('group with no members stays unchanged (filtered.length === 0 === members.length)', async () => {
+    localStorage.setItem('dbPath', '/test/project.db')
+    const store = useAgentsStore()
+    store.agentGroups = [
+      { id: 1, name: 'Empty Group', sort_order: 0, created_at: '', members: [] },
+    ]
+    await store.setAgentGroup(99, null)
+    // Group had no members, filtering agent 99 from it returns same empty array
+    expect(store.agentGroups[0].members).toHaveLength(0)
+  })
+})
