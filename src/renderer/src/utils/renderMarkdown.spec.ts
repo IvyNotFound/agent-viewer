@@ -68,6 +68,12 @@ describe('renderMarkdown', () => {
     expect(result).toContain('&lt;b&gt;')
   })
 
+  it('escapes > in unlabeled code blocks → &gt;', () => {
+    const result = renderMarkdown('```\na > b\n```')
+    expect(result).toContain('&gt;')
+    expect(result).not.toMatch(/>b/)
+  })
+
   it('escapes & in unlabeled code blocks', () => {
     const result = renderMarkdown('```\na & b\n```')
     expect(result).toContain('&amp;')

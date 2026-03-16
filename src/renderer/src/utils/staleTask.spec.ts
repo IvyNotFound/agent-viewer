@@ -50,4 +50,27 @@ describe('staleDuration', () => {
     const start = new Date(Date.now() - (2 * 60 + 15) * 60 * 1000).toISOString()
     expect(staleDuration(start)).toBe('2h 15min')
   })
+
+  it('returns empty string for invalid date string', () => {
+    expect(staleDuration('not-a-date')).toBe('')
+  })
+
+  it('returns empty string for a future date (ms <= 0)', () => {
+    const future = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+    expect(staleDuration(future)).toBe('')
+  })
+})
+
+describe('isStale — boundary', () => {
+  it('returns true for any non-null/non-NaN date when thresholdMinutes is 0', () => {
+    const anyPast = new Date(Date.now() - 1).toISOString()
+    expect(isStale(anyPast, 0)).toBe(true)
+  })
+
+  it('returns false at exact boundary (elapsed === threshold)', () => {
+    const threshold = 60
+    // Exactly at boundary: elapsed == threshold * 60 * 1000, strict > is false
+    const exactBoundary = new Date(Date.now() - threshold * 60 * 1000).toISOString()
+    expect(isStale(exactBoundary, threshold)).toBe(false)
+  })
 })
