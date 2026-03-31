@@ -653,7 +653,10 @@ describe('whereClause', () => {
     const mockQueryDb = vi.fn().mockResolvedValue([])
     ;(window.electronAPI as Record<string, unknown>).queryDb = mockQueryDb
 
-    await setupComposable({ localStoragePeriod: '24h', dbPath: '/test/db' })
+    // Start with 'all' so the watch fires when we switch to '24h'
+    const { selectedPeriod } = await setupComposable({ localStoragePeriod: 'all', dbPath: '/test/db' })
+    selectedPeriod.value = '24h'
+    await nextTick()
     await new Promise(resolve => setTimeout(resolve, 0))
 
     const calls = mockQueryDb.mock.calls as [string, string][]
@@ -673,7 +676,10 @@ describe('andOrWhere', () => {
     const mockQueryDb = vi.fn().mockResolvedValue([])
     ;(window.electronAPI as Record<string, unknown>).queryDb = mockQueryDb
 
-    await setupComposable({ localStoragePeriod: 'all', dbPath: '/test/db' })
+    // Start with '24h' so the watch fires when we switch to 'all'
+    const { selectedPeriod } = await setupComposable({ localStoragePeriod: '24h', dbPath: '/test/db' })
+    selectedPeriod.value = 'all'
+    await nextTick()
     await new Promise(resolve => setTimeout(resolve, 0))
 
     const calls = mockQueryDb.mock.calls as [string, string][]
@@ -686,7 +692,10 @@ describe('andOrWhere', () => {
     const mockQueryDb = vi.fn().mockResolvedValue([])
     ;(window.electronAPI as Record<string, unknown>).queryDb = mockQueryDb
 
-    await setupComposable({ localStoragePeriod: '7d', dbPath: '/test/db' })
+    // Start with 'all' so the watch fires when we switch to '7d'
+    const { selectedPeriod } = await setupComposable({ localStoragePeriod: 'all', dbPath: '/test/db' })
+    selectedPeriod.value = '7d'
+    await nextTick()
     await new Promise(resolve => setTimeout(resolve, 0))
 
     const calls = mockQueryDb.mock.calls as [string, string][]
