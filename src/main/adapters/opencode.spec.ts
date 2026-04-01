@@ -193,9 +193,11 @@ describe('opencodeAdapter.parseLine', () => {
     expect((event as any)?.subtype).toBe('step_finish')
   })
 
-  it('returns null for type:step_finish with cost and tokens (v1.3.4+ full format)', () => {
+  it('returns system:step_finish event for type:step_finish with cost and tokens (v1.3.4+ full format)', () => {
     const line = '{"type":"step_finish","sessionID":"ses_abc","cost":0.0042,"tokens":{"input":1200,"output":350,"cache_read":0,"cache_write":0},"duration":3800}'
-    expect(opencodeAdapter.parseLine(line)).toBeNull()
+    const event = opencodeAdapter.parseLine(line)
+    expect(event?.type).toBe('system')
+    expect((event as any)?.subtype).toBe('step_finish')
   })
 
   it('falls back to plain text for non-JSON line', () => {
