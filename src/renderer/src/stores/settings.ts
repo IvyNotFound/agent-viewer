@@ -236,6 +236,29 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  // OpenCode default model (T1362)
+  const opencodeDefaultModel = ref<string>('')
+
+  async function loadOpencodeDefaultModel(dbPath: string): Promise<void> {
+    try {
+      const result = await window.electronAPI.getConfigValue(dbPath, 'opencode_default_model')
+      if (result.success && result.value !== null) {
+        opencodeDefaultModel.value = result.value
+      }
+    } catch { /* keep default '' */ }
+  }
+
+  async function setOpencodeDefaultModel(dbPath: string, value: string): Promise<void> {
+    const trimmed = value.trim()
+    const prev = opencodeDefaultModel.value
+    opencodeDefaultModel.value = trimmed
+    try {
+      await window.electronAPI.setConfigValue(dbPath, 'opencode_default_model', trimmed)
+    } catch {
+      opencodeDefaultModel.value = prev
+    }
+  }
+
   // Desktop notifications (T755)
   const notificationsEnabled = ref<boolean>(localStorage.getItem('notificationsEnabled') === 'true')
 
@@ -288,5 +311,9 @@ export const useSettingsStore = defineStore('settings', () => {
     worktreeDefault,
     loadWorktreeDefault,
     setWorktreeDefault,
+    // OpenCode default model (T1362)
+    opencodeDefaultModel,
+    loadOpencodeDefaultModel,
+    setOpencodeDefaultModel,
   }
 })

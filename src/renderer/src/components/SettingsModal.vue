@@ -95,6 +95,9 @@ const availableDistros = computed(() => {
 
 onMounted(async () => {
   await settingsStore.refreshCliDetection()
+  if (store.dbPath) {
+    await settingsStore.loadOpencodeDefaultModel(store.dbPath)
+  }
 })
 
 function handleKeydown(e: KeyboardEvent) {
@@ -260,6 +263,17 @@ function handleKeydown(e: KeyboardEvent) {
                     <option v-for="inst in availableDistros" :key="`${inst.cli}:${inst.distro}`" :value="`${inst.cli}:${inst.distro}`">{{ inst.cli }} — {{ inst.distro === 'local' ? 'Local' : inst.distro + ' (WSL)' }}</option>
                   </select>
                 </div>
+              </div>
+              <div class="bg-surface-base border border-edge-subtle rounded-lg px-4 py-3">
+                <p class="text-[11px] text-content-subtle mb-1 uppercase tracking-wider">{{ t('settings.opencodeDefaultModel') }}</p>
+                <p class="text-xs text-content-faint mb-2">{{ t('settings.opencodeDefaultModelHint') }}</p>
+                <input
+                  type="text"
+                  :value="settingsStore.opencodeDefaultModel"
+                  placeholder="anthropic/claude-opus-4-5"
+                  class="w-full bg-surface-secondary border border-edge-default rounded-md px-3 py-2 text-sm text-content-primary outline-none focus:ring-1 focus:ring-violet-500"
+                  @blur="store.dbPath && settingsStore.setOpencodeDefaultModel(store.dbPath, ($event.target as HTMLInputElement).value)"
+                />
               </div>
             </template>
 

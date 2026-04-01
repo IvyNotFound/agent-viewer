@@ -222,6 +222,8 @@
     "exportSuccess": "Exportación descargada: {path}",
     "exportError": "Error al exportar: {error}",
     "defaultCliInstance": "Instancia CLI predeterminada (por entorno de destino)",
+    "opencodeDefaultModel": "Modelo OpenCode predeterminado",
+    "opencodeDefaultModelHint": "Identificador del modelo usado por opencode run --model",
     "aiCodingAssistants": "Asistentes IA",
     "aiCodingAssistantsDesc": "Herramientas CLI detectadas disponibles para sesiones de agentes. Activa/desactiva para mostrar en el launcher.",
     "cliRefresh": "Actualizar",

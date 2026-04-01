@@ -222,6 +222,8 @@
     "exportSuccess": "Eksport lastet ned: {path}",
     "exportError": "Eksportfeil: {error}",
     "defaultCliInstance": "Standard CLI-instans (per målmiljø)",
+    "opencodeDefaultModel": "Standard OpenCode-modell",
+    "opencodeDefaultModelHint": "Modellidentifikator for opencode run --model",
     "aiCodingAssistants": "AI-kodingsassistenter",
     "aiCodingAssistantsDesc": "Oppdagede CLI-verktøy tilgjengelige for agentøkter. Aktiver/deaktiver for å vise i starteren.",
     "cliRefresh": "Oppdater",

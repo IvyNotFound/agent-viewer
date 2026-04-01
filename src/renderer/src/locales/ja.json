@@ -222,6 +222,8 @@
     "exportSuccess": "エクスポート完了: {path}",
     "exportError": "エクスポートエラー: {error}",
     "defaultCliInstance": "デフォルト CLI インスタンス（対象環境ごと）",
+    "opencodeDefaultModel": "デフォルト OpenCode モデル",
+    "opencodeDefaultModelHint": "opencode run --model で使用するモデル識別子",
     "aiCodingAssistants": "AI コーディングアシスタント",
     "aiCodingAssistantsDesc": "エージェントセッションで利用可能な検出済み CLI ツール。ランチャーで表示するには切り替えてください。",
     "cliRefresh": "更新",

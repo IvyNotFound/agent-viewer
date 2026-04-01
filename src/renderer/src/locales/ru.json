@@ -222,6 +222,8 @@
     "exportSuccess": "Экспорт загружен: {path}",
     "exportError": "Ошибка экспорта: {error}",
     "defaultCliInstance": "Экземпляр CLI по умолчанию (для целевой среды)",
+    "opencodeDefaultModel": "Модель OpenCode по умолчанию",
+    "opencodeDefaultModelHint": "Идентификатор модели для opencode run --model",
     "aiCodingAssistants": "ИИ-помощники по коду",
     "aiCodingAssistantsDesc": "Обнаруженные CLI-инструменты для сессий агентов. Включите/выключите для отображения в лаунчере.",
     "cliRefresh": "Обновить",

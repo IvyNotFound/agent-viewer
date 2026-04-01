@@ -222,6 +222,8 @@
     "exportSuccess": "Vienti ladattu: {path}",
     "exportError": "Vientivirhe: {error}",
     "defaultCliInstance": "Oletusarvoinen CLI-instanssi (kohdekäyttöympäristöittäin)",
+    "opencodeDefaultModel": "OpenCode-oletusmalli",
+    "opencodeDefaultModelHint": "Mallitunniste opencode run --model -komennolle",
     "aiCodingAssistants": "Tekoälykoodausapurit",
     "aiCodingAssistantsDesc": "Havaitut CLI-työkalut agenttiistuntoihin. Ota käyttöön/poista käytöstä näyttääksesi käynnistysohjelmassa.",
     "cliRefresh": "Päivitä",
