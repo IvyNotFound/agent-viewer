@@ -123,10 +123,15 @@ export interface SystemPromptResult {
  * Used by extractTokenUsage to aggregate usage across events.
  */
 export interface TokenCounts {
+  /** Number of input (prompt) tokens consumed. */
   tokensIn: number
+  /** Number of output (completion) tokens generated. */
   tokensOut: number
+  /** Number of tokens read from the prompt cache (Claude / compatible CLIs). */
   cacheRead: number
+  /** Number of tokens written to the prompt cache (Claude / compatible CLIs). */
   cacheWrite: number
+  /** Session cost in USD, if reported by the CLI. */
   costUsd?: number
 }
 
@@ -201,10 +206,13 @@ export interface CliAdapter {
    * Extract token usage from a stream event.
    * Called on every non-null event returned by parseLine.
    * Return null if this event carries no usage data.
-   * Counts are accumulated across all events in a session.
+   * Counts are accumulated across all events in a session by stream-handlers.ts.
    *
    * Implementations should use `(event as any).<field>` for CLI-specific fields
    * not present in the StreamEvent base type.
+   *
+   * @param event - Parsed stream event returned by parseLine.
+   * @returns Partial token counts to accumulate, or null if the event carries no usage data.
    */
   extractTokenUsage?(event: StreamEvent): Partial<TokenCounts> | null
 

@@ -31,7 +31,9 @@ export interface SessionTokenRow {
   started_at: string
   ended_at: string | null
   status: string
+  /** CLI type identifier. `'claude'` for Claude Code sessions, `null` for legacy rows; other values (e.g. `'opencode'`, `'gemini'`) for non-Claude CLIs. */
   cli_type: string | null
+  /** Cost in USD as reported directly by the CLI, or `null` if the CLI does not emit cost data. When non-null, `estimateSessionCost()` uses this value as-is instead of computing from token counts. */
   cost_usd: number | null
   tokens_in: number
   tokens_out: number
@@ -92,9 +94,12 @@ export function formatCost(usd: number): string {
  * Returns the cost in USD for a session row, or null when no estimate is available.
  *
  * Priority:
- * 1. cost_usd from DB (populated by the CLI when it reports the cost directly)
- * 2. Anthropic Sonnet 4.6 pricing for Claude sessions (cli_type='claude' or legacy null)
- * 3. null for all other CLIs without a direct cost_usd
+ * 1. `cost_usd` from DB (populated by the CLI when it reports the cost directly)
+ * 2. Anthropic Sonnet 4.6 pricing formula for Claude sessions (`cli_type='claude'` or legacy `null`)
+ * 3. `null` for all other CLIs that do not provide a direct cost
+ *
+ * @param row - Session token row from the `sessions` table
+ * @returns Estimated cost in USD, or `null` if no estimate is available for this CLI type
  */
 export function estimateSessionCost(row: SessionTokenRow): number | null {
   if (row.cost_usd != null) return row.cost_usd

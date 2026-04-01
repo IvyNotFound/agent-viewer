@@ -38,6 +38,7 @@ const worktreeEnabled = ref<number | null>(props.agent?.worktree_enabled ?? null
 const maxSessions = ref(props.agent?.max_sessions === -1 ? '' : String(props.agent?.max_sessions ?? 3))
 const maxSessionsInvalid = computed(() => maxSessions.value !== '' && (!/^\d+$/.test(maxSessions.value) || parseInt(maxSessions.value) < 1))
 const maxSessionsDbValue = computed(() => maxSessions.value === '' ? -1 : parseInt(maxSessions.value))
+// Model identifier passed as --model to OpenCode (e.g. 'anthropic/claude-opus-4-5'). Trimmed on submit; empty string stored as null in DB.
 const preferredModel = ref('')
 const showPrompt = ref(false)
 const loading = ref(false)

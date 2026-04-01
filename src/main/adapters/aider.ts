@@ -61,6 +61,18 @@ export const aiderAdapter: CliAdapter = {
     return { type: 'text', text: line }
   },
 
+  /**
+   * Extract token usage from an Aider plain-text event.
+   *
+   * Source: text lines matching Aider's summary format:
+   *   `"Tokens: X sent, Y received. Cost: $Z session, ..."`
+   * Fields extracted: sent count → tokensIn, received count → tokensOut, session cost → costUsd.
+   * Commas in large numbers (e.g. `"1,234"`) are stripped before parseInt.
+   * Defensive: returns null for any event whose text does not match the summary pattern.
+   *
+   * @param event - Parsed stream event from parseLine.
+   * @returns Partial token counts to accumulate, or null if the event carries no usage data.
+   */
   extractTokenUsage(event: StreamEvent): Partial<TokenCounts> | null {
     // Aider emits "Tokens: X sent, Y received. Cost: $Z session, ..." as a plain-text line
     const text = event.text

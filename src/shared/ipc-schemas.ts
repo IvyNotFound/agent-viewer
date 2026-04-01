@@ -87,6 +87,7 @@ export const CreateAgentDataSchema = z.object({
   thinkingMode: z.string().nullable().optional(),
   systemPrompt: SystemPromptSchema.nullable().optional(),
   description: z.string().max(2000).optional(),
+  /** Model identifier forwarded as `--model` to OpenCode (e.g. `'anthropic/claude-opus-4-5'`). `null` means use the CLI default. */
   preferredModel: z.string().max(200).nullable().optional(),
 })
 
@@ -109,6 +110,7 @@ export const UpdateAgentDataSchema = z.object({
     message: 'maxSessions must be an integer >= 1 or -1 (unlimited)',
   }).optional(),
   worktreeEnabled: z.boolean().nullable().optional(),
+  /** Model identifier forwarded as `--model` to OpenCode (e.g. `'anthropic/claude-opus-4-5'`). `null` means use the CLI default. */
   preferredModel: z.string().max(200).nullable().optional(),
 })
 

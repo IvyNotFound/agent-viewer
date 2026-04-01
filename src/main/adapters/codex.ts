@@ -69,6 +69,19 @@ export const codexAdapter: CliAdapter = {
     }
   },
 
+  /**
+   * Extract token usage from a Codex stream event.
+   *
+   * Source: OpenAI-compatible JSON events (e.g. `response.completed` or similar).
+   * Fields extracted (multiple aliases checked):
+   *   - tokensIn:  `usage.input_tokens` | `usage.prompt_tokens`
+   *   - tokensOut: `usage.output_tokens` | `usage.completion_tokens`
+   * Codex does not report session cost in its events — costUsd is not populated.
+   * Defensive: returns null for any event without a usage object.
+   *
+   * @param event - Parsed stream event from parseLine.
+   * @returns Partial token counts to accumulate, or null if the event carries no usage data.
+   */
   extractTokenUsage(event: StreamEvent): Partial<TokenCounts> | null {
     // Codex emits OpenAI-compatible JSON events; usage may appear in response.completed or similar
     const usage = (event as any).usage

@@ -76,6 +76,17 @@ export const geminiAdapter: CliAdapter = {
     return null
   },
 
+  /**
+   * Extract token usage from a Gemini stream event.
+   *
+   * Source: `result:success` JSONL events, surfaced internally as `system:stats` by parseLine.
+   * Fields extracted: `stats.inputTokenCount` → tokensIn, `stats.outputTokenCount` → tokensOut.
+   * Fallback: older Gemini CLI versions only expose `stats.total_tokens` → mapped to tokensOut.
+   * Defensive: returns null for any event that is not a stats event or if stats is absent.
+   *
+   * @param event - Parsed stream event from parseLine.
+   * @returns Partial token counts to accumulate, or null if the event carries no usage data.
+   */
   extractTokenUsage(event: StreamEvent): Partial<TokenCounts> | null {
     // Only system:stats events (emitted from result:success) carry token data
     if ((event as any).subtype !== 'stats') return null

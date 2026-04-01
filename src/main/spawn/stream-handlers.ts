@@ -33,6 +33,7 @@ export interface StreamHandlerOpts {
   scriptTempFile: string | undefined
   sessionId: number | undefined
   projectPath: string | undefined
+  /** Absolute path to the SQLite DB file. Used on process close to persist cli_type and token counts. */
   dbPath: string | undefined
   agentAdapters: Map<string, CliAdapter>
 }

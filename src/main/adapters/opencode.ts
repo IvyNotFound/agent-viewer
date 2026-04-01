@@ -31,6 +31,19 @@ export const opencodeAdapter: CliAdapter = {
   binaries: ['opencode'],
   singleShotStdin: true,
 
+  /**
+   * Extract token usage from an OpenCode stream event.
+   *
+   * Source: `step_finish` JSONL events, surfaced internally as `system:step_finish` by parseLine.
+   * Fields extracted (multiple aliases checked for cross-version compatibility):
+   *   - tokensIn:  `usage.inputTokens` | `usage.input_tokens` | `usage.prompt_tokens`
+   *   - tokensOut: `usage.outputTokens` | `usage.output_tokens` | `usage.completion_tokens`
+   *   - costUsd:   `usage.cost_usd` (if present)
+   * Defensive: returns null for any event without a usage object.
+   *
+   * @param event - Parsed stream event from parseLine.
+   * @returns Partial token counts to accumulate, or null if the event carries no usage data.
+   */
   extractTokenUsage(event: StreamEvent): Partial<TokenCounts> | null {
     // step_finish events may carry OpenAI-compatible usage data
     const raw = event as any

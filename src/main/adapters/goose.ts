@@ -68,6 +68,20 @@ export const gooseAdapter: CliAdapter = {
     }
   },
 
+  /**
+   * Extract token usage from a Goose ACP stream event.
+   *
+   * Source: ACP JSON events that carry a usage object (exact event type is ACP-version-dependent).
+   * Fields extracted (both snake_case and camelCase checked for ACP version compatibility):
+   *   - tokensIn:  `usage.input_tokens` | `usage.inputTokens`
+   *   - tokensOut: `usage.output_tokens` | `usage.outputTokens`
+   * Checks both `event.usage` and `event.token_usage` field names as a defensive measure.
+   * Goose does not report session cost in its events — costUsd is not populated.
+   * Defensive: returns null for any event without a usage or token_usage object.
+   *
+   * @param event - Parsed stream event from parseLine.
+   * @returns Partial token counts to accumulate, or null if the event carries no usage data.
+   */
   extractTokenUsage(event: StreamEvent): Partial<TokenCounts> | null {
     // Goose ACP format — defensive: check both 'usage' and 'token_usage' field names
     const raw = event as any
