@@ -121,6 +121,33 @@ describe('geminiAdapter.buildCommand', () => {
     const spec = geminiAdapter.buildCommand({ binaryName: 'gemini' })
     expect(spec.command).toBe('gemini')
   })
+
+  it('includes -m <model> when model is provided', () => {
+    const spec = geminiAdapter.buildCommand({ model: 'gemini-2.5-flash' })
+    const idx = spec.args.indexOf('-m')
+    expect(idx).toBeGreaterThan(-1)
+    expect(spec.args[idx + 1]).toBe('gemini-2.5-flash')
+  })
+
+  it('does not include -m when model is not provided', () => {
+    const spec = geminiAdapter.buildCommand({ initialMessage: 'hello' })
+    expect(spec.args).not.toContain('-m')
+  })
+
+  it('includes both -m and -p when model and initialMessage are provided', () => {
+    const spec = geminiAdapter.buildCommand({ model: 'gemini-2.5-flash', initialMessage: 'test' })
+    expect(spec.args).toContain('-m')
+    expect(spec.args).toContain('-p')
+    expect(spec.args[spec.args.indexOf('-m') + 1]).toBe('gemini-2.5-flash')
+    expect(spec.args[spec.args.indexOf('-p') + 1]).toBe('test')
+  })
+
+  it('-m appears before -p in args', () => {
+    const spec = geminiAdapter.buildCommand({ model: 'gemini-2.5-pro', initialMessage: 'test' })
+    const mIdx = spec.args.indexOf('-m')
+    const pIdx = spec.args.indexOf('-p')
+    expect(mIdx).toBeLessThan(pIdx)
+  })
 })
 
 // ── geminiAdapter.singleShotStdin ─────────────────────────────────────────────

@@ -34,6 +34,10 @@ export const geminiAdapter: CliAdapter = {
 
     const args: string[] = []
 
+    if (opts.model) {
+      args.push('-m', opts.model)
+    }
+
     if (opts.initialMessage) {
       // Headless mode: stream JSONL events to stdout line by line.
       args.push('--output-format', 'stream-json')

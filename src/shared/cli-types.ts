@@ -87,6 +87,8 @@ export interface LaunchOpts {
   binaryName?: string
   /** Initial user message to pass at spawn time (used by adapters that take prompts as positional args, e.g. opencode). */
   initialMessage?: string
+  /** Model identifier to pass via CLI flag (e.g. `-m gemini-2.5-flash` for Gemini). */
+  model?: string
 }
 
 /**
