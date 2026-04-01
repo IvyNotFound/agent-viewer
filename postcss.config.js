@@ -1,6 +1,6 @@
 module.exports = {
   plugins: {
-    '@tailwindcss/postcss': {},
+    // '@tailwindcss/postcss': {}, // Disabled: Vuetify migration — avoids CSS reset conflicts
     autoprefixer: {}
   }
 }

@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+/* @import 'tailwindcss'; — Disabled: Vuetify migration (avoids CSS reset conflicts with MD3) */
 
 /* ── Theme tokens ────────────────────────────────────────────────────────────
    Light mode = default (:root).  Dark mode = .dark on <html>.
