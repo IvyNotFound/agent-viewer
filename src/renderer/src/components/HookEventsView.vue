@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useHookEventsStore, type HookEvent } from '@renderer/stores/hookEvents'
 
@@ -10,9 +10,7 @@ import HookEventPayloadModal from './HookEventPayloadModal.vue'
 const store = useHookEventsStore()
 
 const filterTypes = ref<string[]>([])
-const stickyScroll = ref(true)
 const selectedEvent = ref<HookEvent | null>(null)
-const listRef = ref<HTMLElement | null>(null)
 
 const ALL_TYPES = Object.keys(EVENT_ICON)
 
@@ -43,15 +41,6 @@ function relativeTime(ts: number): string {
   return `${Math.floor(diff / 3600)}h`
 }
 
-function scrollToBottom(): void {
-  nextTick(() => {
-    if (listRef.value) listRef.value.scrollTop = listRef.value.scrollHeight
-  })
-}
-
-watch(() => store.events.length, () => {
-  if (stickyScroll.value) scrollToBottom()
-})
 </script>
 
 <template>
@@ -78,21 +67,10 @@ watch(() => store.events.length, () => {
       <span class="text-[11px] text-content-faint font-mono tabular-nums">
         {{ filtered.length }} event{{ filtered.length !== 1 ? 's' : '' }}
       </span>
-      <button
-        class="text-[11px] px-2 py-0.5 rounded border transition-colors"
-        :class="stickyScroll
-          ? 'border-sky-600 text-sky-300 bg-sky-950/40'
-          : 'border-edge-subtle text-content-subtle hover:text-content-secondary'"
-        title="Auto-scroll"
-        @click="stickyScroll = !stickyScroll"
-      >
-        ↓ scroll
-      </button>
     </div>
 
     <!-- Event list -->
     <div
-      ref="listRef"
       class="flex-1 overflow-y-auto px-6 py-2 space-y-0.5"
     >
       <div
