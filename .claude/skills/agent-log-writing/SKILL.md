@@ -13,6 +13,7 @@ Correct insertion of `agent_logs` entries for KanbAgent. Mandatory at minimum fo
 |---|---|---|
 | `task_started` | Right after `UPDATE tasks SET status='in_progress'` | `info` |
 | `task_done` | Right before `UPDATE tasks SET status='done'` | `info` |
+| `session_start` | In agent-session-starting Step 1b (all agents) | `info` |
 
 ## Additional Events (situational)
 

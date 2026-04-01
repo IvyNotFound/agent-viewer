@@ -32,6 +32,15 @@ The limit is configurable per agent via agents.max_sessions in the DB (default 3
 To check or change: node scripts/dbq.js "SELECT name, max_sessions FROM agents WHERE name = '<agent>'"
 To raise the limit: node scripts/dbw.js "UPDATE agents SET max_sessions = <N> WHERE name = '<agent>'" (or -1 for unlimited)
 
+### Step 1b — Log session start
+
+Insert a `session_start` entry in `agent_logs` immediately after dbstart succeeds. This step is **mandatory for all agents**.
+
+```sql
+INSERT INTO agent_logs (session_id, agent_id, level, action, detail, created_at)
+VALUES (:session_id, :agent_id, 'info', 'session_start', 'Session started', CURRENT_TIMESTAMP);
+```
+
 ### Step 2 — Read Your Assigned Tasks
 
   SELECT id, title, description, priority, effort FROM tasks
