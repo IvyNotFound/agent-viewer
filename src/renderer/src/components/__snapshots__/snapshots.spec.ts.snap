@@ -420,16 +420,10 @@ exports[`TitleBar — snapshots > matches snapshot: not maximized 1`] = `
 </v-app-bar>"
 `;
 
-exports[`ToastContainer — snapshots > matches snapshot: empty (no toasts) 1`] = `
-"<!-- MD3: fixed bottom-right, stacked toasts with elevation shadow -->
-<div data-v-1a1a9880="" class="toast-container"></div>"
-`;
+exports[`ToastContainer — snapshots > matches snapshot: empty (no toasts) 1`] = `""`;
 
 exports[`ToastContainer — snapshots > matches snapshot: three toast types (error, warn, info) 1`] = `
-"<!-- MD3: fixed bottom-right, stacked toasts with elevation shadow -->
-<div data-v-1a1a9880="" class="toast-container">
-  <div data-v-1a1a9880="" class="toast-item elevation-4 toast-error"><span data-v-1a1a9880="" class="toast-icon">✕</span><span data-v-1a1a9880="" class="toast-message">Connection failed</span><button data-v-1a1a9880="" class="toast-dismiss">✕</button></div>
-  <div data-v-1a1a9880="" class="toast-item elevation-4 toast-warn"><span data-v-1a1a9880="" class="toast-icon">⚠</span><span data-v-1a1a9880="" class="toast-message">Slow response detected</span><button data-v-1a1a9880="" class="toast-dismiss">✕</button></div>
-  <div data-v-1a1a9880="" class="toast-item elevation-4 toast-info"><span data-v-1a1a9880="" class="toast-icon">ℹ</span><span data-v-1a1a9880="" class="toast-message">Changes saved</span><button data-v-1a1a9880="" class="toast-dismiss">✕</button></div>
-</div>"
+"<v-snackbar model-value="true" color="error" timeout="-1" location="bottom end">Connection failed </v-snackbar>
+<v-snackbar model-value="true" color="warning" timeout="-1" location="bottom end">Slow response detected </v-snackbar>
+<v-snackbar model-value="true" color="surface-variant" timeout="-1" location="bottom end">Changes saved </v-snackbar>"
 `;
