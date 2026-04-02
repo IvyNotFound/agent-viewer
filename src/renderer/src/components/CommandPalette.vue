@@ -17,7 +17,7 @@ const tasksStore = useTasksStore()
 const searchQuery = ref('')
 const debouncedQuery = ref('')
 const selectedIndex = ref(0)
-const inputRef = ref<HTMLInputElement | null>(null)
+const inputRef = ref<{ focus: () => void } | null>(null)
 
 const filterStatut = ref<string | null>(null)
 const filterAgentId = ref<number | null>(null)
@@ -60,18 +60,6 @@ const filteredTasks = computed<Task[]>(() => {
 const hasFilters = computed(() =>
   filterStatut.value !== null || filterAgentId.value !== null || filterPerimetre.value !== null
 )
-
-function toggleStatut(key: string) {
-  filterStatut.value = filterStatut.value === key ? null : key
-}
-
-function toggleAgent(id: number) {
-  filterAgentId.value = filterAgentId.value === id ? null : id
-}
-
-function togglePerimetre(name: string) {
-  filterPerimetre.value = filterPerimetre.value === name ? null : name
-}
 
 function clearFilters() {
   filterStatut.value = null
@@ -154,151 +142,176 @@ function effortColor(effort: number): string {
     >
       <div class="palette-panel elevation-8">
 
-          <!-- Search input -->
-          <div class="palette-search">
-            <v-icon class="search-icon" size="16">mdi-magnify</v-icon>
-            <input
-              ref="inputRef"
-              v-model="searchQuery"
-              type="text"
-              :placeholder="t('commandPalette.placeholder')"
-              class="palette-input"
-            >
-            <div class="d-flex align-center ga-2 flex-shrink-0">
-              <button
-                v-if="hasFilters"
-                class="btn-reset"
-                @click="clearFilters"
-              >{{ t('commandPalette.resetFilters') }}</button>
-              <kbd class="palette-kbd">ESC</kbd>
-            </div>
+        <!-- Search input -->
+        <div class="palette-search">
+          <v-text-field
+            ref="inputRef"
+            v-model="searchQuery"
+            data-testid="search-input"
+            variant="plain"
+            hide-details
+            :placeholder="t('commandPalette.placeholder')"
+            prepend-inner-icon="mdi-magnify"
+            clearable
+            class="palette-text-field"
+          />
+          <div class="d-flex align-center ga-2 flex-shrink-0">
+            <button
+              v-if="hasFilters"
+              class="btn-reset"
+              @click="clearFilters"
+            >{{ t('commandPalette.resetFilters') }}</button>
+            <kbd class="palette-kbd">ESC</kbd>
           </div>
+        </div>
 
-          <!-- Filters -->
-          <div class="palette-filters">
-            <!-- Statut chips -->
-            <div class="d-flex align-center ga-2 flex-wrap">
-              <span class="filter-label">{{ t('commandPalette.status') }}</span>
-              <button
+        <!-- Filters -->
+        <div class="palette-filters">
+          <!-- Statut chips -->
+          <div class="d-flex align-center ga-2 flex-wrap">
+            <span class="filter-label">{{ t('commandPalette.status') }}</span>
+            <v-chip-group
+              :model-value="filterStatut ?? undefined"
+              @update:model-value="filterStatut = $event ?? null"
+            >
+              <v-chip
                 v-for="s in STATUTS"
                 :key="s.key"
-                class="filter-chip"
-                :class="filterStatut === s.key ? 'filter-chip--active' : ''"
-                @click="toggleStatut(s.key)"
+                :value="s.key"
+                variant="outlined"
+                size="small"
               >
-                <span class="status-dot" :style="{ backgroundColor: s.color }" />
+                <template #prepend>
+                  <span class="status-dot mr-1" :style="{ backgroundColor: s.color }" />
+                </template>
                 {{ s.label }}
-              </button>
-            </div>
+              </v-chip>
+            </v-chip-group>
+          </div>
 
-            <!-- Agent + Périmètre -->
-            <div v-if="tasksStore.agents.length > 0 || tasksStore.perimetresData.length > 0" class="d-flex align-center ga-3 flex-wrap">
-              <!-- Agents -->
-              <div v-if="tasksStore.agents.length > 0" class="d-flex align-center ga-2 flex-wrap">
-                <span class="filter-label">{{ t('commandPalette.agent') }}</span>
-                <button
+          <!-- Agent + Périmètre -->
+          <div v-if="tasksStore.agents.length > 0 || tasksStore.perimetresData.length > 0" class="d-flex align-center ga-3 flex-wrap">
+            <!-- Agents -->
+            <div v-if="tasksStore.agents.length > 0" class="d-flex align-center ga-2 flex-wrap">
+              <span class="filter-label">{{ t('commandPalette.agent') }}</span>
+              <v-chip-group
+                :model-value="filterAgentId ?? undefined"
+                @update:model-value="filterAgentId = $event != null ? Number($event) : null"
+              >
+                <v-chip
                   v-for="agent in tasksStore.agents.slice(0, 8)"
                   :key="agent.id"
-                  class="filter-chip filter-chip--mono"
-                  :class="filterAgentId === agent.id ? 'filter-chip--active' : ''"
+                  :value="agent.id"
+                  variant="outlined"
+                  size="small"
+                  class="filter-chip--mono"
                   :style="filterAgentId === Number(agent.id)
                     ? { color: agentFg(agent.name), backgroundColor: agentBg(agent.name), borderColor: agentFg(agent.name) + '66' }
                     : {}"
-                  @click="toggleAgent(Number(agent.id))"
                 >
                   {{ agent.name }}
-                </button>
-              </div>
+                </v-chip>
+              </v-chip-group>
+            </div>
 
-              <!-- Périmètres -->
-              <div v-if="tasksStore.perimetresData.length > 0" class="d-flex align-center ga-2 flex-wrap">
-                <span class="filter-label">{{ t('commandPalette.perimeter') }}</span>
-                <button
+            <!-- Périmètres -->
+            <div v-if="tasksStore.perimetresData.length > 0" class="d-flex align-center ga-2 flex-wrap">
+              <span class="filter-label">{{ t('commandPalette.perimeter') }}</span>
+              <v-chip-group
+                :model-value="filterPerimetre ?? undefined"
+                @update:model-value="filterPerimetre = $event ?? null"
+              >
+                <v-chip
                   v-for="p in tasksStore.perimetresData"
                   :key="p.id"
-                  class="filter-chip filter-chip--mono"
-                  :class="filterPerimetre === p.name ? 'filter-chip--active' : ''"
+                  :value="p.name"
+                  variant="outlined"
+                  size="small"
+                  class="filter-chip--mono"
                   :style="filterPerimetre === p.name
                     ? { color: agentFg(p.name), backgroundColor: agentBg(p.name), borderColor: agentFg(p.name) + '66' }
                     : {}"
-                  @click="togglePerimetre(p.name)"
                 >
                   {{ p.name }}
-                </button>
-              </div>
+                </v-chip>
+              </v-chip-group>
             </div>
           </div>
+        </div>
 
-          <!-- Results -->
-          <div class="palette-results">
-            <div v-if="filteredTasks.length === 0" class="palette-empty">
-              <v-icon class="empty-icon" size="24">mdi-magnify</v-icon>
-              <p class="text-caption" style="color: var(--content-faint)">
-                {{ debouncedQuery || hasFilters ? t('commandPalette.noResults') : t('commandPalette.noTasksLoaded') }}
+        <!-- Results -->
+        <v-list class="palette-results" bg-color="transparent" :padding="false">
+          <div v-if="filteredTasks.length === 0" class="palette-empty">
+            <v-icon class="empty-icon" size="24">mdi-magnify</v-icon>
+            <p class="text-caption" style="color: var(--content-faint)">
+              {{ debouncedQuery || hasFilters ? t('commandPalette.noResults') : t('commandPalette.noTasksLoaded') }}
+            </p>
+          </div>
+
+          <template v-else>
+            <div class="palette-count">
+              <p class="filter-label">
+                {{ filteredTasks.length }} {{ t('commandPalette.tasks', filteredTasks.length) }}
               </p>
             </div>
-
-            <div v-else>
-              <div class="palette-count">
-                <p class="filter-label">
-                  {{ filteredTasks.length }} {{ t('commandPalette.tasks', filteredTasks.length) }}
-                </p>
-              </div>
-              <div
-                v-for="(task, index) in filteredTasks"
-                :key="task.id"
-                class="palette-item"
-                :class="index === selectedIndex ? 'palette-item--selected' : ''"
-                @click="selectTask(task)"
-                @mouseenter="selectedIndex = index"
-              >
-                <!-- Status dot -->
+            <v-list-item
+              v-for="(task, index) in filteredTasks"
+              :key="task.id"
+              :class="['palette-item', index === selectedIndex ? 'palette-item--selected' : '']"
+              @click="selectTask(task)"
+              @mouseenter="selectedIndex = index"
+            >
+              <!-- Status dot -->
+              <template #prepend>
                 <span
                   class="status-dot flex-shrink-0"
                   style="margin-top: 2px;"
                   :style="{ backgroundColor: STATUTS.find(s => s.key === task.status)?.color ?? 'var(--content-faint)' }"
                 />
+              </template>
 
-                <!-- Content -->
-                <div style="flex: 1; min-width: 0;">
-                  <div class="d-flex align-center ga-2">
-                    <span class="task-id">#{{ task.id }}</span>
-                    <span class="task-title">{{ task.title }}</span>
-                  </div>
-                  <div class="d-flex align-center ga-2 mt-1">
-                    <span
-                      v-if="task.agent_name"
-                      class="task-agent"
-                      :style="{ color: agentFg(task.agent_name) }"
-                    >{{ task.agent_name }}</span>
-                    <span
-                      v-if="task.scope"
-                      class="task-scope"
-                      :style="{ color: agentFg(task.scope), backgroundColor: agentBg(task.scope) }"
-                    >{{ task.scope }}</span>
-                  </div>
+              <!-- Content -->
+              <div style="min-width: 0;">
+                <div class="d-flex align-center ga-2">
+                  <span class="task-id">#{{ task.id }}</span>
+                  <span class="task-title">{{ task.title }}</span>
                 </div>
+                <div class="d-flex align-center ga-2 mt-1">
+                  <span
+                    v-if="task.agent_name"
+                    class="task-agent"
+                    :style="{ color: agentFg(task.agent_name) }"
+                  >{{ task.agent_name }}</span>
+                  <span
+                    v-if="task.scope"
+                    class="task-scope"
+                    :style="{ color: agentFg(task.scope), backgroundColor: agentBg(task.scope) }"
+                  >{{ task.scope }}</span>
+                </div>
+              </div>
 
-                <!-- Effort dot -->
+              <!-- Effort dot -->
+              <template #append>
                 <span
                   v-if="task.effort"
                   class="effort-dot flex-shrink-0"
                   :style="{ backgroundColor: effortColor(task.effort) }"
                   :title="task.effort === 1 ? 'Small' : task.effort === 2 ? 'Medium' : 'Large'"
                 />
-              </div>
-            </div>
-          </div>
+              </template>
+            </v-list-item>
+          </template>
+        </v-list>
 
-          <!-- Footer -->
-          <div class="palette-footer">
-            <span class="palette-hint"><kbd class="palette-kbd">↑↓</kbd> {{ t('commandPalette.navigate') }}</span>
-            <span class="palette-hint"><kbd class="palette-kbd">↵</kbd> {{ t('commandPalette.open') }}</span>
-            <span class="palette-hint" style="margin-left: auto;"><kbd class="palette-kbd">Ctrl+K</kbd> toggle</span>
-          </div>
-
+        <!-- Footer -->
+        <div class="palette-footer">
+          <span class="palette-hint"><kbd class="palette-kbd">↑↓</kbd> {{ t('commandPalette.navigate') }}</span>
+          <span class="palette-hint"><kbd class="palette-kbd">↵</kbd> {{ t('commandPalette.open') }}</span>
+          <span class="palette-hint" style="margin-left: auto;"><kbd class="palette-kbd">Ctrl+K</kbd> toggle</span>
         </div>
+
       </div>
+    </div>
   </v-dialog>
 </template>
 
@@ -326,26 +339,21 @@ function effortColor(effort: number): string {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 4px 16px 4px 4px;
   border-bottom: 1px solid var(--edge-subtle);
   flex-shrink: 0;
 }
-.search-icon {
-  width: 16px;
-  height: 16px;
-  color: var(--content-subtle);
-  flex-shrink: 0;
-}
-.palette-input {
+.palette-text-field {
   flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-size: 14px;
-  color: var(--content-primary);
 }
-.palette-input::placeholder {
-  color: var(--content-subtle);
+.palette-text-field :deep(.v-field__input) {
+  font-size: 14px;
+  min-height: 0;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.palette-text-field :deep(.v-input__control) {
+  min-height: 0;
 }
 
 /* Filters */
@@ -355,7 +363,7 @@ function effortColor(effort: number): string {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 .filter-label {
   font-size: 10px;
@@ -365,30 +373,9 @@ function effortColor(effort: number): string {
   color: var(--content-faint);
   flex-shrink: 0;
 }
-.filter-chip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 12px;
-  border: 1px solid rgba(var(--v-theme-on-surface, 255, 255, 255), 0.1);
-  background: none;
-  color: var(--content-subtle);
-  cursor: pointer;
-  transition: all 150ms;
-}
-.filter-chip:hover {
-  border-color: var(--content-faint);
-  color: var(--content-tertiary);
-}
-.filter-chip--active {
-  border-color: var(--content-subtle);
-  background: var(--surface-tertiary);
-  color: var(--content-primary);
-}
-.filter-chip--mono {
+.filter-chip--mono :deep(.v-chip__content) {
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  font-size: 12px;
 }
 
 /* Status / effort dots */
@@ -397,11 +384,13 @@ function effortColor(effort: number): string {
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+  display: inline-block;
 }
 .effort-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  display: inline-block;
 }
 
 /* Results */
@@ -430,21 +419,18 @@ function effortColor(effort: number): string {
   justify-content: space-between;
 }
 .palette-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
   cursor: pointer;
-  transition: background 100ms;
-  border-left: 2px solid transparent;
+  border-left: 2px solid transparent !important;
+  padding: 10px 16px !important;
+  min-height: 0 !important;
 }
 .palette-item:hover {
-  background: rgba(var(--v-theme-on-surface, 255, 255, 255), 0.05);
-  border-left-color: var(--content-faint);
+  background: rgba(var(--v-theme-on-surface, 255, 255, 255), 0.05) !important;
+  border-left-color: var(--content-faint) !important;
 }
 .palette-item--selected {
-  background: var(--surface-secondary);
-  border-left-color: #8b5cf6;
+  background: var(--surface-secondary) !important;
+  border-left-color: #8b5cf6 !important;
 }
 
 /* Task item content */

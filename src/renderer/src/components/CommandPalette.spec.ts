@@ -51,7 +51,7 @@ describe('CommandPalette', () => {
       },
     })
     // With modelValue=false, v-if on the inner wrapper hides all palette content
-    const input = wrapper.find('input[type="text"]')
+    const input = wrapper.find('[data-testid="search-input"]')
     expect(input.exists()).toBe(false)
   })
 
@@ -63,7 +63,7 @@ describe('CommandPalette', () => {
         stubs: teleportStub,
       },
     })
-    const input = wrapper.find('input[type="text"]')
+    const input = wrapper.find('[data-testid="search-input"]')
     expect(input.exists()).toBe(true)
   })
 
