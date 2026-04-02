@@ -60,7 +60,7 @@ describe('SidebarPerimetreSection', () => {
     const wrapper = shallowMount(SidebarPerimetreSection, {
       global: { plugins: [pinia, i18n] },
     })
-    expect(wrapper.find('.text-content-faint').exists()).toBe(true)
+    expect(wrapper.find('.no-perimeter-msg').exists()).toBe(true)
     wrapper.unmount()
   })
 
@@ -173,7 +173,7 @@ describe('SidebarPerimetreSection', () => {
       global: { plugins: [pinia, i18n] },
     })
     // Find the edit button (the pencil icon button with @click.stop="openEditPerimetre(p)")
-    const editBtn = wrapper.find('button.absolute')
+    const editBtn = wrapper.find('button.edit-btn')
     if (editBtn.exists()) {
       await editBtn.trigger('click')
       // Edit modal should now show with prefilled values
@@ -238,7 +238,7 @@ describe('SidebarPerimetreSection', () => {
     })
     // Reset button should exist when selectedPerimetre is non-null
     const buttons = wrapper.findAll('button')
-    const hasResetBtn = buttons.some(b => b.classes().includes('text-violet-400'))
+    const hasResetBtn = buttons.some(b => b.classes().includes('reset-btn'))
     expect(hasResetBtn).toBe(true)
     wrapper.unmount()
   })

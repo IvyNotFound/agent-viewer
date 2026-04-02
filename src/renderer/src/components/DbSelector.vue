@@ -88,66 +88,58 @@ async function create() {
 
 <template>
   <!-- Accueil -->
-  <div v-if="step === 'home'" class="h-full flex items-center justify-center">
-    <div class="text-center space-y-6 max-w-sm px-6">
+  <div v-if="step === 'home'" class="screen-center">
+    <div class="home-content">
       <!-- Logo -->
-      <div class="w-14 h-14 rounded-2xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center mx-auto">
-        <svg viewBox="0 0 24 24" fill="none" class="w-7 h-7 text-violet-400">
+      <div class="logo-wrap">
+        <svg viewBox="0 0 24 24" fill="none" class="logo-icon">
           <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7l-9-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
           <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <div>
-        <h2 class="text-xl font-semibold text-content-primary mb-1">KanbAgent</h2>
-        <p class="text-sm text-content-subtle">{{ t('dbSelector.tagline') }}</p>
+      <div class="home-titles">
+        <h2 class="app-name">KanbAgent</h2>
+        <p class="app-tagline">{{ t('dbSelector.tagline') }}</p>
       </div>
 
       <!-- 2 options -->
-      <div class="grid grid-cols-2 gap-3">
+      <div class="action-grid">
         <!-- Ouvrir existant -->
-        <button
-          class="flex flex-col items-center gap-2 px-4 py-5 rounded-xl border border-edge-default hover:border-content-subtle bg-surface-secondary/40 hover:bg-surface-secondary transition-all group"
-          @click="store.selectProject()"
-        >
-          <div class="w-9 h-9 rounded-lg bg-surface-tertiary group-hover:bg-content-faint flex items-center justify-center transition-colors">
-            <svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-content-tertiary">
+        <button class="action-card" @click="store.selectProject()">
+          <div class="action-icon-wrap">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="action-icon">
               <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
             </svg>
           </div>
           <div>
-            <p class="text-sm font-medium text-content-secondary">{{ t('dbSelector.open') }}</p>
-            <p class="text-xs text-content-subtle mt-0.5">{{ t('dbSelector.existingProject') }}</p>
+            <p class="action-label">{{ t('dbSelector.open') }}</p>
+            <p class="action-sublabel">{{ t('dbSelector.existingProject') }}</p>
           </div>
         </button>
 
         <!-- Créer nouveau -->
-        <button
-          class="flex flex-col items-center gap-2 px-4 py-5 rounded-xl border border-violet-500/30 hover:border-violet-500/60 bg-violet-500/5 hover:bg-violet-500/10 transition-all group"
-          @click="step = 'create'"
-        >
-          <div class="w-9 h-9 rounded-lg bg-violet-500/20 group-hover:bg-violet-500/30 flex items-center justify-center transition-colors">
-            <svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-violet-400">
+        <button class="action-card action-card--primary" @click="step = 'create'">
+          <div class="action-icon-wrap action-icon-wrap--primary">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="action-icon action-icon--primary">
               <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
             </svg>
           </div>
           <div>
-            <p class="text-sm font-medium text-violet-600 dark:text-violet-300">{{ t('dbSelector.createNew') }}</p>
-            <p class="text-xs text-content-subtle mt-0.5">{{ t('setup.newProject') }}</p>
+            <p class="action-label action-label--primary">{{ t('dbSelector.createNew') }}</p>
+            <p class="action-sublabel">{{ t('setup.newProject') }}</p>
           </div>
         </button>
       </div>
 
-      <p v-if="store.error" class="text-xs text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-800/50 rounded px-3 py-2">
-        {{ store.error }}
-      </p>
+      <p v-if="store.error" class="error-msg">{{ store.error }}</p>
 
       <!-- Language selector -->
-      <div class="flex justify-center">
+      <div class="lang-row">
         <select
           :value="locale"
           @change="setLocale(($event.target as HTMLSelectElement).value as Language)"
           aria-label="Language"
-          class="bg-transparent text-content-subtle text-xs border-none focus:outline-none cursor-pointer"
+          class="lang-select"
         >
           <option value="fr">Français</option>
           <option value="en">English</option>
@@ -173,73 +165,311 @@ async function create() {
   </div>
 
   <!-- Création de projet -->
-  <div v-else class="h-full flex items-center justify-center">
-    <div class="space-y-5 max-w-sm w-full px-6">
+  <div v-else class="screen-center">
+    <div class="create-content">
       <!-- Header -->
-      <div class="flex items-center gap-3">
-        <button
-          class="flex items-center gap-1.5 text-xs text-content-subtle hover:text-content-tertiary transition-colors"
-          @click="step = 'home'"
-        >
-          <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
+      <div class="create-header">
+        <button class="back-btn" @click="step = 'home'">
+          <svg viewBox="0 0 16 16" fill="currentColor" class="back-icon">
             <path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H13a1 1 0 110 2H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
           </svg>
           {{ t('dbSelector.back') }}
         </button>
-        <h2 class="text-base font-semibold text-content-primary">{{ t('setup.newProject') }}</h2>
+        <h2 class="create-title">{{ t('setup.newProject') }}</h2>
       </div>
 
       <!-- Explication -->
-      <div class="px-3 py-3 rounded-lg bg-surface-secondary/60 border border-edge-default/50 text-xs text-content-muted leading-relaxed space-y-1">
-        <p>Le <code class="text-violet-600 dark:text-violet-300 bg-surface-primary px-1 rounded">CLAUDE.md</code> sera initialisé dans le dossier choisi.</p>
-        <p>Un terminal <span class="text-violet-600 dark:text-violet-300 font-mono">setup</span> sera lancé automatiquement pour initialiser le projet.</p>
+      <div class="create-info">
+        <p>Le <code class="code-inline">CLAUDE.md</code> sera initialisé dans le dossier choisi.</p>
+        <p>Un terminal <span class="code-agent">setup</span> sera lancé automatiquement pour initialiser le projet.</p>
       </div>
 
       <!-- Instance selector (hidden when ≤ 1 instance — auto-selected) -->
       <div v-if="availableInstances.length > 1">
-        <p class="text-xs font-semibold text-content-muted uppercase tracking-wider mb-2">{{ t('dbSelector.instance') }}</p>
-
-        <div v-if="loadingInstances" class="text-sm text-content-subtle animate-pulse">{{ t('common.loading') }}</div>
-
-        <div v-else class="space-y-1.5">
+        <p class="instance-label">{{ t('dbSelector.instance') }}</p>
+        <div v-if="loadingInstances" class="loading-text">{{ t('common.loading') }}</div>
+        <div v-else class="instance-list">
           <label
             v-for="inst in availableInstances"
             :key="inst.distro"
-            class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all"
-            :class="selectedInstance?.distro === inst.distro
-              ? 'border-violet-500/60 bg-violet-100 dark:bg-violet-950/30'
-              : 'border-edge-default hover:border-content-faint bg-surface-secondary/40'"
+            :class="['instance-option', selectedInstance?.distro === inst.distro ? 'instance-option--selected' : '']"
           >
             <input
               v-model="selectedInstance"
               type="radio"
               :value="inst"
-              class="accent-violet-500"
+              class="instance-radio"
             />
-            <span class="text-sm font-mono text-content-secondary">{{ getSystemLabel(inst.type, inst.distro) }}</span>
+            <span class="instance-name">{{ getSystemLabel(inst.type, inst.distro) }}</span>
           </label>
         </div>
       </div>
 
       <!-- Bouton lancer -->
       <button
-        class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-violet-600 hover:bg-violet-500 text-white"
+        class="create-btn"
         :disabled="creating || loadingInstances || (availableInstances.length > 1 && !selectedInstance)"
         @click="create"
       >
-        <svg v-if="creating" class="w-4 h-4 animate-spin" viewBox="0 0 16 16" fill="none">
+        <svg v-if="creating" class="btn-spinner" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" stroke-opacity="0.25"/>
           <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        <svg v-else viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+        <svg v-else viewBox="0 0 20 20" fill="currentColor" class="btn-icon">
           <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
         </svg>
         {{ creating ? t('setup.creating') : t('dbSelector.selectAndInit') }}
       </button>
 
-      <p v-if="creatingError" class="text-xs text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-800/50 rounded px-3 py-2">
-        {{ creatingError }}
-      </p>
+      <p v-if="creatingError" class="error-msg">{{ creatingError }}</p>
     </div>
   </div>
 </template>
+
+<style scoped>
+.screen-center {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.home-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 320px;
+  padding: 0 24px;
+}
+.logo-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(var(--v-theme-primary), 0.2);
+  border: 1px solid rgba(var(--v-theme-primary), 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  color: rgb(var(--v-theme-primary));
+}
+.home-titles { display: flex; flex-direction: column; gap: 4px; }
+.app-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--content-primary);
+}
+.app-tagline {
+  font-size: 0.875rem;
+  color: var(--content-subtle);
+}
+.action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--edge-default);
+  background: rgba(var(--v-theme-on-surface), 0.02);
+  transition: all 150ms;
+  cursor: pointer;
+}
+.action-card:hover {
+  border-color: var(--content-subtle);
+  background: var(--surface-secondary);
+}
+.action-card--primary {
+  border-color: rgba(var(--v-theme-primary), 0.3);
+  background: rgba(var(--v-theme-primary), 0.05);
+}
+.action-card--primary:hover {
+  border-color: rgba(var(--v-theme-primary), 0.6);
+  background: rgba(var(--v-theme-primary), 0.1);
+}
+.action-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--surface-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms;
+}
+.action-card:hover .action-icon-wrap { background: var(--content-faint); }
+.action-icon-wrap--primary { background: rgba(var(--v-theme-primary), 0.2); }
+.action-card--primary:hover .action-icon-wrap--primary { background: rgba(var(--v-theme-primary), 0.3); }
+.action-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--content-tertiary);
+}
+.action-icon--primary { color: rgb(var(--v-theme-primary)); }
+.action-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--content-secondary);
+}
+.action-label--primary { color: rgb(var(--v-theme-primary)); }
+.action-sublabel {
+  font-size: 0.75rem;
+  color: var(--content-subtle);
+  margin-top: 2px;
+}
+.error-msg {
+  font-size: 0.75rem;
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+.lang-row { display: flex; justify-content: center; }
+.lang-select {
+  background: transparent;
+  color: var(--content-subtle);
+  font-size: 0.75rem;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Create project screen */
+.create-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 320px;
+  width: 100%;
+  padding: 0 24px;
+}
+.create-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--content-subtle);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 150ms;
+}
+.back-btn:hover { color: var(--content-tertiary); }
+.back-icon { width: 14px; height: 14px; }
+.create-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--content-primary);
+}
+.create-info {
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  font-size: 0.75rem;
+  color: var(--content-muted);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.code-inline {
+  font-family: monospace;
+  color: rgb(var(--v-theme-primary));
+  background: var(--surface-primary);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.code-agent {
+  color: rgb(var(--v-theme-primary));
+  font-family: monospace;
+  font-weight: 600;
+}
+.instance-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--content-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+.loading-text {
+  font-size: 0.875rem;
+  color: var(--content-subtle);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.instance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.instance-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--edge-default);
+  cursor: pointer;
+  transition: all 150ms;
+  background: rgba(var(--v-theme-on-surface), 0.02);
+}
+.instance-option:hover { border-color: var(--content-faint); background: var(--surface-secondary); }
+.instance-option--selected {
+  border-color: rgba(var(--v-theme-primary), 0.6);
+  background: rgba(var(--v-theme-primary), 0.08);
+}
+.instance-radio { accent-color: rgb(var(--v-theme-primary)); }
+.instance-name {
+  font-size: 0.875rem;
+  font-family: monospace;
+  color: var(--content-secondary);
+}
+.create-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: rgb(var(--v-theme-primary));
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all 150ms;
+}
+.create-btn:hover { filter: brightness(1.1); }
+.create-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.btn-icon { width: 16px; height: 16px; }
+</style>

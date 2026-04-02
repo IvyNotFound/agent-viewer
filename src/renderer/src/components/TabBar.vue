@@ -121,8 +121,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
       <!-- .absolute.bottom-0 preserved for TabBar.spec.ts test -->
       <span
         v-if="store.activeTabId === 'backlog'"
-        class="absolute bottom-0 left-0 right-0 h-[2px] bg-content-faint"
-        style="position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: rgba(var(--v-theme-on-surface), 0.25);"
+        class="tab-indicator"
       ></span>
     </button>
 
@@ -137,8 +136,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
       <span>{{ t('sidebar.dashboard') }}</span>
       <span
         v-if="store.activeTabId === 'dashboard'"
-        class="absolute bottom-0 left-0 right-0 h-[2px] bg-content-faint"
-        style="position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: rgba(var(--v-theme-on-surface), 0.25);"
+        class="tab-indicator"
       ></span>
     </button>
 
@@ -182,8 +180,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
         >✕</span>
         <span
           v-if="store.activeTabId === tab.id"
-          class="absolute bottom-0 left-0 right-0 h-[2px] bg-content-faint"
-          style="position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: rgba(var(--v-theme-on-surface), 0.25);"
+          class="tab-indicator"
         ></span>
       </button>
 
@@ -546,5 +543,13 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
 .btn-wsl-plus {
   font-size: 16px;
   line-height: 1;
+}
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(var(--v-theme-on-surface), 0.25);
 }
 </style>

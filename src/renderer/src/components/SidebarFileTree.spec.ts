@@ -29,7 +29,7 @@ describe('SidebarFileTree', () => {
       global: { plugins: [createTestingPinia(), i18n] },
     })
     // Shows empty/no project state
-    expect(wrapper.find('.flex-1').exists()).toBe(true)
+    expect(wrapper.find('.file-tree-content').exists()).toBe(true)
     wrapper.unmount()
   })
 
@@ -203,7 +203,7 @@ describe('SidebarFileTree', () => {
     await (wrapper.vm as { loadSidebarTree: () => Promise<void> }).loadSidebarTree()
     await flushPromises()
     // Empty folder state shown
-    const emptyMsg = wrapper.find('.px-4.py-3')
+    const emptyMsg = wrapper.find('.empty-state')
     expect(emptyMsg.exists()).toBe(true)
     wrapper.unmount()
   })

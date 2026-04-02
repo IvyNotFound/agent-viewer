@@ -65,7 +65,7 @@ describe('SidebarAgentSection', () => {
       global: { plugins: [pinia, i18n] },
     })
     // The agent section header should still exist
-    expect(wrapper.find('.flex-1').exists()).toBe(true)
+    expect(wrapper.find('.agent-section').exists()).toBe(true)
     wrapper.unmount()
   })
 
@@ -85,7 +85,7 @@ describe('SidebarAgentSection', () => {
       global: { plugins: [pinia, i18n] },
     })
     const buttons = wrapper.findAll('button')
-    const hasResetBtn = buttons.some(b => b.classes().includes('text-violet-400'))
+    const hasResetBtn = buttons.some(b => b.classes().includes('reset-btn'))
     expect(hasResetBtn).toBe(true)
     wrapper.unmount()
   })
@@ -105,7 +105,7 @@ describe('SidebarAgentSection', () => {
     const wrapper = shallowMount(SidebarAgentSection, {
       global: { plugins: [pinia, i18n] },
     })
-    const resetBtn = wrapper.findAll('button').find(b => b.classes().includes('text-violet-400'))
+    const resetBtn = wrapper.findAll('button').find(b => b.classes().includes('reset-btn'))
     expect(resetBtn).toBeUndefined()
     wrapper.unmount()
   })

@@ -68,7 +68,7 @@ describe('TabBar', () => {
       },
     })
     // backlog is active — check for active indicator
-    const indicator = wrapper.find('.absolute.bottom-0')
+    const indicator = wrapper.find('.tab-indicator')
     expect(indicator.exists()).toBe(true)
   })
 
