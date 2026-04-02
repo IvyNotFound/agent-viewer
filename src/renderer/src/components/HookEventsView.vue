@@ -77,9 +77,9 @@ function relativeTime(ts: number): string {
         <span class="he-event-icon">{{ eventIcon(e.event) }}</span>
         <span
           class="he-event-type"
-          :class="['PreToolUse','PostToolUse','PostToolUseFailure'].includes(e.event)
+          :style="{ color: ['PreToolUse','PostToolUse','PostToolUseFailure'].includes(e.event)
             ? toolColor(toolName(e.payload))
-            : eventColor(e.event)"
+            : eventColor(e.event) }"
         >
           {{ ['PreToolUse','PostToolUse','PostToolUseFailure'].includes(e.event) ? toolName(e.payload) : e.event }}
         </span>

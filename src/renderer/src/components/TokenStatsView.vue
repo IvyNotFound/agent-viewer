@@ -64,7 +64,7 @@ const {
 
       <div class="ts-card">
         <span class="ts-card-label">{{ t('tokenStats.cacheHit') }}</span>
-        <span class="ts-card-value ts-tabnum" :class="cacheHitColor">{{ cacheHitRate }}%</span>
+        <span class="ts-card-value ts-tabnum" :style="{ color: cacheHitColor }">{{ cacheHitRate }}%</span>
         <div class="ts-card-sub">{{ t('tokenStats.cacheHitLabel') }}</div>
       </div>
 

@@ -59,7 +59,7 @@ function rowLabel(e: HookEvent): string {
       <!-- Active tool spinner -->
       <div v-if="activeTool" class="active-tool">
         <v-progress-circular class="spinner" indeterminate :size="16" :width="2" />
-        <span class="tool-name-active" :class="toolColor(activeTool)">{{ activeTool }}</span>
+        <span class="tool-name-active" :style="{ color: toolColor(activeTool) }">{{ activeTool }}</span>
         <span class="tool-in-progress">{{ t('hooks.inProgress') }}</span>
       </div>
       <!-- Idle: last event summary -->
@@ -85,7 +85,7 @@ function rowLabel(e: HookEvent): string {
         @click.stop="selectedEvent = e"
       >
         <span class="event-icon">{{ eventIcon(e.event) }}</span>
-        <span class="event-label" :class="rowColor(e)">{{ rowLabel(e) }}</span>
+        <span class="event-label" :style="{ color: rowColor(e) }">{{ rowLabel(e) }}</span>
         <span class="event-time">
           {{ new Date(e.ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
         </span>

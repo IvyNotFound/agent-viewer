@@ -81,7 +81,7 @@ function sortIcon(key: SortKey): string {
               class="tool-stats-row"
             >
               <!-- Tool name -->
-              <td class="tool-stats-td tool-stats-td--mono" :class="toolColor(row.name)">{{ row.name }}</td>
+              <td class="tool-stats-td tool-stats-td--mono" :style="{ color: toolColor(row.name) }">{{ row.name }}</td>
               <!-- Calls -->
               <td class="tool-stats-td tool-stats-td--mono tool-stats-td--right tool-stats-td--muted">{{ row.calls }}</td>
               <!-- Errors -->
