@@ -213,7 +213,7 @@ onMounted(loadTree)
 
 <script lang="ts">
 // Sub-component: recursive file tree node — VS Code-style rendering
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, resolveComponent, type Component } from 'vue'
 
 // File extension → icon color mapping (VS Code inspired)
 const EXT_COLORS: Record<string, string> = {
@@ -234,31 +234,32 @@ function fileIconColor(name: string): string {
   return EXT_COLORS[ext] ?? '#9ca3af'
 }
 
-// SVG icon factories (VS Code style, inline)
-function chevronSvg(open: boolean) {
-  return h('svg', {
-    viewBox: '0 0 16 16', fill: 'currentColor',
-    class: ['w-3 h-3 shrink-0 transition-transform duration-150', open ? 'rotate-90' : ''],
+// MDI icon factories (VS Code style) — VIcon resolved at runtime to avoid static CSS import
+function chevronSvg(VIconComp: Component, open: boolean) {
+  return h(VIconComp, {
+    class: ['shrink-0 transition-transform duration-150', open ? 'rotate-90' : ''],
+    size: 12,
     style: { color: 'var(--content-subtle)' },
-  }, [
-    h('path', { d: 'M6 4l4 4-4 4', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
-  ])
+    icon: 'mdi-chevron-right',
+  })
 }
 
-function folderSvg(open: boolean) {
-  return open
-    ? h('svg', { viewBox: '0 0 16 16', fill: 'currentColor', class: 'w-4 h-4 shrink-0', style: { color: '#dcb67a' } }, [
-        h('path', { d: 'M1.75 3A1.75 1.75 0 0 0 0 4.75v7.5C0 13.216.784 14 1.75 14h12.5A1.75 1.75 0 0 0 16 12.25v-6.5A1.75 1.75 0 0 0 14.25 4H8.22a.25.25 0 0 1-.177-.073L6.957 2.841A1.75 1.75 0 0 0 5.721 2.25H1.75zM1.5 4.75a.25.25 0 0 1 .25-.25h3.971c.067 0 .13.026.177.073l1.086 1.086A1.75 1.75 0 0 0 8.22 5.5h6.03a.25.25 0 0 1 .25.25v6.5a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25z' }),
-      ])
-    : h('svg', { viewBox: '0 0 16 16', fill: 'currentColor', class: 'w-4 h-4 shrink-0', style: { color: '#c09553' } }, [
-        h('path', { d: 'M1.75 3A1.75 1.75 0 0 0 0 4.75v7.5C0 13.216.784 14 1.75 14h12.5A1.75 1.75 0 0 0 16 12.25v-6.5A1.75 1.75 0 0 0 14.25 4H8.22a.25.25 0 0 1-.177-.073L6.957 2.841A1.75 1.75 0 0 0 5.721 2.25H1.75zM1.5 4.75a.25.25 0 0 1 .25-.25h3.971c.067 0 .13.026.177.073l1.086 1.086A1.75 1.75 0 0 0 8.22 5.5h6.03a.25.25 0 0 1 .25.25v6.5a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25z' }),
-      ])
+function folderSvg(VIconComp: Component, open: boolean) {
+  return h(VIconComp, {
+    class: 'shrink-0',
+    size: 16,
+    style: { color: open ? '#dcb67a' : '#c09553' },
+    icon: open ? 'mdi-folder-open' : 'mdi-folder',
+  })
 }
 
-function fileSvg(name: string) {
-  return h('svg', { viewBox: '0 0 16 16', fill: 'currentColor', class: 'w-4 h-4 shrink-0', style: { color: fileIconColor(name) } }, [
-    h('path', { d: 'M3.75 1.5a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25V5.414a.25.25 0 0 0-.073-.177L9.263 2.073a.25.25 0 0 0-.177-.073H3.75zM2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l3.164 3.163c.329.328.513.773.513 1.237v8.337A1.75 1.75 0 0 1 12.5 15h-9A1.75 1.75 0 0 1 2 13.25z' }),
-  ])
+function fileSvg(VIconComp: Component, name: string) {
+  return h(VIconComp, {
+    class: 'shrink-0',
+    size: 16,
+    style: { color: fileIconColor(name) },
+    icon: 'mdi-file-outline',
+  })
 }
 
 const FileTreeNode = defineComponent({
@@ -271,6 +272,7 @@ const FileTreeNode = defineComponent({
   },
   emits: ['select'],
   setup(props, { emit }) {
+    const VIconComp = resolveComponent('VIcon') as Component
     return () => {
       const node = props.node
       const isOpen = node.isDir && props.openDirs.has(node.path)
@@ -298,9 +300,9 @@ const FileTreeNode = defineComponent({
       }, [
         ...guides,
         // Chevron (dirs only)
-        node.isDir ? chevronSvg(isOpen) : h('span', { class: 'w-3 shrink-0' }),
+        node.isDir ? chevronSvg(VIconComp, isOpen) : h('span', { class: 'w-3 shrink-0' }),
         // Icon
-        node.isDir ? folderSvg(isOpen) : fileSvg(node.name),
+        node.isDir ? folderSvg(VIconComp, isOpen) : fileSvg(VIconComp, node.name),
         // Label
         h('span', { class: 'truncate' }, node.name),
       ])
