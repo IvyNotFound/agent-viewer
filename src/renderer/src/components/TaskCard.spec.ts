@@ -266,9 +266,9 @@ describe('TaskCard — multi-agents', () => {
     })
     await nextTick()
 
-    const avatarDivs = wrapper.findAll('div.avatar')
+    const avatarDivs = wrapper.findAll('v-avatar')
     expect(avatarDivs.length).toBe(2)
-    const overflowBadge = wrapper.findAll('div.avatar').find(d => d.text().startsWith('+'))
+    const overflowBadge = wrapper.findAll('v-chip').find(d => d.text().startsWith('+'))
     expect(overflowBadge).toBeUndefined()
   })
 
@@ -290,9 +290,9 @@ describe('TaskCard — multi-agents', () => {
     })
     await nextTick()
 
-    const allRounded = wrapper.findAll('div.avatar')
+    const allRounded = wrapper.findAll('v-avatar')
     expect(allRounded.length).toBe(3)
-    const overflowBadge = allRounded.find(d => d.text().startsWith('+'))
+    const overflowBadge = wrapper.findAll('v-chip').find(d => d.text().startsWith('+'))
     expect(overflowBadge).toBeUndefined()
   })
 
@@ -315,9 +315,9 @@ describe('TaskCard — multi-agents', () => {
     })
     await nextTick()
 
-    const allRounded = wrapper.findAll('div.avatar')
-    expect(allRounded.length).toBe(4)
-    const overflowBadge = allRounded.find(d => d.text().trim() === '+1')
+    const allRounded = wrapper.findAll('v-avatar')
+    expect(allRounded.length).toBe(3)
+    const overflowBadge = wrapper.findAll('v-chip').find(d => d.text().trim() === '+1')
     expect(overflowBadge).toBeDefined()
   })
 })

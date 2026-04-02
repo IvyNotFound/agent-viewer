@@ -10,7 +10,7 @@ import { useTasksStore } from '@renderer/stores/tasks'
 import { useTabsStore } from '@renderer/stores/tabs'
 import { useLaunchSession, MAX_AGENT_SESSIONS } from '@renderer/composables/useLaunchSession'
 import { useToast } from '@renderer/composables/useToast'
-import { agentFg, agentBg, agentBorder, perimeterFg, perimeterBg, perimeterBorder } from '@renderer/utils/agentColor'
+import { agentFg, agentBg, perimeterFg, perimeterBg, perimeterBorder } from '@renderer/utils/agentColor'
 import { isStale, staleDuration } from '@renderer/utils/staleTask'
 
 const { t, locale } = useI18n()
@@ -96,7 +96,24 @@ const staleTooltip = computed(() => {
 })
 
 const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
-const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 'error' }
+const EFFORT_CLASS: Record<number, string> = {
+  1: 'badge-effort-1',
+  2: 'badge-effort-2',
+  3: 'badge-effort-3',
+}
+
+const PRIORITY_CLASS: Record<string, string> = {
+  critical: 'badge-priority-critical',
+  high:     'badge-priority-high',
+  normal:   'badge-priority-normal',
+  low:      '',
+}
+const PRIORITY_LABEL: Record<string, string> = {
+  critical: '!!',
+  high:     '!',
+  normal:   '—',
+  low:      '',
+}
 </script>
 
 <template>
@@ -119,42 +136,49 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
         <p class="card-title text-body-2">{{ task.title }}</p>
       </div>
       <div class="card-badge-row ga-1">
-        <v-chip v-if="isStaleTask" size="x-small" variant="tonal" color="warning" :title="staleTooltip">⚠</v-chip>
-        <v-chip v-if="task.priority === 'critical'" size="x-small" variant="tonal" color="error">!!</v-chip>
-        <v-chip v-if="task.priority === 'high'" size="x-small" variant="tonal" color="warning">!</v-chip>
-        <v-chip v-if="task.priority === 'normal'" size="x-small" variant="tonal" color="default">—</v-chip>
-        <v-chip v-if="task.effort" size="x-small" variant="tonal" :color="EFFORT_COLOR[task.effort]">{{ EFFORT_LABEL[task.effort] }}</v-chip>
+        <span
+          v-if="isStaleTask"
+          class="badge badge-stale"
+          :title="staleTooltip"
+        >⚠</span>
+        <span
+          v-if="task.priority && task.priority !== 'normal' && task.priority !== 'low'"
+          :class="['badge', PRIORITY_CLASS[task.priority]]"
+        >{{ PRIORITY_LABEL[task.priority] }}</span>
+        <span
+          v-if="task.effort"
+          :class="['badge', EFFORT_CLASS[task.effort]]"
+        >{{ EFFORT_LABEL[task.effort] }}</span>
       </div>
     </div>
 
     <!-- Badges: perimeter + agent avatars -->
     <div v-if="task.scope || task.agent_name || assigneeAvatars.length > 0" class="card-meta ga-1 mb-2">
-      <span
+      <v-chip
         v-if="task.scope"
-        class="badge-scope"
+        size="x-small"
+        variant="outlined"
         :style="{
           color: perimeterFg(task.scope),
-          backgroundColor: perimeterBg(task.scope),
           borderColor: perimeterBorder(task.scope),
+          backgroundColor: perimeterBg(task.scope),
         }"
-      >{{ task.scope }}</span>
+      >
+        {{ task.scope }}
+      </v-chip>
       <!-- Multi-agent avatars (≤3 + overflow badge) -->
       <div v-if="assigneeAvatars.length > 0" class="card-avatars">
-        <div
+        <v-avatar
           v-for="av in visibleAvatars"
           :key="av.agent_id"
-          class="avatar"
-          :style="{ color: agentFg(av.agent_name), backgroundColor: agentBg(av.agent_name), borderColor: agentBorder(av.agent_name) }"
+          :size="20"
+          :style="{ color: agentFg(av.agent_name), backgroundColor: agentBg(av.agent_name) }"
           :title="av.agent_name"
+          class="text-caption font-weight-bold"
         >
           {{ av.agent_name.slice(0, 2).toUpperCase() }}
-        </div>
-        <div
-          v-if="overflowCount > 0"
-          class="avatar avatar-overflow"
-        >
-          +{{ overflowCount }}
-        </div>
+        </v-avatar>
+        <v-chip v-if="overflowCount > 0" size="x-small" variant="tonal">+{{ overflowCount }}</v-chip>
       </div>
       <!-- Fallback: single agent badge when no task_agents rows -->
       <AgentBadge v-else-if="task.agent_name" :name="task.agent_name" :perimetre="task.agent_scope" />
@@ -234,37 +258,58 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
   align-items: center;
   flex-shrink: 0;
 }
-.card-meta {
-  display: flex;
-  flex-wrap: wrap;
-}
-.badge-scope {
+/* Base badge */
+.badge {
   font-size: 0.75rem;
+  font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
   border: 1px solid transparent;
 }
+.badge-stale {
+  background-color: rgba(var(--v-theme-warning), 0.2);
+  color: rgb(var(--v-theme-warning));
+  border-color: rgba(var(--v-theme-warning), 0.3);
+}
+.badge-effort-1 {
+  background-color: rgba(var(--v-theme-secondary), 0.2);
+  color: rgb(var(--v-theme-secondary));
+  border-color: rgba(var(--v-theme-secondary), 0.3);
+}
+.badge-effort-2 {
+  background-color: rgba(var(--v-theme-warning), 0.2);
+  color: rgb(var(--v-theme-warning));
+  border-color: rgba(var(--v-theme-warning), 0.3);
+}
+.badge-effort-3 {
+  background-color: rgba(var(--v-theme-error), 0.2);
+  color: rgb(var(--v-theme-error));
+  border-color: rgba(var(--v-theme-error), 0.3);
+}
+.badge-priority-critical {
+  background-color: rgba(var(--v-theme-error), 0.2);
+  color: rgb(var(--v-theme-error));
+  border-color: rgba(var(--v-theme-error), 0.3);
+}
+.badge-priority-high {
+  background-color: rgba(var(--v-theme-warning), 0.2);
+  color: rgb(var(--v-theme-warning));
+  border-color: rgba(var(--v-theme-warning), 0.3);
+}
+.badge-priority-normal {
+  background-color: var(--surface-tertiary);
+  color: var(--content-muted);
+  border-color: var(--edge-default);
+}
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+}
 .card-avatars {
   display: flex;
   align-items: center;
   gap: 2px;
-}
-.avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  border: 1px solid transparent;
-}
-.avatar-overflow {
-  background-color: var(--surface-tertiary);
-  color: var(--content-muted);
-  border-color: var(--edge-default);
 }
 .card-footer {
   display: flex;
