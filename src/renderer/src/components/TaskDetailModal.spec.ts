@@ -252,7 +252,7 @@ describe('TaskDetailModal — multi-agents', () => {
     await flushPromises()
 
     // Find the Save button and click it to trigger saveAssignees → rejection → toast
-    const saveBtn = wrapper.findAll('button').find(b => {
+    const saveBtn = wrapper.findAll('v-btn').find(b => {
       const txt = b.text().toLowerCase()
       return txt === 'save' || txt === 'enregistrer'
     })

@@ -82,7 +82,7 @@ function onAgentClick(row: TopologyRow): void {
     <!-- Header -->
     <div class="tp-header">
       <h2 class="tp-title text-h6">{{ t('topology.title') }}</h2>
-      <button class="tp-refresh-btn text-caption" @click="store.refresh()">{{ t('common.refresh') }}</button>
+      <v-btn variant="text" size="small" class="tp-refresh-btn" @click="store.refresh()">{{ t('common.refresh') }}</v-btn>
     </div>
 
     <!-- Loading -->
@@ -116,9 +116,11 @@ function onAgentClick(row: TopologyRow): void {
 
           <!-- Agent cards -->
           <div class="tp-cards">
-            <button
+            <v-btn
               v-for="agent in perimAgents"
               :key="agent.id"
+              variant="text"
+              block
               class="tp-card"
               :class="[
                 agentStatus(agent) === 'active'  ? 'tp-card--active'  :
@@ -145,7 +147,7 @@ function onAgentClick(row: TopologyRow): void {
               <p v-if="agent.session_tokens != null && agent.session_tokens > 0" class="tp-tokens">
                 {{ agent.session_tokens.toLocaleString() }} {{ t('topology.tokens') }}
               </p>
-            </button>
+            </v-btn>
           </div>
         </div>
       </div>
@@ -171,13 +173,10 @@ function onAgentClick(row: TopologyRow): void {
 }
 .tp-title {}
 .tp-refresh-btn {
-  color: var(--content-subtle);
-  background: none;
-  border: none;
-  cursor: pointer;
+  color: var(--content-subtle) !important;
   transition: color 0.15s;
 }
-.tp-refresh-btn:hover { color: var(--content-secondary); }
+.tp-refresh-btn:hover { color: var(--content-secondary) !important; }
 .tp-state-center {
   display: flex;
   align-items: center;
@@ -211,13 +210,21 @@ function onAgentClick(row: TopologyRow): void {
 
 .tp-cards { display: flex; flex-direction: column; gap: 8px; }
 .tp-card {
-  width: 100%;
-  text-align: left;
-  border-radius: 8px;
-  border: 1px solid;
-  padding: 10px 12px;
-  cursor: pointer;
+  width: 100% !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid !important;
+  padding: 10px 12px !important;
   transition: background 0.15s, border-color 0.15s;
+}
+.tp-card :deep(.v-btn__content) {
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
 }
 .tp-card--active  { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.3); }
 .tp-card--active:hover  { background: rgba(16,185,129,0.10); }

@@ -241,28 +241,34 @@ const legendItems = computed(() => [
             <option :value="90">90j</option>
           </select>
         </div>
-        <button class="tl-refresh-btn py-1 px-2 text-caption" :disabled="loading" @click="fetchTasks">
+        <v-btn variant="outlined" size="x-small" class="tl-refresh-btn py-1 px-2 text-caption" :disabled="loading" @click="fetchTasks">
           {{ loading ? t('common.loading') : t('common.refresh') }}
-        </button>
+        </v-btn>
       </div>
     </div>
 
     <!-- Agent filter chips -->
     <div v-if="allAgents.length > 0" class="tl-filters ga-2 py-2 px-5">
       <span class="tl-muted-xs tl-shrink text-caption">{{ t('timeline.filterAgents') }}</span>
-      <button
+      <v-btn
         v-for="name in allAgents"
         :key="name"
+        variant="text"
+        size="x-small"
+        density="compact"
         class="tl-chip text-caption"
         :class="isAgentSelected(name) ? '' : 'tl-chip--inactive'"
         :style="isAgentSelected(name) ? { color: agentFg(name), background: agentBg(name), borderColor: agentBorder(name) } : {}"
         @click="toggleAgent(name)"
-      >{{ name }}</button>
-      <button
+      >{{ name }}</v-btn>
+      <v-btn
         v-if="selectedAgents.length > 0"
+        variant="text"
+        size="x-small"
+        density="compact"
         class="tl-clear-btn ml-1 text-caption"
         @click="selectedAgents = []"
-      >{{ t('timeline.clearFilter') }}</button>
+      >{{ t('timeline.clearFilter') }}</v-btn>
     </div>
 
     <!-- Timeline body -->
@@ -375,15 +381,10 @@ const legendItems = computed(() => [
   outline: none;
 }
 .tl-refresh-btn {
-  color: var(--content-muted);
-  background: none;
-  border: 1px solid var(--edge-subtle);
-  border-radius: 4px;
-  cursor: pointer;
+  color: var(--content-muted) !important;
   transition: color 0.15s;
 }
-.tl-refresh-btn:hover:not(:disabled) { color: var(--content-primary); }
-.tl-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.tl-refresh-btn:hover:not(:disabled) { color: var(--content-primary) !important; }
 
 .tl-filters {
   flex-shrink: 0;
@@ -394,22 +395,18 @@ const legendItems = computed(() => [
 }
 .tl-shrink { flex-shrink: 0; }
 .tl-chip {
-  padding: 2px 8px;
-  border-radius: 9999px;
-  border: 1px solid;
-  cursor: pointer;
+  padding: 2px 8px !important;
+  border-radius: 9999px !important;
+  border: 1px solid !important;
   transition: border-color 0.15s, color 0.15s;
 }
-.tl-chip--inactive { border-color: var(--edge-subtle); color: var(--content-muted); }
-.tl-chip--inactive:hover { border-color: var(--edge-default); }
+.tl-chip--inactive { border-color: var(--edge-subtle) !important; color: var(--content-muted) !important; }
+.tl-chip--inactive:hover { border-color: var(--edge-default) !important; }
 .tl-clear-btn {
-  color: var(--content-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
+  color: var(--content-muted) !important;
   transition: color 0.15s;
 }
-.tl-clear-btn:hover { color: var(--content-primary); }
+.tl-clear-btn:hover { color: var(--content-primary) !important; }
 
 .tl-body { flex: 1; overflow: auto; }
 .tl-state-center { display: flex; align-items: center; justify-content: center; height: 128px; }

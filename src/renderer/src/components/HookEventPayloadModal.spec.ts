@@ -55,7 +55,7 @@ describe('HookEventPayloadModal (T756)', () => {
       attachTo: document.body,
       global: { plugins: [i18n] },
     })
-    await wrapper.find('button').trigger('click')
+    await wrapper.find('v-btn').trigger('click')
     expect(wrapper.emitted('close')).toHaveLength(1)
     wrapper.unmount()
   })

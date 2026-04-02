@@ -22,15 +22,18 @@ const {
       <h2 class="ts-title mr-2 text-h6">{{ t('tokenStats.title') }}</h2>
       <span class="ts-period-label text-overline">{{ t('tokenStats.period.label') }}</span>
       <div class="ts-period-btns ga-1">
-        <button
+        <v-btn
           v-for="period in PERIODS"
           :key="period.key"
+          variant="text"
+          size="x-small"
+          density="compact"
           class="ts-period-btn text-overline"
           :class="selectedPeriod === period.key ? 'ts-period-btn--active' : ''"
           @click="selectedPeriod = period.key"
         >
           {{ t(period.labelKey) }}
-        </button>
+        </v-btn>
       </div>
     </div>
 
@@ -203,14 +206,17 @@ const {
 
     <!-- Refresh button -->
     <div class="ts-footer py-2 px-4">
-      <button
+      <v-btn
+        icon
+        variant="text"
+        density="compact"
         class="ts-refresh-btn"
         :class="{ 'ts-refresh-btn--spinning': loading }"
         :title="t('logs.refresh')"
         @click="refresh"
       >
         <v-icon size="14">mdi-refresh</v-icon>
-      </button>
+      </v-btn>
     </div>
   </div>
 </template>
@@ -234,16 +240,15 @@ const {
 .ts-period-label { text-transform: uppercase; letter-spacing: 0.05em; color: var(--content-faint); }
 .ts-period-btns { display: flex; }
 .ts-period-btn {
-  padding: 2px 10px;
-  border-radius: 9999px;
-  border: 1px solid var(--edge-default);
-  background: var(--surface-secondary);
-  color: var(--content-secondary);
-  cursor: pointer;
+  padding: 2px 10px !important;
+  border-radius: 9999px !important;
+  border: 1px solid var(--edge-default) !important;
+  background: var(--surface-secondary) !important;
+  color: var(--content-secondary) !important;
   transition: border-color 0.15s, color 0.15s;
 }
-.ts-period-btn:hover { border-color: #6d28d9; color: var(--content-primary); }
-.ts-period-btn--active { background: #6d28d9; border-color: #6d28d9; color: #fff; }
+.ts-period-btn:hover { border-color: #6d28d9 !important; color: var(--content-primary) !important; }
+.ts-period-btn--active { background: #6d28d9 !important; border-color: #6d28d9 !important; color: #fff !important; }
 
 /* summary cards */
 .ts-cards-row {
@@ -430,19 +435,14 @@ const {
   background: var(--surface-base);
 }
 .ts-refresh-btn {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  color: var(--content-subtle);
-  background: none;
-  border: none;
-  cursor: pointer;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  border-radius: 4px !important;
+  color: var(--content-subtle) !important;
   transition: color 0.15s, background 0.15s;
 }
-.ts-refresh-btn:hover { color: var(--content-secondary); background: var(--surface-secondary); }
+.ts-refresh-btn:hover { color: var(--content-secondary) !important; background: var(--surface-secondary) !important; }
 .ts-refresh-btn--spinning { animation: tspin 1s linear infinite; }
 @keyframes tspin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>

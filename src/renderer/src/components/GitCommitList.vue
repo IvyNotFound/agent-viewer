@@ -61,14 +61,15 @@ function formatDate(iso: string): string {
 
       <!-- Task badges -->
       <div class="commit-badges">
-        <button
+        <v-btn
           v-for="id in commit.taskIds"
           :key="id"
+          variant="text"
+          size="x-small"
+          density="compact"
           class="commit-task-badge"
           @click="emit('openTask', id)"
-        >
-T{{ id }}
-</button>
+        >T{{ id }}</v-btn>
       </div>
     </div>
   </div>
@@ -120,15 +121,12 @@ T{{ id }}
   flex-shrink: 0;
 }
 .commit-task-badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: ui-monospace, monospace;
-  background: rgba(139, 92, 246, 0.2);
-  color: #c4b5fd;
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  cursor: pointer;
-  transition: background-color 0.15s;
+  font-size: 10px !important;
+  font-family: ui-monospace, monospace !important;
+  background: rgba(139, 92, 246, 0.2) !important;
+  color: #c4b5fd !important;
+  border: 1px solid rgba(139, 92, 246, 0.3) !important;
+  border-radius: 4px !important;
 }
-.commit-task-badge:hover { background: rgba(139, 92, 246, 0.3); }
+.commit-task-badge:hover { background: rgba(139, 92, 246, 0.3) !important; }
 </style>

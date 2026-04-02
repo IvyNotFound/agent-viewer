@@ -4,27 +4,10 @@ import { nextTick } from 'vue'
 import ToastContainer from '@renderer/components/ToastContainer.vue'
 import { useToast } from '@renderer/composables/useToast'
 
-// Custom stubs that render all slots (default + named) without needing Vuetify plugin
-const vuetifyStubs = {
-  VSnackbar: {
-    name: 'VSnackbar',
-    props: ['modelValue', 'color', 'timeout', 'location'],
-    template: '<div v-if="modelValue" :data-color="color" :data-timeout="timeout"><slot /><slot name="actions" /></div>',
-  },
-  VBtn: {
-    name: 'VBtn',
-    template: '<button @click="$emit(\'click\')"><slot /></button>',
-  },
-  VIcon: {
-    name: 'VIcon',
-    template: '<span><slot /></span>',
-  },
-}
-
+// vitest.config.ts sets isCustomElement: tag => tag.startsWith('v-'),
+// so v-snackbar / v-btn are custom HTML elements — no Vuetify stubs needed.
 function mountContainer() {
-  return mount(ToastContainer, {
-    global: { stubs: vuetifyStubs },
-  })
+  return mount(ToastContainer)
 }
 
 describe('ToastContainer', () => {
@@ -40,7 +23,7 @@ describe('ToastContainer', () => {
 
   it('renders no snackbars when toasts array is empty', () => {
     const wrapper = mountContainer()
-    expect(wrapper.findAllComponents({ name: 'VSnackbar' })).toHaveLength(0)
+    expect(wrapper.findAll('v-snackbar')).toHaveLength(0)
   })
 
   it('renders one VSnackbar per toast', async () => {
@@ -49,7 +32,7 @@ describe('ToastContainer', () => {
     push('Warning here', 'warn', 999999)
     const wrapper = mountContainer()
     await nextTick()
-    expect(wrapper.findAllComponents({ name: 'VSnackbar' })).toHaveLength(2)
+    expect(wrapper.findAll('v-snackbar')).toHaveLength(2)
   })
 
   it('passes correct color prop per type (error→error, warn→warning, info→surface-variant)', async () => {
@@ -59,10 +42,10 @@ describe('ToastContainer', () => {
     push('inf', 'info', 999999)
     const wrapper = mountContainer()
     await nextTick()
-    const snackbars = wrapper.findAllComponents({ name: 'VSnackbar' })
-    expect(snackbars[0].props('color')).toBe('error')
-    expect(snackbars[1].props('color')).toBe('warning')
-    expect(snackbars[2].props('color')).toBe('surface-variant')
+    const snackbars = wrapper.findAll('v-snackbar')
+    expect(snackbars[0].attributes('color')).toBe('error')
+    expect(snackbars[1].attributes('color')).toBe('warning')
+    expect(snackbars[2].attributes('color')).toBe('surface-variant')
   })
 
   it('displays toast message in snackbar content', async () => {
@@ -79,7 +62,7 @@ describe('ToastContainer', () => {
     expect(toasts.value).toHaveLength(1)
     const wrapper = mountContainer()
     await nextTick()
-    const btn = wrapper.find('button')
+    const btn = wrapper.find('v-btn')
     await btn.trigger('click')
     await nextTick()
     expect(toasts.value).toHaveLength(0)
@@ -90,7 +73,7 @@ describe('ToastContainer', () => {
     push('timed', 'info', 999999)
     const wrapper = mountContainer()
     await nextTick()
-    const snackbar = wrapper.findComponent({ name: 'VSnackbar' })
-    expect(snackbar.props('timeout')).toBe(-1)
+    const snackbar = wrapper.find('v-snackbar')
+    expect(Number(snackbar.attributes('timeout'))).toBe(-1)
   })
 })

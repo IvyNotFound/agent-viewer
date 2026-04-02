@@ -178,7 +178,7 @@ describe('SidebarGroupNode', () => {
     const group = makeGroup({ name: 'Dev', members: [{ agent_id: 1, sort_order: 0 }] })
     const wrapper2 = mountGroupNode(group, [agent])
     // content is visible by default (not collapsed)
-    const button = wrapper2.find('button')
+    const button = wrapper2.find('v-btn')
     expect(button.exists()).toBe(true)
     await button.trigger('click')
     // After click, collapsed state changes — content div is hidden

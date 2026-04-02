@@ -102,7 +102,7 @@ async function create() {
       <!-- 2 options -->
       <div class="action-grid ga-3">
         <!-- Ouvrir existant -->
-        <button class="action-card ga-2 py-4 px-5" @click="store.selectProject()">
+        <v-btn variant="text" class="action-card ga-2 py-4 px-5" @click="store.selectProject()">
           <div class="action-icon-wrap">
             <v-icon class="action-icon" size="20">mdi-folder-outline</v-icon>
           </div>
@@ -110,10 +110,10 @@ async function create() {
             <p class="action-label text-body-2">{{ t('dbSelector.open') }}</p>
             <p class="action-sublabel text-caption">{{ t('dbSelector.existingProject') }}</p>
           </div>
-        </button>
+        </v-btn>
 
         <!-- Créer nouveau -->
-        <button class="action-card action-card--primary ga-2 py-4 px-5" @click="step = 'create'">
+        <v-btn variant="text" class="action-card action-card--primary ga-2 py-4 px-5" @click="step = 'create'">
           <div class="action-icon-wrap action-icon-wrap--primary">
             <v-icon class="action-icon action-icon--primary" size="20">mdi-plus</v-icon>
           </div>
@@ -121,7 +121,7 @@ async function create() {
             <p class="action-label action-label--primary text-body-2">{{ t('dbSelector.createNew') }}</p>
             <p class="action-sublabel text-caption">{{ t('setup.newProject') }}</p>
           </div>
-        </button>
+        </v-btn>
       </div>
 
       <p v-if="store.error" class="error-msg py-2 px-3 text-caption">{{ store.error }}</p>
@@ -162,10 +162,10 @@ async function create() {
     <div class="create-content ga-5 px-6">
       <!-- Header -->
       <div class="create-header ga-3">
-        <button class="back-btn text-caption" @click="step = 'home'">
+        <v-btn variant="text" size="small" class="back-btn text-caption" @click="step = 'home'">
           <v-icon class="back-icon" size="16">mdi-arrow-left</v-icon>
           {{ t('dbSelector.back') }}
-        </button>
+        </v-btn>
         <h2 class="create-title text-body-1">{{ t('setup.newProject') }}</h2>
       </div>
 
@@ -197,7 +197,9 @@ async function create() {
       </div>
 
       <!-- Bouton lancer -->
-      <button
+      <v-btn
+        color="primary"
+        block
         class="create-btn ga-2 text-body-2"
         :disabled="creating || loadingInstances || (availableInstances.length > 1 && !selectedInstance)"
         @click="create"
@@ -205,7 +207,7 @@ async function create() {
         <v-progress-circular v-if="creating" class="btn-spinner" indeterminate :size="14" :width="2" />
         <v-icon v-else class="btn-icon" size="18">mdi-folder-outline</v-icon>
         {{ creating ? t('setup.creating') : t('dbSelector.selectAndInit') }}
-      </button>
+      </v-btn>
 
       <p v-if="creatingError" class="error-msg py-2 px-3 text-caption">{{ creatingError }}</p>
     </div>
@@ -254,18 +256,17 @@ async function create() {
   grid-template-columns: 1fr 1fr;
 }
 .action-card {
-  display: flex;
+  height: auto !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--edge-default) !important;
+  background: rgba(var(--v-theme-on-surface), 0.02) !important;
+}
+.action-card :deep(.v-btn__content) {
   flex-direction: column;
-  align-items: center;
-  border-radius: 12px;
-  border: 1px solid var(--edge-default);
-  background: rgba(var(--v-theme-on-surface), 0.02);
-  transition: all 150ms;
-  cursor: pointer;
 }
 .action-card:hover {
-  border-color: var(--content-subtle);
-  background: var(--surface-secondary);
+  border-color: var(--content-subtle) !important;
+  background: var(--surface-secondary) !important;
 }
 .action-card--primary {
   border-color: rgba(var(--v-theme-primary), 0.3);
@@ -330,16 +331,9 @@ async function create() {
   align-items: center;
 }
 .back-btn {
-  display: flex;
-  align-items: center;
   gap: 6px;
-  color: var(--content-subtle);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 150ms;
+  color: var(--content-subtle) !important;
 }
-.back-btn:hover { color: var(--content-tertiary); }
 .back-icon { width: 14px; height: 14px; }
 .create-title {
   font-weight: 600;
@@ -405,22 +399,6 @@ async function create() {
   font-family: monospace;
   color: var(--content-secondary);
 }
-.create-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-weight: 500;
-  background: rgb(var(--v-theme-primary));
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  transition: all 150ms;
-}
-.create-btn:hover { filter: brightness(1.1); }
-.create-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
 .btn-spinner {
   width: 16px;
   height: 16px;

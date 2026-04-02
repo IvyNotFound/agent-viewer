@@ -86,7 +86,7 @@ watch(() => store.dbPath, fetchQuality)
           <option v-for="p in perimetres" :key="p" :value="p">{{ p }}</option>
         </select>
       </div>
-      <button class="quality-refresh-btn text-overline" @click="fetchQuality">{{ t('quality.refresh') }}</button>
+      <v-btn variant="text" size="small" class="text-overline" @click="fetchQuality">{{ t('quality.refresh') }}</v-btn>
     </div>
 
     <!-- Loading -->
@@ -207,14 +207,6 @@ watch(() => store.dbPath, fetchQuality)
   color: var(--content-tertiary);
   outline: none;
 }
-.quality-refresh-btn {
-  color: var(--content-subtle);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: color 0.15s;
-}
-.quality-refresh-btn:hover { color: var(--content-secondary); }
 .quality-state {
   display: flex;
   align-items: center;

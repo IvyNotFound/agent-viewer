@@ -19,16 +19,14 @@ const colorMap: Record<ToastType, string> = {
       location="bottom end"
     >
       {{ toast.message }}
-      <template #actions>
-        <v-btn
-          icon
-          variant="plain"
-          density="compact"
-          @click="dismiss(toast.id)"
-        >
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </template>
+      <v-btn
+        icon
+        variant="plain"
+        density="compact"
+        @click="dismiss(toast.id)"
+      >
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
     </v-snackbar>
   </template>
 </template>

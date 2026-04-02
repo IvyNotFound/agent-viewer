@@ -133,39 +133,45 @@ const archivedGroupsSorted = computed(() => {
     <div class="board-header py-3 px-5">
       <!-- Sub-tabs -->
       <div class="board-tabs ga-1">
-        <button
+        <v-btn
           v-for="tab in (['backlog', 'archive'] as BoardTab[])"
           :key="tab"
+          variant="text"
+          size="small"
           class="text-caption" :class="['tab-btn', { active: activeTab === tab }]"
           @click="activeTab = tab"
         >
           {{ tab === 'backlog' ? t('board.backlog') : t('board.archive', { count: store.stats.archived }) }}
-        </button>
+        </v-btn>
       </div>
 
       <!-- List / Tree toggle (backlog only) -->
       <div v-if="activeTab === 'backlog'" class="view-toggle">
-        <button
+        <v-btn
+          variant="text"
+          size="small"
           class="text-caption" :class="['toggle-btn', { active: !treeMode }]"
           :title="t('board.listView')"
           @click="treeMode = false"
         >
           <v-icon class="toggle-icon" size="18">mdi-view-list</v-icon>
-        </button>
-        <button
+        </v-btn>
+        <v-btn
+          variant="text"
+          size="small"
           class="text-caption" :class="['toggle-btn', 'toggle-btn-separator', { active: treeMode }]"
           :title="t('board.treeView')"
           @click="treeMode = true"
         >
           <v-icon class="toggle-icon" size="18">mdi-file-tree</v-icon>
-        </button>
+        </v-btn>
       </div>
 
       <!-- Active filters -->
       <div class="board-filters ga-2">
         <span v-if="activeAgentName" class="filter-badge-agent">
           {{ activeAgentName }}
-          <button class="filter-badge-close" @click="store.selectedAgentId = null">✕</button>
+          <v-btn icon="mdi-close" variant="text" size="x-small" density="compact" class="filter-badge-close" @click="store.selectedAgentId = null" />
         </span>
         <span
           v-if="store.selectedPerimetre"
@@ -173,7 +179,7 @@ const archivedGroupsSorted = computed(() => {
           :style="{ color: agentFg(store.selectedPerimetre), backgroundColor: agentBg(store.selectedPerimetre), borderColor: agentBorder(store.selectedPerimetre) }"
         >
           {{ store.selectedPerimetre }}
-          <button class="filter-badge-close" @click="store.selectedPerimetre = null">✕</button>
+          <v-btn icon="mdi-close" variant="text" size="x-small" density="compact" class="filter-badge-close" @click="store.selectedPerimetre = null" />
         </span>
         <div v-if="store.error" class="board-error">{{ store.error }}</div>
       </div>
@@ -240,9 +246,11 @@ const archivedGroupsSorted = computed(() => {
               </div>
               <!-- Tasks in group -->
               <div class="task-list">
-                <button
+                <v-btn
                   v-for="task in agentTasks"
                   :key="task.id"
+                  variant="text"
+                  block
                   class="archive-task-btn py-3 px-4"
                   @click="store.openTask(task)"
                 >
@@ -256,7 +264,7 @@ const archivedGroupsSorted = computed(() => {
                       <p class="archive-task-id">#{{ task.id }}</p>
                     </div>
                   </div>
-                </button>
+                </v-btn>
               </div>
             </div>
           </div>
@@ -264,13 +272,15 @@ const archivedGroupsSorted = computed(() => {
 
         <!-- Pagination controls -->
         <div class="pagination py-2 px-4">
-          <button
+          <v-btn
             :disabled="pagination.page.value === 0"
-            class="text-caption" :class="['pag-btn', { disabled: pagination.page.value === 0 }]"
+            variant="text"
+            size="small"
+            class="text-caption pag-btn"
             @click="pagination.loadPage(pagination.page.value - 1)"
           >
             {{ t('board.prevPage') }}
-          </button>
+          </v-btn>
 
           <span class="pag-info">
             {{ t('board.pageOf', {
@@ -280,13 +290,15 @@ const archivedGroupsSorted = computed(() => {
             }) }}
           </span>
 
-          <button
+          <v-btn
             :disabled="pagination.page.value >= pagination.totalPages.value - 1"
-            class="text-caption" :class="['pag-btn', { disabled: pagination.page.value >= pagination.totalPages.value - 1 }]"
+            variant="text"
+            size="small"
+            class="text-caption pag-btn"
             @click="pagination.loadPage(pagination.page.value + 1)"
           >
             {{ t('board.nextPage') }}
-          </button>
+          </v-btn>
         </div>
       </template>
     </div>
@@ -312,22 +324,12 @@ const archivedGroupsSorted = computed(() => {
   align-items: center;
 }
 .tab-btn {
-  padding: 4px 12px;
-  font-weight: 500;
-  border-radius: 6px;
-  transition: background-color 150ms, color 150ms;
-  color: var(--content-subtle);
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-.tab-btn:hover {
-  color: var(--content-tertiary);
-  background-color: var(--surface-secondary);
+  font-weight: 500 !important;
+  color: var(--content-subtle) !important;
 }
 .tab-btn.active {
-  background-color: var(--surface-tertiary);
-  color: var(--content-primary);
+  background-color: var(--surface-tertiary) !important;
+  color: var(--content-primary) !important;
 }
 .view-toggle {
   display: flex;
@@ -338,23 +340,11 @@ const archivedGroupsSorted = computed(() => {
   flex-shrink: 0;
 }
 .toggle-btn {
-  padding: 4px 10px;
-  font-weight: 500;
-  transition: background-color 150ms, color 150ms;
-  color: var(--content-subtle);
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-.toggle-btn:hover {
-  color: var(--content-tertiary);
-  background-color: var(--surface-secondary);
+  color: var(--content-subtle) !important;
 }
 .toggle-btn.active {
-  background-color: var(--surface-tertiary);
-  color: var(--content-primary);
+  background-color: var(--surface-tertiary) !important;
+  color: var(--content-primary) !important;
 }
 .toggle-btn-separator {
   border-left: 1px solid var(--edge-subtle);
@@ -391,13 +381,8 @@ const archivedGroupsSorted = computed(() => {
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
 }
 .filter-badge-close {
-  background: none;
-  border: none;
-  cursor: pointer;
   opacity: 0.7;
-  transition: opacity 150ms;
-  color: inherit;
-  padding: 0;
+  color: inherit !important;
 }
 .filter-badge-close:hover {
   opacity: 1;
@@ -506,17 +491,15 @@ const archivedGroupsSorted = computed(() => {
   gap: 6px;
 }
 .archive-task-btn {
-  width: 100%;
-  text-align: left;
-  background-color: var(--surface-primary);
-  border: 1px solid var(--edge-subtle);
-  border-radius: 8px;
-  transition: background-color 150ms, border-color 150ms;
-  cursor: pointer;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  background-color: var(--surface-primary) !important;
+  border: 1px solid var(--edge-subtle) !important;
+  border-radius: 8px !important;
 }
 .archive-task-btn:hover {
-  background-color: var(--surface-secondary);
-  border-color: var(--edge-default);
+  background-color: var(--surface-secondary) !important;
+  border-color: var(--edge-default) !important;
 }
 .archive-task-inner {
   display: flex;
@@ -568,24 +551,8 @@ const archivedGroupsSorted = computed(() => {
   background-color: var(--surface-primary);
 }
 .pag-btn {
-  padding: 4px 12px;
-  font-weight: 500;
-  border-radius: 6px;
-  transition: background-color 150ms, color 150ms;
-  color: var(--content-tertiary);
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-.pag-btn:hover:not(:disabled) {
-  color: var(--content-primary);
-  background-color: var(--surface-secondary);
-}
-.pag-btn:disabled,
-.pag-btn.disabled {
-  color: var(--content-subtle);
-  opacity: 0.4;
-  cursor: not-allowed;
+  font-weight: 500 !important;
+  color: var(--content-tertiary) !important;
 }
 .pag-info {
   font-size: 11px;

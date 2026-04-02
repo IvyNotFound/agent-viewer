@@ -71,9 +71,9 @@ function rowLabel(e: HookEvent): string {
       <div class="header-spacer" />
 
       <!-- Expand/collapse toggle -->
-      <button class="toggle-btn">
+      <v-btn variant="text" size="x-small" density="compact" class="toggle-btn">
         {{ expanded ? '▲' : '▼' }}
-      </button>
+      </v-btn>
     </div>
 
     <!-- Expanded event list — max-h-36 kept for test selector compatibility -->
@@ -170,16 +170,9 @@ function rowLabel(e: HookEvent): string {
 .header-spacer { flex: 1; }
 
 .toggle-btn {
-  font-size: 0.625rem;
-  color: var(--content-subtle);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: color 0.15s;
-  font-family: ui-monospace, monospace;
-}
-.toggle-btn:hover {
-  color: var(--content-muted);
+  font-size: 0.625rem !important;
+  color: var(--content-subtle) !important;
+  font-family: ui-monospace, monospace !important;
 }
 
 .event-list {

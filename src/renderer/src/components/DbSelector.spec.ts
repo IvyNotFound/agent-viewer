@@ -36,7 +36,7 @@ describe('DbSelector', () => {
     const store = useTasksStore()
 
     // Find the open project button (not the language toggle buttons)
-    const buttons = wrapper.findAll('button')
+    const buttons = wrapper.findAll('v-btn')
     const openBtn = buttons.find(b => {
       const text = b.text()
       return text.includes('Ouvrir') || text.includes('Open')
@@ -68,7 +68,7 @@ describe('DbSelector', () => {
     await flushPromises()
 
     // The second button should be the "create" button
-    const buttons = wrapper.findAll('button')
+    const buttons = wrapper.findAll('v-btn')
     const createBtn = buttons.find(b => {
       const text = b.text()
       return text.includes('Créer') || text.includes('Create') || text.includes('Nouveau')

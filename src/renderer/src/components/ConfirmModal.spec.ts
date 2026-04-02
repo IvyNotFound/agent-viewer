@@ -25,7 +25,7 @@ describe('ConfirmModal (T675)', () => {
       props: { title: 'Confirmation', message: 'Continuer ?' },
       global: { plugins: [i18n], stubs: teleportStub },
     })
-    const buttons = wrapper.findAll('button')
+    const buttons = wrapper.findAll('v-btn')
     const confirmBtn = buttons[buttons.length - 1]
     await confirmBtn.trigger('click')
     expect(wrapper.emitted('confirm')).toHaveLength(1)
@@ -36,7 +36,7 @@ describe('ConfirmModal (T675)', () => {
       props: { title: 'Confirmation', message: 'Continuer ?' },
       global: { plugins: [i18n], stubs: teleportStub },
     })
-    const buttons = wrapper.findAll('button')
+    const buttons = wrapper.findAll('v-btn')
     const cancelBtn = buttons[0]
     await cancelBtn.trigger('click')
     expect(wrapper.emitted('cancel')).toHaveLength(1)

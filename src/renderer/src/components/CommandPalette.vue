@@ -156,11 +156,13 @@ function effortColor(effort: number): string {
             class="palette-text-field"
           />
           <div class="d-flex align-center ga-2 flex-shrink-0">
-            <button
+            <v-btn
               v-if="hasFilters"
+              variant="text"
+              size="small"
               class="btn-reset text-caption"
               @click="clearFilters"
-            >{{ t('commandPalette.resetFilters') }}</button>
+            >{{ t('commandPalette.resetFilters') }}</v-btn>
             <kbd class="palette-kbd">ESC</kbd>
           </div>
         </div>
@@ -181,9 +183,7 @@ function effortColor(effort: number): string {
                 variant="outlined"
                 size="small"
               >
-                <template #prepend>
-                  <span class="status-dot mr-1" :style="{ backgroundColor: s.color }" />
-                </template>
+                <span class="status-dot mr-1" :style="{ backgroundColor: s.color }" />
                 {{ s.label }}
               </v-chip>
             </v-chip-group>
@@ -261,44 +261,39 @@ function effortColor(effort: number): string {
               @click="selectTask(task)"
               @mouseenter="selectedIndex = index"
             >
-              <!-- Status dot -->
-              <template #prepend>
+              <!-- Inline row: status dot · content · effort dot
+                   (avoids #prepend/#append slot syntax on custom element in test env) -->
+              <div class="palette-item-row">
                 <span
                   class="status-dot flex-shrink-0"
                   style="margin-top: 2px;"
                   :style="{ backgroundColor: STATUTS.find(s => s.key === task.status)?.color ?? 'var(--content-faint)' }"
                 />
-              </template>
-
-              <!-- Content -->
-              <div style="min-width: 0;">
-                <div class="d-flex align-center ga-2">
-                  <span class="task-id">#{{ task.id }}</span>
-                  <span class="task-title text-body-2">{{ task.title }}</span>
+                <div style="min-width: 0; flex: 1;">
+                  <div class="d-flex align-center ga-2">
+                    <span class="task-id">#{{ task.id }}</span>
+                    <span class="task-title text-body-2">{{ task.title }}</span>
+                  </div>
+                  <div class="d-flex align-center ga-2 mt-1">
+                    <span
+                      v-if="task.agent_name"
+                      class="task-agent"
+                      :style="{ color: agentFg(task.agent_name) }"
+                    >{{ task.agent_name }}</span>
+                    <span
+                      v-if="task.scope"
+                      class="task-scope"
+                      :style="{ color: agentFg(task.scope), backgroundColor: agentBg(task.scope) }"
+                    >{{ task.scope }}</span>
+                  </div>
                 </div>
-                <div class="d-flex align-center ga-2 mt-1">
-                  <span
-                    v-if="task.agent_name"
-                    class="task-agent"
-                    :style="{ color: agentFg(task.agent_name) }"
-                  >{{ task.agent_name }}</span>
-                  <span
-                    v-if="task.scope"
-                    class="task-scope"
-                    :style="{ color: agentFg(task.scope), backgroundColor: agentBg(task.scope) }"
-                  >{{ task.scope }}</span>
-                </div>
-              </div>
-
-              <!-- Effort dot -->
-              <template #append>
                 <span
                   v-if="task.effort"
                   class="effort-dot flex-shrink-0"
                   :style="{ backgroundColor: effortColor(task.effort) }"
                   :title="task.effort === 1 ? 'Small' : task.effort === 2 ? 'Medium' : 'Large'"
                 />
-              </template>
+              </div>
             </v-list-item>
           </template>
         </v-list>
@@ -432,6 +427,13 @@ function effortColor(effort: number): string {
   border-left-color: #8b5cf6 !important;
 }
 
+.palette-item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
 /* Task item content */
 .task-id {
   font-size: 12px;
@@ -486,13 +488,9 @@ function effortColor(effort: number): string {
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
 }
 .btn-reset {
-  color: #c4b5fd;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 150ms;
+  color: #c4b5fd !important;
 }
 .btn-reset:hover {
-  color: #a78bfa;
+  color: #a78bfa !important;
 }
 </style>

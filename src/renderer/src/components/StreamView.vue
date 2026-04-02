@@ -260,10 +260,13 @@ onUnmounted(() => {
           {{ t('stream.sessionStarted') }}
           <span v-if="event.session_id" class="init-session-id ml-1">· {{ event.session_id.slice(0, 8) }}…</span>
           <template v-if="sessionContextMap.get(event._id!)">
-            <button
+            <v-btn
+              variant="text"
+              size="x-small"
+              density="compact"
               class="init-ctx-btn ml-2"
               @click="toggleCollapsed(`init-ctx-${event._id}`, true)"
-            >{{ (collapsed[`init-ctx-${event._id}`] ?? true) ? '▶ ' + t('stream.ctx') : '▼ ' + t('stream.ctx') }}</button>
+            >{{ (collapsed[`init-ctx-${event._id}`] ?? true) ? '▶ ' + t('stream.ctx') : '▼ ' + t('stream.ctx') }}</v-btn>
             <div
               v-show="!(collapsed[`init-ctx-${event._id}`] ?? true)"
               class="init-ctx-body mt-1 ml-4"
@@ -438,16 +441,10 @@ onUnmounted(() => {
   font-family: ui-monospace, monospace;
 }
 .init-ctx-btn {
-  font-style: normal;
-  color: var(--content-faint);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  font-size: inherit;
-  transition: color 0.15s;
+  font-style: normal !important;
+  color: var(--content-faint) !important;
+  font-size: inherit !important;
 }
-.init-ctx-btn:hover { color: var(--content-muted); }
 .init-ctx-body {
   font-style: normal;
   color: var(--content-faint);

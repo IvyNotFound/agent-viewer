@@ -53,7 +53,7 @@ const maxEffort = computed(() =>
     <!-- Header -->
     <div class="wl-header">
       <h2 class="wl-title text-body-2">{{ t('workload.title') }}</h2>
-      <button class="wl-refresh-btn text-caption" @click="store.refresh()">{{ t('common.refresh') }}</button>
+      <v-btn variant="text" size="small" class="wl-refresh-btn" @click="store.refresh()">{{ t('common.refresh') }}</v-btn>
     </div>
 
     <!-- Loading -->
@@ -126,13 +126,10 @@ const maxEffort = computed(() =>
 }
 .wl-title {}
 .wl-refresh-btn {
-  color: var(--content-subtle);
-  background: none;
-  border: none;
-  cursor: pointer;
+  color: var(--content-subtle) !important;
   transition: color 0.15s;
 }
-.wl-refresh-btn:hover { color: var(--content-secondary); }
+.wl-refresh-btn:hover { color: var(--content-secondary) !important; }
 .wl-state-center { display: flex; align-items: center; justify-content: center; padding: 32px; }
 .wl-loading {}
 .wl-empty {}

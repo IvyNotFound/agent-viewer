@@ -97,9 +97,11 @@ function typeBadgeLabel(link: TaskLink): string {
       <div v-if="outgoing.length > 0" class="dep-section">
         <p class="dep-section-label text-overline">{{ t('taskDetail.blocks') }}</p>
         <div class="dep-list">
-          <button
+          <v-btn
             v-for="link in outgoing"
             :key="link.id"
+            variant="text"
+            block
             class="dep-row"
             @click="emit('navigate', linkedTaskId(link))"
           >
@@ -114,7 +116,7 @@ function typeBadgeLabel(link: TaskLink): string {
             <span class="dep-title text-caption">
               #{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}
             </span>
-          </button>
+          </v-btn>
         </div>
       </div>
 
@@ -122,9 +124,11 @@ function typeBadgeLabel(link: TaskLink): string {
       <div v-if="incoming.length > 0" class="dep-section">
         <p class="dep-section-label text-overline">{{ t('taskDetail.blockedBy') }}</p>
         <div class="dep-list">
-          <button
+          <v-btn
             v-for="link in incoming"
             :key="link.id"
+            variant="text"
+            block
             class="dep-row"
             @click="emit('navigate', linkedTaskId(link))"
           >
@@ -139,7 +143,7 @@ function typeBadgeLabel(link: TaskLink): string {
             <span class="dep-title text-caption">
               #{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}
             </span>
-          </button>
+          </v-btn>
         </div>
       </div>
 
@@ -147,9 +151,11 @@ function typeBadgeLabel(link: TaskLink): string {
       <div v-if="related.length > 0" class="dep-section">
         <p class="dep-section-label text-overline">{{ t('taskDetail.relatedTo') }}</p>
         <div class="dep-list">
-          <button
+          <v-btn
             v-for="link in related"
             :key="link.id"
+            variant="text"
+            block
             class="dep-row"
             @click="emit('navigate', linkedTaskId(link))"
           >
@@ -164,7 +170,7 @@ function typeBadgeLabel(link: TaskLink): string {
             <span class="dep-title text-caption">
               #{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}
             </span>
-          </button>
+          </v-btn>
         </div>
       </div>
     </template>
@@ -200,20 +206,12 @@ function typeBadgeLabel(link: TaskLink): string {
 }
 
 .dep-row {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  text-align: left;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-  transition: background-color 0.15s;
-}
-.dep-row:hover {
-  background-color: var(--surface-secondary);
+  gap: 6px !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 2px 4px !important;
 }
 
 .dep-badge {

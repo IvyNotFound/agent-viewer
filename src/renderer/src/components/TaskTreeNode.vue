@@ -44,8 +44,11 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
       @click="store.openTask(node)"
     >
       <!-- Expand/collapse toggle -->
-      <button
+      <v-btn
         v-if="hasChildren"
+        icon
+        variant="text"
+        density="compact"
         class="expand-btn"
         :title="expanded ? t('common.collapse') : t('common.expand')"
         @click.stop="toggle"
@@ -55,7 +58,7 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
           :class="expanded ? 'expanded' : ''"
           size="14"
         >mdi-chevron-right</v-icon>
-      </button>
+      </v-btn>
       <!-- Leaf spacer -->
       <span v-else class="leaf-spacer" />
 
@@ -135,21 +138,17 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
 
 .expand-btn {
   flex-shrink: 0;
-  width: 1rem;
-  height: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--content-subtle);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
+  width: 1rem !important;
+  height: 1rem !important;
+  min-width: 1rem !important;
+  min-height: 0 !important;
+  color: var(--content-subtle) !important;
+  padding: 0 !important;
   margin-top: 2px;
   transition: color 0.15s;
 }
 .expand-btn:hover {
-  color: var(--content-muted);
+  color: var(--content-muted) !important;
 }
 
 .expand-icon {

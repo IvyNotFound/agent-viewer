@@ -137,9 +137,9 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
       @contextmenu.prevent="openGroupContextMenu"
     >
       <!-- Collapse/expand toggle -->
-      <button class="collapse-btn" @click.stop="collapsed = !collapsed">
+      <v-btn variant="text" density="compact" size="x-small" class="collapse-btn" @click.stop="collapsed = !collapsed">
         <v-icon class="chevron-icon" size="14" :style="collapsed ? { transform: 'rotate(-90deg)' } : {}">mdi-chevron-down</v-icon>
-      </button>
+      </v-btn>
 
       <!-- Rename input or group name -->
       <template v-if="renamingGroupId === group.id">
@@ -161,12 +161,12 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
       >{{ group.name }}</span>
 
       <!-- Inline action buttons (visible on hover) -->
-      <button class="header-btn" :title="t('sidebar.renameGroup')" @click.stop="startRename(group)">
+      <v-btn variant="text" density="compact" size="x-small" class="header-btn" :title="t('sidebar.renameGroup')" @click.stop="startRename(group)">
         <v-icon size="12" class="icon-sm">mdi-pencil</v-icon>
-      </button>
-      <button class="header-btn header-btn--danger" :title="t('sidebar.deleteGroup')" @click.stop="handleDeleteGroup(group.id)">
+      </v-btn>
+      <v-btn variant="text" density="compact" size="x-small" class="header-btn header-btn--danger" :title="t('sidebar.deleteGroup')" @click.stop="handleDeleteGroup(group.id)">
         <v-icon size="12" class="icon-sm">mdi-delete</v-icon>
-      </button>
+      </v-btn>
     </div>
 
     <!-- Drop hint -->
@@ -184,8 +184,8 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
           @keydown.enter="confirmCreateSubgroup"
           @keydown.esc="cancelCreateSubgroup"
         />
-        <button class="icon-btn icon-btn--confirm text-caption" @click="confirmCreateSubgroup">✓</button>
-        <button class="icon-btn icon-btn--cancel text-caption" @click="cancelCreateSubgroup">✕</button>
+        <v-btn variant="text" density="compact" size="x-small" class="icon-btn icon-btn--confirm text-caption" @click="confirmCreateSubgroup">✓</v-btn>
+        <v-btn variant="text" density="compact" size="x-small" class="icon-btn icon-btn--cancel text-caption" @click="cancelCreateSubgroup">✕</v-btn>
       </div>
 
       <!-- Child groups (recursive) -->
@@ -209,7 +209,9 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
           @contextmenu.prevent="openContextMenu($event, agent)"
         >
           <div class="agent-row-wrap">
-            <button
+            <v-btn
+              variant="text"
+              block
               :class="['agent-btn', isAgentSelected(agent.id) ? 'agent-btn--selected' : '']"
               @click="store.toggleAgentFilter(agent.id)"
             >
@@ -219,11 +221,11 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
                 <span v-else class="status-dot" :style="{ backgroundColor: agentFg(agent.name) }" />
               </span>
               <span :class="['agent-name', isAgentSelected(agent.id) ? 'agent-name--active' : '']">{{ agent.name }}</span>
-            </button>
+            </v-btn>
             <div class="agent-actions ga-1">
               <span class="drag-handle" :title="t('sidebar.move')"><v-icon size="12" class="icon-xs">mdi-drag</v-icon></span>
-              <button class="action-btn" :title="t('sidebar.editAgent')" @click.stop="openEditAgent(agent)"><v-icon size="12" class="icon-sm">mdi-pencil</v-icon></button>
-              <button class="action-btn action-btn--launch" :style="{ color: agentFg(agent.name), backgroundColor: agentBg(agent.name) }" :title="t('sidebar.launchAgent', { name: agent.name })" @click.stop="openLaunchModal($event, agent)"><v-icon size="12" class="icon-sm">mdi-play</v-icon></button>
+              <v-btn variant="text" density="compact" size="x-small" class="action-btn" :title="t('sidebar.editAgent')" @click.stop="openEditAgent(agent)"><v-icon size="12" class="icon-sm">mdi-pencil</v-icon></v-btn>
+              <v-btn variant="text" density="compact" size="x-small" class="action-btn action-btn--launch" :style="{ color: agentFg(agent.name), backgroundColor: agentBg(agent.name) }" :title="t('sidebar.launchAgent', { name: agent.name })" @click.stop="openLaunchModal($event, agent)"><v-icon size="12" class="icon-sm">mdi-play</v-icon></v-btn>
             </div>
           </div>
         </div>
@@ -268,19 +270,14 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   box-shadow: 0 0 0 1px rgba(var(--v-theme-primary), 0.4);
 }
 .collapse-btn {
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--content-dim);
-  transition: color 150ms;
+  width: 16px !important;
+  min-width: 16px !important;
+  height: 16px !important;
+  min-height: 16px !important;
   flex-shrink: 0;
-  background: none;
-  border: none;
-  cursor: pointer;
+  color: var(--content-dim) !important;
+  padding: 0 !important;
 }
-.collapse-btn:hover { color: var(--content-secondary); }
 .chevron-icon {
   width: 10px;
   height: 10px;
@@ -316,21 +313,15 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
 }
 .group-name--deep { color: #71717a; }
 .header-btn {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  color: var(--content-dim);
-  transition: all 150ms;
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  padding: 0 !important;
+  color: var(--content-dim) !important;
   opacity: 0;
-  background: none;
-  border: none;
-  cursor: pointer;
 }
-.header-btn:hover { color: var(--content-secondary); background: var(--surface-secondary); }
-.header-btn--danger:hover { color: #f87171; }
+.header-btn--danger:hover { color: #f87171 !important; }
 .group-header:hover .header-btn { opacity: 1; }
 .drop-hint {
   margin: 0 4px 4px;
@@ -357,21 +348,14 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   box-shadow: 0 0 0 1px rgb(var(--v-theme-primary));
 }
 .icon-btn {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: background 150ms;
-  border: none;
-  cursor: pointer;
-  background: none;
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
 }
-.icon-btn--confirm { color: #10b981; }
-.icon-btn--confirm:hover { background: var(--surface-secondary); }
-.icon-btn--cancel { color: var(--content-faint); }
-.icon-btn--cancel:hover { color: var(--content-secondary); background: var(--surface-secondary); }
+.icon-btn--confirm { color: #10b981 !important; }
+.icon-btn--cancel { color: var(--content-faint) !important; }
 .agents-list {
   display: flex;
   flex-direction: column;
@@ -380,23 +364,13 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
 .agent-item { position: relative; }
 .agent-row-wrap { position: relative; }
 .agent-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 8px;
-  padding-right: 80px;
-  border-radius: 6px;
-  text-align: left;
-  transition: background 150ms;
-  cursor: pointer;
-  background: none;
-  border: none;
+  padding-right: 80px !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
 }
-.agent-btn:hover { background: var(--surface-primary); }
 .agent-btn--selected {
-  background: var(--surface-secondary);
-  box-shadow: 0 0 0 1px var(--content-faint);
+  background: var(--surface-secondary) !important;
+  box-shadow: 0 0 0 1px var(--content-faint) !important;
 }
 .agent-status {
   position: relative;
@@ -460,19 +434,12 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   color: var(--content-dim);
 }
 .action-btn {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 150ms;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--content-subtle);
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  color: var(--content-subtle) !important;
 }
-.action-btn:hover { color: var(--content-secondary); background: var(--surface-tertiary); }
 .action-btn--launch:hover { filter: brightness(1.15); }
 .empty-msg {
   color: var(--content-dim);

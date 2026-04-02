@@ -316,13 +316,15 @@ function handleKeydown(e: KeyboardEvent) {
 
           <!-- System prompt (optionnel, collapsible) -->
           <div>
-            <button
+            <v-btn
+              variant="text"
+              size="small"
               class="prompt-toggle"
               @click="showPrompt = !showPrompt"
             >
               <v-icon :class="['prompt-arrow', showPrompt ? 'prompt-arrow--open' : '']" size="14">mdi-chevron-right</v-icon>
               System prompt {{ isEditMode ? '' : t('agent.systemPromptOptional') }}
-            </button>
+            </v-btn>
             <div v-if="showPrompt" class="d-flex flex-column ga-2 mt-2">
               <v-textarea
                 v-model="systemPrompt"
@@ -439,18 +441,10 @@ function handleKeydown(e: KeyboardEvent) {
 
 /* System prompt toggle */
 .prompt-toggle {
-  display: flex;
-  align-items: center;
   gap: 6px;
-  font-size: 12px;
-  color: var(--content-subtle);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 150ms;
-}
-.prompt-toggle:hover {
-  color: var(--content-tertiary);
+  font-size: 12px !important;
+  color: var(--content-subtle) !important;
+  justify-content: flex-start !important;
 }
 .prompt-arrow {
   transition: transform 150ms;

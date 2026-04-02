@@ -37,19 +37,19 @@ const { t } = useI18n()
         <!-- Footer -->
         <v-card-actions>
           <v-spacer />
-          <button
-            class="btn-cancel text-body-2"
+          <v-btn
+            variant="text"
             @click="emit('cancel')"
           >
             {{ props.cancelLabel ?? t('common.cancel') }}
-          </button>
-          <button
-            class="btn-confirm text-body-2"
-            :class="props.danger ? 'btn-confirm--danger' : 'btn-confirm--primary'"
+          </v-btn>
+          <v-btn
+            :color="props.danger ? 'error' : 'primary'"
+            variant="elevated"
             @click="emit('confirm')"
           >
             {{ props.confirmLabel ?? t('common.confirm') }}
-          </button>
+          </v-btn>
         </v-card-actions>
       </v-card>
     </div>
@@ -57,26 +57,4 @@ const { t } = useI18n()
 </template>
 
 <style scoped>
-.btn-cancel {
-  padding: 8px 16px;
-  border-radius: 8px;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-  transition: background-color 0.15s, color 0.15s;
-}
-.btn-cancel:hover {
-  background-color: rgba(var(--v-theme-on-surface), 0.08);
-  color: rgba(var(--v-theme-on-surface), 0.87);
-}
-
-.btn-confirm {
-  padding: 8px 16px;
-  font-weight: 500;
-  border-radius: 8px;
-  color: #fff;
-  transition: background-color 0.15s;
-}
-.btn-confirm--danger   { background-color: rgb(220 38 38); }
-.btn-confirm--danger:hover   { background-color: rgb(239 68 68); }
-.btn-confirm--primary  { background-color: rgb(var(--v-theme-primary)); }
-.btn-confirm--primary:hover  { background-color: rgb(var(--v-theme-primary) / 0.85); }
 </style>

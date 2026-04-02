@@ -220,15 +220,18 @@ const hoveredBar = ref<number | null>(null)
         {{ t('costStats.title') }}
       </h3>
       <div class="cost-period-btns ga-1">
-        <button
+        <v-btn
           v-for="p in PERIODS"
           :key="p.key"
+          variant="text"
+          size="small"
+          density="compact"
           class="cost-period-btn text-overline"
           :class="{ 'cost-period-btn--active': selectedPeriod === p.key }"
           @click="selectedPeriod = p.key"
         >
           {{ t(p.labelKey) }}
-        </button>
+        </v-btn>
       </div>
     </div>
 
@@ -349,22 +352,14 @@ const hoveredBar = ref<number | null>(null)
   display: flex;
 }
 .cost-period-btn {
-  padding: 2px 8px;
-  border-radius: 9999px;
-  border: 1px solid var(--edge-default);
-  background: var(--surface-secondary);
-  color: var(--content-secondary);
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
-}
-.cost-period-btn:hover {
-  border-color: #6d28d9;
-  color: var(--content-primary);
+  border: 1px solid var(--edge-default) !important;
+  border-radius: 9999px !important;
+  color: var(--content-secondary) !important;
 }
 .cost-period-btn--active {
-  background: #6d28d9;
-  border-color: #6d28d9;
-  color: white;
+  background: #6d28d9 !important;
+  border-color: #6d28d9 !important;
+  color: white !important;
 }
 .cost-state {
   color: var(--content-faint);

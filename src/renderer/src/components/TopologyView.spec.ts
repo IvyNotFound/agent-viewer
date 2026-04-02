@@ -86,7 +86,7 @@ describe('TopologyView (T750)', () => {
     })
     await flushPromises()
     // Find the dev-front agent card (scope=front-vuejs, id=1)
-    const buttons = wrapper.findAll('button[title]')
+    const buttons = wrapper.findAll('v-btn[title]')
     const devFrontBtn = buttons.find(b => b.text().includes('dev-front'))!
     await devFrontBtn.trigger('click')
     const { useTasksStore: getTasksStore } = await import('@renderer/stores/tasks')

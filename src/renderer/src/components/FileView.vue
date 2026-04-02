@@ -234,12 +234,14 @@ watch(() => props.filePath, async () => {
       <span class="fv-actions">
         <span v-if="saved" class="fv-saved text-caption">{{ t('fileView.saved') }}</span>
         <span v-if="saveError" class="fv-save-error text-caption">{{ saveError }}</span>
-        <button
+        <v-btn
           v-if="!error && !loading"
+          variant="tonal"
+          size="small"
           class="fv-save-btn text-caption"
           :disabled="saving || !isDirty"
           @click="save"
-        >{{ saving ? t('common.saving') : t('common.save') }}</button>
+        >{{ saving ? t('common.saving') : t('common.save') }}</v-btn>
       </span>
     </div>
 
@@ -297,17 +299,6 @@ watch(() => props.filePath, async () => {
 }
 .fv-saved {}
 .fv-save-error {}
-.fv-save-btn {
-  padding: 4px 10px;
-  border-radius: 4px;
-  background: var(--surface-tertiary);
-  color: var(--content-secondary);
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.fv-save-btn:hover:not(:disabled) { background: var(--content-faint); }
-.fv-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .fv-content { flex: 1; overflow: hidden; position: relative; }
 .fv-loading-overlay {
   position: absolute;

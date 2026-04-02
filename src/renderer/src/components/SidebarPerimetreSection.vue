@@ -82,12 +82,14 @@ async function addPerimetre() {
 <template>
   <div class="perimetre-section py-3 px-4 ga-1">
     <div v-if="store.selectedPerimetre !== null" class="reset-row mb-2">
-      <button class="reset-btn text-caption" @click="store.selectedPerimetre = null">{{ t('sidebar.reset') }}</button>
+      <v-btn variant="text" size="small" color="primary" class="reset-btn text-caption" @click="store.selectedPerimetre = null">{{ t('sidebar.reset') }}</v-btn>
     </div>
 
     <div v-for="p in store.perimetresData" :key="p.id" class="perimetre-item">
       <div class="perimetre-row-wrap">
-        <button
+        <v-btn
+          variant="text"
+          block
           :class="['perimetre-btn', store.selectedPerimetre === p.name ? 'perimetre-btn--selected' : '']"
           :style="store.selectedPerimetre === p.name ? { backgroundColor: agentBg(p.name), borderColor: agentBorder(p.name) } : {}"
           @click="store.togglePerimetreFilter(p.name)"
@@ -116,19 +118,19 @@ async function addPerimetre() {
             </div>
           </div>
           <p v-if="p.description" class="perimetre-desc text-overline">{{ p.description }}</p>
-        </button>
-        <button class="edit-btn" :title="t('sidebar.editPerimeter')" @click.stop="openEditPerimetre(p)">
+        </v-btn>
+        <v-btn icon variant="text" density="compact" size="x-small" class="edit-btn" :title="t('sidebar.editPerimeter')" @click.stop="openEditPerimetre(p)">
           <v-icon size="12" class="icon-sm">mdi-pencil</v-icon>
-        </button>
+        </v-btn>
       </div>
     </div>
 
     <div v-if="store.perimetresData.length === 0" class="no-perimeter-msg pa-2 text-body-2">{{ t('sidebar.noPerimeter') }}</div>
 
-    <button class="add-btn ga-2 pa-2 mt-2 text-caption" @click="addPerimetre">
+    <v-btn variant="text" block size="small" class="add-btn ga-2 pa-2 mt-2 text-caption" @click="addPerimetre">
       <v-icon size="12" class="icon-sm">mdi-plus</v-icon>
       {{ t('sidebar.addPerimeter') }}
-    </button>
+    </v-btn>
   </div>
 
   <!-- Modal édition périmètre -->
@@ -145,8 +147,8 @@ async function addPerimetre() {
           <input v-model="editPerimetreDesc" class="modal-input modal-input--secondary" :placeholder="t('sidebar.descriptionPlaceholder')" @keydown.enter="savePerimetre" @keydown.esc="editPerimetre = null" />
         </div>
         <div class="modal-actions ga-2">
-          <button class="modal-btn modal-btn--cancel text-caption" @click="editPerimetre = null">{{ t('common.cancel') }}</button>
-          <button class="modal-btn modal-btn--save text-caption" :disabled="savingPerimetre || !editPerimetreName.trim()" @click="savePerimetre">{{ savingPerimetre ? t('common.saving') : t('common.save') }}</button>
+          <v-btn variant="text" size="small" class="modal-btn modal-btn--cancel text-caption" @click="editPerimetre = null">{{ t('common.cancel') }}</v-btn>
+          <v-btn color="primary" size="small" :disabled="savingPerimetre || !editPerimetreName.trim()" class="modal-btn modal-btn--save text-caption" @click="savePerimetre">{{ savingPerimetre ? t('common.saving') : t('common.save') }}</v-btn>
         </div>
       </div>
     </div>
@@ -165,14 +167,6 @@ async function addPerimetre() {
   display: flex;
   justify-content: flex-end;
 }
-.reset-btn {
-  color: rgb(var(--v-theme-primary));
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 150ms;
-}
-.reset-btn:hover { color: rgba(var(--v-theme-primary), 0.7); }
 .perimetre-item {
   border-radius: 6px;
 }
@@ -180,19 +174,13 @@ async function addPerimetre() {
   position: relative;
 }
 .perimetre-btn {
-  width: 100%;
-  text-align: left;
-  padding: 8px;
-  padding-right: 32px;
-  border-radius: 6px;
-  transition: background 150ms;
-  background: none;
-  border: 1px solid transparent;
-  cursor: pointer;
+  text-align: left !important;
+  padding-right: 32px !important;
+  justify-content: flex-start !important;
+  height: auto !important;
 }
-.perimetre-btn:not(.perimetre-btn--selected):hover { background: var(--surface-primary); }
 .perimetre-btn--selected {
-  box-shadow: 0 0 0 1px var(--content-faint);
+  box-shadow: 0 0 0 1px var(--content-faint) !important;
 }
 .perimetre-row {
   display: flex;
@@ -235,40 +223,26 @@ async function addPerimetre() {
   margin-top: 2px;
 }
 .edit-btn {
-  position: absolute;
+  position: absolute !important;
   right: 4px;
   top: 50%;
   transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  color: var(--content-faint);
-  background: none;
-  border: none;
-  cursor: pointer;
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  color: var(--content-faint) !important;
   opacity: 0;
-  transition: all 150ms;
 }
-.edit-btn:hover { color: var(--content-secondary); background: var(--surface-tertiary); }
 .perimetre-item:hover .edit-btn { opacity: 1; }
 .no-perimeter-msg {
   color: var(--content-faint);
 }
 .add-btn {
-  display: flex;
-  align-items: center;
-  border-radius: 6px;
-  color: var(--content-faint);
-  transition: all 150ms;
-  width: 100%;
-  background: none;
-  border: none;
-  cursor: pointer;
+  color: var(--content-faint) !important;
+  justify-content: flex-start !important;
 }
-.add-btn:hover { color: var(--content-tertiary); background: var(--surface-primary); }
 .icon-sm { width: 14px; height: 14px; }
 
 /* Modal */
@@ -321,22 +295,4 @@ async function addPerimetre() {
   display: flex;
   justify-content: flex-end;
 }
-.modal-btn {
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  border: none;
-  transition: all 150ms;
-}
-.modal-btn--cancel {
-  color: var(--content-muted);
-  background: none;
-}
-.modal-btn--cancel:hover { color: var(--content-secondary); background: var(--surface-secondary); }
-.modal-btn--save {
-  background: rgb(var(--v-theme-primary));
-  color: #fff;
-}
-.modal-btn--save:hover { filter: brightness(1.1); }
-.modal-btn--save:disabled { opacity: 0.4; cursor: not-allowed; }
 </style>

@@ -67,7 +67,7 @@ describe('TaskTreeNode', () => {
       global: { plugins: [createTestingPinia(), i18n] },
     })
     // No expand/collapse button visible
-    const buttons = wrapper.findAll('button')
+    const buttons = wrapper.findAll('v-btn')
     const expandBtn = buttons.find(b => b.attributes('title') === 'Réduire' || b.attributes('title') === 'Développer')
     expect(expandBtn).toBeUndefined()
     wrapper.unmount()
@@ -80,7 +80,7 @@ describe('TaskTreeNode', () => {
       props: { node },
       global: { plugins: [createTestingPinia(), i18n] },
     })
-    const expandBtn = wrapper.find('button[title]')
+    const expandBtn = wrapper.find('v-btn[title]')
     expect(expandBtn.exists()).toBe(true)
     wrapper.unmount()
   })
@@ -93,7 +93,7 @@ describe('TaskTreeNode', () => {
       global: { plugins: [createTestingPinia(), i18n] },
     })
     // Initially expanded (default ref(true))
-    const expandBtn = wrapper.find('button[title]')
+    const expandBtn = wrapper.find('v-btn[title]')
     expect(expandBtn.attributes('title')).toBe('Réduire')
     await expandBtn.trigger('click')
     expect(expandBtn.attributes('title')).toBe('Développer')
@@ -111,7 +111,7 @@ describe('TaskTreeNode', () => {
       global: { plugins: [createTestingPinia(), i18n] },
     })
     // Collapse
-    const expandBtn = wrapper.find('button[title]')
+    const expandBtn = wrapper.find('v-btn[title]')
     await expandBtn.trigger('click')
     expect(wrapper.text()).toContain('2 sous-tâches')
     wrapper.unmount()

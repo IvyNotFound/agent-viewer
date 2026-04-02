@@ -76,9 +76,9 @@ onMounted(loadTree)
     <div class="ex-tree">
       <div class="ex-tree-header">
         <span class="ex-tree-label text-caption">{{ t('explorer.files') }}</span>
-        <button class="ex-tree-refresh" :title="t('common.refresh')" @click="loadTree">
+        <v-btn icon variant="text" density="compact" size="small" class="ex-tree-refresh" :title="t('common.refresh')" @click="loadTree">
           <v-icon size="14">mdi-refresh</v-icon>
-        </button>
+        </v-btn>
       </div>
       <div v-if="loadingTree" class="ex-state-center">
         <span class="ex-loading text-caption">{{ t('explorer.loading') }}</span>
@@ -148,19 +148,8 @@ onMounted(loadTree)
   letter-spacing: 0.05em;
 }
 .ex-tree-refresh {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  color: var(--content-subtle);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 0.15s, background 0.15s;
+  color: var(--content-subtle) !important;
 }
-.ex-tree-refresh:hover { color: var(--content-tertiary); background: var(--surface-secondary); }
 .ex-tree-nodes { flex: 1; padding: 2px 0; user-select: none; }
 
 .ex-state-center { flex: 1; display: flex; align-items: center; justify-content: center; }

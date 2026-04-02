@@ -84,7 +84,7 @@ describe('SidebarAgentSection', () => {
     const wrapper = shallowMount(SidebarAgentSection, {
       global: { plugins: [pinia, i18n] },
     })
-    const buttons = wrapper.findAll('button')
+    const buttons = wrapper.findAll('v-btn')
     const hasResetBtn = buttons.some(b => b.classes().includes('reset-btn'))
     expect(hasResetBtn).toBe(true)
     wrapper.unmount()
@@ -105,7 +105,7 @@ describe('SidebarAgentSection', () => {
     const wrapper = shallowMount(SidebarAgentSection, {
       global: { plugins: [pinia, i18n] },
     })
-    const resetBtn = wrapper.findAll('button').find(b => b.classes().includes('reset-btn'))
+    const resetBtn = wrapper.findAll('v-btn').find(b => b.classes().includes('reset-btn'))
     expect(resetBtn).toBeUndefined()
     wrapper.unmount()
   })

@@ -31,7 +31,7 @@ describe('BoardView', () => {
     const wrapper = shallowMount(BoardView, {
       global: { plugins: [createTestingPinia(), i18n] },
     })
-    const tabs = wrapper.findAll('button').filter(b => b.text().includes('Archive'))
+    const tabs = wrapper.findAll('v-btn').filter(b => b.text().includes('Archive'))
     if (tabs.length > 0) {
       await tabs[0].trigger('click')
       await nextTick()

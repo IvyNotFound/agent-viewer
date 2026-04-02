@@ -87,13 +87,15 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
             </div>
             <h2 class="popup-title text-body-2">{{ t('project.activeTitle') }}</h2>
           </div>
-          <button
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            density="compact"
             class="popup-close"
             :title="t('common.close')"
             @click="emit('close')"
-          >
-            <v-icon class="icon-xs" size="14">mdi-close</v-icon>
-          </button>
+          />
         </div>
 
         <!-- Body -->
@@ -123,21 +125,26 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 
         <!-- Footer -->
         <div class="popup-footer py-4 px-5 ga-2">
-          <button
+          <v-btn
+            variant="outlined"
+            block
             class="btn-change ga-2 py-2 px-4"
             @click="handleChangeProject"
           >
             <v-icon class="icon-xs" size="14">mdi-folder-outline</v-icon>
             {{ t('project.changeProject') }}
-          </button>
-          <button
+          </v-btn>
+          <v-btn
             v-if="store.projectPath"
+            color="error"
+            variant="outlined"
+            block
             class="btn-close-project ga-2 py-2 px-4 text-body-2"
             @click="handleCloseProject"
           >
             <v-icon class="icon-xs" size="14">mdi-close</v-icon>
             {{ t('project.close') }}
-          </button>
+          </v-btn>
           <p class="popup-version pt-1">v{{ appVersion }}</p>
         </div>
       </div>
@@ -189,21 +196,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 }
 
 .popup-close {
-  width: 1.75rem;
-  height: 1.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--content-subtle);
-  transition: color 0.15s, background-color 0.15s;
-}
-.popup-close:hover {
-  color: var(--content-secondary);
-  background-color: var(--surface-secondary);
+  color: var(--content-subtle) !important;
 }
 
 /* Body */
@@ -262,38 +255,6 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
   flex-direction: column;
 }
 
-.btn-change,
-.btn-close-project {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
-  border: 1px solid transparent;
-}
-
-.btn-change {
-  background-color: var(--surface-secondary);
-  color: var(--content-primary);
-  border-color: var(--edge-subtle);
-}
-.btn-change:hover {
-  background-color: var(--surface-tertiary);
-}
-
-.btn-close-project {
-  background-color: transparent;
-  color: #f87171;
-  border-color: rgba(127, 29, 29, 0.3);
-}
-.btn-close-project:hover {
-  color: #fca5a5;
-  background-color: rgba(127, 29, 29, 0.15);
-  border-color: rgba(185, 28, 28, 0.5);
-}
 
 .popup-version {
   font-size: 0.6875rem;

@@ -55,8 +55,10 @@ function isEnabled(cli: CliType): boolean {
   <div class="cli-list">
     <!-- Refresh button -->
     <div class="cli-refresh-row">
-      <button
+      <v-btn
         :disabled="loading"
+        variant="outlined"
+        size="small"
         class="cli-refresh-btn text-overline"
         @click="emit('refresh')"
       >
@@ -64,7 +66,7 @@ function isEnabled(cli: CliType): boolean {
         <v-progress-circular v-if="loading" class="cli-icon" indeterminate :size="14" :width="2" />
         <v-icon v-else class="cli-icon" size="14">mdi-refresh</v-icon>
         {{ loading ? t('settings.cliRefreshing') : t('settings.cliRefresh') }}
-      </button>
+      </v-btn>
     </div>
 
     <!-- CLI rows -->
@@ -88,8 +90,9 @@ function isEnabled(cli: CliType): boolean {
       </div>
 
       <!-- Right: toggle -->
-      <button
+      <v-btn
         :title="isEnabled(meta.cli) ? t('settings.cliEnabled') : t('settings.cliDisabled')"
+        variant="text"
         class="cli-toggle"
         :class="{ 'cli-toggle--on': isEnabled(meta.cli) }"
         role="switch"
@@ -100,7 +103,7 @@ function isEnabled(cli: CliType): boolean {
           class="cli-toggle-thumb elevation-1"
           :class="{ 'cli-toggle-thumb--on': isEnabled(meta.cli) }"
         />
-      </button>
+      </v-btn>
     </div>
   </div>
 </template>
@@ -117,22 +120,8 @@ function isEnabled(cli: CliType): boolean {
   margin-bottom: 8px;
 }
 .cli-refresh-btn {
-  display: flex;
-  align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  background: var(--surface-secondary);
-  border: 1px solid var(--edge-subtle);
-  border-radius: 6px;
-  color: var(--content-muted);
-  cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
 }
-.cli-refresh-btn:hover:not(:disabled) {
-  background: var(--surface-tertiary);
-  color: var(--content-primary);
-}
-.cli-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .cli-icon {
   width: 12px;
   height: 12px;
@@ -190,20 +179,21 @@ function isEnabled(cli: CliType): boolean {
 }
 /* Toggle switch */
 .cli-toggle {
-  position: relative;
-  display: inline-flex;
-  width: 36px;
-  height: 20px;
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  padding: 0 !important;
   flex-shrink: 0;
-  border-radius: 9999px;
-  border: 1px solid var(--edge-default);
-  background: var(--surface-tertiary);
-  cursor: pointer;
+  border-radius: 9999px !important;
+  border: 1px solid var(--edge-default) !important;
+  background: var(--surface-tertiary) !important;
   transition: background-color 0.2s;
+  overflow: hidden;
 }
 .cli-toggle--on {
-  background: #6d28d9;
-  border-color: #6d28d9;
+  background: #6d28d9 !important;
+  border-color: #6d28d9 !important;
 }
 .cli-toggle-thumb {
   pointer-events: none;

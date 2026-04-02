@@ -158,7 +158,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
 <template>
   <div class="agent-section py-3 px-4">
     <div v-if="store.selectedAgentId !== null" class="reset-row mb-2">
-      <button class="reset-btn text-caption" @click="store.selectedAgentId = null">{{ t('sidebar.reset') }}</button>
+      <v-btn variant="text" size="small" color="primary" class="reset-btn text-caption" @click="store.selectedAgentId = null">{{ t('sidebar.reset') }}</v-btn>
     </div>
 
     <!-- Création de groupe inline (top-level) -->
@@ -171,8 +171,8 @@ async function duplicateAgent(agent: Agent): Promise<void> {
         @keydown.enter="confirmCreateGroup"
         @keydown.esc="cancelCreateGroup"
       />
-      <button class="icon-btn icon-btn--confirm text-caption" @click="confirmCreateGroup">✓</button>
-      <button class="icon-btn icon-btn--cancel text-caption" @click="cancelCreateGroup">✕</button>
+      <v-btn variant="text" size="small" density="compact" class="icon-btn icon-btn--confirm text-caption" @click="confirmCreateGroup">✓</v-btn>
+      <v-btn variant="text" size="small" density="compact" class="icon-btn icon-btn--cancel text-caption" @click="cancelCreateGroup">✕</v-btn>
     </div>
 
     <!-- ── Groupes hiérarchiques ── -->
@@ -204,7 +204,9 @@ async function duplicateAgent(agent: Agent): Promise<void> {
           @contextmenu.prevent="openContextMenuLocal($event, agent)"
         >
           <div class="agent-row-wrap">
-            <button
+            <v-btn
+              variant="text"
+              block
               :class="['agent-btn', isAgentSelected(agent.id) ? 'agent-btn--selected' : '']"
               @click="store.toggleAgentFilter(agent.id)"
             >
@@ -214,11 +216,11 @@ async function duplicateAgent(agent: Agent): Promise<void> {
                 <span v-else class="status-dot" :style="{ backgroundColor: agentFg(agent.name) }" />
               </span>
               <span :class="['agent-name', isAgentSelected(agent.id) ? 'agent-name--active' : '']">{{ agent.name }}</span>
-            </button>
+            </v-btn>
             <div class="agent-actions ga-1">
               <span class="drag-handle" :title="t('sidebar.move')"><v-icon size="12" class="icon-xs">mdi-drag</v-icon></span>
-              <button class="action-btn" :title="t('sidebar.editAgent')" @click.stop="editAgentTarget = agent"><v-icon size="12" class="icon-sm">mdi-pencil</v-icon></button>
-              <button class="action-btn action-btn--launch" :style="{ color: agentFg(agent.name), backgroundColor: agentBg(agent.name) }" :title="t('sidebar.launchAgent', { name: agent.name })" @click.stop="openLaunchModal($event, agent)"><v-icon size="12" class="icon-sm">mdi-play</v-icon></button>
+              <v-btn variant="text" density="compact" size="x-small" class="action-btn" :title="t('sidebar.editAgent')" @click.stop="editAgentTarget = agent"><v-icon size="12" class="icon-sm">mdi-pencil</v-icon></v-btn>
+              <v-btn variant="text" density="compact" size="x-small" class="action-btn action-btn--launch" :style="{ color: agentFg(agent.name), backgroundColor: agentBg(agent.name) }" :title="t('sidebar.launchAgent', { name: agent.name })" @click.stop="openLaunchModal($event, agent)"><v-icon size="12" class="icon-sm">mdi-play</v-icon></v-btn>
             </div>
           </div>
         </div>
@@ -228,16 +230,16 @@ async function duplicateAgent(agent: Agent): Promise<void> {
     </div>
 
     <!-- Bouton nouveau groupe -->
-    <button v-if="!creatingGroup" class="add-btn ga-2 text-caption" @click="startCreateGroup">
+    <v-btn v-if="!creatingGroup" variant="text" block size="small" class="add-btn ga-2 text-caption" @click="startCreateGroup">
       <v-icon size="12" class="icon-sm">mdi-plus</v-icon>
       {{ t('sidebar.newGroup') }}
-    </button>
+    </v-btn>
 
     <!-- Bouton ajouter agent -->
-    <button class="add-btn add-btn--mt ga-2 mt-1 text-caption" @click="showCreateAgent = true">
+    <v-btn variant="text" block size="small" class="add-btn add-btn--mt ga-2 mt-1 text-caption" @click="showCreateAgent = true">
       <v-icon size="12" class="icon-sm">mdi-plus</v-icon>
       {{ t('sidebar.addAgent') }}
-    </button>
+    </v-btn>
   </div>
 
   <!-- Modales agents -->
@@ -258,16 +260,6 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   display: flex;
   justify-content: flex-end;
 }
-.reset-btn {
-  color: rgb(var(--v-theme-primary));
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 150ms;
-}
-.reset-btn:hover {
-  color: rgba(var(--v-theme-primary), 0.7);
-}
 .group-create-row {
   display: flex;
   align-items: center;
@@ -285,21 +277,13 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   box-shadow: 0 0 0 1px rgb(var(--v-theme-primary));
 }
 .icon-btn {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: background 150ms;
-  border: none;
-  cursor: pointer;
-  background: none;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
 }
-.icon-btn--confirm { color: #10b981; }
-.icon-btn--confirm:hover { background: var(--surface-secondary); }
-.icon-btn--cancel { color: var(--content-faint); }
-.icon-btn--cancel:hover { color: var(--content-secondary); background: var(--surface-secondary); }
+.icon-btn--confirm { color: #10b981 !important; }
+.icon-btn--cancel { color: var(--content-faint) !important; }
 .ungrouped-zone {
 }
 .section-header {
@@ -343,23 +327,14 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   position: relative;
 }
 .agent-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 8px 6px 8px;
-  padding-right: 80px;
-  border-radius: 6px;
-  text-align: left;
-  transition: background 150ms;
-  cursor: pointer;
-  background: none;
-  border: none;
+  padding-right: 80px !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  text-align: left !important;
 }
-.agent-btn:hover { background: var(--surface-primary); }
 .agent-btn--selected {
-  background: var(--surface-secondary);
-  box-shadow: 0 0 0 1px var(--content-faint);
+  background: var(--surface-secondary) !important;
+  box-shadow: 0 0 0 1px var(--content-faint) !important;
 }
 .agent-status {
   position: relative;
@@ -423,19 +398,12 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   color: var(--content-dim);
 }
 .action-btn {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 150ms;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--content-subtle);
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  color: var(--content-subtle) !important;
 }
-.action-btn:hover { color: var(--content-secondary); background: var(--surface-tertiary); }
 .action-btn--launch:hover { filter: brightness(1.15); }
 .empty-msg {
   color: var(--content-dim);
@@ -445,18 +413,9 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   color: var(--content-faint);
 }
 .add-btn {
-  display: flex;
-  align-items: center;
-  padding: 6px 8px;
-  border-radius: 6px;
-  color: var(--content-faint);
-  transition: all 150ms;
-  width: 100%;
-  background: none;
-  border: none;
-  cursor: pointer;
+  color: var(--content-faint) !important;
+  justify-content: flex-start !important;
 }
-.add-btn:hover { color: var(--content-tertiary); background: var(--surface-primary); }
 .add-btn--mt { }
 .icon-xs { width: 10px; height: 10px; }
 .icon-sm { width: 12px; height: 12px; }

@@ -204,8 +204,8 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             <span>{{ key === 'cyan' ? t('orgchart.status.active') : key === 'green' ? t('orgchart.status.todo') : key === 'yellow' ? t('orgchart.status.idle') : key === 'red' ? t('orgchart.status.blocked') : t('orgchart.status.inactive') }}</span>
           </span>
         </div>
-        <button class="oc-btn text-caption" @click="fitView">Fit</button>
-        <button class="oc-btn oc-btn--text text-caption" @click="fetchData">&#8635;</button>
+        <v-btn variant="tonal" size="small" class="oc-btn text-caption" @click="fitView">Fit</v-btn>
+        <v-btn variant="text" size="small" class="oc-btn text-caption" @click="fetchData">&#8635;</v-btn>
       </div>
     </div>
 
@@ -327,17 +327,8 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
 }
 .oc-legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .oc-btn {
-  padding: 4px 10px;
-  background: var(--surface-secondary);
-  color: var(--content-muted);
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.15s;
+  color: var(--content-muted) !important;
 }
-.oc-btn:hover { background: var(--surface-tertiary); }
-.oc-btn--text { background: none; }
-.oc-btn--text:hover { background: none; color: var(--content-secondary); }
 .oc-empty {
   display: flex;
   align-items: center;

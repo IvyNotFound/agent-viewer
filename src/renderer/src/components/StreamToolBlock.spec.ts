@@ -52,7 +52,7 @@ describe('StreamToolBlock (T842)', () => {
   it('emits toggleCollapsed when tool_use header clicked', async () => {
     const block: StreamContentBlock = { type: 'tool_use', name: 'Bash', input: {} }
     const wrapper = mount(StreamToolBlock, { props: { ...defaultProps, block }, global: { plugins: [i18n] } })
-    await wrapper.find('[data-testid="block-tool-use"] button').trigger('click')
+    await wrapper.find('[data-testid="block-tool-use"] v-btn').trigger('click')
     expect(wrapper.emitted('toggleCollapsed')).toBeTruthy()
     wrapper.unmount()
   })

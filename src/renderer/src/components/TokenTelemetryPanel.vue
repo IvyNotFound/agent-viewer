@@ -52,15 +52,18 @@ function formatTokens(n: number): string {
         {{ t('dashboard.telemetry') }}
       </span>
       <div class="token-tabs ga-1">
-        <button
+        <v-btn
           v-for="tab in TABS"
           :key="tab.key"
+          variant="text"
+          size="x-small"
+          density="compact"
           class="token-tab text-overline"
           :class="{ 'token-tab--active': activeTab === tab.key }"
           @click="activeTab = tab.key"
         >
           {{ t(tab.i18nKey) }}
-        </button>
+        </v-btn>
       </div>
     </div>
 
@@ -132,19 +135,16 @@ function formatTokens(n: number): string {
   display: flex;
 }
 .token-tab {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: 500;
-  background: transparent;
-  border: none;
-  color: var(--content-tertiary);
-  cursor: pointer;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+  color: var(--content-tertiary) !important;
   transition: color 0.15s, background-color 0.15s;
 }
-.token-tab:hover { color: var(--content-secondary); }
+.token-tab:hover { color: var(--content-secondary) !important; }
 .token-tab--active {
-  background: var(--surface-tertiary);
-  color: var(--content-primary);
+  background: var(--surface-tertiary) !important;
+  color: var(--content-primary) !important;
 }
 /* 4 token metrics */
 .token-metrics {

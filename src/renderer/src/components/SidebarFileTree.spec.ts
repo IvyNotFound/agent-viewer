@@ -100,7 +100,7 @@ describe('SidebarFileTree', () => {
     await (wrapper.vm as { loadSidebarTree: () => Promise<void> }).loadSidebarTree()
     await flushPromises()
     // The dir button should exist; dirs start closed after loadSidebarTree
-    const dirBtn = wrapper.find('button')
+    const dirBtn = wrapper.find('v-btn')
     expect(dirBtn.exists()).toBe(true)
     expect(wrapper.text()).not.toContain('main.ts')
     // Click to open the dir (children already set — no IPC call)
@@ -133,7 +133,7 @@ describe('SidebarFileTree', () => {
     expect(wrapper.text()).toContain('src')
     expect(wrapper.text()).not.toContain('index.ts')
     // Click the dir button to trigger lazy load
-    const dirBtn = wrapper.find('button')
+    const dirBtn = wrapper.find('v-btn')
     await dirBtn.trigger('click')
     await flushPromises()
     // fsListDir should have been called for /project/src
@@ -158,7 +158,7 @@ describe('SidebarFileTree', () => {
       global: { plugins: [createTestingPinia(), i18n] },
     })
     await flushPromises()
-    const dirBtn = wrapper.find('button')
+    const dirBtn = wrapper.find('v-btn')
     // Open (lazy load)
     await dirBtn.trigger('click')
     await flushPromises()
@@ -187,7 +187,7 @@ describe('SidebarFileTree', () => {
     await flushPromises()
     const { useTabsStore } = await import('@renderer/stores/tabs')
     const tabsStore = useTabsStore()
-    const fileBtn = wrapper.find('button')
+    const fileBtn = wrapper.find('v-btn')
     expect(fileBtn.exists()).toBe(true)
     await fileBtn.trigger('click')
     expect(tabsStore.openFile).toHaveBeenCalledWith('/project/app.ts', 'app.ts')

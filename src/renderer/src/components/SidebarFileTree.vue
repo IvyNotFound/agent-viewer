@@ -93,9 +93,11 @@ defineExpose({ loadSidebarTree })
     <div v-else-if="flatSidebarTree.length === 0 && !loadingSidebarTree" class="empty-state text-caption">
       {{ t('sidebar.emptyFolder') }}
     </div>
-    <button
+    <v-btn
       v-for="item in flatSidebarTree"
       :key="item.node.path"
+      variant="text"
+      block
       class="text-body-2"
       :class="['tree-btn', item.node.isDir ? 'tree-btn--dir' : 'tree-btn--file']"
       :style="{ paddingLeft: `${6 + item.depth * 12}px` }"
@@ -107,10 +109,10 @@ defineExpose({ loadSidebarTree })
       <v-icon v-else class="tree-icon tree-icon--file" size="14">mdi-file-outline</v-icon>
       <!-- Nom -->
       <span :class="['tree-name', item.node.isDir ? 'tree-name--dir' : 'tree-name--file']">{{ item.node.name }}</span>
-    </button>
+    </v-btn>
   </div>
   <div class="tree-footer">
-    <button class="refresh-btn text-caption" @click="loadSidebarTree">↺ {{ t('common.refresh') }}</button>
+    <v-btn variant="text" size="small" class="refresh-btn text-caption" @click="loadSidebarTree">↺ {{ t('common.refresh') }}</v-btn>
   </div>
 </template>
 
@@ -141,19 +143,15 @@ defineExpose({ loadSidebarTree })
   color: var(--content-faint);
 }
 .tree-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  padding-right: 8px;
-  text-align: left;
-transition: background 150ms;
-  border-radius: 4px;
-  background: none;
-  border: none;
-  cursor: pointer;
+  gap: 8px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  padding-right: 8px !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  border-radius: 4px !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 .tree-btn--dir:hover { background: rgba(var(--v-theme-on-surface), 0.05); }
 .tree-btn--file:hover { background: rgba(var(--v-theme-on-surface), 0.04); }
@@ -188,11 +186,6 @@ transition: background 150ms;
   justify-content: space-between;
 }
 .refresh-btn {
-  color: var(--content-subtle);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 150ms;
+  color: var(--content-subtle) !important;
 }
-.refresh-btn:hover { color: var(--content-tertiary); }
 </style>

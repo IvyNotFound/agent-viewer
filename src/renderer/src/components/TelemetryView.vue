@@ -103,8 +103,10 @@ onMounted(scan)
     <!-- Header -->
     <div class="telem-header">
       <h2 class="telem-title text-h6">{{ t('telemetry.title') }}</h2>
-      <button
-        class="telem-rescan-btn ga-2 text-body-2"
+      <v-btn
+        variant="text"
+        size="small"
+        class="telem-rescan-btn ga-2"
         :disabled="loading || !store.projectPath"
         @click="scan"
       >
@@ -113,7 +115,7 @@ onMounted(scan)
           {{ t('telemetry.scanning') }}
         </span>
         <span v-else>{{ t('telemetry.rescan') }}</span>
-      </button>
+      </v-btn>
     </div>
 
     <!-- No project guard -->
@@ -295,18 +297,12 @@ onMounted(scan)
   margin: 0;
 }
 .telem-rescan-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 16px;
-  border-radius: 6px;
-  background: var(--surface-tertiary);
-  color: var(--content-secondary);
-  border: none;
-  cursor: pointer;
+  background: var(--surface-tertiary) !important;
+  color: var(--content-secondary) !important;
+  border-radius: 6px !important;
   transition: background 0.15s;
 }
-.telem-rescan-btn:hover:not(:disabled) { background: var(--surface-secondary); }
-.telem-rescan-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.telem-rescan-btn:hover:not(:disabled) { background: var(--surface-secondary) !important; }
 .telem-rescan-loading { display: flex; align-items: center; }
 
 .telem-spin { animation: telemSpin 1s linear infinite; }

@@ -128,7 +128,7 @@ describe('SidebarPerimetreSection', () => {
     const { useTasksStore } = await import('@renderer/stores/tasks')
     const store = useTasksStore()
     // Find and click the perimetre button
-    const buttons = wrapper.findAll('button')
+    const buttons = wrapper.findAll('v-btn')
     const perimetreBtn = buttons.find(b => b.text().includes('front-vuejs'))
     expect(perimetreBtn).toBeDefined()
     await perimetreBtn!.trigger('click')
@@ -173,7 +173,7 @@ describe('SidebarPerimetreSection', () => {
       global: { plugins: [pinia, i18n] },
     })
     // Find the edit button (the pencil icon button with @click.stop="openEditPerimetre(p)")
-    const editBtn = wrapper.find('button.edit-btn')
+    const editBtn = wrapper.find('v-btn.edit-btn')
     if (editBtn.exists()) {
       await editBtn.trigger('click')
       // Edit modal should now show with prefilled values
@@ -237,7 +237,7 @@ describe('SidebarPerimetreSection', () => {
       global: { plugins: [pinia, i18n] },
     })
     // Reset button should exist when selectedPerimetre is non-null
-    const buttons = wrapper.findAll('button')
+    const buttons = wrapper.findAll('v-btn')
     const hasResetBtn = buttons.some(b => b.classes().includes('reset-btn'))
     expect(hasResetBtn).toBe(true)
     wrapper.unmount()

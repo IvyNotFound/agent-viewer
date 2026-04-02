@@ -85,19 +85,21 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
       <span class="telemetry-title text-overline">
         {{ t('dashboard.codeTelemetry') }}
       </span>
-      <button
+      <v-btn
+        icon
+        variant="text"
+        density="compact"
         class="telemetry-refresh-btn"
         :disabled="loading || !props.projectPath"
         :title="t('dashboard.scan')"
         @click="scan"
       >
-        <!-- Refresh icon -->
         <v-icon
           class="telemetry-refresh-icon"
           :class="{ 'telemetry-refresh-icon--spin': loading }"
           size="18"
         >mdi-refresh</v-icon>
-      </button>
+      </v-btn>
     </div>
 
     <!-- Body -->
@@ -125,9 +127,9 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
       <!-- Not yet scanned -->
       <div v-else-if="!data" class="telemetry-not-scanned">
         <p class="telemetry-empty-text text-overline">{{ t('dashboard.notScanned') }}</p>
-        <button class="telemetry-scan-btn text-overline" @click="scan">
+        <v-btn variant="outlined" size="small" class="telemetry-scan-btn text-overline" @click="scan">
           {{ t('dashboard.scan') }}
-        </button>
+        </v-btn>
       </div>
 
       <!-- Data -->
@@ -206,16 +208,8 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
   color: var(--content-secondary);
 }
 .telemetry-refresh-btn {
-  padding: 2px;
-  border-radius: 4px;
-  color: var(--content-tertiary);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: color 0.15s;
+  color: var(--content-tertiary) !important;
 }
-.telemetry-refresh-btn:hover:not(:disabled) { color: var(--content-secondary); }
-.telemetry-refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .telemetry-refresh-icon {
   width: 14px;
   height: 14px;
@@ -257,16 +251,6 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
   justify-content: center;
   gap: 8px;
 }
-.telemetry-scan-btn {
-  padding: 4px 12px;
-  border-radius: 4px;
-  background: var(--surface-tertiary);
-  border: 1px solid var(--edge-default);
-  color: var(--content-secondary);
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-.telemetry-scan-btn:hover { background: var(--edge-default); }
 /* Skeleton loader */
 .telemetry-skeleton {
   display: flex;

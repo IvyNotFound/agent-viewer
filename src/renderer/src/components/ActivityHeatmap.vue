@@ -127,15 +127,18 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
     <div class="heatmap-filters">
       <span class="heatmap-label text-overline">{{ t('heatmap.agentLabel') }}</span>
       <div class="heatmap-filter-btns">
-        <button
+        <v-btn
           v-for="a in agents"
           :key="String(a.id)"
+          variant="text"
+          size="small"
+          density="compact"
           class="heatmap-filter-btn"
           :class="{ 'heatmap-filter-btn--active': filterAgentId === a.id }"
           @click="filterAgentId = a.id"
         >
           {{ a.id === null ? t('heatmap.all') : a.name }}
-        </button>
+        </v-btn>
       </div>
     </div>
 
@@ -195,17 +198,12 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
   flex-wrap: wrap;
 }
 .heatmap-filter-btn {
-  font-size: 11px;
-  font-family: ui-monospace, monospace;
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--edge-subtle);
-  background: transparent;
-  color: var(--content-subtle);
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+  font-size: 11px !important;
+  font-family: ui-monospace, monospace !important;
+  border: 1px solid var(--edge-subtle) !important;
+  color: var(--content-subtle) !important;
 }
-.heatmap-filter-btn:hover { color: var(--content-secondary); }
+.heatmap-filter-btn:hover { color: var(--content-secondary) !important; }
 .heatmap-filter-btn--active {
   border-color: #10b981;
   color: #10b981;

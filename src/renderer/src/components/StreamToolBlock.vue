@@ -46,7 +46,9 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
     :style="{ borderColor: accentBorder }"
     data-testid="block-tool-use"
   >
-    <button
+    <v-btn
+      variant="text"
+      block
       class="tool-header ga-2 py-2 px-3 text-caption"
       :style="{ backgroundColor: accentBg, color: accentFg }"
       @click="emit('toggleCollapsed', collapseKey(eventId, blockIdx), true)"
@@ -54,7 +56,7 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
       <span class="collapse-arrow" :class="isCollapsed(eventId, blockIdx, true) ? '' : 'rotated'">▶</span>
       <span class="tool-name">{{ block.name }}</span>
       <span class="tool-label">{{ t('stream.tool') }}</span>
-    </button>
+    </v-btn>
     <div
       v-show="!isCollapsed(eventId, blockIdx, true)"
       class="tool-body pt-3 px-4 pb-2 text-caption"
@@ -70,7 +72,9 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
     :class="block.is_error ? 'tool-block--error' : 'tool-block--result'"
     data-testid="block-tool-result"
   >
-    <button
+    <v-btn
+      variant="text"
+      block
       class="tool-header tool-header--result ga-2 py-2 px-3 text-caption"
       :class="block.is_error ? 'tool-header--error' : ''"
       @click="emit('toggleCollapsed', collapseKey(eventId, blockIdx), !block.is_error && !!block._isLong)"
@@ -84,7 +88,7 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
         v-if="isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong)"
         class="line-count ml-1"
       >({{ block._lineCount ?? 0 }} {{ t('stream.lines') }})</span>
-    </button>
+    </v-btn>
     <!-- eslint-disable vue/no-v-html -->
     <div
       v-show="!isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong)"
@@ -113,32 +117,26 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
 }
 
 .tool-header {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  border: none;
-  text-align: left;
-  transition: filter 0.15s;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  height: auto !important;
+  border-radius: 0 !important;
 }
 .tool-header:hover {
   filter: brightness(1.1);
 }
 
 .tool-header--result {
-  background-color: transparent;
-  color: var(--content-muted);
+  color: var(--content-muted) !important;
 }
 .tool-header--result:hover {
-  background-color: var(--surface-secondary);
   filter: none;
 }
 
 .tool-header--error {
-  color: #f87171;
+  color: #f87171 !important;
 }
 .tool-header--error:hover {
-  background-color: rgba(127, 29, 29, 0.3);
   filter: none;
 }
 

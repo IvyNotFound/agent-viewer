@@ -193,7 +193,7 @@ onUnmounted(() => {
               >{{ EFFORT_LABEL[task.effort] }}</span>
             </div>
           </div>
-          <button class="btn-close text-body-2" @click="store.closeTask()">✕</button>
+          <v-btn icon="mdi-close" variant="text" size="small" class="btn-close" @click="store.closeTask()" />
         </div>
 
         <!-- Body : 2 colonnes -->
@@ -262,7 +262,9 @@ onUnmounted(() => {
 
             <!-- Section Commits liés (T761) — hidden when no commits -->
             <div v-if="gitCommits.length > 0" class="right-section right-section--collapsible">
-              <button
+              <v-btn
+                variant="text"
+                block
                 class="commits-toggle py-3 px-4"
                 @click="gitCommitsOpen = !gitCommitsOpen"
               >
@@ -275,7 +277,7 @@ onUnmounted(() => {
                   :class="gitCommitsOpen ? 'toggle-arrow--open' : ''"
                   size="14"
                 >mdi-chevron-right</v-icon>
-              </button>
+              </v-btn>
               <div v-if="gitCommitsOpen" class="commits-content">
                 <GitCommitList
                   :commits="gitCommits"
@@ -408,21 +410,12 @@ onUnmounted(() => {
 }
 .btn-close {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  border: none;
-  background: none;
-  color: var(--content-subtle);
-  cursor: pointer;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  border-radius: 6px !important;
+  color: var(--content-subtle) !important;
   transition: all 150ms;
-}
-.btn-close:hover {
-  color: var(--content-secondary);
-  background: var(--surface-secondary);
 }
 
 /* Status badges */
@@ -537,17 +530,9 @@ padding: 2px 8px;
 
 /* Commits collapsible */
 .commits-toggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: none;
-  border: none;
-  cursor: pointer;
+  justify-content: space-between !important;
+  height: auto !important;
   transition: background 150ms;
-}
-.commits-toggle:hover {
-  background: rgba(var(--v-theme-on-surface, 255,255,255), 0.03);
 }
 .toggle-arrow {
   width: 12px;

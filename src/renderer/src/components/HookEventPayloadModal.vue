@@ -43,11 +43,14 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
           <span class="text-subtitle-2 font-weight-medium font-mono">{{ event.event }}</span>
           <span class="text-caption text-disabled font-mono">{{ timestamp }}</span>
           <div class="flex-grow-1" />
-          <!-- Native button for wrapper.find('button') test compat -->
-          <button
-            class="close-btn text-subtitle-2"
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            density="compact"
+            class="close-btn"
             @click="emit('close')"
-          >×</button>
+          />
         </div>
 
         <!-- Payload -->
@@ -81,8 +84,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
 .close-btn {
   opacity: 0.5;
-  line-height: 1;
-  transition: opacity 0.15s;
 }
 .close-btn:hover { opacity: 1; }
 
