@@ -406,12 +406,13 @@ describe('migrateDb — bootstrap rawCurrent === 0 is strict equality', () => {
     expect(bootstrapUV).toBeGreaterThan(savepoint23) // bootstrap did NOT set it before the migration ran
   })
 
-  it('bootstraps when rawCurrent is exactly 0 and config+permission_mode+max_sessions present', () => {
+  it('bootstraps when rawCurrent is exactly 0 and config+permission_mode+max_sessions+cost_usd present', () => {
     const db = makeMockDb({
       userVersion: 0,
       hasConfigTable: true,
       colMap: {
         agents: ['id', 'name', 'scope', 'permission_mode', 'max_sessions'],
+        sessions: ['id', 'status', 'cost_usd'],
       },
     })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
@@ -458,12 +459,13 @@ describe('migrateDb — bootstrap requires BOTH permission_mode AND max_sessions
     expect(firstUVCall).not.toBe('PRAGMA user_version = 23')
   })
 
-  it('bootstraps when BOTH permission_mode AND max_sessions are present', () => {
+  it('bootstraps when permission_mode, max_sessions AND sessions.cost_usd are all present', () => {
     const db = makeMockDb({
       userVersion: 0,
       hasConfigTable: true,
       colMap: {
         agents: ['id', 'name', 'scope', 'permission_mode', 'max_sessions'],
+        sessions: ['id', 'status', 'cost_usd'],
       },
     })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
@@ -482,6 +484,27 @@ describe('migrateDb — bootstrap requires BOTH permission_mode AND max_sessions
     expect(result).toBe(31)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s === 'ADD COLUMN permission_mode' || s.includes('ADD COLUMN permission_mode'))).toBe(true)
+  })
+
+  it('does NOT bootstrap when permission_mode+max_sessions present but sessions.cost_usd absent — v20 runs and adds cost_usd', () => {
+    // Simulates an old DB that had the old schema system (has permission_mode/max_sessions)
+    // but was created before v20 — sessions table lacks cost_usd/duration_ms/num_turns.
+    const db = makeMockDb({
+      userVersion: 0,
+      hasConfigTable: true,
+      colMap: {
+        agents: ['id', 'name', 'scope', 'permission_mode', 'max_sessions'],
+        sessions: ['id', 'status'],  // cost_usd absent — v20 not yet applied
+      },
+    })
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
+    const calls = db.run.mock.calls.map((c: string[]) => c[0])
+    // Bootstrap must NOT have fired — no 'PRAGMA user_version = 23' before SAVEPOINT m1
+    const firstUVCall = calls.find((s: string) => /PRAGMA user_version\s*=/.test(s))
+    expect(firstUVCall).toBe('PRAGMA user_version = 1')
+    expect(firstUVCall).not.toBe('PRAGMA user_version = 23')
+    // v20 must have run — it adds cost_usd (among others)
+    expect(calls.some((s: string) => s.includes('ADD COLUMN cost_usd'))).toBe(true)
   })
 })
 
@@ -886,6 +909,7 @@ describe('migrateDb — critical SQL strings not mutated to empty', () => {
       hasConfigTable: true,
       colMap: {
         agents: ['id', 'name', 'permission_mode', 'max_sessions'],
+        sessions: ['id', 'status', 'cost_usd'],
       },
     })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)

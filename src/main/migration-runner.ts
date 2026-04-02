@@ -375,7 +375,13 @@ export function migrateDb(db: MigrationDb): number {
       const agentCols = new Set(
         colResult.length > 0 ? colResult[0].values.map((r: unknown[]) => r[1] as string) : []
       )
-      if (agentCols.has('permission_mode') && agentCols.has('max_sessions')) {
+      // Also verify sessions.cost_usd (added by v20) to avoid skipping it on DBs
+      // that had permission_mode/max_sessions but were created before v20.
+      const sessResult = db.exec('PRAGMA table_info(sessions)')
+      const sessCols = new Set(
+        sessResult.length > 0 ? sessResult[0].values.map((r: unknown[]) => r[1] as string) : []
+      )
+      if (agentCols.has('permission_mode') && agentCols.has('max_sessions') && sessCols.has('cost_usd')) {
         db.run(`PRAGMA user_version = ${LEGACY_BOOTSTRAP_VERSION}`)
         current = LEGACY_BOOTSTRAP_VERSION
       }

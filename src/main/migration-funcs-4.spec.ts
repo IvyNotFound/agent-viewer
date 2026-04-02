@@ -301,10 +301,12 @@ describe('migrateDb bootstrap (T958)', () => {
   function createLegacyBootstrapMockDb() {
     const agentGroupCols = ['id', 'name', 'sort_order', 'created_at']
     const agentGroupPragmaValues = agentGroupCols.map((name, idx) => [idx, name, 'TEXT', 0, null, 0])
-    // Genuine legacy KanbAgent DB: already has permission_mode and max_sessions
+    // Genuine legacy KanbAgent DB: already has permission_mode, max_sessions, and cost_usd
     const agentCols = ['id', 'name', 'scope', 'system_prompt', 'system_prompt_suffix',
       'thinking_mode', 'allowed_tools', 'auto_launch', 'permission_mode', 'max_sessions']
     const agentPragmaValues = agentCols.map((name, idx) => [idx, name, 'TEXT', 0, null, 0])
+    const sessionCols = ['id', 'status', 'cost_usd', 'duration_ms', 'num_turns']
+    const sessionPragmaValues = sessionCols.map((name, idx) => [idx, name, 'TEXT', 0, null, 0])
     return {
       exec: vi.fn().mockImplementation((query: string) => {
         if (query.includes('PRAGMA user_version')) {
@@ -315,6 +317,9 @@ describe('migrateDb bootstrap (T958)', () => {
         }
         if (query.includes('PRAGMA table_info(agents)')) {
           return [{ columns: ['cid', 'name', 'type', 'notnull', 'dflt_value', 'pk'], values: agentPragmaValues }]
+        }
+        if (query.includes('PRAGMA table_info(sessions)')) {
+          return [{ columns: ['cid', 'name', 'type', 'notnull', 'dflt_value', 'pk'], values: sessionPragmaValues }]
         }
         if (query.includes('PRAGMA table_info(agent_groups)')) {
           return [{ columns: ['cid', 'name', 'type', 'notnull', 'dflt_value', 'pk'], values: agentGroupPragmaValues }]
