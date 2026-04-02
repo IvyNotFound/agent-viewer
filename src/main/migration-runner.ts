@@ -331,6 +331,17 @@ const migrations: Migration[] = [
     const cols = new Set(colResult[0].values.map((r: unknown[]) => r[1] as string))
     if (!cols.has('cli_type')) db.run('ALTER TABLE sessions ADD COLUMN cli_type TEXT')
   } },
+
+  // v32: repair sessions columns missing on DBs bootstrapped before T1393 fixed the v20 guard (T1423)
+  // DBs with user_version≥23 but created before v20 ran may lack cost_usd/duration_ms/num_turns.
+  { version: 32, up: (db) => {
+    const colResult = db.exec('PRAGMA table_info(sessions)')
+    if (colResult.length === 0) return
+    const cols = new Set(colResult[0].values.map((r: unknown[]) => r[1] as string))
+    if (!cols.has('cost_usd'))    db.run('ALTER TABLE sessions ADD COLUMN cost_usd REAL')
+    if (!cols.has('duration_ms')) db.run('ALTER TABLE sessions ADD COLUMN duration_ms INTEGER')
+    if (!cols.has('num_turns'))   db.run('ALTER TABLE sessions ADD COLUMN num_turns INTEGER')
+  } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */
