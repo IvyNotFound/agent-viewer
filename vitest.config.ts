@@ -3,7 +3,17 @@ import { resolve } from 'path'
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: {
+          // Suppress "Failed to resolve component: v-xxx" warnings in tests
+          // by treating all Vuetify components (v-*) as known custom elements.
+          isCustomElement: (tag) => tag.startsWith('v-'),
+        },
+      },
+    }),
+  ],
   test: {
     // Global test configuration
     globals: true,
