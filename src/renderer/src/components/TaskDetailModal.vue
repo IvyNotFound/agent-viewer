@@ -30,21 +30,15 @@ const statusLabel = (key: string) => ({
   archived:    t('columns.archived'),
 }[key] ?? key)
 
-// Semantic class names for status badges (no Tailwind color classes)
-const STATUS_BADGE_CLASS: Record<string, string> = {
-  todo:        'status-badge status-badge--todo',
-  in_progress: 'status-badge status-badge--in-progress',
-  done:        'status-badge status-badge--done',
-  archived:    'status-badge status-badge--archived',
+const STATUS_COLOR: Record<string, string | undefined> = {
+  todo:        'warning',
+  in_progress: 'secondary',
+  done:        undefined,
+  archived:    undefined,
 }
 
 const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
-// Semantic class names for effort badges
-const EFFORT_BADGE_CLASS: Record<number, string> = {
-  1: 'effort-badge effort-badge--small',
-  2: 'effort-badge effort-badge--medium',
-  3: 'effort-badge effort-badge--large',
-}
+const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 'error' }
 
 function formatDateFull(iso: string): string {
   const dateLocale = locale.value === 'fr' ? 'fr-FR' : 'en-US'
@@ -175,22 +169,25 @@ onUnmounted(() => {
           <div class="task-header-left">
             <p class="task-title mb-2 text-body-2">{{ task.title }}</p>
             <div class="d-flex flex-wrap ga-2">
-              <span class="text-caption" :class="STATUS_BADGE_CLASS[task.status] ?? 'status-badge'">
+              <v-chip size="small" variant="tonal" :color="STATUS_COLOR[task.status]">
                 {{ statusLabel(task.status) }}
-              </span>
-              <span
+              </v-chip>
+              <v-chip
                 v-if="task.scope"
-                class="scope-badge"
+                size="small"
+                variant="outlined"
                 :style="{
                   color: perimeterFg(task.scope),
-                  backgroundColor: perimeterBg(task.scope),
                   borderColor: perimeterBorder(task.scope),
+                  backgroundColor: perimeterBg(task.scope),
                 }"
-              >{{ task.scope }}</span>
-              <span
+              >{{ task.scope }}</v-chip>
+              <v-chip
                 v-if="task.effort"
-                :class="EFFORT_BADGE_CLASS[task.effort] ?? 'effort-badge'"
-              >{{ EFFORT_LABEL[task.effort] }}</span>
+                size="small"
+                variant="tonal"
+                :color="EFFORT_COLOR[task.effort]"
+              >{{ EFFORT_LABEL[task.effort] }}</v-chip>
             </div>
           </div>
           <v-btn icon="mdi-close" variant="text" size="small" class="btn-close" @click="store.closeTask()" />
@@ -295,11 +292,12 @@ onUnmounted(() => {
               <!-- Assigned agents list — display only -->
               <div v-if="sortedAssignees.length > 0" class="d-flex flex-column ga-2">
                 <div v-for="a in sortedAssignees" :key="a.agent_id" class="d-flex align-center ga-2">
-                  <div
-                    class="assignee-avatar"
-                    :style="{ color: agentFg(a.agent_name), backgroundColor: agentBg(a.agent_name), borderColor: agentBorder(a.agent_name) }"
+                  <v-avatar
+                    size="20"
+                    :style="{ color: agentFg(a.agent_name), backgroundColor: agentBg(a.agent_name) }"
                     :title="a.agent_name"
-                  >{{ a.agent_name.slice(0, 2).toUpperCase() }}</div>
+                    class="text-overline font-weight-bold"
+                  >{{ a.agent_name.slice(0, 2).toUpperCase() }}</v-avatar>
                   <span class="text-caption" style="color: var(--content-secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ a.agent_name }}</span>
                   <span class="text-caption" style="color: var(--content-faint); flex-shrink: 0;">{{ a.role ?? '—' }}</span>
                 </div>
@@ -418,40 +416,6 @@ onUnmounted(() => {
   transition: all 150ms;
 }
 
-/* Status badges */
-.status-badge {
-padding: 2px 8px;
-  border-radius: 9999px;
-  border: 1px solid;
-  font-weight: 500;
-}
-.status-badge--todo        { background: rgba(var(--v-theme-warning), 0.2);   color: rgb(var(--v-theme-warning)); border-color: rgba(var(--v-theme-warning), 0.3); }
-.status-badge--in-progress { background: rgba(var(--v-theme-secondary), 0.2); color: rgb(var(--v-theme-secondary)); border-color: rgba(var(--v-theme-secondary), 0.3); }
-.status-badge--done        { background: rgba(var(--v-theme-content-subtle), 0.2);  color: rgb(var(--v-theme-content-muted)); border-color: rgba(var(--v-theme-content-subtle), 0.3); }
-.status-badge--archived    { background: rgba(var(--v-theme-primary), 0.2);   color: rgb(var(--v-theme-primary)); border-color: rgba(var(--v-theme-primary), 0.3); }
-
-/* Scope badge */
-.scope-badge {
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
-  border: 1px solid;
-}
-
-/* Effort badges */
-.effort-badge {
-  font-size: 12px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
-  border: 1px solid;
-}
-.effort-badge--small  { background: rgba(var(--v-theme-secondary), 0.2); color: rgb(var(--v-theme-secondary)); border-color: rgba(var(--v-theme-secondary), 0.3); }
-.effort-badge--medium { background: rgba(var(--v-theme-warning), 0.2);   color: rgb(var(--v-theme-warning));   border-color: rgba(var(--v-theme-warning), 0.3); }
-.effort-badge--large  { background: rgba(var(--v-theme-error), 0.2);     color: rgb(var(--v-theme-error));     border-color: rgba(var(--v-theme-error), 0.3); }
-
 /* Body layout: 2 columns */
 .task-body {
   display: flex;
@@ -546,20 +510,6 @@ padding: 2px 8px;
   max-height: 160px;
   overflow-y: auto;
   border-top: 1px solid var(--edge-subtle);
-}
-
-/* Assignee avatar */
-.assignee-avatar {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 8px;
-  font-weight: 700;
-  border: 1px solid;
 }
 
 /* Comments */
