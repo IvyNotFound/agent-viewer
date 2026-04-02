@@ -43,16 +43,16 @@ function sortIcon(key: SortKey): string {
 <template>
   <div class="tool-stats-panel">
     <!-- Header -->
-    <div class="tool-stats-header">
+    <div class="tool-stats-header py-3 px-6">
       <h2 class="tool-stats-title">{{ t('toolStats.title') }}</h2>
     </div>
     <!-- Empty state -->
-    <div v-if="toolStats.length === 0" class="tool-stats-empty">
-      <p class="tool-stats-empty-text">{{ t('toolStats.empty') }}</p>
+    <div v-if="toolStats.length === 0" class="tool-stats-empty pa-12">
+      <p class="tool-stats-empty-text px-4">{{ t('toolStats.empty') }}</p>
     </div>
 
     <!-- Table -->
-    <div v-else class="tool-stats-body">
+    <div v-else class="tool-stats-body pa-6">
       <div class="tool-stats-table-wrap">
         <table class="tool-stats-table">
           <thead>
@@ -81,26 +81,26 @@ function sortIcon(key: SortKey): string {
               class="tool-stats-row"
             >
               <!-- Tool name -->
-              <td class="tool-stats-td tool-stats-td--mono" :style="{ color: toolColor(row.name) }">{{ row.name }}</td>
+              <td class="tool-stats-td py-2 px-4 tool-stats-td--mono" :style="{ color: toolColor(row.name) }">{{ row.name }}</td>
               <!-- Calls -->
-              <td class="tool-stats-td tool-stats-td--mono tool-stats-td--right tool-stats-td--muted">{{ row.calls }}</td>
+              <td class="tool-stats-td py-2 px-4 tool-stats-td--mono tool-stats-td--right tool-stats-td--muted">{{ row.calls }}</td>
               <!-- Errors -->
               <td
-                class="tool-stats-td tool-stats-td--mono tool-stats-td--right"
+                class="tool-stats-td py-2 px-4 tool-stats-td--mono tool-stats-td--right"
                 :class="row.errors > 0 ? 'tool-stats-td--error' : 'tool-stats-td--faint'"
               >
                 {{ row.errors }}
               </td>
               <!-- Error rate -->
               <td
-                class="tool-stats-td tool-stats-td--mono tool-stats-td--right"
+                class="tool-stats-td py-2 px-4 tool-stats-td--mono tool-stats-td--right"
                 :class="row.errorRate > 0 ? 'tool-stats-td--error' : 'tool-stats-td--faint'"
               >
                 {{ row.errors > 0 ? (row.errorRate * 100).toFixed(0) + '%' : '—' }}
               </td>
               <!-- Avg duration -->
               <td
-                class="tool-stats-td tool-stats-td--mono tool-stats-td--right"
+                class="tool-stats-td py-2 px-4 tool-stats-td--mono tool-stats-td--right"
                 :class="row.avgDurationMs !== null && row.avgDurationMs > 5000 ? 'tool-stats-td--warn' : 'tool-stats-td--faint'"
               >
                 {{ formatDuration(row.avgDurationMs) }}
@@ -126,7 +126,6 @@ function sortIcon(key: SortKey): string {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  padding: 12px 24px;
   border-bottom: 1px solid var(--edge-default);
 }
 .tool-stats-title {
@@ -140,7 +139,6 @@ function sortIcon(key: SortKey): string {
   align-items: center;
   justify-content: center;
   flex: 1;
-  padding: 48px;
 }
 .tool-stats-empty-text {
   font-size: 13px;
@@ -148,12 +146,10 @@ function sortIcon(key: SortKey): string {
   font-style: italic;
   text-align: center;
   margin: 0;
-  padding: 0 16px;
 }
 .tool-stats-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
 }
 .tool-stats-table-wrap {
   background: var(--surface-secondary);
@@ -192,9 +188,6 @@ function sortIcon(key: SortKey): string {
 }
 .tool-stats-row:last-child { border-bottom: none; }
 .tool-stats-row:hover { background: rgba(63, 63, 70, 0.3); }
-.tool-stats-td {
-  padding: 8px 16px;
-}
 .tool-stats-td--mono { font-family: ui-monospace, monospace; }
 .tool-stats-td--right { text-align: right; }
 .tool-stats-td--muted { color: var(--content-tertiary); }

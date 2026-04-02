@@ -228,12 +228,12 @@ const legendItems = computed(() => [
 <template>
   <div class="tl-view" @mousemove="moveTooltip">
     <!-- Header -->
-    <div class="tl-header">
+    <div class="tl-header py-3 px-5">
       <h2 class="tl-title">{{ t('timeline.title') }}</h2>
-      <div class="tl-header-controls">
+      <div class="tl-header-controls ga-3">
         <div class="tl-period">
           <span class="tl-muted-xs">{{ t('timeline.period') }}</span>
-          <select v-model="daysBack" class="tl-select">
+          <select v-model="daysBack" class="tl-select py-1 px-2">
             <option :value="7">7j</option>
             <option :value="14">14j</option>
             <option :value="30">30j</option>
@@ -241,14 +241,14 @@ const legendItems = computed(() => [
             <option :value="90">90j</option>
           </select>
         </div>
-        <button class="tl-refresh-btn" :disabled="loading" @click="fetchTasks">
+        <button class="tl-refresh-btn py-1 px-2" :disabled="loading" @click="fetchTasks">
           {{ loading ? t('common.loading') : t('common.refresh') }}
         </button>
       </div>
     </div>
 
     <!-- Agent filter chips -->
-    <div v-if="allAgents.length > 0" class="tl-filters">
+    <div v-if="allAgents.length > 0" class="tl-filters ga-2 py-2 px-5">
       <span class="tl-muted-xs tl-shrink">{{ t('timeline.filterAgents') }}</span>
       <button
         v-for="name in allAgents"
@@ -260,7 +260,7 @@ const legendItems = computed(() => [
       >{{ name }}</button>
       <button
         v-if="selectedAgents.length > 0"
-        class="tl-clear-btn"
+        class="tl-clear-btn ml-1"
         @click="selectedAgents = []"
       >{{ t('timeline.clearFilter') }}</button>
     </div>
@@ -290,7 +290,7 @@ const legendItems = computed(() => [
           :key="group.name"
           class="tl-row"
         >
-          <div class="tl-row-label">
+          <div class="tl-row-label py-2 px-3">
             <span class="tl-agent-name" :style="{ color: agentFg(group.name) }">{{ group.name }}</span>
           </div>
           <div class="tl-row-bars">
@@ -307,7 +307,7 @@ const legendItems = computed(() => [
         </div>
 
         <!-- Legend -->
-        <div class="tl-legend">
+        <div class="tl-legend ga-4 py-3 px-5">
           <span class="tl-muted-xs">{{ t('timeline.legend') }}</span>
           <div v-for="item in legendItems" :key="item.status" class="tl-legend-item">
             <div class="tl-legend-dot" :class="statusColorClass(item.status)" />
@@ -321,7 +321,7 @@ const legendItems = computed(() => [
     <Teleport to="body">
       <div
         v-if="tooltipTask"
-        class="tl-tooltip elevation-4"
+        class="tl-tooltip elevation-4 pa-3"
         :style="{ left: (tooltipX + 14) + 'px', top: (tooltipY - 14) + 'px' }"
       >
         <div class="tl-tooltip-title">{{ tooltipTask.title }}</div>
@@ -358,12 +358,11 @@ const legendItems = computed(() => [
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
   border-bottom: 1px solid var(--edge-subtle);
   background: var(--surface-base);
 }
 .tl-title { font-size: 14px; font-weight: 600; color: var(--content-secondary); margin: 0; }
-.tl-header-controls { display: flex; align-items: center; gap: 12px; }
+.tl-header-controls { display: flex; align-items: center; }
 .tl-period { display: flex; align-items: center; gap: 6px; }
 .tl-muted-xs { font-size: 12px; color: var(--content-muted); }
 .tl-muted-sm { font-size: 14px; color: var(--content-muted); }
@@ -372,7 +371,6 @@ const legendItems = computed(() => [
   background: var(--surface-base);
   border: 1px solid var(--edge-subtle);
   border-radius: 4px;
-  padding: 4px 8px;
   color: var(--content-primary);
   cursor: pointer;
   outline: none;
@@ -383,7 +381,6 @@ const legendItems = computed(() => [
   background: none;
   border: 1px solid var(--edge-subtle);
   border-radius: 4px;
-  padding: 4px 8px;
   cursor: pointer;
   transition: color 0.15s;
 }
@@ -394,8 +391,6 @@ const legendItems = computed(() => [
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 20px;
   border-bottom: 1px solid var(--edge-subtle);
   flex-wrap: wrap;
 }
@@ -416,7 +411,6 @@ const legendItems = computed(() => [
   background: none;
   border: none;
   cursor: pointer;
-  margin-left: 4px;
   transition: color 0.15s;
 }
 .tl-clear-btn:hover { color: var(--content-primary); }
@@ -453,7 +447,6 @@ const legendItems = computed(() => [
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  padding: 8px 12px;
   border-right: 1px solid rgba(39,39,42,0.4);
 }
 .tl-agent-name {
@@ -485,8 +478,6 @@ const legendItems = computed(() => [
 .tl-legend {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 20px;
   border-top: 1px solid var(--edge-subtle);
 }
 .tl-legend-item { display: flex; align-items: center; gap: 6px; }
@@ -499,7 +490,6 @@ const legendItems = computed(() => [
   background: var(--surface-primary, var(--surface-base));
   border: 1px solid var(--edge-default);
   border-radius: 8px;
-  padding: 12px;
   font-size: 12px;
   pointer-events: none;
   max-width: 280px;

@@ -42,12 +42,12 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
   <!-- tool_use block — carte collapsible couleur agent (T680) -->
   <div
     v-if="block.type === 'tool_use'"
-    class="tool-block"
+    class="tool-block mb-2"
     :style="{ borderColor: accentBorder }"
     data-testid="block-tool-use"
   >
     <button
-      class="tool-header"
+      class="tool-header ga-2 py-2 px-3"
       :style="{ backgroundColor: accentBg, color: accentFg }"
       @click="emit('toggleCollapsed', collapseKey(eventId, blockIdx), true)"
     >
@@ -57,7 +57,7 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
     </button>
     <div
       v-show="!isCollapsed(eventId, blockIdx, true)"
-      class="tool-body"
+      class="tool-body pt-3 px-4 pb-2"
     >
       <pre>{{ toolInputPreview(block.input) }}</pre>
     </div>
@@ -66,12 +66,12 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
   <!-- tool_result block — sortie collapsible + markdown + strip ANSI (T727/T729) -->
   <div
     v-else-if="block.type === 'tool_result'"
-    class="tool-block"
+    class="tool-block mb-2"
     :class="block.is_error ? 'tool-block--error' : 'tool-block--result'"
     data-testid="block-tool-result"
   >
     <button
-      class="tool-header tool-header--result"
+      class="tool-header tool-header--result ga-2 py-2 px-3"
       :class="block.is_error ? 'tool-header--error' : ''"
       @click="emit('toggleCollapsed', collapseKey(eventId, blockIdx), !block.is_error && !!block._isLong)"
     >
@@ -82,13 +82,13 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
       <span>{{ block.is_error ? t('stream.error') : t('stream.result') }}</span>
       <span
         v-if="isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong)"
-        class="line-count"
+        class="line-count ml-1"
       >({{ block._lineCount ?? 0 }} {{ t('stream.lines') }})</span>
     </button>
     <!-- eslint-disable vue/no-v-html -->
     <div
       v-show="!isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong)"
-      class="stream-markdown tool-body"
+      class="stream-markdown tool-body pt-3 px-4 pb-2"
       v-html="block._html ?? ''"
     />
     <!-- eslint-enable vue/no-v-html -->
@@ -100,7 +100,6 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
   border: 1px solid;
   border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 8px;
 }
 
 .tool-block--result {
@@ -117,8 +116,6 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
   cursor: pointer;
   font-size: 0.75rem;
   border: none;
@@ -164,12 +161,10 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
 }
 
 .line-count {
-  margin-left: 4px;
   opacity: 0.6;
 }
 
 .tool-body {
-  padding: 12px 16px 8px;
   font-size: 0.75rem;
   color: var(--content-muted);
   overflow-x: auto;

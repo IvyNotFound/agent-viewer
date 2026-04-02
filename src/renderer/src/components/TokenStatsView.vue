@@ -18,10 +18,10 @@ const {
   <div class="ts-view">
 
     <!-- ── Period selector ────────────────────────────────────────────── -->
-    <div class="ts-period-bar">
-      <h2 class="ts-title">{{ t('tokenStats.title') }}</h2>
+    <div class="ts-period-bar ga-2 pt-3 px-4 pb-2">
+      <h2 class="ts-title mr-2">{{ t('tokenStats.title') }}</h2>
       <span class="ts-period-label">{{ t('tokenStats.period.label') }}</span>
-      <div class="ts-period-btns">
+      <div class="ts-period-btns ga-1">
         <button
           v-for="period in PERIODS"
           :key="period.key"
@@ -35,8 +35,8 @@ const {
     </div>
 
     <!-- ── Summary cards ──────────────────────────────────────────────── -->
-    <div class="ts-cards-row">
-      <div class="ts-card">
+    <div class="ts-cards-row ga-2 py-2 px-4">
+      <div class="ts-card ga-1 pa-3">
         <span class="ts-card-label">{{ t('tokenStats.total') }}</span>
         <span class="ts-card-value">{{ formatNumber(globalStats.total) }}</span>
         <div class="ts-card-sub ts-mono">
@@ -45,7 +45,7 @@ const {
         </div>
       </div>
 
-      <div class="ts-card">
+      <div class="ts-card ga-1 pa-3">
         <span class="ts-card-label">{{ t('tokenStats.sessions') }}</span>
         <span class="ts-card-value">{{ globalStats.session_count }}</span>
         <div class="ts-card-sub">
@@ -53,7 +53,7 @@ const {
         </div>
       </div>
 
-      <div class="ts-card">
+      <div class="ts-card ga-1 pa-3">
         <span class="ts-card-label">{{ t('tokenStats.cache') }}</span>
         <span class="ts-card-value">{{ formatNumber(globalStats.tokens_cache_read + globalStats.tokens_cache_write) }}</span>
         <div class="ts-card-sub ts-mono">
@@ -62,19 +62,19 @@ const {
         </div>
       </div>
 
-      <div class="ts-card">
+      <div class="ts-card ga-1 pa-3">
         <span class="ts-card-label">{{ t('tokenStats.cacheHit') }}</span>
         <span class="ts-card-value ts-tabnum" :style="{ color: cacheHitColor }">{{ cacheHitRate }}%</span>
         <div class="ts-card-sub">{{ t('tokenStats.cacheHitLabel') }}</div>
       </div>
 
-      <div class="ts-card">
+      <div class="ts-card ga-1 pa-3">
         <span class="ts-card-label">{{ t('tokenStats.cost') }}</span>
         <span class="ts-card-value">{{ formatCost(estimatedCost) }}</span>
         <div class="ts-card-sub ts-faint">{{ t('tokenStats.costNote') }}</div>
       </div>
 
-      <div class="ts-card">
+      <div class="ts-card ga-1 pa-3">
         <span class="ts-card-label">{{ t('tokenStats.ratio') }}</span>
         <span class="ts-card-value">
           {{ globalStats.total > 0 ? Math.round((globalStats.tokens_out / Math.max(globalStats.total, 1)) * 100) : 0 }}%
@@ -86,11 +86,11 @@ const {
     </div>
 
     <!-- ── Sparkline 30 days ─────────────────────────────────────────── -->
-    <div class="ts-spark-wrap">
-      <div class="ts-spark-header">
+    <div class="ts-spark-wrap py-2 px-4">
+      <div class="ts-spark-header ga-2 mb-1">
         <span class="ts-mini-label">{{ t('tokenStats.evolution') }}</span>
       </div>
-      <div class="ts-spark-bars">
+      <div class="ts-spark-bars ga-1">
         <div
           v-for="(bar, i) in sparkBars"
           :key="bar.day"
@@ -112,22 +112,22 @@ const {
     </div>
 
     <!-- ── Content (scrollable) ───────────────────────────────────────── -->
-    <div class="ts-content">
+    <div class="ts-content py-3 px-4 ga-4">
 
       <!-- Cost analytics section (T769) -->
       <CostStatsSection :db-path="store.dbPath" :period="costPeriod" />
 
       <!-- Per-agent table with bars -->
       <section>
-        <h3 class="ts-section-title">{{ t('tokenStats.perAgent') }}</h3>
+        <h3 class="ts-section-title mb-2">{{ t('tokenStats.perAgent') }}</h3>
 
-        <div v-if="agentRows.length === 0" class="ts-empty">{{ t('tokenStats.noData') }}</div>
+        <div v-if="agentRows.length === 0" class="ts-empty py-4">{{ t('tokenStats.noData') }}</div>
 
         <div v-else class="ts-agent-rows">
           <div
             v-for="row in agentRows"
             :key="row.agent_id"
-            class="ts-agent-row"
+            class="ts-agent-row ga-3"
           >
             <span
               v-if="row.agent_name"
@@ -142,7 +142,7 @@ const {
               <span class="ts-bar-label ts-mono">{{ formatNumber(row.total) }}</span>
             </div>
 
-            <div class="ts-agent-totals ts-mono">
+            <div class="ts-agent-totals ga-2 ts-mono">
               <span class="ts-in">↓{{ formatNumber(row.tokens_in) }}</span>
               <span class="ts-out">↑{{ formatNumber(row.tokens_out) }}</span>
               <span class="ts-faint">{{ row.session_count }}s</span>
@@ -153,9 +153,9 @@ const {
 
       <!-- Per-session table -->
       <section>
-        <h3 class="ts-section-title">{{ t('tokenStats.perSession') }}</h3>
+        <h3 class="ts-section-title mb-2">{{ t('tokenStats.perSession') }}</h3>
 
-        <div v-if="sessionRows.length === 0" class="ts-empty">{{ t('tokenStats.noData') }}</div>
+        <div v-if="sessionRows.length === 0" class="ts-empty py-4">{{ t('tokenStats.noData') }}</div>
 
         <table v-else class="ts-table">
           <thead>
@@ -202,7 +202,7 @@ const {
     </div>
 
     <!-- Refresh button -->
-    <div class="ts-footer">
+    <div class="ts-footer py-2 px-4">
       <button
         class="ts-refresh-btn"
         :class="{ 'ts-refresh-btn--spinning': loading }"
@@ -229,12 +229,10 @@ const {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px 8px;
 }
-.ts-title { font-size: 20px; font-weight: 600; color: var(--content-primary); margin: 0 8px 0 0; }
+.ts-title { font-size: 20px; font-weight: 600; color: var(--content-primary); margin: 0; }
 .ts-period-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--content-faint); }
-.ts-period-btns { display: flex; gap: 4px; }
+.ts-period-btns { display: flex; }
 .ts-period-btn {
   padding: 2px 10px;
   border-radius: 9999px;
@@ -253,16 +251,12 @@ const {
   flex-shrink: 0;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  padding: 8px 16px;
   border-bottom: 1px solid var(--edge-subtle);
   background: var(--surface-base);
 }
 .ts-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px;
   border-radius: 8px;
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
@@ -309,15 +303,13 @@ const {
 /* sparkline */
 .ts-spark-wrap {
   flex-shrink: 0;
-  padding: 8px 16px;
   border-bottom: 1px solid var(--edge-subtle);
   background: var(--surface-base);
 }
-.ts-spark-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.ts-spark-header { display: flex; align-items: center; }
 .ts-spark-bars {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
   height: 60px;
 }
 .ts-spark-col {
@@ -357,23 +349,21 @@ const {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 .ts-section-title {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--content-faint);
-  margin: 0 0 8px;
+  margin: 0;
 }
-.ts-empty { font-size: 14px; color: var(--content-faint); padding: 16px 0; text-align: center; }
+.ts-empty { font-size: 14px; color: var(--content-faint); text-align: center; }
 
 /* agent bar rows */
 .ts-agent-rows { display: flex; flex-direction: column; gap: 6px; }
-.ts-agent-row { display: flex; align-items: center; gap: 12px; }
+.ts-agent-row { display: flex; align-items: center; }
 .ts-agent-name {
   flex-shrink: 0;
   width: 128px;
@@ -413,7 +403,6 @@ const {
 .ts-agent-totals {
   flex-shrink: 0;
   display: flex;
-  gap: 8px;
   font-size: 10px;
   width: 160px;
   justify-content: flex-end;
@@ -443,7 +432,6 @@ const {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 8px 16px;
   border-top: 1px solid var(--edge-subtle);
   background: var(--surface-base);
 }

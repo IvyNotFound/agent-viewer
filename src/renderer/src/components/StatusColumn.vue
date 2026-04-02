@@ -56,21 +56,21 @@ function onDrop(e: DragEvent): void {
     @drop="onDrop"
   >
     <div class="column-header">
-      <div class="column-title-row">
+      <div class="column-title-row ga-2">
         <div class="column-accent" :style="{ backgroundColor: accentColor }"></div>
         <span class="column-title">{{ title }}</span>
       </div>
       <span class="column-count">{{ tasks.length }}</span>
     </div>
     <!-- List mode -->
-    <div v-if="!treeMode" class="column-body" style="contain: content;">
+    <div v-if="!treeMode" class="column-body pa-2 ga-2" style="contain: content;">
       <TaskCard v-for="task in tasks" :key="task.id" :task="task" />
-      <div v-if="tasks.length === 0" class="column-empty">{{ t('statusColumn.noTasks') }}</div>
+      <div v-if="tasks.length === 0" class="column-empty py-8">{{ t('statusColumn.noTasks') }}</div>
     </div>
     <!-- Tree mode -->
-    <div v-else class="column-body-tree" style="contain: content;">
+    <div v-else class="column-body-tree pa-2" style="contain: content;">
       <TaskTreeNode v-for="root in treeRoots" :key="root.id" :node="root" />
-      <div v-if="treeRoots.length === 0" class="column-empty">{{ t('statusColumn.noTasks') }}</div>
+      <div v-if="treeRoots.length === 0" class="column-empty py-8">{{ t('statusColumn.noTasks') }}</div>
     </div>
   </div>
 </template>
@@ -101,7 +101,6 @@ function onDrop(e: DragEvent): void {
 .column-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 .column-accent {
   width: 8px;
@@ -126,16 +125,13 @@ function onDrop(e: DragEvent): void {
 .column-body {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
   min-height: 0;
 }
 .column-body-tree {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -145,6 +141,5 @@ function onDrop(e: DragEvent): void {
   font-size: 0.75rem;
   color: var(--content-faint);
   text-align: center;
-  padding: 32px 0;
 }
 </style>

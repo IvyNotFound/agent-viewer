@@ -99,16 +99,16 @@ onMounted(scan)
 </script>
 
 <template>
-  <div class="telemetry-view">
+  <div class="telemetry-view pa-6 ga-6">
     <!-- Header -->
     <div class="telem-header">
       <h2 class="telem-title">{{ t('telemetry.title') }}</h2>
       <button
-        class="telem-rescan-btn"
+        class="telem-rescan-btn ga-2"
         :disabled="loading || !store.projectPath"
         @click="scan"
       >
-        <span v-if="loading" class="telem-rescan-loading">
+        <span v-if="loading" class="telem-rescan-loading ga-2">
           <v-progress-circular class="telem-spin" indeterminate :size="16" :width="2" />
           {{ t('telemetry.scanning') }}
         </span>
@@ -117,25 +117,25 @@ onMounted(scan)
     </div>
 
     <!-- No project guard -->
-    <div v-if="!store.projectPath" class="telem-state-center telem-subtle">
+    <div v-if="!store.projectPath" class="telem-state-center telem-subtle ga-3">
       {{ t('telemetry.noProject') }}
     </div>
 
     <!-- Loading state -->
-    <div v-else-if="loading && !data" class="telem-state-center telem-muted telem-gap">
+    <div v-else-if="loading && !data" class="telem-state-center telem-muted ga-3">
       <v-progress-circular class="telem-spin telem-spin-lg" indeterminate :size="32" :width="3" />
       {{ t('telemetry.scanningProject') }}
     </div>
 
     <!-- Error state -->
-    <div v-else-if="error" class="telem-state-center telem-error">
+    <div v-else-if="error" class="telem-state-center telem-error ga-3">
       {{ error }}
     </div>
 
     <!-- Data -->
     <template v-else-if="data">
       <!-- Stat cards -->
-      <div class="telem-stat-grid" :class="hasAdvancedMetrics ? 'telem-stat-grid--wide' : ''">
+      <div class="telem-stat-grid ga-4" :class="hasAdvancedMetrics ? 'telem-stat-grid--wide' : ''">
         <div class="telem-stat-card">
           <span class="telem-stat-label">{{ t('telemetry.totalLines') }}</span>
           <span class="telem-stat-value">{{ formatLines(data.totalLines) }}</span>
@@ -159,7 +159,7 @@ onMounted(scan)
       </div>
 
       <!-- Language bar (GitHub-style) -->
-      <div class="telem-section">
+      <div class="telem-section ga-2">
         <span class="telem-section-label">{{ t('telemetry.languageBreakdown') }}</span>
         <div class="telem-lang-bar">
           <div
@@ -170,7 +170,7 @@ onMounted(scan)
             class="telem-lang-segment"
           />
         </div>
-        <div class="telem-lang-legend">
+        <div class="telem-lang-legend mt-1">
           <div
             v-for="lang in data.languages"
             :key="lang.name"
@@ -184,7 +184,7 @@ onMounted(scan)
       </div>
 
       <!-- Source / Test bar -->
-      <div v-if="hasAdvancedMetrics" class="telem-section">
+      <div v-if="hasAdvancedMetrics" class="telem-section ga-2">
         <div class="telem-section-header">
           <span class="telem-section-label">{{ t('telemetry.sourceVsTests') }}</span>
           <span class="telem-test-pct">{{ testPercent.toFixed(1) }}% tests</span>
@@ -201,7 +201,7 @@ onMounted(scan)
             :title="`Tests — ${testPercent.toFixed(1)}%`"
           />
         </div>
-        <div class="telem-legend-row">
+        <div class="telem-legend-row ga-4">
           <span class="telem-legend-item">
             <span class="telem-dot" style="background:#22c55e;" />
             {{ t('telemetry.sourceLabel', { percent: sourcePercent.toFixed(1) }) }}
@@ -214,18 +214,18 @@ onMounted(scan)
       </div>
 
       <!-- Code quality section -->
-      <div v-if="hasAdvancedMetrics" class="telem-section">
+      <div v-if="hasAdvancedMetrics" class="telem-section ga-2">
         <span class="telem-section-label">{{ t('telemetry.codeQuality') }}</span>
-        <div class="telem-quality-grid">
-          <div class="telem-stat-card">
+        <div class="telem-quality-grid ga-3">
+          <div class="telem-stat-card pa-4 ga-1">
             <span class="telem-stat-label">{{ t('telemetry.percentRealCode') }}</span>
             <span class="telem-stat-value telem-value--green">{{ codePercent.toFixed(1) }}%</span>
           </div>
-          <div class="telem-stat-card">
+          <div class="telem-stat-card pa-4 ga-1">
             <span class="telem-stat-label">{{ t('telemetry.percentComments') }}</span>
             <span class="telem-stat-value telem-value--blue">{{ commentPercent.toFixed(1) }}%</span>
           </div>
-          <div class="telem-stat-card">
+          <div class="telem-stat-card pa-4 ga-1">
             <span class="telem-stat-label">{{ t('telemetry.percentBlank') }}</span>
             <span class="telem-stat-value telem-muted">{{ blankPercent.toFixed(1) }}%</span>
           </div>
@@ -251,7 +251,7 @@ onMounted(scan)
               :key="lang.name"
               class="telem-tbody-row"
             >
-              <td class="telem-td telem-td--lang">
+              <td class="telem-td telem-td--lang ga-2">
                 <span class="telem-dot" :style="{ backgroundColor: lang.color }" />
                 <span class="telem-td-text">{{ lang.name }}</span>
               </td>
@@ -281,8 +281,6 @@ onMounted(scan)
   overflow: auto;
   background-color: var(--surface-base);
   color: var(--content-primary);
-  padding: 24px;
-  gap: 24px;
 }
 
 .telem-header {
@@ -300,7 +298,6 @@ onMounted(scan)
 .telem-rescan-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   padding: 6px 16px;
   border-radius: 6px;
   background: var(--surface-tertiary);
@@ -312,7 +309,7 @@ onMounted(scan)
 }
 .telem-rescan-btn:hover:not(:disabled) { background: var(--surface-secondary); }
 .telem-rescan-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.telem-rescan-loading { display: flex; align-items: center; gap: 8px; }
+.telem-rescan-loading { display: flex; align-items: center; }
 
 .telem-spin { animation: telemSpin 1s linear infinite; }
 .telem-spin-track { opacity: 0.25; }
@@ -327,28 +324,23 @@ onMounted(scan)
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  gap: 12px;
 }
 .telem-subtle { color: var(--content-subtle); }
 .telem-muted { color: var(--content-muted); }
 .telem-tertiary { color: var(--content-tertiary); }
 .telem-error { color: #f87171; }
-.telem-gap { gap: 12px; }
 
 /* stat cards */
 .telem-stat-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
 }
 .telem-stat-grid--wide { grid-template-columns: repeat(5, 1fr); }
 .telem-stat-card {
   background: var(--surface-secondary);
   border-radius: 8px;
-  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
   border: 1px solid var(--edge-default);
 }
 .telem-stat-label {
@@ -368,7 +360,7 @@ onMounted(scan)
 .telem-value--amber-soft { color: rgba(251, 191, 36, 0.8); }
 
 /* sections */
-.telem-section { display: flex; flex-direction: column; gap: 8px; }
+.telem-section { display: flex; flex-direction: column; }
 .telem-section-header { display: flex; align-items: center; justify-content: space-between; }
 .telem-section-label { font-size: 14px; font-weight: 500; color: var(--content-tertiary); }
 .telem-test-pct { font-size: 12px; color: #f59e0b; font-weight: 500; }
@@ -387,7 +379,6 @@ onMounted(scan)
   flex-wrap: wrap;
   column-gap: 16px;
   row-gap: 4px;
-  margin-top: 4px;
 }
 .telem-lang-legend-item {
   display: flex;
@@ -396,7 +387,7 @@ onMounted(scan)
   font-size: 12px;
   color: var(--content-muted);
 }
-.telem-legend-row { display: flex; gap: 16px; font-size: 12px; color: var(--content-muted); }
+.telem-legend-row { display: flex; font-size: 12px; color: var(--content-muted); }
 .telem-legend-item { display: flex; align-items: center; gap: 6px; }
 .telem-dot {
   width: 10px;
@@ -407,7 +398,7 @@ onMounted(scan)
 }
 
 /* quality grid */
-.telem-quality-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.telem-quality-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
 
 /* table */
 .telem-table-wrap {
@@ -434,7 +425,7 @@ onMounted(scan)
 .telem-tbody-row:last-child { border-bottom: none; }
 .telem-tbody-row:hover { background: rgba(63, 63, 70, 0.3); }
 .telem-td { padding: 8px 16px; }
-.telem-td--lang { display: flex; align-items: center; gap: 8px; }
+.telem-td--lang { display: flex; align-items: center; }
 .telem-td--num { text-align: right; font-variant-numeric: tabular-nums; }
 .telem-td-text { color: var(--content-secondary); }
 

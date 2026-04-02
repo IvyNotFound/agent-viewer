@@ -73,8 +73,8 @@ watch(() => store.dbPath, fetchQuality)
 <template>
   <div class="quality-panel">
     <!-- Header -->
-    <div class="quality-header">
-      <div class="quality-header-left">
+    <div class="quality-header py-3 px-4">
+      <div class="quality-header-left ga-3">
         <h2 class="quality-title">{{ t('quality.title') }}</h2>
         <!-- Perimetre filter -->
         <select
@@ -90,24 +90,24 @@ watch(() => store.dbPath, fetchQuality)
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="quality-state">
+    <div v-if="loading" class="quality-state pa-8">
       <p class="quality-state-text quality-state-text--pulse">{{ t('quality.loading') }}</p>
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="quality-state">
+    <div v-else-if="error" class="quality-state pa-8">
       <p class="quality-state-text quality-state-text--error">{{ t('quality.error', { msg: error }) }}</p>
     </div>
 
     <!-- Empty -->
-    <div v-else-if="filteredRows.length === 0" class="quality-state">
+    <div v-else-if="filteredRows.length === 0" class="quality-state pa-8">
       <p class="quality-state-text">{{ t('quality.empty') }}</p>
     </div>
 
     <template v-else>
       <!-- Global indicator -->
-      <div class="quality-global">
-        <div class="quality-global-rate">
+      <div class="quality-global py-3 px-4">
+        <div class="quality-global-rate ga-4">
           <span class="quality-rate-label">{{ t('quality.rejectionRate') }}</span>
           <span
             class="quality-rate-value"
@@ -115,15 +115,15 @@ watch(() => store.dbPath, fetchQuality)
           >{{ globalRejectionRate }}%</span>
           <span v-if="!hasRejections" class="quality-no-rejections">{{ t('quality.noRejections') }}</span>
         </div>
-        <p class="quality-heuristic-note">
+        <p class="quality-heuristic-note mt-1">
           {{ t('quality.heuristicNote') }}
         </p>
       </div>
 
       <!-- Table -->
-      <div class="quality-table">
+      <div class="quality-table py-3 px-4 ga-2">
         <!-- Column headers -->
-        <div class="quality-row quality-header-row">
+        <div class="quality-row ga-3 quality-header-row pb-1">
           <span>Agent</span>
           <span class="quality-col-right">{{ t('quality.colTotal') }}</span>
           <span class="quality-col-right">{{ t('quality.colRejected') }}</span>
@@ -135,7 +135,7 @@ watch(() => store.dbPath, fetchQuality)
         <div
           v-for="row in filteredRows"
           :key="row.agent_id"
-          class="quality-row quality-data-row"
+          class="quality-row ga-3 quality-data-row"
         >
           <!-- Agent name -->
           <span
@@ -187,14 +187,12 @@ watch(() => store.dbPath, fetchQuality)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
   border-bottom: 1px solid var(--edge-subtle);
   background: var(--surface-base);
 }
 .quality-header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 .quality-title {
   font-size: 13px;
@@ -224,7 +222,6 @@ watch(() => store.dbPath, fetchQuality)
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px;
 }
 .quality-state-text {
   font-size: 13px;
@@ -240,14 +237,12 @@ watch(() => store.dbPath, fetchQuality)
 }
 .quality-global {
   flex-shrink: 0;
-  padding: 12px 16px;
   border-bottom: 1px solid var(--edge-subtle);
   background: rgba(0, 0, 0, 0.06);
 }
 .quality-global-rate {
   display: flex;
   align-items: center;
-  gap: 16px;
 }
 .quality-rate-label {
   font-size: 11px;
@@ -269,19 +264,16 @@ watch(() => store.dbPath, fetchQuality)
 .quality-heuristic-note {
   font-size: 10px;
   color: var(--content-faint);
-  margin: 4px 0 0;
+  margin: 0;
   font-style: italic;
 }
 .quality-table {
-  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 .quality-row {
   display: grid;
   grid-template-columns: minmax(130px, 1fr) 70px 60px 50px minmax(0, 2fr);
-  gap: 12px;
   align-items: center;
 }
 .quality-header-row {
@@ -290,7 +282,6 @@ watch(() => store.dbPath, fetchQuality)
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--content-faint);
-  padding-bottom: 4px;
   border-bottom: 1px solid var(--edge-subtle);
 }
 .quality-data-row { padding: 2px 0; }

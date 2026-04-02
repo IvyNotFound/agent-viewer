@@ -76,17 +76,17 @@ exports[`ContextMenu — snapshots > matches snapshot: simple items (no separato
 exports[`DbSelector — snapshots > matches snapshot: home screen (no project selected) 1`] = `
 "<!-- Accueil -->
 <div data-v-2585d2c8="" class="screen-center">
-  <div data-v-2585d2c8="" class="home-content">
+  <div data-v-2585d2c8="" class="home-content ga-6 px-6">
     <!-- Logo -->
     <div data-v-2585d2c8="" class="logo-wrap">
       <v-icon data-v-2585d2c8="" class="logo-icon" size="32">mdi-shield-check</v-icon>
     </div>
-    <div data-v-2585d2c8="" class="home-titles">
+    <div data-v-2585d2c8="" class="home-titles ga-1">
       <h2 data-v-2585d2c8="" class="app-name">KanbAgent</h2>
       <p data-v-2585d2c8="" class="app-tagline">Visualisez les tâches de vos agents en temps réel.</p>
     </div><!-- 2 options -->
-    <div data-v-2585d2c8="" class="action-grid">
-      <!-- Ouvrir existant --><button data-v-2585d2c8="" class="action-card">
+    <div data-v-2585d2c8="" class="action-grid ga-3">
+      <!-- Ouvrir existant --><button data-v-2585d2c8="" class="action-card ga-2 py-4 px-5">
         <div data-v-2585d2c8="" class="action-icon-wrap">
           <v-icon data-v-2585d2c8="" class="action-icon" size="20">mdi-folder-outline</v-icon>
         </div>
@@ -94,7 +94,7 @@ exports[`DbSelector — snapshots > matches snapshot: home screen (no project se
           <p data-v-2585d2c8="" class="action-label">Ouvrir</p>
           <p data-v-2585d2c8="" class="action-sublabel">Projet existant</p>
         </div>
-      </button><!-- Créer nouveau --><button data-v-2585d2c8="" class="action-card action-card--primary">
+      </button><!-- Créer nouveau --><button data-v-2585d2c8="" class="action-card action-card--primary ga-2 py-4 px-5">
         <div data-v-2585d2c8="" class="action-icon-wrap action-icon-wrap--primary">
           <v-icon data-v-2585d2c8="" class="action-icon action-icon--primary" size="20">mdi-plus</v-icon>
         </div>
@@ -133,17 +133,17 @@ exports[`DbSelector — snapshots > matches snapshot: home screen (no project se
 exports[`DbSelector — snapshots > matches snapshot: home screen with error 1`] = `
 "<!-- Accueil -->
 <div data-v-2585d2c8="" class="screen-center">
-  <div data-v-2585d2c8="" class="home-content">
+  <div data-v-2585d2c8="" class="home-content ga-6 px-6">
     <!-- Logo -->
     <div data-v-2585d2c8="" class="logo-wrap">
       <v-icon data-v-2585d2c8="" class="logo-icon" size="32">mdi-shield-check</v-icon>
     </div>
-    <div data-v-2585d2c8="" class="home-titles">
+    <div data-v-2585d2c8="" class="home-titles ga-1">
       <h2 data-v-2585d2c8="" class="app-name">KanbAgent</h2>
       <p data-v-2585d2c8="" class="app-tagline">Visualisez les tâches de vos agents en temps réel.</p>
     </div><!-- 2 options -->
-    <div data-v-2585d2c8="" class="action-grid">
-      <!-- Ouvrir existant --><button data-v-2585d2c8="" class="action-card">
+    <div data-v-2585d2c8="" class="action-grid ga-3">
+      <!-- Ouvrir existant --><button data-v-2585d2c8="" class="action-card ga-2 py-4 px-5">
         <div data-v-2585d2c8="" class="action-icon-wrap">
           <v-icon data-v-2585d2c8="" class="action-icon" size="20">mdi-folder-outline</v-icon>
         </div>
@@ -151,7 +151,7 @@ exports[`DbSelector — snapshots > matches snapshot: home screen with error 1`]
           <p data-v-2585d2c8="" class="action-label">Ouvrir</p>
           <p data-v-2585d2c8="" class="action-sublabel">Projet existant</p>
         </div>
-      </button><!-- Créer nouveau --><button data-v-2585d2c8="" class="action-card action-card--primary">
+      </button><!-- Créer nouveau --><button data-v-2585d2c8="" class="action-card action-card--primary ga-2 py-4 px-5">
         <div data-v-2585d2c8="" class="action-icon-wrap action-icon-wrap--primary">
           <v-icon data-v-2585d2c8="" class="action-icon action-icon--primary" size="20">mdi-plus</v-icon>
         </div>
@@ -161,7 +161,7 @@ exports[`DbSelector — snapshots > matches snapshot: home screen with error 1`]
         </div>
       </button>
     </div>
-    <p data-v-2585d2c8="" class="error-msg">DB not found</p><!-- Language selector -->
+    <p data-v-2585d2c8="" class="error-msg py-2 px-3">DB not found</p><!-- Language selector -->
     <div data-v-2585d2c8="" class="lang-row"><select data-v-2585d2c8="" aria-label="Language" class="lang-select" value="fr">
         <option value="fr" data-v-2585d2c8="">Français</option>
         <option value="en" data-v-2585d2c8="">English</option>
@@ -189,11 +189,11 @@ exports[`DbSelector — snapshots > matches snapshot: home screen with error 1`]
 exports[`StatusColumn — snapshots > matches snapshot: column with 2 tasks 1`] = `
 "<div data-v-b539d429="" class="column-wrap">
   <div data-v-b539d429="" class="column-header">
-    <div data-v-b539d429="" class="column-title-row">
+    <div data-v-b539d429="" class="column-title-row ga-2">
       <div data-v-b539d429="" class="column-accent" style="background-color: rgb(148, 163, 184);"></div><span data-v-b539d429="" class="column-title">Todo</span>
     </div><span data-v-b539d429="" class="column-count">2</span>
   </div><!-- List mode -->
-  <div data-v-b539d429="" class="column-body" style="contain: content;">
+  <div data-v-b539d429="" class="column-body pa-2 ga-2" style="contain: content;">
     <task-card-stub data-v-b539d429="" task="[object Object]"></task-card-stub>
     <task-card-stub data-v-b539d429="" task="[object Object]"></task-card-stub>
     <!--v-if-->
@@ -204,12 +204,12 @@ exports[`StatusColumn — snapshots > matches snapshot: column with 2 tasks 1`] 
 exports[`StatusColumn — snapshots > matches snapshot: empty column 1`] = `
 "<div data-v-b539d429="" class="column-wrap">
   <div data-v-b539d429="" class="column-header">
-    <div data-v-b539d429="" class="column-title-row">
+    <div data-v-b539d429="" class="column-title-row ga-2">
       <div data-v-b539d429="" class="column-accent" style="background-color: rgb(148, 163, 184);"></div><span data-v-b539d429="" class="column-title">Todo</span>
     </div><span data-v-b539d429="" class="column-count">0</span>
   </div><!-- List mode -->
-  <div data-v-b539d429="" class="column-body" style="contain: content;">
-    <div data-v-b539d429="" class="column-empty">Aucune tâche</div>
+  <div data-v-b539d429="" class="column-body pa-2 ga-2" style="contain: content;">
+    <div data-v-b539d429="" class="column-empty py-8">Aucune tâche</div>
   </div>
 </div>"
 `;
@@ -217,11 +217,11 @@ exports[`StatusColumn — snapshots > matches snapshot: empty column 1`] = `
 exports[`StatusColumn — snapshots > matches snapshot: in_progress column (drop target) 1`] = `
 "<div data-v-b539d429="" class="column-wrap">
   <div data-v-b539d429="" class="column-header">
-    <div data-v-b539d429="" class="column-title-row">
+    <div data-v-b539d429="" class="column-title-row ga-2">
       <div data-v-b539d429="" class="column-accent" style="background-color: rgb(34, 211, 238);"></div><span data-v-b539d429="" class="column-title">In Progress</span>
     </div><span data-v-b539d429="" class="column-count">1</span>
   </div><!-- List mode -->
-  <div data-v-b539d429="" class="column-body" style="contain: content;">
+  <div data-v-b539d429="" class="column-body pa-2 ga-2" style="contain: content;">
     <task-card-stub data-v-b539d429="" task="[object Object]"></task-card-stub>
     <!--v-if-->
   </div>
@@ -284,21 +284,21 @@ exports[`TabBar — snapshots > matches snapshot: tab bar with one terminal tab 
 `;
 
 exports[`TaskCard — snapshots > matches snapshot: critical in_progress task with all badges 1`] = `
-"<div data-v-8da3d041="" class="task-card" draggable="true">
+"<div data-v-8da3d041="" class="task-card pa-3" draggable="true">
   <!-- Top row: title + effort/priority -->
-  <div data-v-8da3d041="" class="card-top">
-    <div data-v-8da3d041="" class="card-title-area"><span data-v-8da3d041="" class="card-pulse" title="Tâche en cours d'exécution" aria-label="Tâche en cours d'exécution"></span>
+  <div data-v-8da3d041="" class="card-top ga-2 mb-2">
+    <div data-v-8da3d041="" class="card-title-area"><span data-v-8da3d041="" class="card-pulse mt-1" title="Tâche en cours d'exécution" aria-label="Tâche en cours d'exécution"></span>
       <p data-v-8da3d041="" class="card-title">Urgent Fix</p>
     </div>
-    <div data-v-8da3d041="" class="card-badge-row">
+    <div data-v-8da3d041="" class="card-badge-row ga-1">
       <!--v-if--><span data-v-8da3d041="" class="badge badge-priority-critical">!!</span><span data-v-8da3d041="" class="badge badge-effort-3">L</span>
     </div>
   </div><!-- Badges: perimeter + agent avatars -->
-  <div data-v-8da3d041="" class="card-meta"><span data-v-8da3d041="" class="badge-scope" style="color: rgb(123, 197, 234); background-color: rgb(24, 43, 52); border-color: rgb(43, 77, 94);">back-electron</span><!-- Multi-agent avatars (≤3 + overflow badge) -->
+  <div data-v-8da3d041="" class="card-meta ga-1 mb-2"><span data-v-8da3d041="" class="badge-scope" style="color: rgb(123, 197, 234); background-color: rgb(24, 43, 52); border-color: rgb(43, 77, 94);">back-electron</span><!-- Multi-agent avatars (≤3 + overflow badge) -->
     <!-- Fallback: single agent badge when no task_agents rows -->
     <agent-badge-stub data-v-8da3d041="" name="dev-back" active="false"></agent-badge-stub>
   </div><!-- Footer: dates left, #id right -->
-  <div data-v-8da3d041="" class="card-footer card-footer-bordered">
+  <div data-v-8da3d041="" class="card-footer ga-2 pt-2 card-footer-bordered">
     <div data-v-8da3d041="" class="card-dates">
       <p data-v-8da3d041="" class="card-date"><span data-v-8da3d041="" class="date-label">Créé</span> 01/01/26 00:00</p>
       <p data-v-8da3d041="" class="card-date"><span data-v-8da3d041="" class="date-label">Modifié</span> 01/01/26 00:00</p>
@@ -309,14 +309,14 @@ exports[`TaskCard — snapshots > matches snapshot: critical in_progress task wi
 `;
 
 exports[`TaskCard — snapshots > matches snapshot: done task without agent or perimetre 1`] = `
-"<div data-v-8da3d041="" class="task-card" draggable="false">
+"<div data-v-8da3d041="" class="task-card pa-3" draggable="false">
   <!-- Top row: title + effort/priority -->
-  <div data-v-8da3d041="" class="card-top">
+  <div data-v-8da3d041="" class="card-top ga-2 mb-2">
     <div data-v-8da3d041="" class="card-title-area">
       <!--v-if-->
       <p data-v-8da3d041="" class="card-title">Completed Task</p>
     </div>
-    <div data-v-8da3d041="" class="card-badge-row">
+    <div data-v-8da3d041="" class="card-badge-row ga-1">
       <!--v-if-->
       <!--v-if-->
       <!--v-if-->
@@ -324,7 +324,7 @@ exports[`TaskCard — snapshots > matches snapshot: done task without agent or p
   </div><!-- Badges: perimeter + agent avatars -->
   <!--v-if-->
   <!-- Footer: dates left, #id right -->
-  <div data-v-8da3d041="" class="card-footer">
+  <div data-v-8da3d041="" class="card-footer ga-2 pt-2">
     <div data-v-8da3d041="" class="card-dates">
       <p data-v-8da3d041="" class="card-date"><span data-v-8da3d041="" class="date-label">Créé</span> 01/01/26 00:00</p>
       <p data-v-8da3d041="" class="card-date"><span data-v-8da3d041="" class="date-label">Modifié</span> 01/01/26 00:00</p>
@@ -335,23 +335,23 @@ exports[`TaskCard — snapshots > matches snapshot: done task without agent or p
 `;
 
 exports[`TaskCard — snapshots > matches snapshot: minimal todo task 1`] = `
-"<div data-v-8da3d041="" class="task-card" draggable="true">
+"<div data-v-8da3d041="" class="task-card pa-3" draggable="true">
   <!-- Top row: title + effort/priority -->
-  <div data-v-8da3d041="" class="card-top">
+  <div data-v-8da3d041="" class="card-top ga-2 mb-2">
     <div data-v-8da3d041="" class="card-title-area">
       <!--v-if-->
       <p data-v-8da3d041="" class="card-title">Simple Task</p>
     </div>
-    <div data-v-8da3d041="" class="card-badge-row">
+    <div data-v-8da3d041="" class="card-badge-row ga-1">
       <!--v-if-->
       <!--v-if--><span data-v-8da3d041="" class="badge badge-effort-1">S</span>
     </div>
   </div><!-- Badges: perimeter + agent avatars -->
-  <div data-v-8da3d041="" class="card-meta"><span data-v-8da3d041="" class="badge-scope" style="color: rgb(190, 228, 129); background-color: rgb(41, 50, 26); border-color: rgb(74, 91, 47);">front-vuejs</span><!-- Multi-agent avatars (≤3 + overflow badge) -->
+  <div data-v-8da3d041="" class="card-meta ga-1 mb-2"><span data-v-8da3d041="" class="badge-scope" style="color: rgb(190, 228, 129); background-color: rgb(41, 50, 26); border-color: rgb(74, 91, 47);">front-vuejs</span><!-- Multi-agent avatars (≤3 + overflow badge) -->
     <!-- Fallback: single agent badge when no task_agents rows -->
     <agent-badge-stub data-v-8da3d041="" name="dev-front" active="false"></agent-badge-stub>
   </div><!-- Footer: dates left, #id right -->
-  <div data-v-8da3d041="" class="card-footer card-footer-bordered">
+  <div data-v-8da3d041="" class="card-footer ga-2 pt-2 card-footer-bordered">
     <div data-v-8da3d041="" class="card-dates">
       <p data-v-8da3d041="" class="card-date"><span data-v-8da3d041="" class="date-label">Créé</span> 01/01/26 00:00</p>
       <p data-v-8da3d041="" class="card-date"><span data-v-8da3d041="" class="date-label">Modifié</span> 01/01/26 00:00</p>

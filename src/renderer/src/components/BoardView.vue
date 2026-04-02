@@ -130,9 +130,9 @@ const archivedGroupsSorted = computed(() => {
 <template>
   <div class="board-root">
     <!-- Header -->
-    <div class="board-header">
+    <div class="board-header py-3 px-5">
       <!-- Sub-tabs -->
-      <div class="board-tabs">
+      <div class="board-tabs ga-1">
         <button
           v-for="tab in (['backlog', 'archive'] as BoardTab[])"
           :key="tab"
@@ -162,7 +162,7 @@ const archivedGroupsSorted = computed(() => {
       </div>
 
       <!-- Active filters -->
-      <div class="board-filters">
+      <div class="board-filters ga-2">
         <span v-if="activeAgentName" class="filter-badge-agent">
           {{ activeAgentName }}
           <button class="filter-badge-close" @click="store.selectedAgentId = null">✕</button>
@@ -182,20 +182,20 @@ const archivedGroupsSorted = computed(() => {
     <!-- Board view: 3 colonnes -->
     <div v-if="activeTab === 'backlog'" class="board-area">
       <!-- Stale tasks alert (T749) -->
-      <div v-if="staleTasks.length > 0" class="stale-alert">
+      <div v-if="staleTasks.length > 0" class="stale-alert ma-4 mb-0 py-2 px-3 ga-2">
         <span class="stale-icon">⚠</span>
         <div class="stale-content">
           <span class="stale-title">{{ t('board.staleTasks', { count: staleTasks.length }) }}</span>
           <span
             v-for="task in staleTasks"
             :key="task.id"
-            class="stale-task"
+            class="stale-task ml-2"
             @click="store.openTask(task)"
           >#{{ task.id }} {{ task.title }}</span>
         </div>
       </div>
 
-      <div class="columns-area">
+      <div class="columns-area pa-4 ga-3">
         <StatusColumn
           v-for="col in columns"
           :key="col.key"
@@ -224,12 +224,12 @@ const archivedGroupsSorted = computed(() => {
       <!-- Tasks list + pagination -->
       <template v-else>
         <!-- Scrollable tasks list -->
-        <div class="archive-list">
-          <div class="archive-groups">
+        <div class="archive-list py-3 px-4">
+          <div class="archive-groups ga-4">
             <!-- Group by agent -->
             <div v-for="[agentName, agentTasks] in archivedGroupsSorted" :key="agentName" class="agent-group">
               <!-- Group header -->
-              <div class="agent-group-header">
+              <div class="agent-group-header ga-2 mb-2">
                 <span
                   :class="['agent-badge', { 'agent-badge-unassigned': agentName === UNASSIGNED_SENTINEL }]"
                   :style="agentName !== UNASSIGNED_SENTINEL
@@ -243,13 +243,13 @@ const archivedGroupsSorted = computed(() => {
                 <button
                   v-for="task in agentTasks"
                   :key="task.id"
-                  class="archive-task-btn"
+                  class="archive-task-btn py-3 px-4"
                   @click="store.openTask(task)"
                 >
-                  <div class="archive-task-inner">
+                  <div class="archive-task-inner ga-3">
                     <div class="archive-task-content">
                       <p class="archive-task-title">{{ task.title }}</p>
-                      <span v-if="task.scope" class="archive-task-scope">{{ task.scope }}</span>
+                      <span v-if="task.scope" class="archive-task-scope mt-1">{{ task.scope }}</span>
                     </div>
                     <div class="archive-task-meta">
                       <p class="archive-task-date">{{ formatDate(task.updated_at) }}</p>
@@ -263,7 +263,7 @@ const archivedGroupsSorted = computed(() => {
         </div>
 
         <!-- Pagination controls -->
-        <div class="pagination">
+        <div class="pagination py-2 px-4">
           <button
             :disabled="pagination.page.value === 0"
             :class="['pag-btn', { disabled: pagination.page.value === 0 }]"
@@ -304,14 +304,12 @@ const archivedGroupsSorted = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
   border-bottom: 1px solid var(--edge-subtle);
   flex-shrink: 0;
 }
 .board-tabs {
   display: flex;
   align-items: center;
-  gap: 4px;
 }
 .tab-btn {
   padding: 4px 12px;
@@ -370,7 +368,6 @@ const archivedGroupsSorted = computed(() => {
 .board-filters {
   display: flex;
   align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
 }
 .filter-badge-agent {
@@ -420,14 +417,11 @@ const archivedGroupsSorted = computed(() => {
 }
 .stale-alert {
   flex-shrink: 0;
-  margin: 16px 16px 0;
-  padding: 8px 12px;
   background-color: rgba(249, 115, 22, 0.1);
   border: 1px solid rgba(249, 115, 22, 0.3);
   border-radius: 8px;
   display: flex;
   align-items: flex-start;
-  gap: 8px;
 }
 .stale-icon {
   color: #fb923c; /* orange-400 */
@@ -444,7 +438,6 @@ const archivedGroupsSorted = computed(() => {
   color: #fdba74; /* orange-300 */
 }
 .stale-task {
-  margin-left: 8px;
   font-size: 0.75rem;
   color: rgba(254, 215, 170, 0.8); /* orange-200/80 */
   cursor: pointer;
@@ -455,10 +448,8 @@ const archivedGroupsSorted = computed(() => {
 }
 .columns-area {
   display: flex;
-  gap: 12px;
   flex: 1;
   min-height: 0;
-  padding: 16px;
 }
 .archive-area {
   flex: 1;
@@ -482,18 +473,14 @@ const archivedGroupsSorted = computed(() => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 12px 16px;
 }
 .archive-groups {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 .agent-group-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
 }
 .agent-badge {
   display: inline-flex;
@@ -523,7 +510,6 @@ const archivedGroupsSorted = computed(() => {
 .archive-task-btn {
   width: 100%;
   text-align: left;
-  padding: 12px 16px;
   background-color: var(--surface-primary);
   border: 1px solid var(--edge-subtle);
   border-radius: 8px;
@@ -538,7 +524,6 @@ const archivedGroupsSorted = computed(() => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
 }
 .archive-task-content {
   flex: 1;
@@ -559,7 +544,6 @@ const archivedGroupsSorted = computed(() => {
   font-size: 10px;
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
   color: var(--content-subtle);
-  margin-top: 4px;
   display: block;
 }
 .archive-task-meta {
@@ -582,7 +566,6 @@ const archivedGroupsSorted = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
   border-top: 1px solid var(--edge-subtle);
   background-color: var(--surface-primary);
 }

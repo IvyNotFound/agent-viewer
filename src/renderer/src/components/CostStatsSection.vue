@@ -213,13 +213,13 @@ const hoveredBar = ref<number | null>(null)
 </script>
 
 <template>
-  <section class="cost-section">
+  <section class="cost-section ga-3">
 <!-- Header + period selector -->
     <div v-if="!props.period" class="cost-header">
       <h3 class="cost-title">
         {{ t('costStats.title') }}
       </h3>
-      <div class="cost-period-btns">
+      <div class="cost-period-btns ga-1">
         <button
           v-for="p in PERIODS"
           :key="p.key"
@@ -233,18 +233,18 @@ const hoveredBar = ref<number | null>(null)
     </div>
 
     <!-- Loading state -->
-    <div v-if="loading && rows.length === 0" class="cost-state">
+    <div v-if="loading && rows.length === 0" class="cost-state pa-4">
       {{ t('costStats.loading') }}
     </div>
 
     <!-- No data state -->
-    <div v-else-if="hasData === false" class="cost-state">
+    <div v-else-if="hasData === false" class="cost-state pa-4">
       {{ t('costStats.noData') }}
     </div>
 
     <template v-else-if="byAgent.length > 0">
 <!-- Global summary row -->
-      <div class="cost-summary-grid">
+      <div class="cost-summary-grid ga-2">
         <div class="cost-summary-card">
           <span class="cost-summary-label">{{ t('costStats.totalCost') }}</span>
           <span class="cost-summary-value">{{ formatCost(globalCost) }}</span>
@@ -260,9 +260,9 @@ const hoveredBar = ref<number | null>(null)
       </div>
 
       <!-- Cost sparkline (last 7 periods) -->
-      <div v-if="sparkPeriods.length > 1" class="cost-sparkline-section">
+      <div v-if="sparkPeriods.length > 1" class="cost-sparkline-section ga-1">
         <span class="cost-section-label">{{ t('costStats.trend') }}</span>
-        <div class="cost-sparkline">
+        <div class="cost-sparkline ga-1">
           <div
             v-for="(bar, i) in sparkPeriods"
             :key="bar.label"
@@ -278,7 +278,7 @@ const hoveredBar = ref<number | null>(null)
             <div v-if="bar.cost === 0" class="cost-spark-zero" />
             <div
               v-if="hoveredBar === i"
-              class="cost-spark-tooltip elevation-2"
+              class="cost-spark-tooltip elevation-2 py-1 px-2"
             >
               {{ bar.label }} : {{ formatCost(bar.cost) }}
             </div>
@@ -293,7 +293,7 @@ const hoveredBar = ref<number | null>(null)
         <div
           v-for="row in byAgent"
           :key="row.agent_id"
-          class="cost-agent-row"
+          class="cost-agent-row ga-3"
         >
           <!-- Agent badge -->
           <span
@@ -308,13 +308,13 @@ const hoveredBar = ref<number | null>(null)
               class="cost-bar-fill"
               :style="{ width: barWidth(row.total_cost) }"
             />
-            <span class="cost-bar-label">
+            <span class="cost-bar-label px-2">
               {{ formatCost(row.total_cost) }}
             </span>
           </div>
 
           <!-- Cache efficiency -->
-          <div class="cost-cache-info">
+          <div class="cost-cache-info ga-3">
             <span
               class="cost-cache-eff"
               :class="cacheEffClass(row)"
@@ -332,7 +332,6 @@ const hoveredBar = ref<number | null>(null)
 .cost-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 .cost-header {
   display: flex;
@@ -349,7 +348,6 @@ const hoveredBar = ref<number | null>(null)
 }
 .cost-period-btns {
   display: flex;
-  gap: 4px;
 }
 .cost-period-btn {
   padding: 2px 8px;
@@ -373,14 +371,12 @@ const hoveredBar = ref<number | null>(null)
 .cost-state {
   font-size: 13px;
   color: var(--content-faint);
-  padding: 16px;
   text-align: center;
 }
 /* Summary grid */
 .cost-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
 }
 .cost-summary-card {
   display: flex;
@@ -415,12 +411,10 @@ const hoveredBar = ref<number | null>(null)
 .cost-sparkline-section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 .cost-sparkline {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
   height: 40px;
 }
 .cost-spark-bar-wrap {
@@ -450,7 +444,6 @@ const hoveredBar = ref<number | null>(null)
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
-  padding: 4px 8px;
   border-radius: 4px;
   font-size: 10px;
   white-space: nowrap;
@@ -468,7 +461,6 @@ const hoveredBar = ref<number | null>(null)
 .cost-agent-row {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 .cost-agent-badge {
   flex-shrink: 0;
@@ -502,7 +494,6 @@ const hoveredBar = ref<number | null>(null)
   inset: 0;
   display: flex;
   align-items: center;
-  padding: 0 8px;
   font-size: 10px;
   font-family: ui-monospace, monospace;
   color: var(--content-secondary);
@@ -510,7 +501,6 @@ const hoveredBar = ref<number | null>(null)
 .cost-cache-info {
   flex-shrink: 0;
   display: flex;
-  gap: 12px;
   font-size: 10px;
   font-family: ui-monospace, monospace;
   color: var(--content-subtle);

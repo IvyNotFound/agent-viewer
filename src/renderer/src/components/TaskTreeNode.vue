@@ -40,7 +40,7 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
     <!-- Node row — cursor-pointer kept for test selector compatibility -->
     <div
       class="node-row cursor-pointer"
-      :class="node.depth > 0 ? 'node-row--child' : ''"
+      :class="node.depth > 0 ? 'node-row--child ml-4 pl-3' : ''"
       @click="store.openTask(node)"
     >
       <!-- Expand/collapse toggle -->
@@ -62,10 +62,10 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
       <!-- Card content -->
       <div class="node-content">
         <!-- Title row -->
-        <div class="node-title-row">
+        <div class="node-title-row ga-2">
           <p class="node-title">{{ node.title }}</p>
           <!-- Badges -->
-          <div class="node-badges">
+          <div class="node-badges ga-1">
             <span
               v-if="node.effort"
               class="effort-badge"
@@ -130,9 +130,7 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
 }
 
 .node-row--child {
-  margin-left: 16px;
   border-left: 1px solid var(--edge-subtle);
-  padding-left: 12px;
 }
 
 .expand-btn {
@@ -179,7 +177,6 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
 .node-title-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
 }
 
 .node-title {
@@ -196,7 +193,6 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
 .node-badges {
   display: flex;
   align-items: center;
-  gap: 4px;
   flex-shrink: 0;
 }
 

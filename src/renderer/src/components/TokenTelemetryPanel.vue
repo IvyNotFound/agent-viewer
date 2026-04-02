@@ -47,11 +47,11 @@ function formatTokens(n: number): string {
 <template>
   <div class="token-panel">
 <!-- Header + period tabs -->
-    <div class="token-header">
+    <div class="token-header py-3 px-4">
       <span class="token-title">
         {{ t('dashboard.telemetry') }}
       </span>
-      <div class="token-tabs">
+      <div class="token-tabs ga-1">
         <button
           v-for="tab in TABS"
           :key="tab.key"
@@ -65,7 +65,7 @@ function formatTokens(n: number): string {
     </div>
 
     <!-- 4 token metrics -->
-    <div class="token-metrics">
+    <div class="token-metrics py-3 px-4 ga-3">
 <!-- Input tokens -->
       <div class="token-metric">
         <span class="token-metric-label">{{ t('dashboard.tokensIn') }}</span>
@@ -100,7 +100,7 @@ function formatTokens(n: number): string {
 </div>
 
     <!-- Session count -->
-    <div class="token-sessions">
+    <div class="token-sessions px-4 pb-3">
       <span class="token-sessions-text">
         {{ currentStats.session_count }} {{ t('dashboard.tokensSessions') }}
       </span>
@@ -117,7 +117,6 @@ function formatTokens(n: number): string {
 }
 .token-header {
   flex-shrink: 0;
-  padding: 12px 16px;
   border-bottom: 1px solid var(--edge-subtle);
   display: flex;
   align-items: center;
@@ -132,7 +131,6 @@ function formatTokens(n: number): string {
 }
 .token-tabs {
   display: flex;
-  gap: 4px;
 }
 .token-tab {
   padding: 2px 8px;
@@ -152,10 +150,8 @@ function formatTokens(n: number): string {
 }
 /* 4 token metrics */
 .token-metrics {
-  padding: 12px 16px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
 }
 .token-metric {
   display: flex;
@@ -177,7 +173,6 @@ function formatTokens(n: number): string {
 .token-metric-value--cache-write { color: #fbbf24; }
 /* Session count */
 .token-sessions {
-  padding: 0 16px 12px;
 }
 .token-sessions-text {
   font-size: 11px;

@@ -80,7 +80,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
       <!-- Card -->
       <div class="popup-card elevation-8">
         <!-- Header -->
-        <div class="popup-header">
+        <div class="popup-header py-4 px-5">
           <div class="popup-header-left">
             <div class="popup-icon">
               <v-icon class="icon-sm" size="16">mdi-folder-outline</v-icon>
@@ -97,9 +97,9 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
         </div>
 
         <!-- Body -->
-        <div class="popup-body">
+        <div class="popup-body py-4 px-5 ga-3">
           <!-- Project info -->
-          <div class="project-info">
+          <div class="project-info ga-1">
             <p class="project-name" :title="store.projectPath ?? undefined">
               {{ projectName }}
             </p>
@@ -116,15 +116,15 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
           </div>
 
           <!-- Error -->
-          <div v-if="store.error" class="project-error">
+          <div v-if="store.error" class="project-error py-2 px-3">
             <p class="project-error-text">{{ store.error }}</p>
           </div>
         </div>
 
         <!-- Footer -->
-        <div class="popup-footer">
+        <div class="popup-footer py-4 px-5 ga-2">
           <button
-            class="btn-change"
+            class="btn-change ga-2 py-2 px-4"
             @click="handleChangeProject"
           >
             <v-icon class="icon-xs" size="14">mdi-folder-outline</v-icon>
@@ -132,13 +132,13 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
           </button>
           <button
             v-if="store.projectPath"
-            class="btn-close-project"
+            class="btn-close-project ga-2 py-2 px-4"
             @click="handleCloseProject"
           >
             <v-icon class="icon-xs" size="14">mdi-close</v-icon>
             {{ t('project.close') }}
           </button>
-          <p class="popup-version">v{{ appVersion }}</p>
+          <p class="popup-version pt-1">v{{ appVersion }}</p>
         </div>
       </div>
     </div>
@@ -158,7 +158,6 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 
 /* Header */
 .popup-header {
-  padding: 16px 20px;
   border-bottom: 1px solid var(--edge-subtle);
   display: flex;
   align-items: center;
@@ -210,16 +209,13 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 
 /* Body */
 .popup-body {
-  padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .project-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
 .project-name {
@@ -250,7 +246,6 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 }
 
 .project-error {
-  padding: 8px 12px;
   background-color: rgba(127, 29, 29, 0.25);
   border: 1px solid rgba(127, 29, 29, 0.5);
   border-radius: 6px;
@@ -264,12 +259,10 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 
 /* Footer */
 .popup-footer {
-  padding: 16px 20px;
   border-top: 1px solid var(--edge-subtle);
   background-color: rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .btn-change,
@@ -278,8 +271,6 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -313,7 +304,6 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
   color: var(--content-faint);
   font-family: ui-monospace, monospace;
   text-align: right;
-  padding-top: 4px;
   margin: 0;
 }
 

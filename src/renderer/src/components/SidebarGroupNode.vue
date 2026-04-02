@@ -116,7 +116,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
 
 <template>
   <div
-    class="group-node"
+    class="group-node mb-1"
     @dragover="onGroupDragOver($event, group.id)"
     @dragleave="onGroupDragLeave"
     @drop="onGroupDrop($event, group.id)"
@@ -131,7 +131,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
     <!-- Group header -->
     <div
       :style="indentStyle"
-      :class="['group-header', { 'drag-target': dragOverGroupId === group.id }]"
+      :class="['group-header', 'px-1', { 'drag-target': dragOverGroupId === group.id }]"
       draggable="true"
       @dragstart="onGroupDragStart($event, group)"
       @contextmenu.prevent="openGroupContextMenu"
@@ -174,11 +174,11 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
     <!-- Content (hidden when collapsed) -->
     <div v-if="!collapsed">
       <!-- Inline subgroup creation for this group -->
-      <div v-if="creatingSubgroupForId === group.id" :style="subgroupInputStyle" class="subgroup-create-row">
+      <div v-if="creatingSubgroupForId === group.id" :style="subgroupInputStyle" class="subgroup-create-row ga-1 mb-1">
         <input
           :ref="(el) => { if (el) createSubgroupInputEl = el as HTMLInputElement }"
           v-model="newSubgroupName"
-          class="group-name-input"
+          class="group-name-input py-1 px-2"
           :placeholder="t('sidebar.newGroupPlaceholder')"
           @keydown.enter="confirmCreateSubgroup"
           @keydown.esc="cancelCreateSubgroup"
@@ -219,14 +219,14 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
               </span>
               <span :class="['agent-name', isAgentSelected(agent.id) ? 'agent-name--active' : '']">{{ agent.name }}</span>
             </button>
-            <div class="agent-actions">
+            <div class="agent-actions ga-1">
               <span class="drag-handle" :title="t('sidebar.move')"><v-icon size="12" class="icon-xs">mdi-drag</v-icon></span>
               <button class="action-btn" :title="t('sidebar.editAgent')" @click.stop="openEditAgent(agent)"><v-icon size="12" class="icon-sm">mdi-pencil</v-icon></button>
               <button class="action-btn action-btn--launch" :style="{ color: agentFg(agent.name), backgroundColor: agentBg(agent.name) }" :title="t('sidebar.launchAgent', { name: agent.name })" @click.stop="openLaunchModal($event, agent)"><v-icon size="12" class="icon-sm">mdi-play</v-icon></button>
             </div>
           </div>
         </div>
-        <div v-if="groupAgents.length === 0 && dragOverGroupId !== group.id" class="empty-msg">{{ t('sidebar.dropAgentHere') }}</div>
+        <div v-if="groupAgents.length === 0 && dragOverGroupId !== group.id" class="empty-msg py-1 px-2">{{ t('sidebar.dropAgentHere') }}</div>
       </div>
     </div>
   </div>
@@ -244,7 +244,6 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
 <style scoped>
 .group-node {
   position: relative;
-  margin-bottom: 4px;
 }
 .guide-line {
   position: absolute;
@@ -260,7 +259,6 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   gap: 2px;
   margin-bottom: 2px;
   border-radius: 4px;
-  padding: 0 4px;
   transition: background 150ms;
   cursor: pointer;
 }
@@ -347,15 +345,12 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
 .subgroup-create-row {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 4px;
 }
 .group-name-input {
   flex: 1;
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
   border-radius: 4px;
-  padding: 4px 8px;
   font-size: 0.75rem;
   color: var(--content-primary);
   outline: none;
@@ -455,7 +450,6 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   top: 50%;
   transform: translateY(-50%);
   display: flex;
-  gap: 4px;
   opacity: 0;
   transition: opacity 150ms;
 }
@@ -487,7 +481,6 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
 .empty-msg {
   font-size: 0.6875rem;
   color: var(--content-dim);
-  padding: 4px 8px;
   font-style: italic;
 }
 .icon-xs { width: 10px; height: 10px; }

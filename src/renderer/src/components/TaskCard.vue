@@ -118,24 +118,24 @@ const PRIORITY_LABEL: Record<string, string> = {
 
 <template>
   <div
-    class="task-card"
+    class="task-card pa-3"
     :draggable="task.status === 'todo' || task.status === 'in_progress'"
     @click="store.openTask(task)"
     @dragstart="onDragStart"
     @contextmenu="onContextMenu"
   >
     <!-- Top row: title + effort/priority -->
-    <div class="card-top">
+    <div class="card-top ga-2 mb-2">
       <div class="card-title-area">
         <span
           v-if="task.status === 'in_progress'"
-          class="card-pulse"
+          class="card-pulse mt-1"
           :title="t('task.running')"
           :aria-label="t('task.running')"
         />
         <p class="card-title">{{ task.title }}</p>
       </div>
-      <div class="card-badge-row">
+      <div class="card-badge-row ga-1">
         <span
           v-if="isStaleTask"
           class="badge badge-stale"
@@ -153,7 +153,7 @@ const PRIORITY_LABEL: Record<string, string> = {
     </div>
 
     <!-- Badges: perimeter + agent avatars -->
-    <div v-if="task.scope || task.agent_name || assigneeAvatars.length > 0" class="card-meta">
+    <div v-if="task.scope || task.agent_name || assigneeAvatars.length > 0" class="card-meta ga-1 mb-2">
       <span
         v-if="task.scope"
         class="badge-scope"
@@ -182,7 +182,7 @@ const PRIORITY_LABEL: Record<string, string> = {
     </div>
 
     <!-- Footer: dates left, #id right -->
-    <div :class="['card-footer', { 'card-footer-bordered': task.scope || task.agent_name }]">
+    <div :class="['card-footer', 'ga-2', 'pt-2', { 'card-footer-bordered': task.scope || task.agent_name }]">
       <div class="card-dates">
         <p class="card-date">
           <span class="date-label">{{ t('taskDetail.created') }}</span> {{ formattedCreatedAt }}
@@ -209,7 +209,6 @@ const PRIORITY_LABEL: Record<string, string> = {
   background-color: var(--surface-secondary);
   border: 1px solid var(--edge-default);
   border-radius: 8px;
-  padding: 12px;
   cursor: pointer;
   min-height: 120px;
   display: flex;
@@ -223,8 +222,6 @@ const PRIORITY_LABEL: Record<string, string> = {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
 }
 .card-title-area {
   display: flex;
@@ -234,7 +231,6 @@ const PRIORITY_LABEL: Record<string, string> = {
   min-width: 0;
 }
 .card-pulse {
-  margin-top: 4px;
   flex-shrink: 0;
   width: 8px;
   height: 8px;
@@ -258,7 +254,6 @@ const PRIORITY_LABEL: Record<string, string> = {
 .card-badge-row {
   display: flex;
   align-items: center;
-  gap: 4px;
   flex-shrink: 0;
 }
 /* Base badge */
@@ -308,8 +303,6 @@ const PRIORITY_LABEL: Record<string, string> = {
 .card-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 8px;
 }
 .badge-scope {
   font-size: 0.75rem;
@@ -343,9 +336,7 @@ const PRIORITY_LABEL: Record<string, string> = {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 8px;
   margin-top: auto;
-  padding-top: 8px;
 }
 .card-footer-bordered {
   border-top: 1px solid color-mix(in srgb, var(--edge-default) 50%, transparent);

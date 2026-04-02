@@ -89,20 +89,20 @@ async function create() {
 <template>
   <!-- Accueil -->
   <div v-if="step === 'home'" class="screen-center">
-    <div class="home-content">
+    <div class="home-content ga-6 px-6">
       <!-- Logo -->
       <div class="logo-wrap">
         <v-icon class="logo-icon" size="32">mdi-shield-check</v-icon>
       </div>
-      <div class="home-titles">
+      <div class="home-titles ga-1">
         <h2 class="app-name">KanbAgent</h2>
         <p class="app-tagline">{{ t('dbSelector.tagline') }}</p>
       </div>
 
       <!-- 2 options -->
-      <div class="action-grid">
+      <div class="action-grid ga-3">
         <!-- Ouvrir existant -->
-        <button class="action-card" @click="store.selectProject()">
+        <button class="action-card ga-2 py-4 px-5" @click="store.selectProject()">
           <div class="action-icon-wrap">
             <v-icon class="action-icon" size="20">mdi-folder-outline</v-icon>
           </div>
@@ -113,7 +113,7 @@ async function create() {
         </button>
 
         <!-- Créer nouveau -->
-        <button class="action-card action-card--primary" @click="step = 'create'">
+        <button class="action-card action-card--primary ga-2 py-4 px-5" @click="step = 'create'">
           <div class="action-icon-wrap action-icon-wrap--primary">
             <v-icon class="action-icon action-icon--primary" size="20">mdi-plus</v-icon>
           </div>
@@ -124,7 +124,7 @@ async function create() {
         </button>
       </div>
 
-      <p v-if="store.error" class="error-msg">{{ store.error }}</p>
+      <p v-if="store.error" class="error-msg py-2 px-3">{{ store.error }}</p>
 
       <!-- Language selector -->
       <div class="lang-row">
@@ -159,9 +159,9 @@ async function create() {
 
   <!-- Création de projet -->
   <div v-else class="screen-center">
-    <div class="create-content">
+    <div class="create-content ga-5 px-6">
       <!-- Header -->
-      <div class="create-header">
+      <div class="create-header ga-3">
         <button class="back-btn" @click="step = 'home'">
           <v-icon class="back-icon" size="16">mdi-arrow-left</v-icon>
           {{ t('dbSelector.back') }}
@@ -170,20 +170,20 @@ async function create() {
       </div>
 
       <!-- Explication -->
-      <div class="create-info">
+      <div class="create-info pa-3 ga-1">
         <p>Le <code class="code-inline">CLAUDE.md</code> sera initialisé dans le dossier choisi.</p>
         <p>Un terminal <span class="code-agent">setup</span> sera lancé automatiquement pour initialiser le projet.</p>
       </div>
 
       <!-- Instance selector (hidden when ≤ 1 instance — auto-selected) -->
       <div v-if="availableInstances.length > 1">
-        <p class="instance-label">{{ t('dbSelector.instance') }}</p>
+        <p class="instance-label mb-2">{{ t('dbSelector.instance') }}</p>
         <div v-if="loadingInstances" class="loading-text">{{ t('common.loading') }}</div>
         <div v-else class="instance-list">
           <label
             v-for="inst in availableInstances"
             :key="inst.distro"
-            :class="['instance-option', selectedInstance?.distro === inst.distro ? 'instance-option--selected' : '']"
+            :class="['instance-option', 'ga-3', 'py-2', 'px-3', selectedInstance?.distro === inst.distro ? 'instance-option--selected' : '']"
           >
             <input
               v-model="selectedInstance"
@@ -198,7 +198,7 @@ async function create() {
 
       <!-- Bouton lancer -->
       <button
-        class="create-btn"
+        class="create-btn ga-2"
         :disabled="creating || loadingInstances || (availableInstances.length > 1 && !selectedInstance)"
         @click="create"
       >
@@ -207,7 +207,7 @@ async function create() {
         {{ creating ? t('setup.creating') : t('dbSelector.selectAndInit') }}
       </button>
 
-      <p v-if="creatingError" class="error-msg">{{ creatingError }}</p>
+      <p v-if="creatingError" class="error-msg py-2 px-3">{{ creatingError }}</p>
     </div>
   </div>
 </template>
@@ -223,9 +223,7 @@ async function create() {
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 24px;
   max-width: 320px;
-  padding: 0 24px;
 }
 .logo-wrap {
   width: 56px;
@@ -243,7 +241,7 @@ async function create() {
   height: 28px;
   color: rgb(var(--v-theme-primary));
 }
-.home-titles { display: flex; flex-direction: column; gap: 4px; }
+.home-titles { display: flex; flex-direction: column; }
 .app-name {
   font-size: 1.25rem;
   font-weight: 600;
@@ -256,14 +254,11 @@ async function create() {
 .action-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
 }
 .action-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px 20px;
   border-radius: 12px;
   border: 1px solid var(--edge-default);
   background: rgba(var(--v-theme-on-surface), 0.02);
@@ -318,7 +313,6 @@ async function create() {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 4px;
-  padding: 8px 12px;
 }
 .lang-row { display: flex; justify-content: center; }
 .lang-select {
@@ -334,15 +328,12 @@ async function create() {
 .create-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
   max-width: 320px;
   width: 100%;
-  padding: 0 24px;
 }
 .create-header {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 .back-btn {
   display: flex;
@@ -363,7 +354,6 @@ async function create() {
   color: var(--content-primary);
 }
 .create-info {
-  padding: 12px;
   border-radius: 8px;
   background: rgba(var(--v-theme-on-surface), 0.04);
   border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
@@ -372,7 +362,6 @@ async function create() {
   line-height: 1.6;
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 .code-inline {
   font-family: monospace;
@@ -392,7 +381,6 @@ async function create() {
   color: var(--content-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 8px;
 }
 .loading-text {
   font-size: 0.875rem;
@@ -411,8 +399,6 @@ async function create() {
 .instance-option {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--edge-default);
   cursor: pointer;
@@ -435,7 +421,6 @@ async function create() {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   padding: 10px 16px;
   border-radius: 8px;
   font-size: 0.875rem;

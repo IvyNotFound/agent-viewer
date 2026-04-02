@@ -241,7 +241,7 @@ onUnmounted(() => {
     <div v-if="agentName" class="stream-accent-bar" :style="{ background: accentFg }" />
 
     <!-- Messages scroll area -->
-    <div ref="scrollContainer" class="stream-scroll">
+    <div ref="scrollContainer" class="stream-scroll pa-4 ga-3">
       <div
         v-if="displayEvents.length === 0 && !isStreaming"
         class="stream-empty"
@@ -258,15 +258,15 @@ onUnmounted(() => {
           data-testid="block-system-init"
         >
           {{ t('stream.sessionStarted') }}
-          <span v-if="event.session_id" class="init-session-id">· {{ event.session_id.slice(0, 8) }}…</span>
+          <span v-if="event.session_id" class="init-session-id ml-1">· {{ event.session_id.slice(0, 8) }}…</span>
           <template v-if="sessionContextMap.get(event._id!)">
             <button
-              class="init-ctx-btn"
+              class="init-ctx-btn ml-2"
               @click="toggleCollapsed(`init-ctx-${event._id}`, true)"
             >{{ (collapsed[`init-ctx-${event._id}`] ?? true) ? '▶ ' + t('stream.ctx') : '▼ ' + t('stream.ctx') }}</button>
             <div
               v-show="!(collapsed[`init-ctx-${event._id}`] ?? true)"
-              class="init-ctx-body"
+              class="init-ctx-body mt-1 ml-4"
             >{{ sessionContextMap.get(event._id!) }}</div>
           </template>
         </div>
@@ -274,14 +274,14 @@ onUnmounted(() => {
         <!-- error:spawn / error:exit -->
         <div
           v-if="event.type === 'error:spawn' || event.type === 'error:exit'"
-          class="block-error"
+          class="block-error ga-2 py-3 px-4"
           data-testid="block-error"
         >
           <span class="error-icon">⚠</span>
           <div class="error-body">
             <span class="error-type">{{ event.type }}</span>
-            <span class="error-text">{{ event.error }}</span>
-            <pre v-if="event.stderr" class="error-stderr">{{ event.stderr }}</pre>
+            <span class="error-text ml-2">{{ event.error }}</span>
+            <pre v-if="event.stderr" class="error-stderr mt-2">{{ event.stderr }}</pre>
           </div>
         </div>
 
@@ -292,7 +292,7 @@ onUnmounted(() => {
           data-testid="block-user"
         >
           <div
-            class="user-bubble"
+            class="user-bubble py-3 px-4"
             :style="{ borderColor: accentBorder }"
           >
             <template v-for="(block, bIdx) in event.message.content" :key="bIdx">
@@ -307,7 +307,7 @@ onUnmounted(() => {
             <!-- text block — Markdown + DOMPurify (T678), agent color bg (T720) -->
             <div
               v-if="block.type === 'text'"
-              class="stream-markdown block-text"
+              class="stream-markdown block-text py-3 px-4"
               :style="{ backgroundColor: accentBg, borderColor: accentBorder, borderLeftColor: accentFg }"
               data-testid="block-text"
               v-html="block._html ?? ''"
@@ -331,7 +331,7 @@ onUnmounted(() => {
         <!-- result footer — cost / duration / turns -->
         <div
           v-if="event.type === 'result'"
-          class="block-result"
+          class="block-result ga-4 pt-2"
           data-testid="block-result"
         >
           <span v-if="event.num_turns !== undefined">{{ t('stream.turns', event.num_turns, { named: { n: event.num_turns } }) }}</span>
@@ -343,7 +343,7 @@ onUnmounted(() => {
         <!-- text block — plain text output from non-Claude CLIs (T1197) -->
         <div
           v-if="event.type === 'text'"
-          class="stream-markdown block-text"
+          class="stream-markdown block-text py-3 px-4"
           :style="{ backgroundColor: accentBg, borderColor: accentBorder, borderLeftColor: accentFg }"
           data-testid="block-text-raw"
           v-html="event._html ?? event.text ?? ''"
@@ -352,7 +352,7 @@ onUnmounted(() => {
         <!-- error block — error events from non-Claude CLIs (T1197) -->
         <div
           v-if="event.type === 'error'"
-          class="block-error"
+          class="block-error ga-2 py-3 px-4"
           data-testid="block-error-raw"
         >
           <span class="error-icon">⚠</span>
@@ -363,7 +363,7 @@ onUnmounted(() => {
       <!-- Streaming indicator — thinking preview (T731) or generic dots -->
       <div
         v-if="isStreaming"
-        class="streaming-indicator"
+        class="streaming-indicator ga-2"
         :style="{ color: accentFg }"
         data-testid="streaming-indicator"
       >
@@ -372,7 +372,7 @@ onUnmounted(() => {
           <span class="bounce-dot bounce-dot--d1" :style="{ backgroundColor: accentFg }" />
           <span class="bounce-dot bounce-dot--d2" :style="{ backgroundColor: accentFg }" />
         </span>
-        <span v-if="activeThinkingText" class="thinking-text">
+        <span v-if="activeThinkingText" class="thinking-text ga-1">
           <span class="thinking-label" data-testid="thinking-label">{{ t('stream.thinking') }}</span>
           <span class="thinking-preview" data-testid="thinking-preview">{{ activeThinkingText.slice(-120) }}</span>
         </span>
@@ -417,10 +417,8 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .stream-empty {
@@ -439,11 +437,9 @@ onUnmounted(() => {
   font-style: italic;
 }
 .init-session-id {
-  margin-left: 4px;
   font-family: ui-monospace, monospace;
 }
 .init-ctx-btn {
-  margin-left: 8px;
   font-style: normal;
   color: var(--content-faint);
   background: none;
@@ -455,8 +451,6 @@ onUnmounted(() => {
 }
 .init-ctx-btn:hover { color: var(--content-muted); }
 .init-ctx-body {
-  margin-top: 4px;
-  margin-left: 16px;
   font-style: normal;
   color: var(--content-faint);
   white-space: pre-wrap;
@@ -468,11 +462,9 @@ onUnmounted(() => {
 .block-error {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
   background: #450a0a;
   border: 1px solid #991b1b;
   border-radius: 8px;
-  padding: 12px 16px;
   color: #fca5a5;
   font-size: 12px;
   font-family: ui-monospace, monospace;
@@ -490,11 +482,9 @@ onUnmounted(() => {
   color: #f87171;
 }
 .error-text {
-  margin-left: 8px;
   white-space: pre-wrap;
 }
 .error-stderr {
-  margin-top: 8px;
   color: #fecaca;
   font-size: 12px;
   white-space: pre-wrap;
@@ -514,7 +504,6 @@ onUnmounted(() => {
   background: var(--surface-secondary);
   border: 1px solid;
   border-radius: 8px;
-  padding: 12px 16px;
   max-width: 80%;
   white-space: pre-wrap;
   overflow-wrap: break-word;
@@ -528,7 +517,6 @@ onUnmounted(() => {
 /* assistant text block */
 .block-text {
   border-radius: 8px;
-  padding: 12px 16px;
   border: 1px solid;
   border-left-width: 4px;
   line-height: 1.625;
@@ -540,11 +528,9 @@ onUnmounted(() => {
 .block-result {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
   font-size: 12px;
   color: var(--content-subtle);
   border-top: 1px solid var(--edge-subtle);
-  padding-top: 8px;
 }
 .result-session-id {
   margin-left: auto;
@@ -556,7 +542,6 @@ onUnmounted(() => {
 .streaming-indicator {
   display: flex;
   align-items: center;
-  gap: 8px;
   font-size: 12px;
   min-width: 0;
 }
@@ -580,7 +565,6 @@ onUnmounted(() => {
 .thinking-text {
   display: flex;
   align-items: center;
-  gap: 4px;
   min-width: 0;
 }
 .thinking-label { flex-shrink: 0; font-weight: 500; }

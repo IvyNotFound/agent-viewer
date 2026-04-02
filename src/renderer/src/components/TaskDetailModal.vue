@@ -171,9 +171,9 @@ onUnmounted(() => {
       <div class="task-panel elevation-8">
 
         <!-- Header -->
-        <div class="task-header">
+        <div class="task-header ga-3 py-4 px-5">
           <div class="task-header-left">
-            <p class="task-title">{{ task.title }}</p>
+            <p class="task-title mb-2">{{ task.title }}</p>
             <div class="d-flex flex-wrap ga-2">
               <span :class="STATUS_BADGE_CLASS[task.status] ?? 'status-badge'">
                 {{ statusLabel(task.status) }}
@@ -200,14 +200,14 @@ onUnmounted(() => {
         <div class="task-body">
 
           <!-- Colonne gauche : description + commentaire tâche -->
-          <div class="task-left-col">
+          <div class="task-left-col py-4 px-5 ga-5">
             <!-- Description -->
             <div v-if="task.description">
               <p class="section-label mb-2">{{ t('taskDetail.description') }}</p>
               <div class="md-content" v-html="renderedDescription"></div>
             </div>
 
-            <p v-if="!task.description" class="empty-text">
+            <p v-if="!task.description" class="empty-text pt-2">
               {{ t('taskDetail.noDescription') }}
             </p>
           </div>
@@ -216,7 +216,7 @@ onUnmounted(() => {
           <div class="task-right-col">
 
             <!-- T553: Blocked indicator -->
-            <div v-if="isBlocked" class="blocked-banner">
+            <div v-if="isBlocked" class="blocked-banner py-2 px-4">
               <p class="section-label mb-1" style="color: #fbbf24;">{{ t('taskDetail.blockedTitle') }}</p>
               <ul class="blocked-list">
                 <li
@@ -263,7 +263,7 @@ onUnmounted(() => {
             <!-- Section Commits liés (T761) — hidden when no commits -->
             <div v-if="gitCommits.length > 0" class="right-section right-section--collapsible">
               <button
-                class="commits-toggle"
+                class="commits-toggle py-3 px-4"
                 @click="gitCommitsOpen = !gitCommitsOpen"
               >
                 <p class="section-label">
@@ -302,7 +302,7 @@ onUnmounted(() => {
                   <span class="text-caption" style="color: var(--content-faint); flex-shrink: 0;">{{ a.role ?? '—' }}</span>
                 </div>
               </div>
-              <p v-else class="empty-text">
+              <p v-else class="empty-text pt-2">
                 {{ t('taskDetail.noAssignees') }}
               </p>
             </div>
@@ -315,7 +315,7 @@ onUnmounted(() => {
               </p>
             </div>
 
-            <div class="comments-list">
+            <div class="comments-list pa-3 ga-3">
               <!-- Messages conversation -->
               <div
                 v-for="comment in renderedComments"
@@ -334,7 +334,7 @@ onUnmounted(() => {
                 </div>
                 <!-- Bulle -->
                 <div
-                  class="md-bubble"
+                  class="md-bubble py-2 px-3"
                   :style="{
                     color: agentFg(comment.agent_name ?? 'unknown'),
                     backgroundColor: agentBg(comment.agent_name ?? 'unknown'),
@@ -352,7 +352,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Footer -->
-        <div class="task-footer">
+        <div class="task-footer py-3 px-5 ga-4">
           <div class="d-flex align-center ga-5">
             <p class="text-caption" style="color: var(--content-muted);">
               <span style="color: var(--content-subtle); margin-right: 4px;">{{ t('taskDetail.created') }}</span>{{ formatDateFull(task.created_at) }}
@@ -394,8 +394,6 @@ onUnmounted(() => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  padding: 16px 20px;
   border-bottom: 1px solid var(--edge-subtle);
   flex-shrink: 0;
 }
@@ -408,7 +406,6 @@ onUnmounted(() => {
   font-weight: 600;
   color: var(--content-primary);
   line-height: 1.4;
-  margin-bottom: 8px;
 }
 .btn-close {
   flex-shrink: 0;
@@ -481,10 +478,8 @@ onUnmounted(() => {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
 }
 
 /* Right column */
@@ -518,7 +513,6 @@ onUnmounted(() => {
 
 /* Blocked banner */
 .blocked-banner {
-  padding: 8px 16px;
   border-bottom: 1px solid rgba(245, 158, 11, 0.3);
   background: rgba(245, 158, 11, 0.1);
   flex-shrink: 0;
@@ -553,7 +547,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
   background: none;
   border: none;
   cursor: pointer;
@@ -595,10 +588,8 @@ onUnmounted(() => {
 .comments-list {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 .comment-author {
   font-size: 11px;
@@ -617,7 +608,6 @@ onUnmounted(() => {
 /* md-bubble: keep class for tests */
 .md-bubble {
   border-radius: 8px;
-  padding: 8px 12px;
   font-size: 12px;
   line-height: 1.5;
   word-break: break-words;
@@ -629,18 +619,15 @@ onUnmounted(() => {
   font-size: 12px;
   color: var(--content-faint);
   font-style: italic;
-  padding-top: 8px;
 }
 
 /* Footer */
 .task-footer {
-  padding: 12px 20px;
   border-top: 1px solid var(--edge-subtle);
   background: var(--surface-base);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
   flex-shrink: 0;
 }
 .font-mono {

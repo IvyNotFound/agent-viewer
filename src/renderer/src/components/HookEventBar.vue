@@ -53,7 +53,7 @@ function rowLabel(e: HookEvent): string {
     <!-- Header bar: active tool indicator + toggle -->
     <!-- cursor-pointer kept as class name for test selector compatibility -->
     <div
-      class="hook-header cursor-pointer"
+      class="hook-header cursor-pointer ga-2"
       @click="expanded = !expanded"
     >
       <!-- Active tool spinner -->
@@ -90,7 +90,7 @@ function rowLabel(e: HookEvent): string {
           {{ new Date(e.ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
         </span>
       </div>
-      <div v-if="events.length === 0" class="no-events">{{ t('hooks.noEvents') }}</div>
+      <div v-if="events.length === 0" class="no-events py-1">{{ t('hooks.noEvents') }}</div>
     </div>
   </div>
 
@@ -123,7 +123,6 @@ function rowLabel(e: HookEvent): string {
 .hook-header {
   display: flex;
   align-items: center;
-  gap: 8px;
   padding: 6px 12px;
   user-select: none;
   transition: background-color 0.15s;
@@ -231,6 +230,5 @@ function rowLabel(e: HookEvent): string {
   font-size: 0.625rem;
   color: var(--content-faint);
   font-style: italic;
-  padding: 4px 0;
 }
 </style>
