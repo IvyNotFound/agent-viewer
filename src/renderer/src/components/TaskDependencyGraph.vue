@@ -18,17 +18,17 @@ const emit = defineEmits<{
 type LinkType = 'blocks' | 'depends_on' | 'related_to' | 'duplicates'
 
 const LINK_TYPE_STYLE: Record<string, { color: string; background: string; border: string }> = {
-  blocks:     { color: '#f87171', background: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.3)' },
-  depends_on: { color: '#fb923c', background: 'rgba(249,115,22,0.12)',  border: 'rgba(249,115,22,0.3)' },
-  related_to: { color: '#60a5fa', background: 'rgba(59,130,246,0.12)',  border: 'rgba(59,130,246,0.3)' },
-  duplicates: { color: '#a1a1aa', background: 'rgba(113,113,122,0.12)', border: 'rgba(113,113,122,0.3)' },
+  blocks:     { color: 'rgb(var(--v-theme-error))',    background: 'rgba(var(--v-theme-error),0.12)',    border: 'rgba(var(--v-theme-error),0.3)' },
+  depends_on: { color: 'rgb(var(--v-theme-warning))', background: 'rgba(var(--v-theme-warning),0.12)',  border: 'rgba(var(--v-theme-warning),0.3)' },
+  related_to: { color: 'rgb(var(--v-theme-primary))', background: 'rgba(var(--v-theme-primary),0.12)',  border: 'rgba(var(--v-theme-primary),0.3)' },
+  duplicates: { color: 'rgb(var(--v-theme-content-muted))', background: 'rgba(var(--v-theme-content-subtle),0.12)', border: 'rgba(var(--v-theme-content-subtle),0.3)' },
 }
 
 const STATUS_STYLE: Record<string, { color: string; background: string; border: string }> = {
-  todo:        { color: '#fbbf24', background: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)' },
-  in_progress: { color: '#34d399', background: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' },
-  done:        { color: '#a1a1aa', background: 'rgba(113,113,122,0.12)', border: 'rgba(113,113,122,0.3)' },
-  archived:    { color: '#71717a', background: 'rgba(82,82,91,0.12)',    border: 'rgba(82,82,91,0.3)' },
+  todo:        { color: 'rgb(var(--v-theme-warning))',   background: 'rgba(var(--v-theme-warning),0.12)',   border: 'rgba(var(--v-theme-warning),0.3)' },
+  in_progress: { color: 'rgb(var(--v-theme-secondary))', background: 'rgba(var(--v-theme-secondary),0.12)', border: 'rgba(var(--v-theme-secondary),0.3)' },
+  done:        { color: 'rgb(var(--v-theme-content-muted))', background: 'rgba(var(--v-theme-content-subtle),0.12)', border: 'rgba(var(--v-theme-content-subtle),0.3)' },
+  archived:    { color: 'rgb(var(--v-theme-content-subtle))', background: 'rgba(var(--v-theme-content-faint),0.12)', border: 'rgba(var(--v-theme-content-faint),0.3)' },
 }
 
 const fallbackLink   = LINK_TYPE_STYLE.related_to

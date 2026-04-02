@@ -247,8 +247,8 @@ const {
   color: var(--content-secondary) !important;
   transition: border-color 0.15s, color 0.15s;
 }
-.ts-period-btn:hover { border-color: #6d28d9 !important; color: var(--content-primary) !important; }
-.ts-period-btn--active { background: #6d28d9 !important; border-color: #6d28d9 !important; color: #fff !important; }
+.ts-period-btn:hover { border-color: rgb(var(--v-theme-primary)) !important; color: var(--content-primary) !important; }
+.ts-period-btn--active { background: rgb(var(--v-theme-primary)) !important; border-color: rgb(var(--v-theme-primary)) !important; color: #fff !important; }
 
 /* summary cards */
 .ts-cards-row {
@@ -288,10 +288,10 @@ const {
 }
 
 /* color helpers */
-.ts-in  { color: #34d399; }
-.ts-out { color: #38bdf8; }
-.ts-amber  { color: #fbbf24; }
-.ts-violet { color: #a78bfa; }
+.ts-in  { color: rgb(var(--v-theme-secondary)); }
+.ts-out { color: rgb(var(--v-theme-primary)); }
+.ts-amber  { color: rgb(var(--v-theme-warning)); }
+.ts-violet { color: rgb(var(--v-theme-primary)); }
 .ts-faint  { color: var(--content-faint); }
 .ts-subtle { color: var(--content-subtle); }
 .ts-secondary { color: var(--content-secondary); }
@@ -324,10 +324,10 @@ const {
 .ts-spark-bar {
   width: 100%;
   border-radius: 2px 2px 0 0;
-  background: rgba(52, 211, 153, 0.4);
+  background: rgba(var(--v-theme-secondary), 0.4);
   transition: background 0.15s;
 }
-.ts-spark-bar--hovered { background: #6d28d9; }
+.ts-spark-bar--hovered { background: rgb(var(--v-theme-primary)); }
 .ts-spark-zero { width: 100%; height: 2px; border-radius: 2px; background: var(--edge-subtle); }
 .ts-spark-tooltip {
   position: absolute;
@@ -387,7 +387,7 @@ const {
 .ts-bar-fill {
   height: 100%;
   border-radius: 4px;
-  background: linear-gradient(to right, rgba(52,211,153,0.6), rgba(56,189,248,0.6));
+  background: linear-gradient(to right, rgba(var(--v-theme-secondary),0.6), rgba(var(--v-theme-primary),0.6));
   transition: width 0.3s;
 }
 .ts-bar-label {
@@ -417,10 +417,10 @@ const {
 .ts-th { padding: 6px 8px; font-weight: 500; }
 .ts-th--right { text-align: right; }
 .ts-tbody-row {
-  border-bottom: 1px solid rgba(39, 39, 42, 0.4);
+  border-bottom: 1px solid rgba(var(--v-theme-surface-secondary), 0.4);
   transition: background 0.15s;
 }
-.ts-tbody-row:hover { background: rgba(39, 39, 42, 0.4); }
+.ts-tbody-row:hover { background: rgba(var(--v-theme-surface-secondary), 0.4); }
 .ts-td { padding: 6px 8px; }
 .ts-td--right { text-align: right; }
 .ts-agent-badge { padding: 2px 6px; border-radius: 4px; font-weight: 500; }

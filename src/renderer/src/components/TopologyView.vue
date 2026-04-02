@@ -226,10 +226,10 @@ function onAgentClick(row: TopologyRow): void {
   align-items: flex-start;
   width: 100%;
 }
-.tp-card--active  { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.3); }
-.tp-card--active:hover  { background: rgba(16,185,129,0.10); }
-.tp-card--blocked { background: rgba(249,115,22,0.05); border-color: rgba(249,115,22,0.3); }
-.tp-card--blocked:hover { background: rgba(249,115,22,0.10); }
+.tp-card--active  { background: rgba(var(--v-theme-secondary),0.05); border-color: rgba(var(--v-theme-secondary),0.3); }
+.tp-card--active:hover  { background: rgba(var(--v-theme-secondary),0.10); }
+.tp-card--blocked { background: rgba(var(--v-theme-warning),0.05); border-color: rgba(var(--v-theme-warning),0.3); }
+.tp-card--blocked:hover { background: rgba(var(--v-theme-warning),0.10); }
 .tp-card--idle    { background: var(--surface-secondary); border-color: var(--edge-subtle); }
 .tp-card--idle:hover    { border-color: var(--edge-default); }
 
@@ -252,12 +252,12 @@ function onAgentClick(row: TopologyRow): void {
   padding: 2px 6px;
   border-radius: 9999px;
 }
-.tp-badge--active  { background: rgba(16,185,129,0.2); color: #34d399; }
-.tp-badge--blocked { background: rgba(249,115,22,0.2); color: #fb923c; }
+.tp-badge--active  { background: rgba(var(--v-theme-secondary),0.2); color: rgb(var(--v-theme-secondary)); }
+.tp-badge--blocked { background: rgba(var(--v-theme-warning),0.2); color: rgb(var(--v-theme-warning)); }
 .tp-badge--idle    { background: var(--surface-tertiary); color: var(--content-faint); }
 .tp-status-dot { width: 6px; height: 6px; border-radius: 50%; }
-.tp-dot--active  { background: #34d399; }
-.tp-dot--blocked { background: #fb923c; }
+.tp-dot--active  { background: rgb(var(--v-theme-secondary)); }
+.tp-dot--blocked { background: rgb(var(--v-theme-warning)); }
 .tp-dot--idle    { background: var(--content-faint); }
 .tp-agent-type { font-size: 10px; color: var(--content-faint); font-family: ui-monospace, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0; }
 .tp-task {}

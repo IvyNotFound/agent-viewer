@@ -217,7 +217,7 @@ onUnmounted(() => {
 
             <!-- T553: Blocked indicator -->
             <div v-if="isBlocked" class="blocked-banner py-2 px-4">
-              <p class="section-label mb-1 text-overline" style="color: #fbbf24;">{{ t('taskDetail.blockedTitle') }}</p>
+              <p class="section-label mb-1 text-overline" style="color: rgb(var(--v-theme-warning));">{{ t('taskDetail.blockedTitle') }}</p>
               <ul class="blocked-list">
                 <li
                   v-for="link in unresolvedBlockers"
@@ -425,10 +425,10 @@ padding: 2px 8px;
   border: 1px solid;
   font-weight: 500;
 }
-.status-badge--todo        { background: rgba(245,158,11,0.2);   color: #fcd34d; border-color: rgba(245,158,11,0.3); }
-.status-badge--in-progress { background: rgba(16,185,129,0.2);   color: #6ee7b7; border-color: rgba(16,185,129,0.3); }
-.status-badge--done        { background: rgba(113,113,122,0.2);  color: #a1a1aa; border-color: rgba(113,113,122,0.3); }
-.status-badge--archived    { background: rgba(139,92,246,0.2);   color: #c4b5fd; border-color: rgba(139,92,246,0.3); }
+.status-badge--todo        { background: rgba(var(--v-theme-warning), 0.2);   color: rgb(var(--v-theme-warning)); border-color: rgba(var(--v-theme-warning), 0.3); }
+.status-badge--in-progress { background: rgba(var(--v-theme-secondary), 0.2); color: rgb(var(--v-theme-secondary)); border-color: rgba(var(--v-theme-secondary), 0.3); }
+.status-badge--done        { background: rgba(var(--v-theme-content-subtle), 0.2);  color: rgb(var(--v-theme-content-muted)); border-color: rgba(var(--v-theme-content-subtle), 0.3); }
+.status-badge--archived    { background: rgba(var(--v-theme-primary), 0.2);   color: rgb(var(--v-theme-primary)); border-color: rgba(var(--v-theme-primary), 0.3); }
 
 /* Scope badge */
 .scope-badge {
@@ -448,9 +448,9 @@ padding: 2px 8px;
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
   border: 1px solid;
 }
-.effort-badge--small  { background: rgba(16,185,129,0.2);  color: #6ee7b7; border-color: rgba(16,185,129,0.3); }
-.effort-badge--medium { background: rgba(245,158,11,0.2);  color: #fcd34d; border-color: rgba(245,158,11,0.3); }
-.effort-badge--large  { background: rgba(239,68,68,0.2);   color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+.effort-badge--small  { background: rgba(var(--v-theme-secondary), 0.2); color: rgb(var(--v-theme-secondary)); border-color: rgba(var(--v-theme-secondary), 0.3); }
+.effort-badge--medium { background: rgba(var(--v-theme-warning), 0.2);   color: rgb(var(--v-theme-warning));   border-color: rgba(var(--v-theme-warning), 0.3); }
+.effort-badge--large  { background: rgba(var(--v-theme-error), 0.2);     color: rgb(var(--v-theme-error));     border-color: rgba(var(--v-theme-error), 0.3); }
 
 /* Body layout: 2 columns */
 .task-body {
@@ -502,8 +502,8 @@ padding: 2px 8px;
 
 /* Blocked banner */
 .blocked-banner {
-  border-bottom: 1px solid rgba(245, 158, 11, 0.3);
-  background: rgba(245, 158, 11, 0.1);
+  border-bottom: 1px solid rgba(var(--v-theme-warning), 0.3);
+  background: rgba(var(--v-theme-warning), 0.1);
   flex-shrink: 0;
 }
 .blocked-list {
@@ -515,7 +515,7 @@ padding: 2px 8px;
   gap: 2px;
 }
 .blocked-item {
-  color: rgba(251, 191, 36, 0.8);
+  color: rgba(var(--v-theme-warning), 0.8);
 }
 
 /* Meta labels */

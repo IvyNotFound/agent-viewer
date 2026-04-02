@@ -287,7 +287,7 @@ watch(() => props.filePath, async () => {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #fbbf24;
+  background: rgb(var(--v-theme-warning));
   flex-shrink: 0;
 }
 .fv-actions {
@@ -307,7 +307,7 @@ watch(() => props.filePath, async () => {
   align-items: center;
   justify-content: center;
   z-index: 10;
-  background: rgba(24,24,27,0.8);
+  background: rgba(var(--v-theme-surface-primary), 0.8);
 }
 .fv-loading-text {
   color: var(--content-faint);

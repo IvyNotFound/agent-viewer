@@ -205,9 +205,9 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
 }
 .heatmap-filter-btn:hover { color: var(--content-secondary) !important; }
 .heatmap-filter-btn--active {
-  border-color: #10b981;
-  color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
+  border-color: rgb(var(--v-theme-secondary));
+  color: rgb(var(--v-theme-secondary));
+  background: rgba(var(--v-theme-secondary), 0.1);
 }
 .heatmap-grid-wrap {
   overflow-x: auto;
@@ -225,11 +225,11 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
   transition: background-color 0.15s;
 }
 /* Heat intensity levels */
-.heat-0 { background-color: rgba(63, 63, 70, 0.4); }
+.heat-0 { background-color: rgba(var(--v-theme-surface-tertiary), 0.4); }
 .heat-1 { background-color: #064e3b; }
 .heat-2 { background-color: #047857; }
-.heat-3 { background-color: #10b981; }
-.heat-4 { background-color: #34d399; }
+.heat-3 { background-color: rgb(var(--v-theme-secondary)); }
+.heat-4 { background-color: rgba(var(--v-theme-secondary), 0.7); }
 .heatmap-legend {
   display: flex;
   align-items: center;

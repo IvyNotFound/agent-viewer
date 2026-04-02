@@ -366,7 +366,7 @@ function onDefaultCliChange(v: string) {
     <v-card class="pa-5">
       <h3 class="text-body-1 font-weight-medium mb-2" style="color: var(--content-primary)">{{ t('settings.exportConfirmTitle') }}</h3>
       <p class="text-body-2 mb-2" style="color: var(--content-muted)">{{ t('settings.exportConfirmMsg') }}</p>
-      <p class="text-caption mb-4" style="color: #f59e0b;">{{ t('settings.exportConfirmWarn') }}</p>
+      <p class="text-caption mb-4" style="color: rgb(var(--v-theme-warning));">{{ t('settings.exportConfirmWarn') }}</p>
       <div class="d-flex ga-2 justify-end">
         <v-btn variant="text" @click="showExportConfirm = false">{{ t('settings.exportCancel') }}</v-btn>
         <v-btn color="primary" @click="exportZip">{{ t('settings.exportConfirm') }}</v-btn>
@@ -415,7 +415,7 @@ function onDefaultCliChange(v: string) {
 }
 
 /* Updater status colors */
-.text-amber { color: #fbbf24; }
-.text-emerald { color: #34d399; }
-.text-red { color: #f87171; }
+.text-amber { color: rgb(var(--v-theme-warning)); }
+.text-emerald { color: rgb(var(--v-theme-secondary)); }
+.text-red { color: rgb(var(--v-theme-error)); }
 </style>

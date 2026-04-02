@@ -173,11 +173,11 @@ function statusColor(status: string): string {
 
 function priorityColor(priority: string): string {
   const map: Record<string, string> = {
-    low: '#71717a',      // zinc-500
-    high: '#fbbf24',     // amber-400
-    critical: '#f87171', // red-400
+    low: 'rgb(var(--v-theme-content-subtle))',
+    high: 'rgb(var(--v-theme-warning))',
+    critical: 'rgb(var(--v-theme-error))',
   }
-  return map[priority] ?? '#a1a1aa'
+  return map[priority] ?? 'rgb(var(--v-theme-content-muted))'
 }
 </script>
 
@@ -202,7 +202,7 @@ function priorityColor(priority: string): string {
           <v-card elevation="0" class="metric-card">
             <v-card-text class="d-flex align-center ga-3 pa-4">
               <div class="metric-icon metric-icon--cyan shrink-0">
-                <v-icon class="metric-svg" size="20" style="color: #22d3ee">mdi-account-group</v-icon>
+                <v-icon class="metric-svg" size="20" style="color: rgb(var(--v-theme-primary))">mdi-account-group</v-icon>
               </div>
               <div class="metric-values">
                 <div class="text-h6 font-weight-bold tabular-nums lh-tight">{{ activeAgentsCount }}</div>
@@ -218,7 +218,7 @@ function priorityColor(priority: string): string {
           <v-card elevation="0" class="metric-card">
             <v-card-text class="d-flex align-center ga-3 pa-4">
               <div class="metric-icon metric-icon--amber shrink-0">
-                <v-icon class="metric-svg" size="20" style="color: #fbbf24">mdi-lightning-bolt</v-icon>
+                <v-icon class="metric-svg" size="20" style="color: rgb(var(--v-theme-warning))">mdi-lightning-bolt</v-icon>
               </div>
               <div class="metric-values">
                 <div class="text-h6 font-weight-bold tabular-nums lh-tight">{{ store.stats.in_progress }}</div>
@@ -234,7 +234,7 @@ function priorityColor(priority: string): string {
           <v-card elevation="0" class="metric-card">
             <v-card-text class="d-flex align-center ga-3 pa-4">
               <div class="metric-icon metric-icon--violet shrink-0">
-                <v-icon class="metric-svg" size="20" style="color: #a78bfa">mdi-clipboard-text-outline</v-icon>
+                <v-icon class="metric-svg" size="20" style="color: rgb(var(--v-theme-primary))">mdi-clipboard-text-outline</v-icon>
               </div>
               <div class="metric-values">
                 <div class="text-h6 font-weight-bold tabular-nums lh-tight">{{ store.stats.todo }}</div>
@@ -250,7 +250,7 @@ function priorityColor(priority: string): string {
           <v-card elevation="0" class="metric-card">
             <v-card-text class="d-flex align-center ga-3 pa-4">
               <div class="metric-icon metric-icon--emerald shrink-0">
-                <v-icon class="metric-svg" size="20" style="color: #34d399">mdi-calendar-today</v-icon>
+                <v-icon class="metric-svg" size="20" style="color: rgb(var(--v-theme-secondary))">mdi-calendar-today</v-icon>
               </div>
               <div class="metric-values">
                 <div class="text-h6 font-weight-bold tabular-nums lh-tight">{{ sessionsTodayCount }}</div>
@@ -444,10 +444,10 @@ function priorityColor(priority: string): string {
   flex-shrink: 0;
 }
 
-.metric-icon--cyan    { background-color: rgba(6,   182, 212, 0.15); }
-.metric-icon--amber   { background-color: rgba(245, 158, 11,  0.15); }
-.metric-icon--violet  { background-color: rgba(139, 92,  246, 0.15); }
-.metric-icon--emerald { background-color: rgba(16,  185, 129, 0.15); }
+.metric-icon--cyan    { background-color: rgba(var(--v-theme-secondary), 0.15); }
+.metric-icon--amber   { background-color: rgba(var(--v-theme-warning), 0.15); }
+.metric-icon--violet  { background-color: rgba(var(--v-theme-primary), 0.15); }
+.metric-icon--emerald { background-color: rgba(var(--v-theme-secondary), 0.15); }
 
 .metric-svg {
   width: 16px;

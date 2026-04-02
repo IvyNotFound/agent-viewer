@@ -253,7 +253,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   top: 0;
   bottom: 0;
   width: 1px;
-  background: rgba(113, 113, 122, 0.6);
+  background: rgba(var(--v-theme-content-subtle), 0.6);
   pointer-events: none;
 }
 .group-header {
@@ -311,7 +311,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   padding: 2px 0;
   color: var(--content-subtle);
 }
-.group-name--deep { color: #71717a; }
+.group-name--deep { color: rgb(var(--v-theme-content-subtle)); }
 .header-btn {
   width: 20px !important;
   min-width: 20px !important;
@@ -321,7 +321,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   color: var(--content-dim) !important;
   opacity: 0;
 }
-.header-btn--danger:hover { color: #f87171 !important; }
+.header-btn--danger:hover { color: rgb(var(--v-theme-error)) !important; }
 .group-header:hover .header-btn { opacity: 1; }
 .drop-hint {
   margin: 0 4px 4px;
@@ -354,7 +354,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   min-height: 24px !important;
   padding: 0 !important;
 }
-.icon-btn--confirm { color: #10b981 !important; }
+.icon-btn--confirm { color: rgb(var(--v-theme-secondary)) !important; }
 .icon-btn--cancel { color: var(--content-faint) !important; }
 .agents-list {
   display: flex;

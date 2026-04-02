@@ -207,7 +207,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
           <span
             v-if="isGroupActive(group)"
             style="position: absolute; bottom: 0; left: 0; right: 0; height: 2px;"
-            :style="group.agentName ? { backgroundColor: agentFg(group.agentName) } : { backgroundColor: '#a78bfa' }"
+            :style="group.agentName ? { backgroundColor: agentFg(group.agentName) } : { backgroundColor: 'rgb(var(--v-theme-primary))' }"
           ></span>
         </button>
 
@@ -389,7 +389,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #f59e0b;
+  background: rgb(var(--v-theme-warning));
   flex-shrink: 0;
 }
 .tab-close {
@@ -406,7 +406,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
 }
 .tab-close:hover {
   opacity: 1;
-  color: #f87171;
+  color: rgb(var(--v-theme-error));
   background: rgba(0,0,0,0.2);
 }
 .tab-group {
@@ -496,7 +496,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   opacity: 1;
 }
 .tab-dot--dirty {
-  background: #f59e0b;
+  background: rgb(var(--v-theme-warning));
 }
 .btn-wsl {
   display: flex;

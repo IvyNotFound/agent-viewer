@@ -82,11 +82,11 @@ function formatDate(iso: string): string {
   align-items: flex-start;
   gap: 8px;
   padding: 8px 16px;
-  border-bottom: 1px solid rgba(63, 63, 70, 0.5);
+  border-bottom: 1px solid rgba(var(--v-theme-surface-tertiary), 0.5);
   transition: background-color 0.15s;
 }
 .commit-row:last-child { border-bottom: none; }
-.commit-row:hover { background: rgba(63, 63, 70, 0.3); }
+.commit-row:hover { background: rgba(var(--v-theme-surface-tertiary), 0.3); }
 .commit-hash {
   font-size: 10px;
   color: var(--content-faint);
@@ -123,10 +123,10 @@ function formatDate(iso: string): string {
 .commit-task-badge {
   font-size: 10px !important;
   font-family: ui-monospace, monospace !important;
-  background: rgba(139, 92, 246, 0.2) !important;
-  color: #c4b5fd !important;
-  border: 1px solid rgba(139, 92, 246, 0.3) !important;
+  background: rgba(var(--v-theme-primary), 0.2) !important;
+  color: rgb(var(--v-theme-primary)) !important;
+  border: 1px solid rgba(var(--v-theme-primary), 0.3) !important;
   border-radius: 4px !important;
 }
-.commit-task-badge:hover { background: rgba(139, 92, 246, 0.3) !important; }
+.commit-task-badge:hover { background: rgba(var(--v-theme-primary), 0.3) !important; }
 </style>

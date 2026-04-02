@@ -69,7 +69,7 @@ const displayLangs = computed(() => {
   const rest = sorted.slice(5)
   if (rest.length > 0) {
     const othersPercent = rest.reduce((s, l) => s + l.percent, 0)
-    top.push({ name: t('dashboard.others'), color: '#6b7280', files: 0, lines: 0, percent: othersPercent })
+    top.push({ name: t('dashboard.others'), color: 'rgb(var(--v-theme-content-faint))', files: 0, lines: 0, percent: othersPercent })
   }
   return top
 })
@@ -240,7 +240,7 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
   text-align: center;
 }
 .telemetry-error-text {
-  color: #f87171;
+  color: rgb(var(--v-theme-error));
   margin: 0;
 }
 .telemetry-not-scanned {
@@ -265,7 +265,7 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
 .telemetry-skeleton-block {
   height: 8px;
   border-radius: 9999px;
-  background: rgba(63, 63, 70, 0.5);
+  background: rgba(var(--v-theme-surface-tertiary), 0.5);
 }
 .telemetry-skeleton-block--wide { height: 24px; width: 96px; }
 .telemetry-skeleton-block--full { width: 100%; }
@@ -289,7 +289,7 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
 .telemetry-test-ratio {
   margin-left: auto;
   font-weight: 500;
-  color: #fbbf24;
+  color: rgb(var(--v-theme-warning));
   font-variant-numeric: tabular-nums;
 }
 /* Language bar */

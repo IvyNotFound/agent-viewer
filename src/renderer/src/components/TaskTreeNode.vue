@@ -29,9 +29,9 @@ function formatDate(iso: string): string {
 
 const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
 const EFFORT_STYLE: Record<number, { color: string; background: string; border: string }> = {
-  1: { color: '#34d399', background: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' },
-  2: { color: '#fbbf24', background: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-  3: { color: '#f87171', background: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)' },
+  1: { color: 'rgb(var(--v-theme-secondary))', background: 'rgba(var(--v-theme-secondary),0.12)', border: 'rgba(var(--v-theme-secondary),0.3)' },
+  2: { color: 'rgb(var(--v-theme-warning))',   background: 'rgba(var(--v-theme-warning),0.12)',   border: 'rgba(var(--v-theme-warning),0.3)' },
+  3: { color: 'rgb(var(--v-theme-error))',     background: 'rgba(var(--v-theme-error),0.12)',     border: 'rgba(var(--v-theme-error),0.3)' },
 }
 </script>
 

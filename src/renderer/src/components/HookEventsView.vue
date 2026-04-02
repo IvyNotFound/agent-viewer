@@ -158,7 +158,7 @@ function relativeTime(ts: number): string {
   cursor: pointer;
   transition: background 0.15s;
 }
-.he-event:hover { background: rgba(39,39,42,0.4); }
+.he-event:hover { background: rgba(var(--v-theme-surface-secondary),0.4); }
 .he-event-icon {
   font-size: 11px;
   color: var(--content-faint);

@@ -232,8 +232,8 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             :width="group.w"
             :height="group.h"
             rx="8"
-            :fill="group.depth === 0 ? '#18181b' : '#27272a'"
-            :stroke="group.depth === 0 ? '#3f3f46' : '#52525b'"
+            :style="{ fill: group.depth === 0 ? 'rgb(var(--v-theme-surface-primary))' : 'rgb(var(--v-theme-surface-secondary))' }"
+            :stroke="group.depth === 0 ? 'rgb(var(--v-theme-edge-default))' : 'rgb(var(--v-theme-content-faint))'"
             stroke-width="1"
           />
           <text
@@ -243,7 +243,7 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             font-size="11"
             font-family="ui-monospace, monospace"
             font-weight="600"
-            fill="#a1a1aa"
+            :style="{ fill: 'rgb(var(--v-theme-content-muted))' }"
           >{{ group.label }}</text>
         </g>
 
@@ -255,8 +255,8 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             :width="CARD_W"
             :height="CARD_H"
             rx="8"
-            fill="#1c1c1e"
-            stroke="#3f3f46"
+            :style="{ fill: 'rgb(var(--v-theme-surface-base))' }"
+            stroke="rgb(var(--v-theme-edge-default))"
             stroke-width="1"
           />
           <circle
@@ -286,7 +286,7 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             :y="node.y + 38"
             font-size="10"
             font-family="ui-monospace, monospace"
-            fill="#71717a"
+            :style="{ fill: 'rgb(var(--v-theme-content-subtle))' }"
           >{{ node.type }}</text>
           <text
             :x="node.x + 10"

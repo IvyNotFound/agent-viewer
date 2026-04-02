@@ -112,8 +112,8 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
 }
 
 .tool-block--error {
-  border-color: #7f1d1d;
-  background-color: #0c0505;
+  border-color: rgba(var(--v-theme-error), 0.4);
+  background-color: rgba(var(--v-theme-error), 0.08);
 }
 
 .tool-header {
@@ -134,9 +134,10 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
 }
 
 .tool-header--error {
-  color: #f87171 !important;
+  color: rgb(var(--v-theme-error)) !important;
 }
 .tool-header--error:hover {
+  background-color: rgba(var(--v-theme-error), 0.15);
   filter: none;
 }
 

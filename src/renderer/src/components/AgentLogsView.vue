@@ -380,11 +380,11 @@ watch(() => props.initialAgentId, (v) => {
 
 /* log rows */
 .al-row {
-  border-bottom: 1px solid rgba(63,63,70,0.5);
+  border-bottom: 1px solid rgba(var(--v-theme-surface-tertiary),0.5);
   transition: background 0.15s;
 }
 .al-row--clickable { cursor: pointer; }
-.al-row--clickable:hover { background: rgba(39,39,42,0.4); }
+.al-row--clickable:hover { background: rgba(var(--v-theme-surface-secondary),0.4); }
 
 .al-row-main {
   display: flex;
@@ -411,14 +411,14 @@ watch(() => props.initialAgentId, (v) => {
 }
 /* dot colors */
 .al-level--info.al-dot  { background: #38bdf8; }
-.al-level--warn.al-dot  { background: #fbbf24; }
-.al-level--error.al-dot { background: #f87171; }
-.al-level--debug.al-dot { background: #c4b5fd; }
+.al-level--warn.al-dot  { background: rgb(var(--v-theme-warning)); }
+.al-level--error.al-dot { background: rgb(var(--v-theme-error)); }
+.al-level--debug.al-dot { background: rgb(var(--v-theme-primary)); }
 /* badge colors */
 .al-level--info.al-badge  { color: #38bdf8; background: rgba(12,74,110,0.6); }
-.al-level--warn.al-badge  { color: #fbbf24; background: rgba(78,52,6,0.6); }
-.al-level--error.al-badge { color: #f87171; background: rgba(69,10,10,0.6); }
-.al-level--debug.al-badge { color: #c4b5fd; background: rgba(46,16,101,0.6); }
+.al-level--warn.al-badge  { color: rgb(var(--v-theme-warning)); background: rgba(78,52,6,0.6); }
+.al-level--error.al-badge { color: rgb(var(--v-theme-error)); background: rgba(69,10,10,0.6); }
+.al-level--debug.al-badge { color: rgb(var(--v-theme-primary)); background: rgba(46,16,101,0.6); }
 
 .al-time {
   flex-shrink: 0;
@@ -478,6 +478,6 @@ watch(() => props.initialAgentId, (v) => {
   border-radius: 4px;
   background: var(--surface-secondary);
   color: var(--content-subtle);
-  border: 1px solid rgba(63,63,70,0.5);
+  border: 1px solid rgba(var(--v-theme-surface-tertiary),0.5);
 }
 </style>

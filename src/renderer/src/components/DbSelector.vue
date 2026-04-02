@@ -305,9 +305,9 @@ async function create() {
   margin-top: 2px;
 }
 .error-msg {
-  color: #f87171;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: rgb(var(--v-theme-error));
+  background: rgba(var(--v-theme-error), 0.1);
+  border: 1px solid rgba(var(--v-theme-error), 0.3);
   border-radius: 4px;
 }
 .lang-row { display: flex; justify-content: center; }

@@ -179,15 +179,15 @@ function sortIcon(key: SortKey): string {
 .tool-stats-th:hover { color: var(--content-secondary); }
 .tool-stats-th--left { text-align: left; }
 .tool-stats-row {
-  border-bottom: 1px solid rgba(63, 63, 70, 0.5);
+  border-bottom: 1px solid rgba(var(--v-theme-surface-tertiary), 0.5);
   transition: background-color 0.15s;
 }
 .tool-stats-row:last-child { border-bottom: none; }
-.tool-stats-row:hover { background: rgba(63, 63, 70, 0.3); }
+.tool-stats-row:hover { background: rgba(var(--v-theme-surface-tertiary), 0.3); }
 .tool-stats-td--mono { font-family: ui-monospace, monospace; }
 .tool-stats-td--right { text-align: right; }
 .tool-stats-td--muted { color: var(--content-tertiary); }
 .tool-stats-td--faint { color: var(--content-faint); }
-.tool-stats-td--error { color: #f87171; }
-.tool-stats-td--warn { color: #fbbf24; }
+.tool-stats-td--error { color: rgb(var(--v-theme-error)); }
+.tool-stats-td--warn { color: rgb(var(--v-theme-warning)); }
 </style>

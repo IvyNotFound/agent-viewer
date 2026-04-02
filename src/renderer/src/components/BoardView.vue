@@ -51,8 +51,8 @@ watch(activeTab, (tab) => {
 })
 
 const columns = computed(() => [
-  { key: 'todo'        as const, title: t('columns.todo'),        accentColor: '#f59e0b' },
-  { key: 'in_progress' as const, title: t('columns.in_progress'), accentColor: '#10b981' },
+  { key: 'todo'        as const, title: t('columns.todo'),        accentColor: 'rgb(var(--v-theme-warning))' },
+  { key: 'in_progress' as const, title: t('columns.in_progress'), accentColor: 'rgb(var(--v-theme-secondary))' },
   { key: 'done'        as const, title: t('columns.done'),        accentColor: 'var(--content-faint)' },
 ])
 
@@ -365,9 +365,9 @@ const archivedGroupsSorted = computed(() => {
   padding: 2px 8px;
   border-radius: 9999px;
   font-size: 0.75rem;
-  background-color: rgba(139, 92, 246, 0.2);
-  color: #c4b5fd; /* violet-300 */
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background-color: rgba(var(--v-theme-primary), 0.2);
+  color: rgb(var(--v-theme-primary));
+  border: 1px solid rgba(var(--v-theme-primary), 0.3);
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
 }
 .filter-badge-perimeter {
@@ -389,7 +389,7 @@ const archivedGroupsSorted = computed(() => {
 }
 .board-error {
   font-size: 0.75rem;
-  color: #f87171; /* red-400 */
+  color: rgb(var(--v-theme-error));
 }
 .board-area {
   flex: 1;
@@ -400,14 +400,14 @@ const archivedGroupsSorted = computed(() => {
 }
 .stale-alert {
   flex-shrink: 0;
-  background-color: rgba(249, 115, 22, 0.1);
-  border: 1px solid rgba(249, 115, 22, 0.3);
+  background-color: rgba(var(--v-theme-warning), 0.1);
+  border: 1px solid rgba(var(--v-theme-warning), 0.3);
   border-radius: 8px;
   display: flex;
   align-items: flex-start;
 }
 .stale-icon {
-  color: #fb923c; /* orange-400 */
+  color: rgb(var(--v-theme-warning));
   flex-shrink: 0;
   font-size: 0.875rem;
 }
@@ -418,16 +418,16 @@ const archivedGroupsSorted = computed(() => {
 .stale-title {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #fdba74; /* orange-300 */
+  color: rgb(var(--v-theme-warning));
 }
 .stale-task {
   font-size: 0.75rem;
-  color: rgba(254, 215, 170, 0.8); /* orange-200/80 */
+  color: rgba(var(--v-theme-warning), 0.8);
   cursor: pointer;
   transition: color 150ms;
 }
 .stale-task:hover {
-  color: #fed7aa; /* orange-200 */
+  color: rgb(var(--v-theme-warning));
 }
 .columns-area {
   display: flex;

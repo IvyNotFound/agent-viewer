@@ -55,9 +55,9 @@ async function fetchQuality(): Promise<void> {
 }
 
 function rateColor(rate: number): string {
-  if (rate === 0) return '#22c55e'    // green-500
-  if (rate < 20) return '#f97316'     // orange-500
-  return '#ef4444'                     // red-500
+  if (rate === 0) return 'rgb(var(--v-theme-secondary))'
+  if (rate < 20) return 'rgb(var(--v-theme-warning))'
+  return 'rgb(var(--v-theme-error))'
 }
 
 function rateBarClass(rate: number): string {
@@ -218,7 +218,7 @@ watch(() => store.dbPath, fetchQuality)
   margin: 0;
 }
 .quality-state-text--pulse { animation: quality-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-.quality-state-text--error { color: #f87171; }
+.quality-state-text--error { color: rgb(var(--v-theme-error)); }
 @keyframes quality-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -244,7 +244,7 @@ watch(() => store.dbPath, fetchQuality)
   font-weight: 700;
 }
 .quality-no-rejections {
-  color: #4ade80;
+  color: rgb(var(--v-theme-secondary));
   font-style: italic;
 }
 .quality-heuristic-note {
@@ -295,7 +295,7 @@ watch(() => store.dbPath, fetchQuality)
   border-radius: 9999px;
   transition: width 0.5s;
 }
-.rate-bar--green { background: #22c55e; }
-.rate-bar--orange { background: #f97316; }
-.rate-bar--red { background: #ef4444; }
+.rate-bar--green { background: rgb(var(--v-theme-secondary)); }
+.rate-bar--orange { background: rgb(var(--v-theme-warning)); }
+.rate-bar--red { background: rgb(var(--v-theme-error)); }
 </style>

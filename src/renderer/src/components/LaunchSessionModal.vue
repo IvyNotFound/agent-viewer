@@ -468,7 +468,7 @@ async function launch() {
   margin-top: 4px;
 }
 .field-hint--error {
-  color: #f87171;
+  color: rgb(var(--v-theme-error));
 }
 
 /* Instance rows (radio) */
@@ -539,7 +539,7 @@ async function launch() {
 }
 
 .no-instance-warning {
-  color: #f59e0b;
+  color: rgb(var(--v-theme-warning));
   text-align: right;
 }
 

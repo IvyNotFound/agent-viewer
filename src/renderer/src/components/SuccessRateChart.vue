@@ -90,9 +90,9 @@ function barClass(rate: number): string {
 }
 
 function avgBadgeStyle(rate: number): string {
-  if (rate >= 80) return '#10b981'  // emerald-500
-  if (rate >= 50) return '#f59e0b'  // amber-400
-  return '#ef4444'                   // red-500
+  if (rate >= 80) return 'rgb(var(--v-theme-secondary))'
+  if (rate >= 50) return 'rgb(var(--v-theme-warning))'
+  return 'rgb(var(--v-theme-error))'
 }
 
 function barH(rate: number): string {
@@ -239,9 +239,9 @@ function tooltip(day: DayRate): string {
   transition: height 0.2s;
 }
 
-.bar-high  { background-color: #10b981; } /* emerald-500 */
-.bar-mid   { background-color: #f59e0b; } /* amber-400 */
-.bar-low   { background-color: #ef4444; } /* red-500 */
+.bar-high  { background-color: rgb(var(--v-theme-secondary)); }
+.bar-mid   { background-color: rgb(var(--v-theme-warning)); }
+.bar-low   { background-color: rgb(var(--v-theme-error)); }
 .bar-empty { background-color: var(--surface-tertiary); }
 
 .date-labels {
@@ -265,7 +265,7 @@ color: var(--content-faint);
   flex-shrink: 0;
 }
 
-.legend-dot--high { background-color: #10b981; }
-.legend-dot--mid  { background-color: #f59e0b; }
-.legend-dot--low  { background-color: #ef4444; }
+.legend-dot--high { background-color: rgb(var(--v-theme-secondary)); }
+.legend-dot--mid  { background-color: rgb(var(--v-theme-warning)); }
+.legend-dot--low  { background-color: rgb(var(--v-theme-error)); }
 </style>

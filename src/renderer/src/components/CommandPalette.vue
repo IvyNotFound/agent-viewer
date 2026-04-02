@@ -30,10 +30,10 @@ watch(searchQuery, (val) => {
 })
 
 const STATUTS = computed(() => [
-  { key: 'todo',        label: t('columns.todo'),        color: '#f59e0b' },
-  { key: 'in_progress', label: t('columns.in_progress'), color: '#10b981' },
+  { key: 'todo',        label: t('columns.todo'),        color: 'rgb(var(--v-theme-warning))' },
+  { key: 'in_progress', label: t('columns.in_progress'), color: 'rgb(var(--v-theme-secondary))' },
   { key: 'done',        label: t('columns.done'),        color: 'var(--content-faint)' },
-  { key: 'archived',    label: t('columns.archived'),    color: '#8b5cf6' },
+  { key: 'archived',    label: t('columns.archived'),    color: 'rgb(var(--v-theme-primary))' },
 ])
 
 // Pre-computed lowercase index — recomputes only when tasks list changes, not on every keystroke
@@ -123,9 +123,9 @@ onUnmounted(() => {
 })
 
 function effortColor(effort: number): string {
-  if (effort === 1) return '#10b981'
-  if (effort === 2) return '#f59e0b'
-  return '#ef4444'
+  if (effort === 1) return 'rgb(var(--v-theme-secondary))'
+  if (effort === 2) return 'rgb(var(--v-theme-warning))'
+  return 'rgb(var(--v-theme-error))'
 }
 </script>
 
@@ -424,7 +424,7 @@ function effortColor(effort: number): string {
 }
 .palette-item--selected {
   background: var(--surface-secondary) !important;
-  border-left-color: #8b5cf6 !important;
+  border-left-color: rgb(var(--v-theme-primary)) !important;
 }
 
 .palette-item-row {
@@ -488,9 +488,9 @@ function effortColor(effort: number): string {
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
 }
 .btn-reset {
-  color: #c4b5fd !important;
+  color: rgb(var(--v-theme-primary)) !important;
 }
 .btn-reset:hover {
-  color: #a78bfa !important;
+  color: rgba(var(--v-theme-primary), 0.8) !important;
 }
 </style>

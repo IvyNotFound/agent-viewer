@@ -410,7 +410,7 @@ const legendItems = computed(() => [
 
 .tl-body { flex: 1; overflow: auto; }
 .tl-state-center { display: flex; align-items: center; justify-content: center; height: 128px; }
-.tl-error { color: #f87171; }
+.tl-error { color: rgb(var(--v-theme-error)); }
 
 .tl-canvas { min-width: 700px; }
 .tl-axis {
@@ -430,16 +430,16 @@ const legendItems = computed(() => [
 .tl-row {
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid rgba(39,39,42,0.4);
+  border-bottom: 1px solid rgba(var(--v-theme-surface-secondary),0.4);
   transition: background 0.15s;
 }
-.tl-row:hover { background: rgba(39,39,42,0.5); }
+.tl-row:hover { background: rgba(var(--v-theme-surface-secondary),0.5); }
 .tl-row-label {
   width: 144px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  border-right: 1px solid rgba(39,39,42,0.4);
+  border-right: 1px solid rgba(var(--v-theme-surface-secondary),0.4);
 }
 .tl-agent-name {
   font-weight: 500;
@@ -461,10 +461,10 @@ const legendItems = computed(() => [
 @keyframes tlPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
 /* status colors */
-.tl-bg-progress { background: #3b82f6; }
-.tl-bg-done     { background: #16a34a; }
-.tl-bg-archived { background: #52525b; }
-.tl-bg-todo     { background: #71717a; }
+.tl-bg-progress { background: rgb(var(--v-theme-primary)); }
+.tl-bg-done     { background: rgb(var(--v-theme-secondary)); }
+.tl-bg-archived { background: rgb(var(--v-theme-content-faint)); }
+.tl-bg-todo     { background: rgb(var(--v-theme-content-subtle)); }
 
 .tl-legend {
   display: flex;
@@ -487,7 +487,7 @@ const legendItems = computed(() => [
 .tl-tooltip-title { font-weight: 600; color: var(--content-primary); margin-bottom: 6px; line-height: 1.4; }
 .tl-tooltip-body { color: var(--content-muted); display: flex; flex-direction: column; gap: 2px; }
 .tl-tooltip-id { color: var(--content-faint); margin-top: 2px; }
-.tl-status-progress { color: #60a5fa; }
-.tl-status-done { color: #4ade80; }
+.tl-status-progress { color: rgb(var(--v-theme-primary)); }
+.tl-status-done { color: rgb(var(--v-theme-secondary)); }
 .tl-status-todo { color: var(--content-tertiary); }
 </style>

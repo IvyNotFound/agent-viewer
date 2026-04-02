@@ -457,16 +457,16 @@ onUnmounted(() => {
 .block-error {
   display: flex;
   align-items: flex-start;
-  background: #450a0a;
-  border: 1px solid #991b1b;
+  background: rgba(var(--v-theme-error), 0.12);
+  border: 1px solid rgba(var(--v-theme-error), 0.4);
   border-radius: 8px;
-  color: #fca5a5;
+  color: rgb(var(--v-theme-error));
   font-size: 12px;
   font-family: ui-monospace, monospace;
 }
 .error-icon {
   flex-shrink: 0;
-  color: #f87171;
+  color: rgb(var(--v-theme-error));
 }
 .error-body {
   user-select: text;
@@ -474,13 +474,13 @@ onUnmounted(() => {
 }
 .error-type {
   font-weight: 600;
-  color: #f87171;
+  color: rgb(var(--v-theme-error));
 }
 .error-text {
   white-space: pre-wrap;
 }
 .error-stderr {
-  color: #fecaca;
+  color: rgba(var(--v-theme-error), 0.8);
   white-space: pre-wrap;
 }
 .error-body-inline {

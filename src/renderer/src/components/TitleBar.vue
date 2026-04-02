@@ -195,6 +195,6 @@ onUnmounted(() => {
 }
 .win-btn--close:hover {
   color: #fff;
-  background: #dc2626;
+  background: rgb(var(--v-theme-error));
 }
 </style>

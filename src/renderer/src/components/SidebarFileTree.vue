@@ -160,8 +160,8 @@ defineExpose({ loadSidebarTree })
   height: 16px;
   flex-shrink: 0;
 }
-.tree-icon--open { color: #f59e0b; }
-.tree-icon--closed { color: rgba(245, 158, 11, 0.7); }
+.tree-icon--open { color: rgb(var(--v-theme-warning)); }
+.tree-icon--closed { color: rgba(var(--v-theme-warning), 0.7); }
 .tree-icon--file { color: var(--content-subtle); }
 .tree-btn:hover .tree-icon--file { color: var(--content-muted); }
 .tree-name {

@@ -265,34 +265,34 @@ const PRIORITY_LABEL: Record<string, string> = {
   border: 1px solid transparent;
 }
 .badge-stale {
-  background-color: rgba(249, 115, 22, 0.2);
-  color: #fb923c; /* orange-400 */
-  border-color: rgba(249, 115, 22, 0.3);
+  background-color: rgba(var(--v-theme-warning), 0.2);
+  color: rgb(var(--v-theme-warning));
+  border-color: rgba(var(--v-theme-warning), 0.3);
 }
 .badge-effort-1 {
-  background-color: rgba(16, 185, 129, 0.2);
-  color: #34d399; /* emerald-400 */
-  border-color: rgba(16, 185, 129, 0.3);
+  background-color: rgba(var(--v-theme-secondary), 0.2);
+  color: rgb(var(--v-theme-secondary));
+  border-color: rgba(var(--v-theme-secondary), 0.3);
 }
 .badge-effort-2 {
-  background-color: rgba(245, 158, 11, 0.2);
-  color: #fbbf24; /* amber-400 */
-  border-color: rgba(245, 158, 11, 0.3);
+  background-color: rgba(var(--v-theme-warning), 0.2);
+  color: rgb(var(--v-theme-warning));
+  border-color: rgba(var(--v-theme-warning), 0.3);
 }
 .badge-effort-3 {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #f87171; /* red-400 */
-  border-color: rgba(239, 68, 68, 0.3);
+  background-color: rgba(var(--v-theme-error), 0.2);
+  color: rgb(var(--v-theme-error));
+  border-color: rgba(var(--v-theme-error), 0.3);
 }
 .badge-priority-critical {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #f87171;
-  border-color: rgba(239, 68, 68, 0.3);
+  background-color: rgba(var(--v-theme-error), 0.2);
+  color: rgb(var(--v-theme-error));
+  border-color: rgba(var(--v-theme-error), 0.3);
 }
 .badge-priority-high {
-  background-color: rgba(249, 115, 22, 0.2);
-  color: #fb923c;
-  border-color: rgba(249, 115, 22, 0.3);
+  background-color: rgba(var(--v-theme-warning), 0.2);
+  color: rgb(var(--v-theme-warning));
+  border-color: rgba(var(--v-theme-warning), 0.3);
 }
 .badge-priority-normal {
   background-color: var(--surface-tertiary);

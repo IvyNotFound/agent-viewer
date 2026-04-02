@@ -194,22 +194,22 @@ onMounted(scan)
         <div class="telem-lang-bar">
           <div
             class="telem-lang-segment"
-            :style="{ width: sourcePercent + '%', backgroundColor: '#22c55e' }"
+            :style="{ width: sourcePercent + '%', backgroundColor: 'rgb(var(--v-theme-secondary))' }"
             :title="`Source — ${sourcePercent.toFixed(1)}%`"
           />
           <div
             class="telem-lang-segment"
-            :style="{ width: testPercent + '%', backgroundColor: '#f59e0b' }"
+            :style="{ width: testPercent + '%', backgroundColor: 'rgb(var(--v-theme-warning))' }"
             :title="`Tests — ${testPercent.toFixed(1)}%`"
           />
         </div>
         <div class="telem-legend-row ga-4 text-caption">
           <span class="telem-legend-item">
-            <span class="telem-dot" style="background:#22c55e;" />
+            <span class="telem-dot" style="background: rgb(var(--v-theme-secondary));" />
             {{ t('telemetry.sourceLabel', { percent: sourcePercent.toFixed(1) }) }}
           </span>
           <span class="telem-legend-item">
-            <span class="telem-dot" style="background:#f59e0b;" />
+            <span class="telem-dot" style="background: rgb(var(--v-theme-warning));" />
             {{ t('telemetry.testsLabel', { percent: testPercent.toFixed(1) }) }}
           </span>
         </div>
@@ -321,7 +321,7 @@ onMounted(scan)
 .telem-subtle { color: var(--content-subtle); }
 .telem-muted { color: var(--content-muted); }
 .telem-tertiary { color: var(--content-tertiary); }
-.telem-error { color: #f87171; }
+.telem-error { color: rgb(var(--v-theme-error)); }
 
 /* stat cards */
 .telem-stat-grid {
@@ -345,10 +345,10 @@ onMounted(scan)
   font-weight: 700;
   color: var(--content-primary);
 }
-.telem-value--green { color: #4ade80; }
-.telem-value--blue { color: #60a5fa; }
-.telem-value--green-soft { color: rgba(74, 222, 128, 0.8); }
-.telem-value--amber-soft { color: rgba(251, 191, 36, 0.8); }
+.telem-value--green { color: rgb(var(--v-theme-secondary)); }
+.telem-value--blue { color: rgb(var(--v-theme-primary)); }
+.telem-value--green-soft { color: rgba(var(--v-theme-secondary), 0.8); }
+.telem-value--amber-soft { color: rgba(var(--v-theme-warning), 0.8); }
 
 /* sections */
 .telem-section { display: flex; flex-direction: column; }
@@ -409,11 +409,11 @@ onMounted(scan)
 .telem-th--left { text-align: left; }
 .telem-th--right { text-align: right; }
 .telem-tbody-row {
-  border-bottom: 1px solid rgba(63, 63, 70, 0.5);
+  border-bottom: 1px solid rgba(var(--v-theme-surface-tertiary), 0.5);
   transition: background 0.15s;
 }
 .telem-tbody-row:last-child { border-bottom: none; }
-.telem-tbody-row:hover { background: rgba(63, 63, 70, 0.3); }
+.telem-tbody-row:hover { background: rgba(var(--v-theme-surface-tertiary), 0.3); }
 .telem-td { padding: 8px 16px; }
 .telem-td--lang { display: flex; align-items: center; }
 .telem-td--num { text-align: right; font-variant-numeric: tabular-nums; }

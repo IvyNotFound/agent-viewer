@@ -88,9 +88,9 @@ async function handleSetup() {
           :class="hasCLAUDEmd ? 'wizard-icon--amber' : 'wizard-icon--violet'"
         >
           <!-- DB missing icon — keep color inline as it differs per condition -->
-          <v-icon v-if="hasCLAUDEmd" class="wizard-svg" size="20" style="color: #fbbf24">mdi-alert</v-icon>
+          <v-icon v-if="hasCLAUDEmd" class="wizard-svg" size="20" style="color: rgb(var(--v-theme-warning))">mdi-alert</v-icon>
           <!-- New project icon -->
-          <v-icon v-else class="wizard-svg" size="20" style="color: #a78bfa">mdi-folder-outline</v-icon>
+          <v-icon v-else class="wizard-svg" size="20" style="color: rgb(var(--v-theme-primary))">mdi-folder-outline</v-icon>
         </div>
         <div class="header-text">
           <h2 class="text-subtitle-1 font-weight-semibold">
@@ -129,7 +129,7 @@ async function handleSetup() {
             <div class="d-flex flex-column ga-2">
               <!-- Always: create DB -->
               <div class="option-box d-flex align-start ga-3">
-                <v-icon class="option-icon mt-1 shrink-0" size="16" style="color: #a78bfa">mdi-check</v-icon>
+                <v-icon class="option-icon mt-1 shrink-0" size="16" style="color: rgb(var(--v-theme-primary))">mdi-check</v-icon>
                 <div>
                   <p class="text-caption font-weight-medium text-medium-emphasis">{{ t('setup.createProjectDb', { projectDb: '.claude/project.db' }) }}</p>
                   <p class="text-caption text-disabled mt-1">{{ t('setup.createProjectDbDesc') }}</p>
@@ -145,7 +145,7 @@ async function handleSetup() {
                   v-model="generateClaudeMd"
                   type="checkbox"
                   class="mt-1 shrink-0"
-                  style="accent-color: #7c3aed"
+                  style="accent-color: rgb(var(--v-theme-primary))"
                 />
                 <div>
                   <p class="text-caption font-weight-medium text-medium-emphasis">{{ t('setup.generateClaudeMd', { claudeMd: 'CLAUDE.md' }) }}</p>
@@ -220,13 +220,13 @@ async function handleSetup() {
 }
 
 .wizard-icon--amber {
-  background-color: rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background-color: rgba(var(--v-theme-warning), 0.15);
+  border: 1px solid rgba(var(--v-theme-warning), 0.3);
 }
 
 .wizard-icon--violet {
-  background-color: rgba(139, 92, 246, 0.15);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background-color: rgba(var(--v-theme-primary), 0.15);
+  border: 1px solid rgba(var(--v-theme-primary), 0.3);
 }
 
 .wizard-svg {
@@ -266,8 +266,8 @@ async function handleSetup() {
 }
 
 .option-box--selected {
-  background-color: rgba(139, 92, 246, 0.08);
-  border-color: rgba(139, 92, 246, 0.4);
+  background-color: rgba(var(--v-theme-primary), 0.08);
+  border-color: rgba(var(--v-theme-primary), 0.4);
 }
 
 .option-icon {

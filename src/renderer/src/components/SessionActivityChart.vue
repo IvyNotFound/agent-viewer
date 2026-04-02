@@ -207,9 +207,9 @@ function tooltip(day: DayBars): string {
   transition: height 0.2s;
 }
 
-.bar-completed { background-color: #10b981; } /* emerald-500 */
-.bar-started   { background-color: #71717a; } /* zinc-500 */
-.bar-blocked   { background-color: #ef4444; } /* red-500 */
+.bar-completed { background-color: rgb(var(--v-theme-secondary)); }
+.bar-started   { background-color: rgb(var(--v-theme-content-subtle)); }
+.bar-blocked   { background-color: rgb(var(--v-theme-error)); }
 .bar-empty     { background-color: var(--surface-tertiary); }
 
 .date-labels {
@@ -233,7 +233,7 @@ color: var(--content-faint);
   flex-shrink: 0;
 }
 
-.legend-dot--completed { background-color: #10b981; }
-.legend-dot--started   { background-color: #71717a; }
-.legend-dot--blocked   { background-color: #ef4444; }
+.legend-dot--completed { background-color: rgb(var(--v-theme-secondary)); }
+.legend-dot--started   { background-color: rgb(var(--v-theme-content-subtle)); }
+.legend-dot--blocked   { background-color: rgb(var(--v-theme-error)); }
 </style>

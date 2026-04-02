@@ -173,9 +173,9 @@ function isEnabled(cli: CliType): boolean {
   border: 1px solid var(--edge-subtle);
 }
 .cli-version-badge--detected {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(var(--v-theme-secondary), 0.15);
+  color: rgb(var(--v-theme-secondary));
+  border-color: rgba(var(--v-theme-secondary), 0.3);
 }
 /* Toggle switch */
 .cli-toggle {
@@ -192,8 +192,8 @@ function isEnabled(cli: CliType): boolean {
   overflow: hidden;
 }
 .cli-toggle--on {
-  background: #6d28d9 !important;
-  border-color: #6d28d9 !important;
+  background: rgb(var(--v-theme-primary)) !important;
+  border-color: rgb(var(--v-theme-primary)) !important;
 }
 .cli-toggle-thumb {
   pointer-events: none;

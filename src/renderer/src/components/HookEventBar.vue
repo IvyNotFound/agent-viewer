@@ -141,7 +141,7 @@ function rowLabel(e: HookEvent): string {
   width: 0.75rem;
   height: 0.75rem;
   animation: spin 1s linear infinite;
-  color: #fbbf24;
+  color: rgb(var(--v-theme-warning));
   flex-shrink: 0;
 }
 @keyframes spin {

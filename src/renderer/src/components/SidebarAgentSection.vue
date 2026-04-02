@@ -282,7 +282,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   width: 24px !important;
   height: 24px !important;
 }
-.icon-btn--confirm { color: #10b981 !important; }
+.icon-btn--confirm { color: rgb(var(--v-theme-secondary)) !important; }
 .icon-btn--cancel { color: var(--content-faint) !important; }
 .ungrouped-zone {
 }

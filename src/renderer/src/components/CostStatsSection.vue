@@ -357,8 +357,8 @@ const hoveredBar = ref<number | null>(null)
   color: var(--content-secondary) !important;
 }
 .cost-period-btn--active {
-  background: #6d28d9 !important;
-  border-color: #6d28d9 !important;
+  background: rgb(var(--v-theme-primary)) !important;
+  border-color: rgb(var(--v-theme-primary)) !important;
   color: white !important;
 }
 .cost-state {
@@ -417,10 +417,10 @@ const hoveredBar = ref<number | null>(null)
 .cost-spark-bar {
   width: 100%;
   border-radius: 2px 2px 0 0;
-  background: rgba(124, 58, 237, 0.45);
+  background: rgba(var(--v-theme-primary), 0.45);
   transition: background-color 0.15s;
 }
-.cost-spark-bar--hover { background: #6d28d9; }
+.cost-spark-bar--hover { background: rgb(var(--v-theme-primary)); }
 .cost-spark-zero {
   width: 100%;
   height: 2px;
@@ -474,7 +474,7 @@ const hoveredBar = ref<number | null>(null)
 .cost-bar-fill {
   height: 100%;
   border-radius: 4px;
-  background: linear-gradient(to right, rgba(124, 58, 237, 0.6), rgba(219, 39, 119, 0.6));
+  background: linear-gradient(to right, rgba(var(--v-theme-primary), 0.6), rgba(219, 39, 119, 0.6));
   transition: width 0.3s;
 }
 .cost-bar-label {
@@ -496,7 +496,7 @@ const hoveredBar = ref<number | null>(null)
   justify-content: flex-end;
 }
 .cost-cache-eff { color: var(--content-faint); }
-.cache-eff--high { color: #4ade80; }
-.cache-eff--mid { color: #fbbf24; }
+.cache-eff--high { color: rgb(var(--v-theme-secondary)); }
+.cache-eff--mid { color: rgb(var(--v-theme-warning)); }
 .cost-sessions { color: var(--content-faint); }
 </style>

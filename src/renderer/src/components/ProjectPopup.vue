@@ -231,18 +231,18 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 
 .project-initializing {
   font-size: 0.75rem;
-  color: #d97706;
+  color: rgb(var(--v-theme-warning));
   font-family: ui-monospace, monospace;
   margin: 0;
 }
 
 .project-error {
-  background-color: rgba(127, 29, 29, 0.25);
-  border: 1px solid rgba(127, 29, 29, 0.5);
+  background-color: rgba(var(--v-theme-error), 0.15);
+  border: 1px solid rgba(var(--v-theme-error), 0.3);
   border-radius: 6px;
 }
 .project-error-text {
-  color: #f87171;
+  color: rgb(var(--v-theme-error));
   word-break: break-all;
   margin: 0;
 }

@@ -165,8 +165,8 @@ function formatTokens(n: number): string {
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
-.token-metric-value--cache-read { color: #34d399; }
-.token-metric-value--cache-write { color: #fbbf24; }
+.token-metric-value--cache-read { color: rgb(var(--v-theme-secondary)); }
+.token-metric-value--cache-write { color: rgb(var(--v-theme-warning)); }
 /* Session count */
 .token-sessions {
 }

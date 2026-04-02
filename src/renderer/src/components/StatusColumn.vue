@@ -87,8 +87,8 @@ function onDrop(e: DragEvent): void {
   transition: border-color 150ms, background-color 150ms;
 }
 .column-wrap.drag-over {
-  border-color: rgba(16, 185, 129, 0.6);
-  background-color: rgba(16, 185, 129, 0.05);
+  border-color: rgba(var(--v-theme-secondary), 0.6);
+  background-color: rgba(var(--v-theme-secondary), 0.05);
 }
 .column-header {
   display: flex;
