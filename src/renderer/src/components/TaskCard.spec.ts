@@ -140,7 +140,7 @@ describe('TaskCard', () => {
       global: { plugins: [i18n] },
     })
     const labels = ['S', 'M', 'L']
-    const badges = wrapper.findAll('span').filter(s => labels.includes(s.text().trim()))
+    const badges = wrapper.findAll('v-chip').filter(s => labels.includes(s.text().trim()))
     expect(badges.length).toBe(0)
   })
 

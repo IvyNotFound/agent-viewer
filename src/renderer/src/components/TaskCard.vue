@@ -96,107 +96,93 @@ const staleTooltip = computed(() => {
 })
 
 const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
-const EFFORT_CLASS: Record<number, string> = {
-  1: 'badge-effort-1',
-  2: 'badge-effort-2',
-  3: 'badge-effort-3',
-}
-
-const PRIORITY_CLASS: Record<string, string> = {
-  critical: 'badge-priority-critical',
-  high:     'badge-priority-high',
-  normal:   'badge-priority-normal',
-  low:      '',
-}
-const PRIORITY_LABEL: Record<string, string> = {
-  critical: '!!',
-  high:     '!',
-  normal:   '—',
-  low:      '',
-}
+const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 'error' }
 </script>
 
 <template>
-  <div
-    class="task-card pa-3"
+  <v-card
+    class="task-card"
+    variant="flat"
+    :ripple="false"
     :draggable="task.status === 'todo' || task.status === 'in_progress'"
     @click="store.openTask(task)"
     @dragstart="onDragStart"
     @contextmenu="onContextMenu"
   >
-    <!-- Top row: title + effort/priority -->
-    <div class="card-top ga-2 mb-2">
-      <div class="card-title-area">
-        <span
-          v-if="task.status === 'in_progress'"
-          class="card-pulse mt-1"
-          :title="t('task.running')"
-          :aria-label="t('task.running')"
-        />
-        <p class="card-title text-body-2">{{ task.title }}</p>
+    <!-- Top row: title + effort/priority badges -->
+    <v-card-text class="pa-3 pb-0">
+      <div class="card-top ga-2">
+        <div class="card-title-area">
+          <span
+            v-if="task.status === 'in_progress'"
+            class="card-pulse mt-1"
+            :title="t('task.running')"
+            :aria-label="t('task.running')"
+          />
+          <p class="card-title text-body-2">{{ task.title }}</p>
+        </div>
+        <div class="card-badge-row ga-1">
+          <v-chip v-if="isStaleTask" size="x-small" variant="tonal" color="warning" :title="staleTooltip">⚠</v-chip>
+          <v-chip v-if="task.priority === 'critical'" size="x-small" variant="tonal" color="error">!!</v-chip>
+          <v-chip v-if="task.priority === 'high'" size="x-small" variant="tonal" color="warning">!</v-chip>
+          <v-chip v-if="task.priority === 'normal'" size="x-small" variant="tonal" color="default">—</v-chip>
+          <v-chip v-if="task.effort" size="x-small" variant="tonal" :color="EFFORT_COLOR[task.effort]">{{ EFFORT_LABEL[task.effort] }}</v-chip>
+        </div>
       </div>
-      <div class="card-badge-row ga-1">
-        <span
-          v-if="isStaleTask"
-          class="badge badge-stale"
-          :title="staleTooltip"
-        >⚠</span>
-        <span
-          v-if="task.priority && task.priority !== 'normal' && task.priority !== 'low'"
-          :class="['badge', PRIORITY_CLASS[task.priority]]"
-        >{{ PRIORITY_LABEL[task.priority] }}</span>
-        <span
-          v-if="task.effort"
-          :class="['badge', EFFORT_CLASS[task.effort]]"
-        >{{ EFFORT_LABEL[task.effort] }}</span>
-      </div>
-    </div>
+    </v-card-text>
 
     <!-- Badges: perimeter + agent avatars -->
-    <div v-if="task.scope || task.agent_name || assigneeAvatars.length > 0" class="card-meta ga-1 mb-2">
-      <v-chip
-        v-if="task.scope"
-        size="x-small"
-        variant="outlined"
-        :style="{
-          color: perimeterFg(task.scope),
-          borderColor: perimeterBorder(task.scope),
-          backgroundColor: perimeterBg(task.scope),
-        }"
-      >
-        {{ task.scope }}
-      </v-chip>
-      <!-- Multi-agent avatars (≤3 + overflow badge) -->
-      <div v-if="assigneeAvatars.length > 0" class="card-avatars">
-        <v-avatar
-          v-for="av in visibleAvatars"
-          :key="av.agent_id"
-          :size="20"
-          :style="{ color: agentFg(av.agent_name), backgroundColor: agentBg(av.agent_name) }"
-          :title="av.agent_name"
-          class="text-caption font-weight-bold"
+    <v-card-text v-if="task.scope || task.agent_name || assigneeAvatars.length > 0" class="pa-3 pt-0 pb-0">
+      <div class="card-meta ga-1">
+        <v-chip
+          v-if="task.scope"
+          size="x-small"
+          variant="outlined"
+          :style="{
+            color: perimeterFg(task.scope),
+            borderColor: perimeterBorder(task.scope),
+            backgroundColor: perimeterBg(task.scope),
+          }"
         >
-          {{ av.agent_name.slice(0, 2).toUpperCase() }}
-        </v-avatar>
-        <v-chip v-if="overflowCount > 0" size="x-small" variant="tonal">+{{ overflowCount }}</v-chip>
+          {{ task.scope }}
+        </v-chip>
+        <!-- Multi-agent avatars (≤3 + overflow badge) -->
+        <div v-if="assigneeAvatars.length > 0" class="card-avatars">
+          <v-avatar
+            v-for="av in visibleAvatars"
+            :key="av.agent_id"
+            :size="20"
+            :style="{ color: agentFg(av.agent_name), backgroundColor: agentBg(av.agent_name) }"
+            :title="av.agent_name"
+            class="text-caption font-weight-bold"
+          >
+            {{ av.agent_name.slice(0, 2).toUpperCase() }}
+          </v-avatar>
+          <v-chip v-if="overflowCount > 0" size="x-small" variant="tonal">+{{ overflowCount }}</v-chip>
+        </div>
+        <!-- Fallback: single agent badge when no task_agents rows -->
+        <AgentBadge v-else-if="task.agent_name" :name="task.agent_name" :perimetre="task.agent_scope" />
       </div>
-      <!-- Fallback: single agent badge when no task_agents rows -->
-      <AgentBadge v-else-if="task.agent_name" :name="task.agent_name" :perimetre="task.agent_scope" />
-    </div>
+    </v-card-text>
 
     <!-- Footer: dates left, #id right -->
-    <div :class="['card-footer', 'ga-2', 'pt-2', { 'card-footer-bordered': task.scope || task.agent_name }]">
-      <div class="card-dates">
-        <p class="card-date text-caption">
-          <span class="date-label">{{ t('taskDetail.created') }}</span> {{ formattedCreatedAt }}
-        </p>
-        <p class="card-date text-caption">
-          <span class="date-label">{{ t('taskDetail.updated') }}</span> {{ formattedUpdatedAt }}
-        </p>
+    <v-card-text
+      class="pa-3 pt-2 mt-auto"
+      :class="{ 'card-footer-bordered': task.scope || task.agent_name }"
+    >
+      <div class="card-footer ga-2">
+        <div class="card-dates">
+          <p class="card-date text-caption">
+            <span class="date-label">{{ t('taskDetail.created') }}</span> {{ formattedCreatedAt }}
+          </p>
+          <p class="card-date text-caption">
+            <span class="date-label">{{ t('taskDetail.updated') }}</span> {{ formattedUpdatedAt }}
+          </p>
+        </div>
+        <span class="card-id">#{{ task.id }}</span>
       </div>
-      <span class="card-id">#{{ task.id }}</span>
-    </div>
-  </div>
+    </v-card-text>
+  </v-card>
 
   <ContextMenu
     v-if="contextMenu"
@@ -209,17 +195,15 @@ const PRIORITY_LABEL: Record<string, string> = {
 
 <style scoped>
 .task-card {
-  background-color: var(--surface-secondary);
-  border: 1px solid var(--edge-default);
-  border-radius: 8px;
+  background-color: var(--surface-secondary) !important; /* override Vuetify theme surface */
+  border: 1px solid var(--edge-default) !important;
+  border-radius: 8px !important;
   cursor: pointer;
   min-height: 120px;
-  display: flex;
-  flex-direction: column;
   transition: border-color 150ms;
 }
 .task-card:hover {
-  border-color: var(--content-faint);
+  border-color: var(--content-faint) !important;
 }
 .card-top {
   display: flex;
@@ -258,53 +242,10 @@ const PRIORITY_LABEL: Record<string, string> = {
   align-items: center;
   flex-shrink: 0;
 }
-/* Base badge */
-.badge {
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-  border: 1px solid transparent;
-}
-.badge-stale {
-  background-color: rgba(var(--v-theme-warning), 0.2);
-  color: rgb(var(--v-theme-warning));
-  border-color: rgba(var(--v-theme-warning), 0.3);
-}
-.badge-effort-1 {
-  background-color: rgba(var(--v-theme-secondary), 0.2);
-  color: rgb(var(--v-theme-secondary));
-  border-color: rgba(var(--v-theme-secondary), 0.3);
-}
-.badge-effort-2 {
-  background-color: rgba(var(--v-theme-warning), 0.2);
-  color: rgb(var(--v-theme-warning));
-  border-color: rgba(var(--v-theme-warning), 0.3);
-}
-.badge-effort-3 {
-  background-color: rgba(var(--v-theme-error), 0.2);
-  color: rgb(var(--v-theme-error));
-  border-color: rgba(var(--v-theme-error), 0.3);
-}
-.badge-priority-critical {
-  background-color: rgba(var(--v-theme-error), 0.2);
-  color: rgb(var(--v-theme-error));
-  border-color: rgba(var(--v-theme-error), 0.3);
-}
-.badge-priority-high {
-  background-color: rgba(var(--v-theme-warning), 0.2);
-  color: rgb(var(--v-theme-warning));
-  border-color: rgba(var(--v-theme-warning), 0.3);
-}
-.badge-priority-normal {
-  background-color: var(--surface-tertiary);
-  color: var(--content-muted);
-  border-color: var(--edge-default);
-}
 .card-meta {
   display: flex;
   flex-wrap: wrap;
+  gap: 4px;
 }
 .card-avatars {
   display: flex;
@@ -315,7 +256,6 @@ const PRIORITY_LABEL: Record<string, string> = {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-top: auto;
 }
 .card-footer-bordered {
   border-top: 1px solid color-mix(in srgb, var(--edge-default) 50%, transparent);
