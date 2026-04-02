@@ -14,12 +14,6 @@ const selectedEvent = ref<HookEvent | null>(null)
 
 const ALL_TYPES = Object.keys(EVENT_ICON)
 
-function toggleType(t: string): void {
-  const idx = filterTypes.value.indexOf(t)
-  if (idx >= 0) filterTypes.value.splice(idx, 1)
-  else filterTypes.value.push(t)
-}
-
 // Iterate backwards — newest first, early exit at 200 items (T792)
 // Avoids .slice().reverse() O(N) on 2000 events on every hook event
 const MAX_DISPLAY = 200
@@ -52,15 +46,17 @@ function relativeTime(ts: number): string {
     <!-- Filters bar -->
     <div class="he-filters">
       <span class="he-filter-label">{{ t('hooks.filters') }}</span>
-      <button
-        v-for="eventType in ALL_TYPES"
-        :key="eventType"
-        class="he-chip"
-        :class="filterTypes.includes(eventType) ? 'he-chip--active' : 'he-chip--inactive'"
-        @click="toggleType(eventType)"
-      >
-        {{ EVENT_ICON[eventType] }} {{ eventType }}
-      </button>
+      <v-chip-group v-model="filterTypes" multiple column>
+        <v-chip
+          v-for="eventType in ALL_TYPES"
+          :key="eventType"
+          :value="eventType"
+          filter
+          size="small"
+          color="primary"
+          class="he-chip-item"
+        >{{ EVENT_ICON[eventType] }} {{ eventType }}</v-chip>
+      </v-chip-group>
       <div class="he-spacer" />
       <span class="he-count">{{ filtered.length }} event{{ filtered.length !== 1 ? 's' : '' }}</span>
     </div>
@@ -133,27 +129,9 @@ function relativeTime(ts: number): string {
   letter-spacing: 0.05em;
   margin-right: 4px;
 }
-.he-chip {
-  font-size: 11px;
+.he-chip-item :deep(.v-chip__content) {
   font-family: ui-monospace, monospace;
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-}
-.he-chip--active {
-  border-color: #f59e0b;
-  color: #fcd34d;
-  background: rgba(120, 53, 15, 0.4);
-}
-.he-chip--inactive {
-  border-color: var(--edge-subtle);
-  color: var(--content-subtle);
-}
-.he-chip--inactive:hover {
-  color: var(--content-secondary);
-  border-color: var(--edge-default);
+  font-size: 11px;
 }
 .he-spacer { flex: 1; }
 .he-count {
