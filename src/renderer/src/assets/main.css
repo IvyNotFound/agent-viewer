@@ -226,3 +226,9 @@
 }
 .stream-markdown th { background: var(--surface-secondary); font-weight: 600; color: var(--content-secondary); }
 .stream-markdown tr:nth-child(even) td { background: var(--surface-secondary); }
+
+/* M3 dialog depth — backdrop blur signals layer separation (v-dialog only, menus/tooltips have no scrim) */
+.v-overlay__scrim {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}

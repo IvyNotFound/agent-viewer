@@ -19,7 +19,7 @@ const vuetifyPlugin = createVuetify({
     VCard: { rounded: 'lg', variant: 'elevated' },
     VChip: { size: 'small', variant: 'tonal' },
     VList: { density: 'compact' },
-    VDialog: { scrim: true, scrollable: true },
+    VDialog: { scrim: 'rgba(0, 0, 0, 0.32)', scrollable: true },
     VSnackbar: { timeout: 5000, location: 'bottom end' },
     VTab: { density: 'compact' },
     VMenu: { offset: 4 },

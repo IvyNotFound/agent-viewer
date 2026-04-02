@@ -6,7 +6,7 @@ exports[`AgentBadge — snapshots > matches snapshot: inactive badge 1`] = `"<sp
 
 exports[`ConfirmDialog — snapshots > matches snapshot: danger dialog 1`] = `
 "<v-dialog data-v-ba1b5c38="" model-value="true" max-width="420" persistent="">
-  <v-card data-v-ba1b5c38="" role="alertdialog" aria-modal="true" aria-label="Delete agent?">
+  <v-card data-v-ba1b5c38="" elevation="8" role="alertdialog" aria-modal="true" aria-label="Delete agent?">
     <!-- Header with icon -->
     <v-card-text data-v-ba1b5c38="" class="pa-5 pb-3">
       <div data-v-ba1b5c38="" class="d-flex align-start ga-3">
@@ -33,7 +33,7 @@ exports[`ConfirmDialog — snapshots > matches snapshot: danger dialog 1`] = `
 
 exports[`ConfirmDialog — snapshots > matches snapshot: info dialog 1`] = `
 "<v-dialog data-v-ba1b5c38="" model-value="true" max-width="420" persistent="">
-  <v-card data-v-ba1b5c38="" role="alertdialog" aria-modal="true" aria-label="Confirm action?">
+  <v-card data-v-ba1b5c38="" elevation="8" role="alertdialog" aria-modal="true" aria-label="Confirm action?">
     <!-- Header with icon -->
     <v-card-text data-v-ba1b5c38="" class="pa-5 pb-3">
       <div data-v-ba1b5c38="" class="d-flex align-start ga-3">

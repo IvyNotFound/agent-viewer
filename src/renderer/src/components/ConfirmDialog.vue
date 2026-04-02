@@ -59,6 +59,7 @@ const confirmBtnColor = computed(() =>
   <v-dialog :model-value="isOpen" max-width="420" persistent @update:model-value="cancel">
     <v-card
       v-if="pending"
+      elevation="8"
       role="alertdialog"
       aria-modal="true"
       :aria-label="pending.options.title"
