@@ -48,6 +48,14 @@ const nameError = ref('')
 
 const isScoped = computed(() => SCOPED_TYPES.includes(type.value))
 
+// Worktree toggle bridge: v-btn-toggle needs primitive string values
+const worktreeToggleValue = computed({
+  get: () => worktreeEnabled.value === null ? 'inherit' : worktreeEnabled.value === 1 ? 'on' : 'off',
+  set: (val: string) => {
+    worktreeEnabled.value = val === 'inherit' ? null : val === 'on' ? 1 : 0
+  },
+})
+
 watch(type, () => {
   if (!isScoped.value) perimetre.value = ''
 })
@@ -57,11 +65,10 @@ watch(name, () => { nameError.value = '' })
 /**
  * Normalizes the agent name on each keystroke: lowercase + spaces→hyphens.
  * Enforces the kebab-case convention used throughout the project (e.g. dev-front-vuejs).
- * Uses :value + @input instead of v-model to apply normalization before Vue sets the ref.
+ * Uses :model-value + @update:model-value instead of v-model to apply normalization before Vue sets the ref.
  */
-function onNameInput(event: Event) {
-  const raw = (event.target as HTMLInputElement).value
-  name.value = raw.toLowerCase().replace(/ /g, '-')
+function onNameInput(value: string) {
+  name.value = value.toLowerCase().replace(/ /g, '-')
 }
 
 function defaultDescription(agentType: string): string {
@@ -200,130 +207,111 @@ function handleKeydown(e: KeyboardEvent) {
         <!-- Header -->
         <div class="modal-header">
           <h2 class="text-body-1 font-weight-medium" style="color: var(--content-primary)">{{ isEditMode ? t('agent.editTitle') : t('agent.newTitle') }}</h2>
-          <button class="btn-close" @click="emit('close')">
-            <v-icon size="14">mdi-close</v-icon>
-          </button>
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            data-testid="btn-close"
+            @click="emit('close')"
+          />
         </div>
 
         <!-- Form -->
         <div class="modal-body">
 
           <!-- Nom -->
-          <div>
-            <label class="field-label">{{ t('sidebar.name') }} <span style="color: #f87171;">*</span></label>
-            <input
-              :value="name"
-              :class="['form-input', nameError ? 'form-input--error' : '']"
-              type="text"
-              autofocus
-              placeholder="dev-back-api"
-              @input="onNameInput"
-            />
-            <p v-if="nameError" class="field-hint field-hint--error">{{ nameError }}</p>
-            <p v-else class="field-hint">{{ t('agent.nameFormatShort') }}</p>
-          </div>
+          <v-text-field
+            :model-value="name"
+            autofocus
+            placeholder="dev-back-api"
+            :label="`${t('sidebar.name')} *`"
+            :error-messages="nameError"
+            :hint="t('agent.nameFormatShort')"
+            persistent-hint
+            @update:model-value="onNameInput"
+          />
 
           <!-- Type -->
           <div>
-            <label class="field-label">{{ t('agent.type') }}</label>
-            <div class="type-grid">
-              <button
+            <div class="field-label mb-2">{{ t('agent.type') }}</div>
+            <v-btn-toggle
+              v-model="type"
+              mandatory
+              color="primary"
+              variant="outlined"
+              class="type-toggle"
+            >
+              <v-btn
                 v-for="tp in ALL_TYPES"
                 :key="tp"
-                :class="['type-btn', type === tp ? 'type-btn--active' : '']"
-                @click="type = tp"
-              >{{ tp }}</button>
-            </div>
+                :value="tp"
+                size="small"
+                class="type-btn"
+              >{{ tp }}</v-btn>
+            </v-btn-toggle>
           </div>
 
           <!-- Périmètre (scoped only) -->
-          <div v-if="isScoped">
-            <label class="field-label">{{ t('agent.perimeter') }}</label>
-            <input
-              v-model="perimetre"
-              list="perimetres-list"
-              type="text"
-              placeholder="front-vuejs"
-              class="form-input"
-            />
-            <datalist id="perimetres-list">
-              <option v-for="p in store.perimetresData" :key="p.id" :value="p.name" />
-            </datalist>
-          </div>
+          <v-combobox
+            v-if="isScoped"
+            v-model="perimetre"
+            :items="store.perimetresData.map(p => p.name)"
+            :label="t('agent.perimeter')"
+            placeholder="front-vuejs"
+            variant="outlined"
+            density="compact"
+            hide-details
+          />
 
           <!-- Description (pour CLAUDE.md) — create mode uniquement -->
-          <div v-if="!isEditMode">
-            <label class="field-label">{{ t('sidebar.description') }} <span class="field-label-note">(CLAUDE.md)</span></label>
-            <input
-              v-model="description"
-              type="text"
-              class="form-input"
-            />
-          </div>
+          <v-text-field
+            v-if="!isEditMode"
+            v-model="description"
+            :label="`${t('sidebar.description')} (CLAUDE.md)`"
+          />
 
           <!-- Thinking mode -->
           <div>
-            <label class="field-label">{{ t('launch.thinkingMode') }}</label>
-            <div class="toggle-group">
-              <button
-                :class="['toggle-btn', thinkingMode === 'auto' ? 'toggle-btn--active' : '']"
-                @click="thinkingMode = 'auto'"
-              >{{ t('launch.auto') }}</button>
-              <button
-                :class="['toggle-btn', thinkingMode === 'disabled' ? 'toggle-btn--active' : '']"
-                @click="thinkingMode = 'disabled'"
-              >{{ t('launch.disabled') }}</button>
-            </div>
+            <div class="field-label mb-2">{{ t('launch.thinkingMode') }}</div>
+            <v-btn-toggle v-model="thinkingMode" mandatory color="primary" variant="outlined" density="compact">
+              <v-btn value="auto">{{ t('launch.auto') }}</v-btn>
+              <v-btn value="disabled">{{ t('launch.disabled') }}</v-btn>
+            </v-btn-toggle>
           </div>
 
           <!-- Modèle préféré -->
-          <div>
-            <label class="field-label">{{ t('agent.preferredModel') }}</label>
-            <input
-              v-model="preferredModel"
-              type="text"
-              placeholder="anthropic/claude-opus-4-5"
-              class="form-input"
-            />
-            <p class="field-hint">{{ t('agent.preferredModelNote') }}</p>
-          </div>
+          <v-text-field
+            v-model="preferredModel"
+            :label="t('agent.preferredModel')"
+            placeholder="anthropic/claude-opus-4-5"
+            :hint="t('agent.preferredModelNote')"
+            persistent-hint
+          />
 
           <!-- Sessions parallèles max (edit mode uniquement) -->
-          <div v-if="isEditMode">
-            <label class="field-label">{{ t('agent.maxSessions') }}</label>
-            <input
-              v-model="maxSessions"
-              type="text"
-              inputmode="numeric"
-              :placeholder="t('agent.maxSessionsUnlimited')"
-              class="form-input"
-              :class="{ 'form-input--error': maxSessionsInvalid }"
-            />
-            <p class="field-hint">{{ t('agent.maxSessionsNote') }}</p>
-            <p v-if="maxSessionsInvalid" class="field-hint field-hint--error">{{ t('agent.maxSessionsError') }}</p>
-          </div>
+          <v-text-field
+            v-if="isEditMode"
+            v-model="maxSessions"
+            :label="t('agent.maxSessions')"
+            :placeholder="t('agent.maxSessionsUnlimited')"
+            inputmode="numeric"
+            :error-messages="maxSessionsInvalid ? t('agent.maxSessionsError') : ''"
+            :hint="t('agent.maxSessionsNote')"
+            persistent-hint
+          />
 
           <!-- Worktree isolation (edit mode uniquement) -->
           <div v-if="isEditMode">
-            <label class="field-label">{{ t('agent.worktreeEnabled') }}</label>
-            <div class="toggle-group">
-              <button
-                :class="['toggle-btn', worktreeEnabled === null ? 'toggle-btn--active-violet' : '']"
-                @click="worktreeEnabled = null"
-              >{{ t('agent.worktreeInherit') }}</button>
-              <button
-                :class="['toggle-btn', worktreeEnabled === 1 ? 'toggle-btn--active-emerald' : '']"
-                @click="worktreeEnabled = 1"
-              >{{ t('agent.worktreeOn') }}</button>
-              <button
-                :class="['toggle-btn', worktreeEnabled === 0 ? 'toggle-btn--active-amber' : '']"
-                @click="worktreeEnabled = 0"
-              >{{ t('agent.worktreeOff') }}</button>
-            </div>
-            <p v-if="worktreeEnabled === null" class="field-hint">
+            <div class="field-label mb-2">{{ t('agent.worktreeEnabled') }}</div>
+            <v-btn-toggle v-model="worktreeToggleValue" mandatory color="primary" variant="outlined" density="compact">
+              <v-btn value="inherit">{{ t('agent.worktreeInherit') }}</v-btn>
+              <v-btn value="on">{{ t('agent.worktreeOn') }}</v-btn>
+              <v-btn value="off">{{ t('agent.worktreeOff') }}</v-btn>
+            </v-btn-toggle>
+            <p v-if="worktreeEnabled === null" class="text-caption text-medium-emphasis mt-1">
               {{ t('agent.worktreeCurrentGlobal', { status: settingsStore.worktreeDefault ? t('agent.worktreeOn') : t('agent.worktreeOff') }) }}
             </p>
-            <p class="field-hint">{{ t('agent.worktreeNote') }}</p>
+            <p class="text-caption text-disabled mt-1">{{ t('agent.worktreeNote') }}</p>
           </div>
 
           <!-- System prompt (optionnel, collapsible) -->
@@ -336,21 +324,24 @@ function handleKeydown(e: KeyboardEvent) {
               System prompt {{ isEditMode ? '' : t('agent.systemPromptOptional') }}
             </button>
             <div v-if="showPrompt" class="d-flex flex-column ga-2 mt-2">
-              <textarea
+              <v-textarea
                 v-model="systemPrompt"
                 rows="14"
                 spellcheck="true"
                 :placeholder="t('agent.systemPromptPlaceholder')"
-                class="form-textarea form-textarea--resizable"
+                hide-details
               />
               <div v-if="isEditMode">
-                <label class="field-label-subtle">{{ t('agent.hiddenSuffix') }} <span class="field-label-note">({{ t('agent.hiddenSuffixCode') }})</span></label>
-                <textarea
+                <div class="field-label-subtle mb-1">
+                  {{ t('agent.hiddenSuffix') }}
+                  <span class="field-label-note">({{ t('agent.hiddenSuffixCode') }})</span>
+                </div>
+                <v-textarea
                   v-model="systemPromptSuffix"
                   rows="12"
                   spellcheck="true"
                   :placeholder="t('agent.systemPromptSuffixPlaceholder')"
-                  class="form-textarea form-textarea--resizable"
+                  hide-details
                 />
               </div>
             </div>
@@ -359,31 +350,32 @@ function handleKeydown(e: KeyboardEvent) {
 
         <!-- Footer -->
         <div class="modal-footer">
-          <p v-if="deleteError" class="field-hint field-hint--error">{{ deleteError }}</p>
+          <p v-if="deleteError" class="text-caption text-error">{{ deleteError }}</p>
           <div class="d-flex align-center justify-space-between">
             <!-- Left: destructive action isolated from primary actions -->
             <div>
-              <button
+              <v-btn
                 v-if="isEditMode"
-                class="btn-danger"
+                color="error"
+                variant="outlined"
+                size="small"
                 :disabled="deleting || loading"
                 @click="deleteAgent"
-              >{{ deleting ? t('agent.deleting') : t('agent.deleteAgent') }}</button>
+              >{{ deleting ? t('agent.deleting') : t('agent.deleteAgent') }}</v-btn>
             </div>
             <!-- Right: primary actions + shortcut hint near the submit button -->
             <div class="d-flex align-center ga-3">
-              <span class="field-hint" style="margin-top: 0;">{{ isEditMode ? t('agent.saveShortcut') : t('agent.createShortcut') }}</span>
-              <button
-                class="btn-ghost"
-                @click="emit('close')"
-              >{{ t('common.cancel') }}</button>
-              <button
-                class="btn-primary"
+              <span class="text-caption text-disabled">{{ isEditMode ? t('agent.saveShortcut') : t('agent.createShortcut') }}</span>
+              <v-btn variant="text" size="small" @click="emit('close')">{{ t('common.cancel') }}</v-btn>
+              <v-btn
+                color="primary"
+                size="small"
+                data-testid="btn-submit"
                 :disabled="loading || !name.trim() || (isEditMode && maxSessionsInvalid)"
                 @click="submit"
               >
                 {{ loading ? (isEditMode ? t('common.saving') : t('agent.creating')) : (isEditMode ? t('common.save') : t('agent.create')) }}
-              </button>
+              </v-btn>
             </div>
           </div>
         </div>
@@ -419,144 +411,30 @@ function handleKeydown(e: KeyboardEvent) {
   flex-shrink: 0;
 }
 
-/* Labels */
+/* Labels for toggle sections */
 .field-label {
-  display: block;
   font-size: 12px;
   color: var(--content-muted);
-  margin-bottom: 4px;
 }
 .field-label-subtle {
-  display: block;
   font-size: 12px;
   color: var(--content-subtle);
-  margin-bottom: 4px;
 }
 .field-label-note {
   color: var(--content-faint);
   margin-left: 2px;
 }
-.field-hint {
-  font-size: 12px;
-  color: var(--content-faint);
-  margin-top: 4px;
-}
-.field-hint--error {
-  color: #f87171;
-}
 
-/* Form inputs */
-.form-input {
-  width: 100%;
-  background: var(--surface-secondary);
-  border: 1px solid var(--edge-default);
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 14px;
-  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
-  color: var(--content-primary);
-  outline: none;
-  transition: border-color 150ms;
-  box-sizing: border-box;
-}
-.form-input:focus {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 1px #8b5cf6;
-}
-.form-input--error {
-  border-color: #ef4444;
-}
-.form-input--error:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 1px #ef4444;
-}
-.form-textarea {
-  width: 100%;
-  background: var(--surface-secondary);
-  border: 1px solid var(--edge-default);
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
-  color: var(--content-tertiary);
-  outline: none;
-  transition: border-color 150ms;
-  resize: none;
-  box-sizing: border-box;
-}
-.form-textarea--resizable {
-  resize: vertical;
-}
-.form-textarea:focus {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 1px #8b5cf6;
-}
-.form-textarea::placeholder {
-  color: var(--content-faint);
-}
-
-/* Type grid */
-.type-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+/* Type grid using v-btn-toggle */
+.type-toggle {
+  flex-wrap: wrap !important;
+  height: auto !important;
   gap: 4px;
+  width: 100%;
 }
 .type-btn {
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
-  border: none;
-  background: var(--surface-secondary);
-  color: var(--content-muted);
-  cursor: pointer;
-  transition: all 150ms;
-}
-.type-btn:hover {
-  background: var(--surface-tertiary);
-}
-.type-btn--active {
-  background: #7c3aed;
-  color: white;
-}
-
-/* Toggle buttons */
-.toggle-group {
-  display: flex;
-  gap: 8px;
-}
-.toggle-btn {
-  flex: 1;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  border: none;
-  background: var(--surface-secondary);
-  color: var(--content-muted);
-  cursor: pointer;
-  transition: all 150ms;
-}
-.toggle-btn:hover {
-  background: var(--surface-tertiary);
-}
-.toggle-btn--active {
-  background: #7c3aed;
-  color: white;
-}
-.toggle-btn--active-violet {
-  border: 1px solid rgba(139, 92, 246, 0.6);
-  background: rgba(109, 40, 217, 0.2);
-  color: #c4b5fd;
-}
-.toggle-btn--active-emerald {
-  border: 1px solid rgba(16, 185, 129, 0.6);
-  background: rgba(2, 44, 34, 0.2);
-  color: #6ee7b7;
-}
-.toggle-btn--active-amber {
-  border: 1px solid rgba(245, 158, 11, 0.6);
-  background: rgba(120, 53, 15, 0.2);
-  color: #fcd34d;
+  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace !important;
+  flex: 0 1 calc(25% - 3px) !important;
 }
 
 /* System prompt toggle */
@@ -575,79 +453,9 @@ function handleKeydown(e: KeyboardEvent) {
   color: var(--content-tertiary);
 }
 .prompt-arrow {
-  width: 12px;
-  height: 12px;
   transition: transform 150ms;
 }
 .prompt-arrow--open {
   transform: rotate(90deg);
-}
-
-/* Close button */
-.btn-close {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  border: none;
-  background: none;
-  color: var(--content-subtle);
-  cursor: pointer;
-  transition: all 150ms;
-}
-.btn-close:hover {
-  color: var(--content-secondary);
-  background: var(--surface-secondary);
-}
-
-/* Footer buttons */
-.btn-danger {
-  padding: 6px 16px;
-  font-size: 14px;
-  background: #b91c1c;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 150ms;
-}
-.btn-danger:hover:not(:disabled) {
-  background: #dc2626;
-}
-.btn-danger:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.btn-ghost {
-  padding: 6px 16px;
-  font-size: 14px;
-  color: var(--content-muted);
-  background: none;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 150ms;
-}
-.btn-ghost:hover {
-  color: var(--content-secondary);
-}
-.btn-primary {
-  padding: 6px 16px;
-  font-size: 14px;
-  background: #7c3aed;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 150ms;
-}
-.btn-primary:hover:not(:disabled) {
-  background: #6d28d9;
-}
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 </style>
