@@ -51,43 +51,88 @@ function toggleSection(section: Section) {
       <div class="rail">
 
         <!-- Backlog — direct navigation to backlog tab -->
-        <button :title="t('sidebar.backlog')" class="rail-btn" @click="tabsStore.setActive('backlog')">
+        <v-btn
+          :title="t('sidebar.backlog')"
+          icon
+          variant="text"
+          @click="tabsStore.setActive('backlog')"
+        >
           <v-icon size="18">mdi-view-list</v-icon>
-        </button>
+        </v-btn>
 
         <hr class="rail-divider">
 
         <!-- Agents -->
-        <button :title="t('sidebar.agents')" :class="['rail-btn', activeSection === 'agents' && 'rail-btn--active']" @click="toggleSection('agents')">
+        <div class="rail-item">
           <span v-if="activeSection === 'agents'" class="rail-indicator" />
-          <v-icon size="18">mdi-account-group</v-icon>
-        </button>
+          <v-btn
+            :title="t('sidebar.agents')"
+            icon
+            variant="text"
+            :class="{ 'rail-btn-active': activeSection === 'agents' }"
+            @click="toggleSection('agents')"
+          >
+            <v-icon size="18">mdi-account-group</v-icon>
+          </v-btn>
+        </div>
 
         <!-- Périmètres -->
-        <button :title="t('sidebar.perimeters')" :class="['rail-btn', activeSection === 'perimetres' && 'rail-btn--active']" @click="toggleSection('perimetres')">
+        <div class="rail-item">
           <span v-if="activeSection === 'perimetres'" class="rail-indicator" />
-          <v-icon size="18">mdi-layers-outline</v-icon>
-        </button>
+          <v-btn
+            :title="t('sidebar.perimeters')"
+            icon
+            variant="text"
+            :class="{ 'rail-btn-active': activeSection === 'perimetres' }"
+            @click="toggleSection('perimetres')"
+          >
+            <v-icon size="18">mdi-layers-outline</v-icon>
+          </v-btn>
+        </div>
 
         <!-- Arborescence -->
-        <button :title="t('sidebar.tree')" :class="['rail-btn', activeSection === 'tree' && 'rail-btn--active']" @click="toggleSection('tree')">
+        <div class="rail-item">
           <span v-if="activeSection === 'tree'" class="rail-indicator" />
-          <v-icon size="18">mdi-file-tree</v-icon>
-        </button>
+          <v-btn
+            :title="t('sidebar.tree')"
+            icon
+            variant="text"
+            :class="{ 'rail-btn-active': activeSection === 'tree' }"
+            @click="toggleSection('tree')"
+          >
+            <v-icon size="18">mdi-file-tree</v-icon>
+          </v-btn>
+        </div>
 
         <div class="rail-spacer" />
 
         <!-- Projet -->
-        <button :title="t('sidebar.project')" :class="['rail-btn', isProjectPopupOpen && 'rail-btn--active']" @click="isProjectPopupOpen = true">
+        <div class="rail-item">
           <span v-if="isProjectPopupOpen" class="rail-indicator" />
-          <v-icon size="18">mdi-folder-outline</v-icon>
-        </button>
+          <v-btn
+            :title="t('sidebar.project')"
+            icon
+            variant="text"
+            :class="{ 'rail-btn-active': isProjectPopupOpen }"
+            @click="isProjectPopupOpen = true"
+          >
+            <v-icon size="18">mdi-folder-outline</v-icon>
+          </v-btn>
+        </div>
 
         <!-- Paramètres -->
-        <button :title="t('sidebar.settings')" :class="['rail-btn rail-btn--bottom', isSettingsOpen && 'rail-btn--active']" @click="isSettingsOpen = true">
+        <div class="rail-item rail-item--bottom">
           <span v-if="isSettingsOpen" class="rail-indicator" />
-          <v-icon size="18">mdi-cog-outline</v-icon>
-        </button>
+          <v-btn
+            :title="t('sidebar.settings')"
+            icon
+            variant="text"
+            :class="{ 'rail-btn-active': isSettingsOpen }"
+            @click="isSettingsOpen = true"
+          >
+            <v-icon size="18">mdi-cog-outline</v-icon>
+          </v-btn>
+        </div>
       </div>
 
       <!-- ── Panel collapsible (0 → 272px) ── -->
@@ -99,9 +144,16 @@ function toggleSection(section: Section) {
             <p class="panel-title">
               {{ activeSection ? sectionTitles[activeSection] : '' }}
             </p>
-            <button class="panel-close" :title="t('sidebar.close')" @click="activeSection = null">
+            <v-btn
+              :title="t('sidebar.close')"
+              icon
+              variant="text"
+              density="compact"
+              size="small"
+              @click="activeSection = null"
+            >
               <v-icon size="12">mdi-close</v-icon>
-            </button>
+            </v-btn>
           </div>
 
           <!-- Sections -->
@@ -149,34 +201,21 @@ function toggleSection(section: Section) {
   gap: 4px;
   border-right: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
-.rail-btn {
+/* Wrapper for rail buttons that need the active indicator */
+.rail-item {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  border: none;
-  background: none;
-  color: rgba(var(--v-theme-on-surface), 0.5);
-  cursor: pointer;
-  transition: background 150ms, color 150ms;
 }
-.rail-btn:hover {
-  color: rgba(var(--v-theme-on-surface), 0.8);
-  background: rgba(var(--v-theme-on-surface), 0.08);
-}
-.rail-btn--active {
-  color: rgba(var(--v-theme-on-surface), 0.9);
-  background: rgba(var(--v-theme-on-surface), 0.12);
-}
-.rail-btn--bottom {
+.rail-item--bottom {
   margin-bottom: 4px;
 }
-.rail-icon {
-  width: 18px;
-  height: 18px;
+/* Active state background for rail v-btn */
+.rail-btn-active {
+  color: rgba(var(--v-theme-on-surface), 0.9) !important;
+  background: rgba(var(--v-theme-on-surface), 0.12) !important;
 }
 .rail-indicator {
   position: absolute;
@@ -187,6 +226,7 @@ function toggleSection(section: Section) {
   height: 20px;
   background: rgba(var(--v-theme-on-surface), 0.9);
   border-radius: 0 2px 2px 0;
+  pointer-events: none;
 }
 .rail-divider {
   border: none;
@@ -224,22 +264,5 @@ function toggleSection(section: Section) {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   user-select: none;
-}
-.panel-close {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  border: none;
-  background: none;
-  color: rgba(var(--v-theme-on-surface), 0.3);
-  cursor: pointer;
-  transition: background 150ms, color 150ms;
-}
-.panel-close:hover {
-  color: rgba(var(--v-theme-on-surface), 0.7);
-  background: rgba(var(--v-theme-on-surface), 0.08);
 }
 </style>
