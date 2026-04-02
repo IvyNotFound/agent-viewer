@@ -37,28 +37,66 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
   <v-dialog model-value max-width="672" scrollable @update:model-value="emit('close')">
     <!-- Wrapper with @click.self for test compat (Vuetify handles overlay click in prod) -->
     <div data-testid="payload-modal-backdrop" @click.self="emit('close')">
-      <v-card class="flex flex-col max-h-[80vh]">
+      <v-card class="payload-card">
         <!-- Header -->
-        <div class="flex items-center gap-3 px-4 py-3 border-b border-edge-default shrink-0">
-          <span class="text-sm font-semibold text-content-primary font-mono">{{ event.event }}</span>
-          <span class="text-xs text-content-subtle font-mono">{{ timestamp }}</span>
-          <div class="flex-1" />
+        <div class="modal-header">
+          <span class="text-subtitle-2 font-weight-medium font-mono">{{ event.event }}</span>
+          <span class="text-caption text-disabled font-mono">{{ timestamp }}</span>
+          <div class="flex-grow-1" />
           <!-- Native button for wrapper.find('button') test compat -->
           <button
-            class="text-content-muted hover:text-content-secondary transition-colors text-lg leading-none"
+            class="close-btn"
             @click="emit('close')"
           >×</button>
         </div>
 
         <!-- Payload -->
-        <div class="overflow-auto flex-1 p-4">
+        <div class="payload-body pa-4">
           <pre
             v-if="formattedPayload"
-            class="text-xs font-mono text-content-secondary whitespace-pre-wrap select-text cursor-text"
+            class="payload-pre"
           >{{ formattedPayload }}</pre>
-          <p v-else class="text-xs text-content-subtle italic">{{ t('hooks.noPayload') }}</p>
+          <p v-else class="text-caption text-disabled font-italic">{{ t('hooks.noPayload') }}</p>
         </div>
       </v-card>
     </div>
   </v-dialog>
 </template>
+
+<style scoped>
+.payload-card {
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  flex-shrink: 0;
+}
+
+.close-btn {
+  opacity: 0.5;
+  font-size: 1.125rem;
+  line-height: 1;
+  transition: opacity 0.15s;
+}
+.close-btn:hover { opacity: 1; }
+
+.payload-body {
+  overflow: auto;
+  flex: 1;
+}
+
+.payload-pre {
+  font-size: 0.75rem;
+  font-family: monospace;
+  white-space: pre-wrap;
+  user-select: text;
+  cursor: text;
+}
+</style>

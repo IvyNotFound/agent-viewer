@@ -119,8 +119,8 @@ describe('ConfirmDialog (T353)', () => {
     })
     await nextTick()
 
-    // Danger icon container has bg-red-500/15
-    const iconContainer = wrapper.find('.bg-red-500\\/15')
+    // Danger icon container has icon-danger scoped class
+    const iconContainer = wrapper.find('.icon-danger')
     expect(iconContainer.exists()).toBe(true)
 
     // Cleanup

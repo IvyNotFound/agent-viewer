@@ -23,29 +23,29 @@ const { t } = useI18n()
   <v-dialog model-value max-width="384" @update:model-value="emit('cancel')">
     <!-- data-testid wrapper catches @click.self for test compat (Vuetify handles overlay in prod) -->
     <div data-testid="confirm-modal-wrapper" @click.self="emit('cancel')">
-      <v-card class="flex flex-col overflow-hidden">
+      <v-card>
         <!-- Header -->
         <v-toolbar color="surface" density="compact">
-          <v-toolbar-title class="text-sm font-semibold">{{ props.title }}</v-toolbar-title>
+          <v-toolbar-title>{{ props.title }}</v-toolbar-title>
         </v-toolbar>
 
         <!-- Body -->
         <v-card-text>
-          <p class="text-sm text-content-secondary">{{ props.message }}</p>
+          <p class="text-body-2 text-medium-emphasis">{{ props.message }}</p>
         </v-card-text>
 
         <!-- Footer -->
         <v-card-actions>
           <v-spacer />
           <button
-            class="px-4 py-2 text-sm text-content-muted hover:text-content-secondary hover:bg-surface-secondary rounded-lg transition-colors"
+            class="btn-cancel"
             @click="emit('cancel')"
           >
             {{ props.cancelLabel ?? t('common.cancel') }}
           </button>
           <button
-            class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-all"
-            :class="props.danger ? 'bg-red-600 hover:bg-red-500' : 'bg-violet-600 hover:bg-violet-500'"
+            class="btn-confirm"
+            :class="props.danger ? 'btn-confirm--danger' : 'btn-confirm--primary'"
             @click="emit('confirm')"
           >
             {{ props.confirmLabel ?? t('common.confirm') }}
@@ -55,3 +55,30 @@ const { t } = useI18n()
     </div>
   </v-dialog>
 </template>
+
+<style scoped>
+.btn-cancel {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  transition: background-color 0.15s, color 0.15s;
+}
+.btn-cancel:hover {
+  background-color: rgba(var(--v-theme-on-surface), 0.08);
+  color: rgba(var(--v-theme-on-surface), 0.87);
+}
+
+.btn-confirm {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 8px;
+  color: #fff;
+  transition: background-color 0.15s;
+}
+.btn-confirm--danger   { background-color: rgb(220 38 38); }
+.btn-confirm--danger:hover   { background-color: rgb(239 68 68); }
+.btn-confirm--primary  { background-color: rgb(var(--v-theme-primary)); }
+.btn-confirm--primary:hover  { background-color: rgb(var(--v-theme-primary) / 0.85); }
+</style>

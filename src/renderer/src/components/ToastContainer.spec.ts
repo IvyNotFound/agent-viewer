@@ -20,7 +20,7 @@ describe('ToastContainer', () => {
   it('renders nothing when toasts array is empty', () => {
     const wrapper = mount(ToastContainer)
     // Container div exists but no toast items inside
-    const toastItems = wrapper.findAll('.flex.items-start')
+    const toastItems = wrapper.findAll('.toast-item')
     expect(toastItems).toHaveLength(0)
   })
 
@@ -56,7 +56,7 @@ describe('ToastContainer', () => {
 
     const wrapper = mount(ToastContainer)
     await nextTick()
-    const toastDiv = wrapper.find('.bg-red-100')
+    const toastDiv = wrapper.find('.toast-error')
     expect(toastDiv.exists()).toBe(true)
   })
 

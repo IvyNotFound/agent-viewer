@@ -64,7 +64,7 @@ describe('ContextMenu', () => {
       props: { x: 100, y: 200, items },
       global: { stubs: teleportStub },
     })
-    const overlay = wrapper.find('.fixed.inset-0')
+    const overlay = wrapper.find('.context-overlay')
     await overlay.trigger('click')
     expect(wrapper.emitted('close')).toHaveLength(1)
   })
@@ -79,7 +79,7 @@ describe('ContextMenu', () => {
       props: { x: 100, y: 200, items },
       global: { stubs: teleportStub },
     })
-    const separators = wrapper.findAll('.border-t')
+    const separators = wrapper.findAll('.separator')
     expect(separators.length).toBe(1)
   })
 

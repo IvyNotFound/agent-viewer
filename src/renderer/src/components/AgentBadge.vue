@@ -15,9 +15,38 @@ defineProps<{
       borderColor: agentBorder(name)
     }"
     :title="name"
-    class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs border font-mono max-w-[120px]"
+    class="agent-badge"
   >
-    <span v-if="active" class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-    <span class="truncate">{{ name }}</span>
+    <span v-if="active" class="activity-dot"></span>
+    <span class="badge-name">{{ name }}</span>
   </span>
 </template>
+
+<style scoped>
+.agent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  border-width: 1px;
+  border-style: solid;
+  font-family: monospace;
+  max-width: 120px;
+}
+
+.activity-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: rgb(52 211 153); /* emerald-400 */
+  flex-shrink: 0;
+}
+
+.badge-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

@@ -26,7 +26,7 @@ describe('AgentBadge', () => {
     const wrapper = shallowMount(AgentBadge, {
       props: { name: 'dev-front', active: true },
     })
-    const dot = wrapper.find('.w-1\\.5.h-1\\.5.rounded-full.bg-emerald-400')
+    const dot = wrapper.find('.activity-dot')
     expect(dot.exists()).toBe(true)
   })
 
@@ -34,7 +34,7 @@ describe('AgentBadge', () => {
     const wrapper = shallowMount(AgentBadge, {
       props: { name: 'dev-front' },
     })
-    const dot = wrapper.find('.bg-emerald-400')
+    const dot = wrapper.find('.activity-dot')
     expect(dot.exists()).toBe(false)
   })
 

@@ -10,26 +10,92 @@ const ICON: Record<Toast['type'], string> = {
 }
 
 const COLOR: Record<Toast['type'], string> = {
-  error: 'bg-red-100 dark:bg-red-900/90 border-red-300 dark:border-red-700/60 text-red-800 dark:text-red-200',
-  warn:  'bg-amber-100 dark:bg-amber-900/90 border-amber-300 dark:border-amber-700/60 text-amber-800 dark:text-amber-200',
-  info:  'bg-surface-secondary/90 border-edge-default text-content-secondary',
+  error: 'toast-error',
+  warn:  'toast-warn',
+  info:  'toast-info',
 }
 </script>
 
 <template>
   <!-- MD3: fixed bottom-right, stacked toasts with elevation shadow -->
-  <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none">
+  <div class="toast-container">
     <div
       v-for="toast in toasts"
       :key="toast.id"
-      :class="['flex items-start gap-2.5 px-3 py-2.5 rounded-xl border text-sm shadow-lg pointer-events-auto', COLOR[toast.type]]"
+      :class="['toast-item', COLOR[toast.type]]"
     >
-      <span class="shrink-0 text-xs font-mono mt-0.5">{{ ICON[toast.type] }}</span>
-      <span class="flex-1 leading-relaxed break-words min-w-0">{{ toast.message }}</span>
+      <span class="toast-icon">{{ ICON[toast.type] }}</span>
+      <span class="toast-message">{{ toast.message }}</span>
       <button
-        class="shrink-0 text-xs opacity-50 hover:opacity-100 transition-opacity mt-0.5"
+        class="toast-dismiss"
         @click="dismiss(toast.id)"
       >✕</button>
     </div>
   </div>
 </template>
+
+<style scoped>
+.toast-container {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 24rem;
+  pointer-events: none;
+}
+
+.toast-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border-width: 1px;
+  border-style: solid;
+  font-size: 0.875rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+  pointer-events: auto;
+}
+
+.toast-error {
+  background-color: rgb(127 29 29 / 0.9);
+  border-color: rgb(185 28 28 / 0.6);
+  color: rgb(254 202 202);
+}
+.toast-warn {
+  background-color: rgb(120 53 15 / 0.9);
+  border-color: rgb(180 83 9 / 0.6);
+  color: rgb(253 230 138);
+}
+.toast-info {
+  background-color: rgba(var(--v-theme-surface-variant), 0.9);
+  border-color: rgba(var(--v-border-color), var(--v-border-opacity));
+  color: rgba(var(--v-theme-on-surface), 0.7);
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-family: monospace;
+  margin-top: 2px;
+}
+
+.toast-message {
+  flex: 1;
+  line-height: 1.625;
+  word-break: break-word;
+  min-width: 0;
+}
+
+.toast-dismiss {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  opacity: 0.5;
+  margin-top: 2px;
+  transition: opacity 0.15s;
+}
+.toast-dismiss:hover { opacity: 1; }
+</style>
