@@ -11,7 +11,7 @@ describe('GitCommitList', () => {
 
   it('renders all commits when no filterTaskId', () => {
     const wrapper = mount(GitCommitList, { props: { commits }, global: { plugins: [i18n] } })
-    expect(wrapper.findAll('.border-b').length).toBeGreaterThanOrEqual(2)
+    expect(wrapper.findAll('.commit-row').length).toBeGreaterThanOrEqual(2)
     wrapper.unmount()
   })
 

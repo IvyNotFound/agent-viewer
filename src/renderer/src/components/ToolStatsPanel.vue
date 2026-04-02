@@ -41,73 +41,164 @@ function sortIcon(key: SortKey): string {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-hidden bg-surface-base text-content-primary">
+  <div class="tool-stats-panel">
     <!-- Header -->
-    <div class="shrink-0 flex items-center px-6 py-3 border-b border-edge-default">
-      <h2 class="text-xl font-semibold text-content-primary">{{ t('toolStats.title') }}</h2>
+    <div class="tool-stats-header">
+      <h2 class="tool-stats-title">{{ t('toolStats.title') }}</h2>
     </div>
     <!-- Empty state -->
-    <div v-if="toolStats.length === 0" class="flex items-center justify-center flex-1 py-12">
-      <p class="text-sm text-content-faint italic text-center px-4">{{ t('toolStats.empty') }}</p>
+    <div v-if="toolStats.length === 0" class="tool-stats-empty">
+      <p class="tool-stats-empty-text">{{ t('toolStats.empty') }}</p>
     </div>
 
     <!-- Table -->
-    <div v-else class="flex-1 overflow-y-auto p-6">
-      <div class="bg-surface-secondary rounded-lg border border-edge-default overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="sticky top-0">
-          <tr class="border-b border-edge-default text-content-muted text-xs uppercase tracking-wide">
-            <th class="text-left px-4 py-2.5 cursor-pointer hover:text-content-secondary"
-                @click="setSort('calls')">
-              {{ t('toolStats.tool') }}
-            </th>
-            <th class="text-right px-4 py-2.5 cursor-pointer hover:text-content-secondary"
-                @click="setSort('calls')">
-              {{ t('toolStats.calls') }}{{ sortIcon('calls') }}
-            </th>
-            <th class="text-right px-4 py-2.5 cursor-pointer hover:text-content-secondary"
-                @click="setSort('errors')">
-              {{ t('toolStats.errors') }}{{ sortIcon('errors') }}
-            </th>
-            <th class="text-right px-4 py-2.5 cursor-pointer hover:text-content-secondary"
-                @click="setSort('errorRate')">
-              {{ t('toolStats.errorRate') }}{{ sortIcon('errorRate') }}
-            </th>
-            <th class="text-right px-4 py-2.5 cursor-pointer hover:text-content-secondary"
-                @click="setSort('avgDurationMs')">
-              {{ t('toolStats.avgDuration') }}{{ sortIcon('avgDurationMs') }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in sorted"
-            :key="row.name"
-            class="border-b border-edge-default/50 last:border-0 hover:bg-surface-tertiary/30 transition-colors"
-          >
-            <!-- Tool name -->
-            <td class="px-4 py-2 font-mono" :class="toolColor(row.name)">{{ row.name }}</td>
-            <!-- Calls -->
-            <td class="px-4 py-2 text-right font-mono text-content-tertiary">{{ row.calls }}</td>
-            <!-- Errors -->
-            <td class="px-4 py-2 text-right font-mono"
-                :class="row.errors > 0 ? 'text-red-400' : 'text-content-faint'">
-              {{ row.errors }}
-            </td>
-            <!-- Error rate -->
-            <td class="px-4 py-2 text-right font-mono"
-                :class="row.errorRate > 0 ? 'text-red-400' : 'text-content-faint'">
-              {{ row.errors > 0 ? (row.errorRate * 100).toFixed(0) + '%' : '—' }}
-            </td>
-            <!-- Avg duration -->
-            <td class="px-4 py-2 text-right font-mono"
-                :class="row.avgDurationMs !== null && row.avgDurationMs > 5000 ? 'text-amber-400' : 'text-content-faint'">
-              {{ formatDuration(row.avgDurationMs) }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-else class="tool-stats-body">
+      <div class="tool-stats-table-wrap">
+        <table class="tool-stats-table">
+          <thead>
+            <tr class="tool-stats-thead-row">
+              <th class="tool-stats-th tool-stats-th--left" @click="setSort('calls')">
+                {{ t('toolStats.tool') }}
+              </th>
+              <th class="tool-stats-th" @click="setSort('calls')">
+                {{ t('toolStats.calls') }}{{ sortIcon('calls') }}
+              </th>
+              <th class="tool-stats-th" @click="setSort('errors')">
+                {{ t('toolStats.errors') }}{{ sortIcon('errors') }}
+              </th>
+              <th class="tool-stats-th" @click="setSort('errorRate')">
+                {{ t('toolStats.errorRate') }}{{ sortIcon('errorRate') }}
+              </th>
+              <th class="tool-stats-th" @click="setSort('avgDurationMs')">
+                {{ t('toolStats.avgDuration') }}{{ sortIcon('avgDurationMs') }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in sorted"
+              :key="row.name"
+              class="tool-stats-row"
+            >
+              <!-- Tool name -->
+              <td class="tool-stats-td tool-stats-td--mono" :class="toolColor(row.name)">{{ row.name }}</td>
+              <!-- Calls -->
+              <td class="tool-stats-td tool-stats-td--mono tool-stats-td--right tool-stats-td--muted">{{ row.calls }}</td>
+              <!-- Errors -->
+              <td
+                class="tool-stats-td tool-stats-td--mono tool-stats-td--right"
+                :class="row.errors > 0 ? 'tool-stats-td--error' : 'tool-stats-td--faint'"
+              >
+                {{ row.errors }}
+              </td>
+              <!-- Error rate -->
+              <td
+                class="tool-stats-td tool-stats-td--mono tool-stats-td--right"
+                :class="row.errorRate > 0 ? 'tool-stats-td--error' : 'tool-stats-td--faint'"
+              >
+                {{ row.errors > 0 ? (row.errorRate * 100).toFixed(0) + '%' : '—' }}
+              </td>
+              <!-- Avg duration -->
+              <td
+                class="tool-stats-td tool-stats-td--mono tool-stats-td--right"
+                :class="row.avgDurationMs !== null && row.avgDurationMs > 5000 ? 'tool-stats-td--warn' : 'tool-stats-td--faint'"
+              >
+                {{ formatDuration(row.avgDurationMs) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.tool-stats-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--surface-base);
+  color: var(--content-primary);
+}
+.tool-stats-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--edge-default);
+}
+.tool-stats-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--content-primary);
+  margin: 0;
+}
+.tool-stats-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 48px;
+}
+.tool-stats-empty-text {
+  font-size: 13px;
+  color: var(--content-faint);
+  font-style: italic;
+  text-align: center;
+  margin: 0;
+  padding: 0 16px;
+}
+.tool-stats-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+.tool-stats-table-wrap {
+  background: var(--surface-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--edge-default);
+  overflow-x: auto;
+}
+.tool-stats-table {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+}
+.tool-stats-thead-row {
+  border-bottom: 1px solid var(--edge-default);
+}
+.tool-stats-th {
+  padding: 10px 16px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--content-muted);
+  text-align: right;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: var(--surface-secondary);
+  transition: color 0.15s;
+}
+.tool-stats-th:hover { color: var(--content-secondary); }
+.tool-stats-th--left { text-align: left; }
+.tool-stats-row {
+  border-bottom: 1px solid rgba(63, 63, 70, 0.5);
+  transition: background-color 0.15s;
+}
+.tool-stats-row:last-child { border-bottom: none; }
+.tool-stats-row:hover { background: rgba(63, 63, 70, 0.3); }
+.tool-stats-td {
+  padding: 8px 16px;
+}
+.tool-stats-td--mono { font-family: ui-monospace, monospace; }
+.tool-stats-td--right { text-align: right; }
+.tool-stats-td--muted { color: var(--content-tertiary); }
+.tool-stats-td--faint { color: var(--content-faint); }
+.tool-stats-td--error { color: #f87171; }
+.tool-stats-td--warn { color: #fbbf24; }
+</style>

@@ -164,6 +164,13 @@ function cacheEfficiency(row: AgentCostAgg): number {
   return Math.round((row.cache_read / total) * 100)
 }
 
+function cacheEffClass(row: AgentCostAgg): string {
+  const e = cacheEfficiency(row)
+  if (e > 50) return 'cache-eff--high'
+  if (e >= 20) return 'cache-eff--mid'
+  return ''
+}
+
 // ── Formatting ─────────────────────────────────────────────────────────────
 
 /**
@@ -206,21 +213,18 @@ const hoveredBar = ref<number | null>(null)
 </script>
 
 <template>
-  <section class="space-y-3">
-
-    <!-- Header + period selector -->
-    <div v-if="!props.period" class="flex items-center justify-between">
-      <h3 class="text-[11px] uppercase tracking-wider text-content-faint">
+  <section class="cost-section">
+<!-- Header + period selector -->
+    <div v-if="!props.period" class="cost-header">
+      <h3 class="cost-title">
         {{ t('costStats.title') }}
       </h3>
-      <div class="flex gap-1">
+      <div class="cost-period-btns">
         <button
           v-for="p in PERIODS"
           :key="p.key"
-          class="px-2 py-0.5 rounded-full text-[11px] border transition-colors"
-          :class="selectedPeriod === p.key
-            ? 'bg-accent-primary border-accent-primary text-white'
-            : 'bg-surface-secondary border-edge-default text-content-secondary hover:border-accent-primary hover:text-content-primary'"
+          class="cost-period-btn"
+          :class="{ 'cost-period-btn--active': selectedPeriod === p.key }"
           @click="selectedPeriod = p.key"
         >
           {{ t(p.labelKey) }}
@@ -229,53 +233,52 @@ const hoveredBar = ref<number | null>(null)
     </div>
 
     <!-- Loading state -->
-    <div v-if="loading && rows.length === 0" class="text-sm text-content-faint py-4 text-center">
+    <div v-if="loading && rows.length === 0" class="cost-state">
       {{ t('costStats.loading') }}
     </div>
 
     <!-- No data state -->
-    <div v-else-if="hasData === false" class="text-sm text-content-faint py-4 text-center">
+    <div v-else-if="hasData === false" class="cost-state">
       {{ t('costStats.noData') }}
     </div>
 
     <template v-else-if="byAgent.length > 0">
-
-      <!-- Global summary row -->
-      <div class="grid grid-cols-3 gap-2">
-        <div class="flex flex-col gap-0.5 p-2.5 rounded-lg bg-surface-secondary border border-edge-default">
-          <span class="text-[10px] uppercase tracking-wider text-content-faint">{{ t('costStats.totalCost') }}</span>
-          <span class="text-base font-bold text-content-primary tabular-nums">{{ formatCost(globalCost) }}</span>
+<!-- Global summary row -->
+      <div class="cost-summary-grid">
+        <div class="cost-summary-card">
+          <span class="cost-summary-label">{{ t('costStats.totalCost') }}</span>
+          <span class="cost-summary-value">{{ formatCost(globalCost) }}</span>
         </div>
-        <div class="flex flex-col gap-0.5 p-2.5 rounded-lg bg-surface-secondary border border-edge-default">
-          <span class="text-[10px] uppercase tracking-wider text-content-faint">{{ t('costStats.sessions') }}</span>
-          <span class="text-base font-bold text-content-primary tabular-nums">{{ globalSessions }}</span>
+        <div class="cost-summary-card">
+          <span class="cost-summary-label">{{ t('costStats.sessions') }}</span>
+          <span class="cost-summary-value">{{ globalSessions }}</span>
         </div>
-        <div class="flex flex-col gap-0.5 p-2.5 rounded-lg bg-surface-secondary border border-edge-default">
-          <span class="text-[10px] uppercase tracking-wider text-content-faint">{{ t('costStats.turns') }}</span>
-          <span class="text-base font-bold text-content-primary tabular-nums">{{ globalTurns }}</span>
+        <div class="cost-summary-card">
+          <span class="cost-summary-label">{{ t('costStats.turns') }}</span>
+          <span class="cost-summary-value">{{ globalTurns }}</span>
         </div>
       </div>
 
       <!-- Cost sparkline (last 7 periods) -->
-      <div v-if="sparkPeriods.length > 1" class="flex flex-col gap-1">
-        <span class="text-[10px] uppercase tracking-wider text-content-faint">{{ t('costStats.trend') }}</span>
-        <div class="flex items-end gap-1 h-[40px]">
+      <div v-if="sparkPeriods.length > 1" class="cost-sparkline-section">
+        <span class="cost-section-label">{{ t('costStats.trend') }}</span>
+        <div class="cost-sparkline">
           <div
             v-for="(bar, i) in sparkPeriods"
             :key="bar.label"
-            class="relative flex-1 flex flex-col justify-end cursor-default"
+            class="cost-spark-bar-wrap"
             @mouseenter="hoveredBar = i"
             @mouseleave="hoveredBar = null"
           >
             <div
-              class="w-full rounded-t transition-colors"
-              :class="hoveredBar === i ? 'bg-accent-primary' : 'bg-violet-600/50 dark:bg-violet-500/40'"
+              class="cost-spark-bar"
+              :class="{ 'cost-spark-bar--hover': hoveredBar === i }"
               :style="{ height: Math.max(Math.round((bar.cost / sparkMax) * 36), bar.cost > 0 ? 2 : 0) + 'px' }"
             />
-            <div v-if="bar.cost === 0" class="w-full h-[2px] rounded bg-edge-subtle" />
+            <div v-if="bar.cost === 0" class="cost-spark-zero" />
             <div
               v-if="hoveredBar === i"
-              class="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-10 px-2 py-1 rounded text-[10px] whitespace-nowrap bg-surface-tooltip text-content-primary border border-edge-default shadow-lg pointer-events-none"
+              class="cost-spark-tooltip"
             >
               {{ bar.label }} : {{ formatCost(bar.cost) }}
             </div>
@@ -284,43 +287,239 @@ const hoveredBar = ref<number | null>(null)
       </div>
 
       <!-- Per-agent cost table -->
-      <div class="space-y-1.5">
-        <span class="text-[10px] uppercase tracking-wider text-content-faint">{{ t('costStats.perAgent') }}</span>
+      <div class="cost-agent-table">
+        <span class="cost-section-label">{{ t('costStats.perAgent') }}</span>
 
         <div
           v-for="row in byAgent"
           :key="row.agent_id"
-          class="flex items-center gap-3"
+          class="cost-agent-row"
         >
           <!-- Agent badge -->
           <span
-            class="shrink-0 w-32 text-[11px] font-mono px-1.5 py-0.5 rounded font-medium truncate text-right"
+            class="cost-agent-badge"
             :style="agentStyles.get(row.agent_name)"
             :title="row.agent_name"
           >{{ row.agent_name }}</span>
 
           <!-- Cost bar -->
-          <div class="flex-1 h-5 bg-surface-secondary rounded overflow-hidden relative">
+          <div class="cost-bar-track">
             <div
-              class="h-full rounded bg-gradient-to-r from-violet-600/60 to-pink-600/60 transition-all duration-300"
+              class="cost-bar-fill"
               :style="{ width: barWidth(row.total_cost) }"
             />
-            <span class="absolute inset-0 flex items-center px-2 text-[10px] font-mono text-content-secondary">
+            <span class="cost-bar-label">
               {{ formatCost(row.total_cost) }}
             </span>
           </div>
 
           <!-- Cache efficiency -->
-          <div class="shrink-0 flex gap-3 text-[10px] font-mono text-content-subtle w-32 justify-end">
+          <div class="cost-cache-info">
             <span
-              :class="cacheEfficiency(row) > 50 ? 'text-emerald-600 dark:text-emerald-400' : cacheEfficiency(row) >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-content-faint'"
+              class="cost-cache-eff"
+              :class="cacheEffClass(row)"
               :title="t('costStats.cacheEfficiency')"
             >{{ t('costStats.cache') }} {{ cacheEfficiency(row) }}%</span>
-            <span class="text-content-faint">{{ row.session_count }}s</span>
+            <span class="cost-sessions">{{ row.session_count }}s</span>
           </div>
         </div>
       </div>
-
-    </template>
+</template>
   </section>
 </template>
+
+<style scoped>
+.cost-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cost-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cost-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--content-faint);
+  margin: 0;
+  font-weight: 400;
+}
+.cost-period-btns {
+  display: flex;
+  gap: 4px;
+}
+.cost-period-btn {
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  border: 1px solid var(--edge-default);
+  background: var(--surface-secondary);
+  color: var(--content-secondary);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+.cost-period-btn:hover {
+  border-color: #6d28d9;
+  color: var(--content-primary);
+}
+.cost-period-btn--active {
+  background: #6d28d9;
+  border-color: #6d28d9;
+  color: white;
+}
+.cost-state {
+  font-size: 13px;
+  color: var(--content-faint);
+  padding: 16px;
+  text-align: center;
+}
+/* Summary grid */
+.cost-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.cost-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--edge-default);
+}
+.cost-summary-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--content-faint);
+}
+.cost-summary-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--content-primary);
+  font-variant-numeric: tabular-nums;
+}
+/* Section label */
+.cost-section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--content-faint);
+  display: block;
+}
+/* Sparkline */
+.cost-sparkline-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cost-sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 40px;
+}
+.cost-spark-bar-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  cursor: default;
+}
+.cost-spark-bar {
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  background: rgba(124, 58, 237, 0.45);
+  transition: background-color 0.15s;
+}
+.cost-spark-bar--hover { background: #6d28d9; }
+.cost-spark-zero {
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--edge-subtle);
+}
+.cost-spark-tooltip {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  background: var(--surface-secondary);
+  color: var(--content-primary);
+  border: 1px solid var(--edge-default);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+/* Per-agent table */
+.cost-agent-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cost-agent-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cost-agent-badge {
+  flex-shrink: 0;
+  width: 128px;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+.cost-bar-track {
+  flex: 1;
+  height: 20px;
+  background: var(--surface-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.cost-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(to right, rgba(124, 58, 237, 0.6), rgba(219, 39, 119, 0.6));
+  transition: width 0.3s;
+}
+.cost-bar-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  color: var(--content-secondary);
+}
+.cost-cache-info {
+  flex-shrink: 0;
+  display: flex;
+  gap: 12px;
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  color: var(--content-subtle);
+  width: 128px;
+  justify-content: flex-end;
+}
+.cost-cache-eff { color: var(--content-faint); }
+.cache-eff--high { color: #4ade80; }
+.cache-eff--mid { color: #fbbf24; }
+.cost-sessions { color: var(--content-faint); }
+</style>
