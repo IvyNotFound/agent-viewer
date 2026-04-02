@@ -439,8 +439,8 @@ exports[`ToastContainer — snapshots > matches snapshot: three toast types (err
 </div>"
 `;
 
-exports[`ToggleSwitch — snapshots > matches snapshot: disabled state 1`] = `"<button type="button" role="switch" aria-checked="false" disabled="" class="relative shrink-0 w-10 h-5 rounded-full transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-40 disabled:cursor-not-allowed bg-surface-tertiary"><span class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 translate-x-0"></span></button>"`;
+exports[`ToggleSwitch — snapshots > matches snapshot: disabled state 1`] = `"<button data-v-c819432f="" type="button" role="switch" aria-checked="false" disabled="" class="toggle-switch is-off"><span data-v-c819432f="" class="toggle-thumb"></span></button>"`;
 
-exports[`ToggleSwitch — snapshots > matches snapshot: off state 1`] = `"<button type="button" role="switch" aria-checked="false" class="relative shrink-0 w-10 h-5 rounded-full transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-40 disabled:cursor-not-allowed bg-surface-tertiary"><span class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 translate-x-0"></span></button>"`;
+exports[`ToggleSwitch — snapshots > matches snapshot: off state 1`] = `"<button data-v-c819432f="" type="button" role="switch" aria-checked="false" class="toggle-switch is-off"><span data-v-c819432f="" class="toggle-thumb"></span></button>"`;
 
-exports[`ToggleSwitch — snapshots > matches snapshot: on state 1`] = `"<button type="button" role="switch" aria-checked="true" class="relative shrink-0 w-10 h-5 rounded-full transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-40 disabled:cursor-not-allowed bg-violet-600"><span class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 translate-x-5"></span></button>"`;
+exports[`ToggleSwitch — snapshots > matches snapshot: on state 1`] = `"<button data-v-c819432f="" type="button" role="switch" aria-checked="true" class="toggle-switch is-on"><span data-v-c819432f="" class="toggle-thumb"></span></button>"`;

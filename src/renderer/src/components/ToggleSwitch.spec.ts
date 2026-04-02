@@ -10,7 +10,7 @@ describe('ToggleSwitch (T675)', () => {
     })
     const btn = wrapper.find('button[role="switch"]')
     expect(btn.attributes('aria-checked')).toBe('false')
-    expect(btn.classes()).toContain('bg-surface-tertiary')
+    expect(btn.classes()).toContain('is-off')
   })
 
   it('renders in on position when modelValue=true', () => {
@@ -19,7 +19,7 @@ describe('ToggleSwitch (T675)', () => {
     })
     const btn = wrapper.find('button[role="switch"]')
     expect(btn.attributes('aria-checked')).toBe('true')
-    expect(btn.classes()).toContain('bg-violet-600')
+    expect(btn.classes()).toContain('is-on')
   })
 
   it('emits update:modelValue with toggled value on click', async () => {
@@ -31,4 +31,5 @@ describe('ToggleSwitch (T675)', () => {
     expect(wrapper.emitted('update:modelValue')![0]).toEqual([true])
   })
 })
+
 

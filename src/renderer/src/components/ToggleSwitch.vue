@@ -9,13 +9,49 @@ defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
     role="switch"
     :aria-checked="modelValue"
     :disabled="disabled"
-    class="relative shrink-0 w-10 h-5 rounded-full transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-40 disabled:cursor-not-allowed"
-    :class="modelValue ? 'bg-violet-600' : 'bg-surface-tertiary'"
+    class="toggle-switch"
+    :class="modelValue ? 'is-on' : 'is-off'"
     @click="$emit('update:modelValue', !modelValue)"
   >
-    <span
-      class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200"
-      :class="modelValue ? 'translate-x-5' : 'translate-x-0'"
-    />
+    <span class="toggle-thumb" />
   </button>
 </template>
+
+<style scoped>
+.toggle-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: var(--surface-tertiary);
+}
+.toggle-switch:focus-visible {
+  box-shadow: 0 0 0 2px rgb(var(--v-theme-primary, 124 58 237));
+}
+.toggle-switch.is-on {
+  background-color: rgb(var(--v-theme-primary, 124 58 237));
+}
+.toggle-switch:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.toggle-thumb {
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background-color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+.is-on .toggle-thumb {
+  transform: translateX(1.25rem);
+}
+</style>

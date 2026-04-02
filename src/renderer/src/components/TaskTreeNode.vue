@@ -28,81 +28,79 @@ function formatDate(iso: string): string {
 }
 
 const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
-const EFFORT_BADGE: Record<number, string> = {
-  1: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  2: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  3: 'bg-red-500/20 text-red-400 border-red-500/30',
+const EFFORT_STYLE: Record<number, { color: string; background: string; border: string }> = {
+  1: { color: '#34d399', background: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' },
+  2: { color: '#fbbf24', background: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
+  3: { color: '#f87171', background: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)' },
 }
 </script>
 
 <template>
-  <div class="flex flex-col">
-    <!-- Node row -->
+  <div class="tree-node-wrapper">
+    <!-- Node row — cursor-pointer kept for test selector compatibility -->
     <div
-      :class="[
-        'flex items-start gap-1.5 group/node rounded-lg px-2 py-1.5 hover:bg-surface-secondary transition-colors cursor-pointer',
-        node.depth > 0 && 'ml-4 border-l border-edge-subtle pl-3',
-      ]"
+      class="node-row cursor-pointer"
+      :class="node.depth > 0 ? 'node-row--child' : ''"
       @click="store.openTask(node)"
     >
       <!-- Expand/collapse toggle -->
       <button
         v-if="hasChildren"
-        class="shrink-0 w-4 h-4 flex items-center justify-center text-content-subtle hover:text-content-tertiary transition-colors mt-0.5"
+        class="expand-btn"
         :title="expanded ? t('common.collapse') : t('common.expand')"
         @click.stop="toggle"
       >
         <svg
-          :class="['w-3 h-3 transition-transform duration-150', expanded ? 'rotate-90' : '']"
+          class="expand-icon"
+          :class="expanded ? 'expanded' : ''"
           fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
         >
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </button>
       <!-- Leaf spacer -->
-      <span v-else class="shrink-0 w-4" />
+      <span v-else class="leaf-spacer" />
 
       <!-- Card content -->
-      <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+      <div class="node-content">
         <!-- Title row -->
-        <div class="flex items-start gap-2">
-          <p class="text-sm text-content-primary font-medium leading-snug flex-1 min-w-0 break-words group-hover/node:text-content-primary transition-colors">
-            {{ node.title }}
-          </p>
+        <div class="node-title-row">
+          <p class="node-title">{{ node.title }}</p>
           <!-- Badges -->
-          <div class="flex items-center gap-1 shrink-0">
+          <div class="node-badges">
             <span
               v-if="node.effort"
-              :class="['text-xs font-bold px-1 py-0.5 rounded font-mono border text-[10px]', EFFORT_BADGE[node.effort]]"
+              class="effort-badge"
+              :style="{ color: EFFORT_STYLE[node.effort]?.color, backgroundColor: EFFORT_STYLE[node.effort]?.background, borderColor: EFFORT_STYLE[node.effort]?.border }"
             >{{ EFFORT_LABEL[node.effort] }}</span>
-            <span class="text-[10px] text-content-faint font-mono">#{{ node.id }}</span>
+            <span class="task-id">#{{ node.id }}</span>
           </div>
         </div>
 
         <!-- Meta: perimetre + agent + date -->
-        <div class="flex items-center gap-1.5 flex-wrap">
+        <div class="node-meta">
           <span
             v-if="node.scope"
-            class="text-[10px] px-1 py-0 rounded font-mono border"
+            class="scope-badge"
             :style="{
               color: perimeterFg(node.scope),
               backgroundColor: perimeterBg(node.scope),
               borderColor: perimeterBorder(node.scope),
             }"
           >{{ node.scope }}</span>
-          <AgentBadge v-if="node.agent_name" :name="node.agent_name" :perimetre="node.agent_scope" class="text-[10px]" />
-          <span class="text-[10px] text-content-muted font-mono ml-auto">{{ formatDate(node.updated_at) }}</span>
+          <AgentBadge v-if="node.agent_name" :name="node.agent_name" :perimetre="node.agent_scope" class="agent-badge-sm" />
+          <span class="node-date">{{ formatDate(node.updated_at) }}</span>
         </div>
 
         <!-- Children count hint when collapsed -->
-        <p v-if="hasChildren && !expanded" class="text-[10px] text-content-subtle italic">
+        <p v-if="hasChildren && !expanded" class="children-hint">
           {{ t('task.subtasks', node.children.length, { named: { n: node.children.length } }) }}
         </p>
       </div>
     </div>
 
     <!-- Recursive children -->
-    <div v-if="hasChildren && expanded" class="flex flex-col gap-0.5 mt-0.5">
+    <div v-if="hasChildren && expanded" class="node-children">
       <TaskTreeNode
         v-for="child in node.children"
         :key="child.id"
@@ -111,3 +109,151 @@ const EFFORT_BADGE: Record<number, string> = {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* cursor-pointer kept as utility for test selector compatibility */
+.cursor-pointer { cursor: pointer; }
+
+.tree-node-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.node-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 6px 8px;
+  transition: background-color 0.15s;
+}
+.node-row:hover {
+  background-color: var(--surface-secondary);
+}
+
+.node-row--child {
+  margin-left: 16px;
+  border-left: 1px solid var(--edge-subtle);
+  padding-left: 12px;
+}
+
+.expand-btn {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--content-subtle);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 2px;
+  transition: color 0.15s;
+}
+.expand-btn:hover {
+  color: var(--content-muted);
+}
+
+.expand-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  transition: transform 0.15s;
+}
+.expand-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.leaf-spacer {
+  flex-shrink: 0;
+  width: 1rem;
+}
+
+.node-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.node-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.node-title {
+  font-size: 0.875rem;
+  color: var(--content-primary);
+  font-weight: 500;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  margin: 0;
+}
+
+.node-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.effort-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid;
+  font-family: ui-monospace, monospace;
+}
+
+.task-id {
+  font-size: 0.625rem;
+  color: var(--content-faint);
+  font-family: ui-monospace, monospace;
+}
+
+.node-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.scope-badge {
+  font-size: 0.625rem;
+  padding: 0 4px;
+  border-radius: 3px;
+  border: 1px solid;
+  font-family: ui-monospace, monospace;
+}
+
+.agent-badge-sm {
+  font-size: 0.625rem;
+}
+
+.node-date {
+  font-size: 0.625rem;
+  color: var(--content-muted);
+  font-family: ui-monospace, monospace;
+  margin-left: auto;
+}
+
+.children-hint {
+  font-size: 0.625rem;
+  color: var(--content-subtle);
+  font-style: italic;
+  margin: 0;
+}
+
+.node-children {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 2px;
+}
+</style>

@@ -42,55 +42,143 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
   <!-- tool_use block — carte collapsible couleur agent (T680) -->
   <div
     v-if="block.type === 'tool_use'"
-    class="border rounded-lg overflow-hidden"
+    class="tool-block"
     :style="{ borderColor: accentBorder }"
     data-testid="block-tool-use"
   >
     <button
-      class="w-full flex items-center gap-2 px-3 py-2 transition-colors text-xs"
+      class="tool-header"
       :style="{ backgroundColor: accentBg, color: accentFg }"
       @click="emit('toggleCollapsed', collapseKey(eventId, blockIdx), true)"
     >
-      <span class="transition-transform duration-200" :class="isCollapsed(eventId, blockIdx, true) ? '' : 'rotate-90'">▶</span>
-      <span class="font-semibold">{{ block.name }}</span>
-      <span class="ml-auto opacity-60">{{ t('stream.tool') }}</span>
+      <span class="collapse-arrow" :class="isCollapsed(eventId, blockIdx, true) ? '' : 'rotated'">▶</span>
+      <span class="tool-name">{{ block.name }}</span>
+      <span class="tool-label">{{ t('stream.tool') }}</span>
     </button>
     <div
       v-show="!isCollapsed(eventId, blockIdx, true)"
-      class="px-4 py-3 bg-surface-primary text-xs text-content-tertiary overflow-x-auto select-text cursor-text"
+      class="tool-body"
     >
-      <pre class="whitespace-pre-wrap">{{ toolInputPreview(block.input) }}</pre>
+      <pre>{{ toolInputPreview(block.input) }}</pre>
     </div>
   </div>
 
   <!-- tool_result block — sortie collapsible + markdown + strip ANSI (T727/T729) -->
   <div
     v-else-if="block.type === 'tool_result'"
-    class="border rounded-lg overflow-hidden"
-    :class="block.is_error ? 'border-red-800 bg-red-950' : 'border-edge-default bg-surface-primary'"
+    class="tool-block"
+    :class="block.is_error ? 'tool-block--error' : 'tool-block--result'"
     data-testid="block-tool-result"
   >
     <button
-      class="w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors"
-      :class="block.is_error ? 'text-red-400 hover:bg-red-900' : 'text-content-muted hover:bg-surface-secondary'"
+      class="tool-header tool-header--result"
+      :class="block.is_error ? 'tool-header--error' : ''"
       @click="emit('toggleCollapsed', collapseKey(eventId, blockIdx), !block.is_error && !!block._isLong)"
     >
       <span
-        class="transition-transform duration-200"
-        :class="isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong) ? '' : 'rotate-90'"
+        class="collapse-arrow"
+        :class="isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong) ? '' : 'rotated'"
       >▶</span>
       <span>{{ block.is_error ? t('stream.error') : t('stream.result') }}</span>
       <span
         v-if="isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong)"
-        class="ml-1 opacity-60"
+        class="line-count"
       >({{ block._lineCount ?? 0 }} {{ t('stream.lines') }})</span>
     </button>
     <!-- eslint-disable vue/no-v-html -->
     <div
       v-show="!isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong)"
-      class="stream-markdown px-4 py-2 text-xs text-content-tertiary overflow-x-auto select-text cursor-text"
+      class="stream-markdown tool-body"
       v-html="block._html ?? ''"
     />
     <!-- eslint-enable vue/no-v-html -->
   </div>
 </template>
+
+<style scoped>
+.tool-block {
+  border: 1px solid;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.tool-block--result {
+  border-color: var(--edge-default);
+  background-color: var(--surface-primary);
+}
+
+.tool-block--error {
+  border-color: #7f1d1d;
+  background-color: #0c0505;
+}
+
+.tool-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  border: none;
+  text-align: left;
+  transition: filter 0.15s;
+}
+.tool-header:hover {
+  filter: brightness(1.1);
+}
+
+.tool-header--result {
+  background-color: transparent;
+  color: var(--content-muted);
+}
+.tool-header--result:hover {
+  background-color: var(--surface-secondary);
+  filter: none;
+}
+
+.tool-header--error {
+  color: #f87171;
+}
+.tool-header--error:hover {
+  background-color: rgba(127, 29, 29, 0.3);
+  filter: none;
+}
+
+.collapse-arrow {
+  transition: transform 0.2s;
+  display: inline-block;
+}
+.collapse-arrow.rotated {
+  transform: rotate(90deg);
+}
+
+.tool-name {
+  font-weight: 600;
+}
+
+.tool-label {
+  margin-left: auto;
+  opacity: 0.6;
+}
+
+.line-count {
+  margin-left: 4px;
+  opacity: 0.6;
+}
+
+.tool-body {
+  padding: 12px 16px 8px;
+  font-size: 0.75rem;
+  color: var(--content-muted);
+  overflow-x: auto;
+  user-select: text;
+  cursor: text;
+}
+
+.tool-body pre {
+  white-space: pre-wrap;
+  margin: 0;
+}
+</style>

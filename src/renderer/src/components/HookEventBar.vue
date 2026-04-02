@@ -48,50 +48,52 @@ function rowLabel(e: HookEvent): string {
 
 <template>
   <!-- Only render if there are events or an active tool -->
-  <div v-if="events.length > 0 || activeTool" class="shrink-0 border-t border-edge-subtle bg-surface-primary/80 backdrop-blur-sm">
+  <!-- shrink-0 kept as class name for test selector compatibility -->
+  <div v-if="events.length > 0 || activeTool" class="hook-bar shrink-0">
     <!-- Header bar: active tool indicator + toggle -->
+    <!-- cursor-pointer kept as class name for test selector compatibility -->
     <div
-      class="flex items-center gap-2 px-3 py-1.5 cursor-pointer select-none hover:bg-surface-secondary/40 transition-colors"
+      class="hook-header cursor-pointer"
       @click="expanded = !expanded"
     >
       <!-- Active tool spinner -->
-      <div v-if="activeTool" class="flex items-center gap-1.5">
-        <svg class="w-3 h-3 animate-spin text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+      <div v-if="activeTool" class="active-tool">
+        <svg class="spinner" fill="none" viewBox="0 0 24 24">
+          <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
+          <path class="spinner-arc" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
         </svg>
-        <span :class="['text-[11px] font-mono font-semibold', toolColor(activeTool)]">{{ activeTool }}</span>
-        <span class="text-[10px] text-content-faint">{{ t('hooks.inProgress') }}</span>
+        <span class="tool-name-active" :class="toolColor(activeTool)">{{ activeTool }}</span>
+        <span class="tool-in-progress">{{ t('hooks.inProgress') }}</span>
       </div>
       <!-- Idle: last event summary -->
-      <div v-else-if="events.length > 0" class="flex items-center gap-1.5">
-        <span class="text-[10px] text-content-faint font-mono">{{ events.length }} event{{ events.length > 1 ? 's' : '' }}</span>
+      <div v-else-if="events.length > 0" class="event-count">
+        <span class="event-count-text">{{ events.length }} event{{ events.length > 1 ? 's' : '' }}</span>
       </div>
 
       <!-- Spacer -->
-      <div class="flex-1" />
+      <div class="header-spacer" />
 
       <!-- Expand/collapse toggle -->
-      <button class="text-[10px] text-content-subtle hover:text-content-tertiary transition-colors font-mono">
+      <button class="toggle-btn">
         {{ expanded ? '▲' : '▼' }}
       </button>
     </div>
 
-    <!-- Expanded event list -->
-    <div v-if="expanded" class="max-h-36 overflow-y-auto border-t border-edge-subtle/50 px-3 py-1.5 space-y-0.5">
+    <!-- Expanded event list — max-h-36 kept for test selector compatibility -->
+    <div v-if="expanded" class="event-list max-h-36">
       <div
         v-for="e in reversedEvents"
         :key="e.id"
-        class="flex items-center gap-1.5 py-0.5 cursor-pointer hover:bg-surface-secondary/40 rounded px-1 -mx-1 transition-colors"
+        class="event-row"
         @click.stop="selectedEvent = e"
       >
-        <span class="text-[10px] text-content-faint font-mono shrink-0">{{ eventIcon(e.event) }}</span>
-        <span class="text-[10px] font-mono shrink-0" :class="rowColor(e)">{{ rowLabel(e) }}</span>
-        <span class="text-[10px] text-content-faint font-mono ml-auto tabular-nums shrink-0">
+        <span class="event-icon">{{ eventIcon(e.event) }}</span>
+        <span class="event-label" :class="rowColor(e)">{{ rowLabel(e) }}</span>
+        <span class="event-time">
           {{ new Date(e.ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
         </span>
       </div>
-      <div v-if="events.length === 0" class="text-[10px] text-content-faint italic py-1">{{ t('hooks.noEvents') }}</div>
+      <div v-if="events.length === 0" class="no-events">{{ t('hooks.noEvents') }}</div>
     </div>
   </div>
 
@@ -104,3 +106,134 @@ function rowLabel(e: HookEvent): string {
     />
   </Teleport>
 </template>
+
+<style scoped>
+/* Utility classes kept for test selector compatibility */
+.shrink-0  { flex-shrink: 0; }
+.cursor-pointer { cursor: pointer; }
+/* max-h-36 used as identifier in tests */
+.max-h-36 {
+  max-height: 9rem;
+  overflow-y: auto;
+}
+
+.hook-bar {
+  border-top: 1px solid var(--edge-subtle);
+  background-color: rgba(var(--surface-primary-rgb, 24 24 27), 0.8);
+  backdrop-filter: blur(4px);
+}
+
+.hook-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  user-select: none;
+  transition: background-color 0.15s;
+}
+.hook-header:hover {
+  background-color: var(--surface-secondary);
+}
+
+.active-tool {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spinner {
+  width: 0.75rem;
+  height: 0.75rem;
+  animation: spin 1s linear infinite;
+  color: #fbbf24;
+  flex-shrink: 0;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.spinner-track { opacity: 0.25; }
+.spinner-arc   { opacity: 0.75; }
+
+.tool-name-active {
+  font-size: 0.6875rem;
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+}
+
+.tool-in-progress {
+  font-size: 0.625rem;
+  color: var(--content-faint);
+}
+
+.event-count-text {
+  font-size: 0.625rem;
+  color: var(--content-faint);
+  font-family: ui-monospace, monospace;
+}
+
+.header-spacer { flex: 1; }
+
+.toggle-btn {
+  font-size: 0.625rem;
+  color: var(--content-subtle);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+  font-family: ui-monospace, monospace;
+}
+.toggle-btn:hover {
+  color: var(--content-muted);
+}
+
+.event-list {
+  border-top: 1px solid rgba(var(--edge-subtle-rgb, 39 39 42), 0.5);
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.event-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+}
+.event-row:hover {
+  background-color: var(--surface-secondary);
+}
+
+.event-icon {
+  font-size: 0.625rem;
+  color: var(--content-faint);
+  font-family: ui-monospace, monospace;
+  flex-shrink: 0;
+}
+
+.event-label {
+  font-size: 0.625rem;
+  font-family: ui-monospace, monospace;
+  flex-shrink: 0;
+}
+
+.event-time {
+  font-size: 0.625rem;
+  color: var(--content-faint);
+  font-family: ui-monospace, monospace;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.no-events {
+  font-size: 0.625rem;
+  color: var(--content-faint);
+  font-style: italic;
+  padding: 4px 0;
+}
+</style>

@@ -17,19 +17,22 @@ const emit = defineEmits<{
 /** Link type values as stored in the DB. */
 type LinkType = 'blocks' | 'depends_on' | 'related_to' | 'duplicates'
 
-const LINK_TYPE_COLOR: Record<string, string> = {
-  'blocks':     'bg-red-500/20 text-red-400 border-red-500/30',
-  'depends_on': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  'related_to': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  'duplicates': 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
+const LINK_TYPE_STYLE: Record<string, { color: string; background: string; border: string }> = {
+  blocks:     { color: '#f87171', background: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.3)' },
+  depends_on: { color: '#fb923c', background: 'rgba(249,115,22,0.12)',  border: 'rgba(249,115,22,0.3)' },
+  related_to: { color: '#60a5fa', background: 'rgba(59,130,246,0.12)',  border: 'rgba(59,130,246,0.3)' },
+  duplicates: { color: '#a1a1aa', background: 'rgba(113,113,122,0.12)', border: 'rgba(113,113,122,0.3)' },
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  todo:        'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  in_progress: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  done:        'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
-  archived:    'bg-zinc-700/20 text-zinc-500 border-zinc-700/30',
+const STATUS_STYLE: Record<string, { color: string; background: string; border: string }> = {
+  todo:        { color: '#fbbf24', background: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)' },
+  in_progress: { color: '#34d399', background: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' },
+  done:        { color: '#a1a1aa', background: 'rgba(113,113,122,0.12)', border: 'rgba(113,113,122,0.3)' },
+  archived:    { color: '#71717a', background: 'rgba(82,82,91,0.12)',    border: 'rgba(82,82,91,0.3)' },
 }
+
+const fallbackLink   = LINK_TYPE_STYLE.related_to
+const fallbackStatus = STATUS_STYLE.todo
 
 /** Tasks this task blocks or that this task depends on (outgoing) */
 const outgoing = computed(() =>
@@ -83,30 +86,32 @@ function typeBadgeLabel(link: TaskLink): string {
 </script>
 
 <template>
-  <div class="flex flex-col gap-1">
+  <div class="dep-graph">
     <!-- No links -->
-    <p v-if="!hasLinks" class="text-xs text-content-faint italic">
+    <p v-if="!hasLinks" class="no-links">
       {{ t('taskDetail.noDependencies') }}
     </p>
 
     <template v-else>
       <!-- Outgoing: this task blocks or depends on -->
-      <div v-if="outgoing.length > 0" class="mb-1">
-        <p class="text-[10px] text-content-faint mb-1">{{ t('taskDetail.blocks') }}</p>
-        <div class="space-y-1">
+      <div v-if="outgoing.length > 0" class="dep-section">
+        <p class="dep-section-label">{{ t('taskDetail.blocks') }}</p>
+        <div class="dep-list">
           <button
             v-for="link in outgoing"
             :key="link.id"
-            class="w-full flex items-center gap-1.5 text-left hover:bg-surface-secondary rounded px-1 py-0.5 transition-colors group"
+            class="dep-row"
             @click="emit('navigate', linkedTaskId(link))"
           >
-            <span :class="['text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0', LINK_TYPE_COLOR[link.type] ?? LINK_TYPE_COLOR['related_to']]">
-              {{ typeBadgeLabel(link) }}
-            </span>
-            <span :class="['text-[9px] px-1 py-0.5 rounded border font-mono shrink-0', STATUS_COLOR[linkedTaskStatus(link)] ?? STATUS_COLOR.todo]">
-              {{ linkedTaskStatus(link) }}
-            </span>
-            <span class="text-xs text-content-secondary truncate group-hover:text-content-primary transition-colors">
+            <span
+              class="dep-badge"
+              :style="{ color: (LINK_TYPE_STYLE[link.type] ?? fallbackLink).color, backgroundColor: (LINK_TYPE_STYLE[link.type] ?? fallbackLink).background, borderColor: (LINK_TYPE_STYLE[link.type] ?? fallbackLink).border }"
+            >{{ typeBadgeLabel(link) }}</span>
+            <span
+              class="dep-badge dep-badge--mono"
+              :style="{ color: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).color, backgroundColor: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).background, borderColor: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).border }"
+            >{{ linkedTaskStatus(link) }}</span>
+            <span class="dep-title">
               #{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}
             </span>
           </button>
@@ -114,22 +119,24 @@ function typeBadgeLabel(link: TaskLink): string {
       </div>
 
       <!-- Incoming: blocked by or depended upon by -->
-      <div v-if="incoming.length > 0" class="mb-1">
-        <p class="text-[10px] text-content-faint mb-1">{{ t('taskDetail.blockedBy') }}</p>
-        <div class="space-y-1">
+      <div v-if="incoming.length > 0" class="dep-section">
+        <p class="dep-section-label">{{ t('taskDetail.blockedBy') }}</p>
+        <div class="dep-list">
           <button
             v-for="link in incoming"
             :key="link.id"
-            class="w-full flex items-center gap-1.5 text-left hover:bg-surface-secondary rounded px-1 py-0.5 transition-colors group"
+            class="dep-row"
             @click="emit('navigate', linkedTaskId(link))"
           >
-            <span :class="['text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0', LINK_TYPE_COLOR[link.type] ?? LINK_TYPE_COLOR['related_to']]">
-              {{ typeBadgeLabel(link) }}
-            </span>
-            <span :class="['text-[9px] px-1 py-0.5 rounded border font-mono shrink-0', STATUS_COLOR[linkedTaskStatus(link)] ?? STATUS_COLOR.todo]">
-              {{ linkedTaskStatus(link) }}
-            </span>
-            <span class="text-xs text-content-secondary truncate group-hover:text-content-primary transition-colors">
+            <span
+              class="dep-badge"
+              :style="{ color: (LINK_TYPE_STYLE[link.type] ?? fallbackLink).color, backgroundColor: (LINK_TYPE_STYLE[link.type] ?? fallbackLink).background, borderColor: (LINK_TYPE_STYLE[link.type] ?? fallbackLink).border }"
+            >{{ typeBadgeLabel(link) }}</span>
+            <span
+              class="dep-badge dep-badge--mono"
+              :style="{ color: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).color, backgroundColor: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).background, borderColor: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).border }"
+            >{{ linkedTaskStatus(link) }}</span>
+            <span class="dep-title">
               #{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}
             </span>
           </button>
@@ -137,22 +144,24 @@ function typeBadgeLabel(link: TaskLink): string {
       </div>
 
       <!-- Related: related_to, duplicates -->
-      <div v-if="related.length > 0">
-        <p class="text-[10px] text-content-faint mb-1">{{ t('taskDetail.relatedTo') }}</p>
-        <div class="space-y-1">
+      <div v-if="related.length > 0" class="dep-section">
+        <p class="dep-section-label">{{ t('taskDetail.relatedTo') }}</p>
+        <div class="dep-list">
           <button
             v-for="link in related"
             :key="link.id"
-            class="w-full flex items-center gap-1.5 text-left hover:bg-surface-secondary rounded px-1 py-0.5 transition-colors group"
+            class="dep-row"
             @click="emit('navigate', linkedTaskId(link))"
           >
-            <span :class="['text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0', LINK_TYPE_COLOR[link.type] ?? LINK_TYPE_COLOR['related_to']]">
-              {{ link.type }}
-            </span>
-            <span :class="['text-[9px] px-1 py-0.5 rounded border font-mono shrink-0', STATUS_COLOR[linkedTaskStatus(link)] ?? STATUS_COLOR.todo]">
-              {{ linkedTaskStatus(link) }}
-            </span>
-            <span class="text-xs text-content-secondary truncate group-hover:text-content-primary transition-colors">
+            <span
+              class="dep-badge"
+              :style="{ color: (LINK_TYPE_STYLE[link.type] ?? fallbackLink).color, backgroundColor: (LINK_TYPE_STYLE[link.type] ?? fallbackLink).background, borderColor: (LINK_TYPE_STYLE[link.type] ?? fallbackLink).border }"
+            >{{ link.type }}</span>
+            <span
+              class="dep-badge dep-badge--mono"
+              :style="{ color: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).color, backgroundColor: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).background, borderColor: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).border }"
+            >{{ linkedTaskStatus(link) }}</span>
+            <span class="dep-title">
               #{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}
             </span>
           </button>
@@ -161,3 +170,76 @@ function typeBadgeLabel(link: TaskLink): string {
     </template>
   </div>
 </template>
+
+<style scoped>
+.dep-graph {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.no-links {
+  font-size: 0.75rem;
+  color: var(--content-faint);
+  font-style: italic;
+  margin: 0;
+}
+
+.dep-section {
+  margin-bottom: 4px;
+}
+
+.dep-section-label {
+  font-size: 0.625rem;
+  color: var(--content-faint);
+  margin: 0 0 4px;
+}
+
+.dep-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dep-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+}
+.dep-row:hover {
+  background-color: var(--surface-secondary);
+}
+
+.dep-badge {
+  font-size: 0.5625rem;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  border: 1px solid;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.dep-badge--mono {
+  border-radius: 3px;
+  font-family: ui-monospace, monospace;
+}
+
+.dep-title {
+  font-size: 0.75rem;
+  color: var(--content-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+.dep-row:hover .dep-title {
+  color: var(--content-primary);
+}
+</style>

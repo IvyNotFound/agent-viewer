@@ -73,89 +73,292 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 
 <template>
   <Transition
-    enter-active-class="transition-opacity duration-150"
-    leave-active-class="transition-opacity duration-150"
-    enter-from-class="opacity-0"
-    leave-to-class="opacity-0"
+    enter-active-class="popup-enter-active"
+    leave-active-class="popup-leave-active"
+    enter-from-class="popup-enter-from"
+    leave-to-class="popup-leave-to"
     appear
   >
-    <!-- Overlay -->
+    <!-- Overlay — .fixed.inset-0 kept for test selector compatibility -->
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      class="popup-overlay fixed inset-0"
       @click.self="emit('close')"
     >
       <!-- Card -->
-      <div class="bg-surface-primary border border-edge-default rounded-xl shadow-2xl w-80 flex flex-col overflow-hidden">
+      <div class="popup-card">
         <!-- Header -->
-        <div class="px-5 py-4 border-b border-edge-subtle flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-surface-secondary flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 text-content-tertiary">
+        <div class="popup-header">
+          <div class="popup-header-left">
+            <div class="popup-icon">
+              <svg viewBox="0 0 16 16" fill="currentColor" class="icon-sm">
                 <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.98 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z" />
               </svg>
             </div>
-            <h2 class="text-sm font-semibold text-content-primary">{{ t('project.activeTitle') }}</h2>
+            <h2 class="popup-title">{{ t('project.activeTitle') }}</h2>
           </div>
           <button
-            class="w-7 h-7 flex items-center justify-center rounded text-content-subtle hover:text-content-secondary hover:bg-surface-secondary transition-colors"
+            class="popup-close"
             :title="t('common.close')"
             @click="emit('close')"
           >
-            <svg viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+            <svg viewBox="0 0 16 16" fill="currentColor" class="icon-xs">
               <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854z" />
             </svg>
           </button>
         </div>
 
         <!-- Body -->
-        <div class="px-5 py-4 flex flex-col gap-3">
+        <div class="popup-body">
           <!-- Project info -->
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-content-primary truncate" :title="store.projectPath ?? undefined">
+          <div class="project-info">
+            <p class="project-name" :title="store.projectPath ?? undefined">
               {{ projectName }}
             </p>
             <p
               v-if="store.dbPath"
-              class="text-xs text-content-muted font-mono truncate"
+              class="project-path"
               :title="store.dbPath"
             >
               {{ store.dbPath }}
             </p>
-            <p v-else-if="store.projectPath" class="text-xs text-amber-500/70 font-mono">
+            <p v-else-if="store.projectPath" class="project-initializing">
               {{ t('sidebar.initializing') }}
             </p>
           </div>
 
           <!-- Error -->
-          <div v-if="store.error" class="px-3 py-2 bg-red-950/40 border border-red-800/50 rounded-md">
-            <p class="text-xs text-red-400 break-all">{{ store.error }}</p>
+          <div v-if="store.error" class="project-error">
+            <p class="project-error-text">{{ store.error }}</p>
           </div>
         </div>
 
         <!-- Footer -->
-        <div class="px-5 py-4 border-t border-edge-subtle bg-surface-base/50 flex flex-col gap-2">
+        <div class="popup-footer">
           <button
-            class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-surface-secondary hover:bg-surface-tertiary text-content-primary transition-colors"
+            class="btn-change"
             @click="handleChangeProject"
           >
-            <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5 shrink-0">
+            <svg viewBox="0 0 16 16" fill="currentColor" class="icon-xs">
               <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.98 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z" />
             </svg>
             {{ t('project.changeProject') }}
           </button>
           <button
             v-if="store.projectPath"
-            class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-950/30 border border-red-800/30 hover:border-red-700/50 transition-colors"
+            class="btn-close-project"
             @click="handleCloseProject"
           >
-            <svg viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5 shrink-0">
+            <svg viewBox="0 0 16 16" fill="currentColor" class="icon-xs">
               <path d="M4.354 4.646a.5.5 0 0 0-.708.708L7.293 8l-3.647 3.646a.5.5 0 0 0 .708.708L8 8.707l3.646 3.647a.5.5 0 0 0 .708-.708L8.707 8l3.647-3.646a.5.5 0 0 0-.708-.708L8 7.293 4.354 4.646z" />
             </svg>
             {{ t('project.close') }}
           </button>
-          <p class="text-[11px] text-content-faint font-mono text-right pt-1">v{{ appVersion }}</p>
+          <p class="popup-version">v{{ appVersion }}</p>
         </div>
       </div>
     </div>
   </Transition>
 </template>
+
+<style scoped>
+/* Utility classes kept for test selector compatibility */
+.fixed  { position: fixed; }
+.inset-0 { inset: 0; }
+
+/* Transition — :global() needed: Transition system adds classes without scoped attr */
+:global(.popup-enter-active),
+:global(.popup-leave-active) { transition: opacity 0.15s; }
+:global(.popup-enter-from),
+:global(.popup-leave-to) { opacity: 0; }
+
+.popup-overlay {
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.popup-card {
+  background-color: var(--surface-primary);
+  border: 1px solid var(--edge-default);
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  width: 20rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.popup-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--edge-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.popup-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.popup-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  background-color: var(--surface-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--content-muted);
+}
+
+.popup-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--content-primary);
+  margin: 0;
+}
+
+.popup-close {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--content-subtle);
+  transition: color 0.15s, background-color 0.15s;
+}
+.popup-close:hover {
+  color: var(--content-secondary);
+  background-color: var(--surface-secondary);
+}
+
+/* Body */
+.popup-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.project-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.project-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--content-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.project-path {
+  font-size: 0.75rem;
+  color: var(--content-muted);
+  font-family: ui-monospace, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.project-initializing {
+  font-size: 0.75rem;
+  color: #d97706;
+  font-family: ui-monospace, monospace;
+  margin: 0;
+}
+
+.project-error {
+  padding: 8px 12px;
+  background-color: rgba(127, 29, 29, 0.25);
+  border: 1px solid rgba(127, 29, 29, 0.5);
+  border-radius: 6px;
+}
+.project-error-text {
+  font-size: 0.75rem;
+  color: #f87171;
+  word-break: break-all;
+  margin: 0;
+}
+
+/* Footer */
+.popup-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--edge-subtle);
+  background-color: rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-change,
+.btn-close-project {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  border: 1px solid transparent;
+}
+
+.btn-change {
+  background-color: var(--surface-secondary);
+  color: var(--content-primary);
+  border-color: var(--edge-subtle);
+}
+.btn-change:hover {
+  background-color: var(--surface-tertiary);
+}
+
+.btn-close-project {
+  background-color: transparent;
+  color: #f87171;
+  border-color: rgba(127, 29, 29, 0.3);
+}
+.btn-close-project:hover {
+  color: #fca5a5;
+  background-color: rgba(127, 29, 29, 0.15);
+  border-color: rgba(185, 28, 28, 0.5);
+}
+
+.popup-version {
+  font-size: 0.6875rem;
+  color: var(--content-faint);
+  font-family: ui-monospace, monospace;
+  text-align: right;
+  padding-top: 4px;
+  margin: 0;
+}
+
+.icon-sm {
+  width: 1rem;
+  height: 1rem;
+}
+.icon-xs {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+</style>
