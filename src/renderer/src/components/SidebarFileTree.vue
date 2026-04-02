@@ -85,17 +85,18 @@ defineExpose({ loadSidebarTree })
 <template>
   <div class="file-tree-content">
     <div v-if="loadingSidebarTree" class="loading-state">
-      <span class="loading-text">{{ t('common.loading') }}</span>
+      <span class="loading-text text-caption">{{ t('common.loading') }}</span>
     </div>
-    <div v-else-if="!projectPath" class="empty-state">
+    <div v-else-if="!projectPath" class="empty-state text-caption">
       {{ t('common.noProject') }}
     </div>
-    <div v-else-if="flatSidebarTree.length === 0 && !loadingSidebarTree" class="empty-state">
+    <div v-else-if="flatSidebarTree.length === 0 && !loadingSidebarTree" class="empty-state text-caption">
       {{ t('sidebar.emptyFolder') }}
     </div>
     <button
       v-for="item in flatSidebarTree"
       :key="item.node.path"
+      class="text-body-2"
       :class="['tree-btn', item.node.isDir ? 'tree-btn--dir' : 'tree-btn--file']"
       :style="{ paddingLeft: `${6 + item.depth * 12}px` }"
       @click="item.node.isDir ? toggleSidebarDir(item.node.path, item.node) : tabsStore.openFile(item.node.path, item.node.name)"
@@ -109,7 +110,7 @@ defineExpose({ loadSidebarTree })
     </button>
   </div>
   <div class="tree-footer">
-    <button class="refresh-btn" @click="loadSidebarTree">↺ {{ t('common.refresh') }}</button>
+    <button class="refresh-btn text-caption" @click="loadSidebarTree">↺ {{ t('common.refresh') }}</button>
   </div>
 </template>
 
@@ -128,7 +129,6 @@ defineExpose({ loadSidebarTree })
   padding: 24px 0;
 }
 .loading-text {
-  font-size: 0.75rem;
   color: var(--content-faint);
   animation: pulse 2s ease-in-out infinite;
 }
@@ -138,7 +138,6 @@ defineExpose({ loadSidebarTree })
 }
 .empty-state {
   padding: 12px 16px;
-  font-size: 0.75rem;
   color: var(--content-faint);
 }
 .tree-btn {
@@ -150,8 +149,7 @@ defineExpose({ loadSidebarTree })
   padding-bottom: 4px;
   padding-right: 8px;
   text-align: left;
-  font-size: 0.875rem;
-  transition: background 150ms;
+transition: background 150ms;
   border-radius: 4px;
   background: none;
   border: none;
@@ -190,7 +188,6 @@ defineExpose({ loadSidebarTree })
   justify-content: space-between;
 }
 .refresh-btn {
-  font-size: 0.75rem;
   color: var(--content-subtle);
   background: none;
   border: none;

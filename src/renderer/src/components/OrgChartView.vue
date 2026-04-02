@@ -193,25 +193,25 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
     <!-- Header -->
     <div class="oc-header">
       <div class="oc-header-left">
-        <h2 class="oc-title">{{ t('orgchart.agentsTitle') }}</h2>
-        <span v-if="loading" class="oc-loading">•••</span>
+        <h2 class="oc-title text-h6">{{ t('orgchart.agentsTitle') }}</h2>
+        <span v-if="loading" class="oc-loading text-overline">•••</span>
       </div>
       <div class="oc-header-right">
         <!-- Legend -->
         <div class="oc-legend">
-          <span v-for="(color, key) in DOT_COLORS" :key="key" class="oc-legend-item">
+          <span v-for="(color, key) in DOT_COLORS" :key="key" class="oc-legend-item text-overline">
             <span class="oc-legend-dot" :style="{ background: color }"></span>
             <span>{{ key === 'cyan' ? t('orgchart.status.active') : key === 'green' ? t('orgchart.status.todo') : key === 'yellow' ? t('orgchart.status.idle') : key === 'red' ? t('orgchart.status.blocked') : t('orgchart.status.inactive') }}</span>
           </span>
         </div>
-        <button class="oc-btn" @click="fitView">Fit</button>
-        <button class="oc-btn oc-btn--text" @click="fetchData">&#8635;</button>
+        <button class="oc-btn text-caption" @click="fitView">Fit</button>
+        <button class="oc-btn oc-btn--text text-caption" @click="fetchData">&#8635;</button>
       </div>
     </div>
 
     <!-- Empty state -->
     <div v-if="!loading && agents.length === 0" class="oc-empty">
-      <p class="oc-empty-text">{{ t('orgchart.noAgents') }}</p>
+      <p class="oc-empty-text text-body-2">{{ t('orgchart.noAgents') }}</p>
     </div>
 
     <!-- SVG Canvas -->
@@ -318,16 +318,16 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
   border-bottom: 1px solid var(--edge-subtle);
 }
 .oc-header-left { display: flex; align-items: center; gap: 12px; }
-.oc-title { font-size: 20px; font-weight: 600; color: var(--content-primary); margin: 0; }
-.oc-loading { font-size: 10px; color: var(--content-faint); animation: ocPulse 1.5s ease-in-out infinite; }
+.oc-title {}
+.oc-loading {}
 @keyframes ocPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 .oc-header-right { display: flex; align-items: center; gap: 8px; }
 .oc-legend { display: flex; align-items: center; gap: 12px; margin-right: 12px; }
-.oc-legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--content-faint); }
+.oc-legend-item { display: flex; align-items: center; gap: 4px; color: var(--content-faint); 
+}
 .oc-legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .oc-btn {
   padding: 4px 10px;
-  font-size: 12px;
   background: var(--surface-secondary);
   color: var(--content-muted);
   border: none;
@@ -344,7 +344,7 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
   justify-content: center;
   flex: 1;
 }
-.oc-empty-text { font-size: 14px; color: var(--content-faint); font-style: italic; }
+.oc-empty-text {}
 .oc-svg { flex: 1; width: 100%; }
 .oc-svg--grab { cursor: grab; }
 .oc-svg--grabbing { cursor: grabbing; }

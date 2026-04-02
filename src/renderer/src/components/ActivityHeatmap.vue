@@ -125,7 +125,7 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
   <div class="heatmap-root">
     <!-- Filters -->
     <div class="heatmap-filters">
-      <span class="heatmap-label">{{ t('heatmap.agentLabel') }}</span>
+      <span class="heatmap-label text-overline">{{ t('heatmap.agentLabel') }}</span>
       <div class="heatmap-filter-btns">
         <button
           v-for="a in agents"
@@ -157,7 +157,7 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
     </div>
 
     <!-- Legend -->
-    <div class="heatmap-legend">
+    <div class="heatmap-legend text-overline">
       <span>{{ t('heatmap.less') }}</span>
       <div
         v-for="(cls, idx) in COLORS"
@@ -186,7 +186,6 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
   flex-wrap: wrap;
 }
 .heatmap-label {
-  font-size: 11px;
   color: var(--content-faint);
   font-weight: 600;
 }
@@ -237,7 +236,6 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 10px;
   color: var(--content-faint);
   flex-shrink: 0;
 }

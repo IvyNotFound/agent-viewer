@@ -48,14 +48,14 @@ function formatTokens(n: number): string {
   <div class="token-panel">
 <!-- Header + period tabs -->
     <div class="token-header py-3 px-4">
-      <span class="token-title">
+      <span class="token-title text-overline">
         {{ t('dashboard.telemetry') }}
       </span>
       <div class="token-tabs ga-1">
         <button
           v-for="tab in TABS"
           :key="tab.key"
-          class="token-tab"
+          class="token-tab text-overline"
           :class="{ 'token-tab--active': activeTab === tab.key }"
           @click="activeTab = tab.key"
         >
@@ -68,32 +68,32 @@ function formatTokens(n: number): string {
     <div class="token-metrics py-3 px-4 ga-3">
 <!-- Input tokens -->
       <div class="token-metric">
-        <span class="token-metric-label">{{ t('dashboard.tokensIn') }}</span>
-        <span class="token-metric-value">
+        <span class="token-metric-label text-overline">{{ t('dashboard.tokensIn') }}</span>
+        <span class="token-metric-value text-subtitle-2">
           {{ formatTokens(currentStats.tokens_in) }}
         </span>
       </div>
 
       <!-- Output tokens -->
       <div class="token-metric">
-        <span class="token-metric-label">{{ t('dashboard.tokensOut') }}</span>
-        <span class="token-metric-value">
+        <span class="token-metric-label text-overline">{{ t('dashboard.tokensOut') }}</span>
+        <span class="token-metric-value text-subtitle-2">
           {{ formatTokens(currentStats.tokens_out) }}
         </span>
       </div>
 
       <!-- Cache read (emerald — économique) -->
       <div class="token-metric">
-        <span class="token-metric-label">{{ t('dashboard.tokensCacheRead') }}</span>
-        <span class="token-metric-value token-metric-value--cache-read">
+        <span class="token-metric-label text-overline">{{ t('dashboard.tokensCacheRead') }}</span>
+        <span class="token-metric-value token-metric-value--cache-read text-subtitle-2">
           {{ formatTokens(currentStats.tokens_cache_read) }}
         </span>
       </div>
 
       <!-- Cache write (amber) -->
       <div class="token-metric">
-        <span class="token-metric-label">{{ t('dashboard.tokensCacheWrite') }}</span>
-        <span class="token-metric-value token-metric-value--cache-write">
+        <span class="token-metric-label text-overline">{{ t('dashboard.tokensCacheWrite') }}</span>
+        <span class="token-metric-value token-metric-value--cache-write text-subtitle-2">
           {{ formatTokens(currentStats.tokens_cache_write) }}
         </span>
       </div>
@@ -101,7 +101,7 @@ function formatTokens(n: number): string {
 
     <!-- Session count -->
     <div class="token-sessions px-4 pb-3">
-      <span class="token-sessions-text">
+      <span class="token-sessions-text text-overline">
         {{ currentStats.session_count }} {{ t('dashboard.tokensSessions') }}
       </span>
     </div>
@@ -123,7 +123,6 @@ function formatTokens(n: number): string {
   justify-content: space-between;
 }
 .token-title {
-  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -134,7 +133,6 @@ function formatTokens(n: number): string {
 }
 .token-tab {
   padding: 2px 8px;
-  font-size: 11px;
   border-radius: 4px;
   font-weight: 500;
   background: transparent;
@@ -159,11 +157,9 @@ function formatTokens(n: number): string {
   gap: 2px;
 }
 .token-metric-label {
-  font-size: 11px;
   color: var(--content-tertiary);
 }
 .token-metric-value {
-  font-size: 18px;
   font-weight: 700;
   color: var(--content-primary);
   font-variant-numeric: tabular-nums;
@@ -175,7 +171,6 @@ function formatTokens(n: number): string {
 .token-sessions {
 }
 .token-sessions-text {
-  font-size: 11px;
   color: var(--content-faint);
   font-variant-numeric: tabular-nums;
 }

@@ -75,16 +75,16 @@ onMounted(loadTree)
     <!-- Tree panel -->
     <div class="ex-tree">
       <div class="ex-tree-header">
-        <span class="ex-tree-label">{{ t('explorer.files') }}</span>
+        <span class="ex-tree-label text-caption">{{ t('explorer.files') }}</span>
         <button class="ex-tree-refresh" :title="t('common.refresh')" @click="loadTree">
           <v-icon size="14">mdi-refresh</v-icon>
         </button>
       </div>
       <div v-if="loadingTree" class="ex-state-center">
-        <span class="ex-loading">{{ t('explorer.loading') }}</span>
+        <span class="ex-loading text-caption">{{ t('explorer.loading') }}</span>
       </div>
       <div v-else-if="!store.projectPath" class="ex-state-center ex-padded">
-        <span class="ex-faint ex-center">{{ t('common.noProject') }}</span>
+        <span class="ex-faint ex-center text-caption">{{ t('common.noProject') }}</span>
       </div>
       <div v-else class="ex-tree-nodes">
         <FileTreeNode
@@ -103,19 +103,19 @@ onMounted(loadTree)
     <div class="ex-content">
       <div class="ex-content-header">
         <span v-if="selectedPath" class="ex-content-filename">{{ selectedName }}</span>
-        <span v-else class="ex-faint">{{ t('explorer.selectFile') }}</span>
-        <span v-if="fileContent" class="ex-line-count">{{ lineCount(fileContent) }} {{ t('explorer.lines') }}</span>
+        <span v-else class="ex-faint text-caption">{{ t('explorer.selectFile') }}</span>
+        <span v-if="fileContent" class="ex-line-count text-caption">{{ lineCount(fileContent) }} {{ t('explorer.lines') }}</span>
       </div>
       <div class="ex-content-body">
         <div v-if="loadingFile" class="ex-state-center">
-          <span class="ex-loading">{{ t('explorer.reading') }}</span>
+          <span class="ex-loading text-caption">{{ t('explorer.reading') }}</span>
         </div>
         <div v-else-if="fileError" class="ex-state-center ex-padded">
-          <span class="ex-subtle ex-center ex-italic">{{ fileError }}</span>
+          <span class="ex-subtle ex-center ex-italic text-caption">{{ fileError }}</span>
         </div>
         <pre v-else-if="fileContent" class="ex-pre">{{ fileContent }}</pre>
         <div v-else class="ex-state-center">
-          <span class="ex-dim">—</span>
+          <span class="ex-dim text-caption">—</span>
         </div>
       </div>
     </div>
@@ -142,7 +142,6 @@ onMounted(loadTree)
   flex-shrink: 0;
 }
 .ex-tree-label {
-  font-size: 12px;
   font-weight: 600;
   color: var(--content-subtle);
   text-transform: uppercase;
@@ -166,11 +165,11 @@ onMounted(loadTree)
 
 .ex-state-center { flex: 1; display: flex; align-items: center; justify-content: center; }
 .ex-padded { padding: 16px; }
-.ex-loading { font-size: 12px; color: var(--content-faint); animation: exPulse 1.5s ease-in-out infinite; }
+.ex-loading {}
 @keyframes exPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-.ex-faint { font-size: 12px; color: var(--content-faint); }
-.ex-subtle { font-size: 12px; color: var(--content-subtle); }
-.ex-dim { font-size: 12px; color: var(--content-dim); }
+.ex-faint {}
+.ex-subtle {}
+.ex-dim {}
 .ex-center { text-align: center; }
 .ex-italic { font-style: italic; }
 
@@ -197,7 +196,8 @@ onMounted(loadTree)
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.ex-line-count { margin-left: auto; font-size: 12px; color: var(--content-faint); flex-shrink: 0; }
+.ex-line-count { margin-left: auto; color: var(--content-faint); flex-shrink: 0; 
+}
 .ex-content-body { flex: 1; overflow: auto; }
 .ex-pre {
   font-size: 12px;

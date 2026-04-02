@@ -88,14 +88,14 @@ function typeBadgeLabel(link: TaskLink): string {
 <template>
   <div class="dep-graph">
     <!-- No links -->
-    <p v-if="!hasLinks" class="no-links">
+    <p v-if="!hasLinks" class="no-links text-caption">
       {{ t('taskDetail.noDependencies') }}
     </p>
 
     <template v-else>
       <!-- Outgoing: this task blocks or depends on -->
       <div v-if="outgoing.length > 0" class="dep-section">
-        <p class="dep-section-label">{{ t('taskDetail.blocks') }}</p>
+        <p class="dep-section-label text-overline">{{ t('taskDetail.blocks') }}</p>
         <div class="dep-list">
           <button
             v-for="link in outgoing"
@@ -111,7 +111,7 @@ function typeBadgeLabel(link: TaskLink): string {
               class="dep-badge dep-badge--mono"
               :style="{ color: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).color, backgroundColor: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).background, borderColor: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).border }"
             >{{ linkedTaskStatus(link) }}</span>
-            <span class="dep-title">
+            <span class="dep-title text-caption">
               #{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}
             </span>
           </button>
@@ -120,7 +120,7 @@ function typeBadgeLabel(link: TaskLink): string {
 
       <!-- Incoming: blocked by or depended upon by -->
       <div v-if="incoming.length > 0" class="dep-section">
-        <p class="dep-section-label">{{ t('taskDetail.blockedBy') }}</p>
+        <p class="dep-section-label text-overline">{{ t('taskDetail.blockedBy') }}</p>
         <div class="dep-list">
           <button
             v-for="link in incoming"
@@ -136,7 +136,7 @@ function typeBadgeLabel(link: TaskLink): string {
               class="dep-badge dep-badge--mono"
               :style="{ color: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).color, backgroundColor: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).background, borderColor: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).border }"
             >{{ linkedTaskStatus(link) }}</span>
-            <span class="dep-title">
+            <span class="dep-title text-caption">
               #{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}
             </span>
           </button>
@@ -145,7 +145,7 @@ function typeBadgeLabel(link: TaskLink): string {
 
       <!-- Related: related_to, duplicates -->
       <div v-if="related.length > 0" class="dep-section">
-        <p class="dep-section-label">{{ t('taskDetail.relatedTo') }}</p>
+        <p class="dep-section-label text-overline">{{ t('taskDetail.relatedTo') }}</p>
         <div class="dep-list">
           <button
             v-for="link in related"
@@ -161,7 +161,7 @@ function typeBadgeLabel(link: TaskLink): string {
               class="dep-badge dep-badge--mono"
               :style="{ color: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).color, backgroundColor: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).background, borderColor: (STATUS_STYLE[linkedTaskStatus(link)] ?? fallbackStatus).border }"
             >{{ linkedTaskStatus(link) }}</span>
-            <span class="dep-title">
+            <span class="dep-title text-caption">
               #{{ linkedTaskId(link) }} {{ linkedTaskTitle(link) }}
             </span>
           </button>
@@ -179,7 +179,6 @@ function typeBadgeLabel(link: TaskLink): string {
 }
 
 .no-links {
-  font-size: 0.75rem;
   color: var(--content-faint);
   font-style: italic;
   margin: 0;
@@ -190,7 +189,6 @@ function typeBadgeLabel(link: TaskLink): string {
 }
 
 .dep-section-label {
-  font-size: 0.625rem;
   color: var(--content-faint);
   margin: 0 0 4px;
 }
@@ -232,7 +230,6 @@ function typeBadgeLabel(link: TaskLink): string {
 }
 
 .dep-title {
-  font-size: 0.75rem;
   color: var(--content-secondary);
   overflow: hidden;
   text-overflow: ellipsis;

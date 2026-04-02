@@ -52,24 +52,24 @@ const maxEffort = computed(() =>
   <div class="wl-view">
     <!-- Header -->
     <div class="wl-header">
-      <h2 class="wl-title">{{ t('workload.title') }}</h2>
-      <button class="wl-refresh-btn" @click="store.refresh()">{{ t('common.refresh') }}</button>
+      <h2 class="wl-title text-body-2">{{ t('workload.title') }}</h2>
+      <button class="wl-refresh-btn text-caption" @click="store.refresh()">{{ t('common.refresh') }}</button>
     </div>
 
     <!-- Loading -->
     <div v-if="store.loading" class="wl-state-center">
-      <p class="wl-loading">{{ t('common.loading') }}</p>
+      <p class="wl-loading text-body-2">{{ t('common.loading') }}</p>
     </div>
 
     <!-- Empty -->
     <div v-else-if="rows.length === 0" class="wl-state-center">
-      <p class="wl-empty">{{ t('workload.noAgents') }}</p>
+      <p class="wl-empty text-body-2">{{ t('workload.noAgents') }}</p>
     </div>
 
     <!-- Table -->
     <div v-else class="wl-table">
       <!-- Column headers -->
-      <div class="wl-cols wl-cols-head">
+      <div class="wl-cols wl-cols-head text-overline">
         <span>{{ t('workload.agent') }}</span>
         <span class="wl-right">{{ t('workload.tasks') }}</span>
         <span class="wl-right">{{ t('workload.effort') }}</span>
@@ -97,10 +97,10 @@ const maxEffort = computed(() =>
         </div>
         <span
           v-if="row.currentTask"
-          class="wl-current"
+          class="wl-current text-overline"
           :title="row.currentTask"
         >{{ row.currentTask }}</span>
-        <span v-else class="wl-current wl-dash">—</span>
+        <span v-else class="wl-current wl-dash text-overline">—</span>
       </div>
     </div>
   </div>
@@ -124,9 +124,8 @@ const maxEffort = computed(() =>
   border-bottom: 1px solid var(--edge-subtle);
   background: var(--surface-base);
 }
-.wl-title { font-size: 14px; font-weight: 600; color: var(--content-secondary); margin: 0; }
+.wl-title {}
 .wl-refresh-btn {
-  font-size: 12px;
   color: var(--content-subtle);
   background: none;
   border: none;
@@ -135,8 +134,8 @@ const maxEffort = computed(() =>
 }
 .wl-refresh-btn:hover { color: var(--content-secondary); }
 .wl-state-center { display: flex; align-items: center; justify-content: center; padding: 32px; }
-.wl-loading { font-size: 14px; color: var(--content-faint); animation: wlPulse 1.5s ease-in-out infinite; }
-.wl-empty { font-size: 14px; color: var(--content-faint); font-style: italic; }
+.wl-loading {}
+.wl-empty {}
 @keyframes wlPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
 .wl-table { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -147,7 +146,6 @@ const maxEffort = computed(() =>
   align-items: center;
 }
 .wl-cols-head {
-  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -183,7 +181,6 @@ const maxEffort = computed(() =>
   transition: width 0.5s;
 }
 .wl-current {
-  font-size: 10px;
   color: var(--content-faint);
   overflow: hidden;
   text-overflow: ellipsis;

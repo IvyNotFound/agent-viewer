@@ -85,7 +85,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
             <div class="popup-icon">
               <v-icon class="icon-sm" size="16">mdi-folder-outline</v-icon>
             </div>
-            <h2 class="popup-title">{{ t('project.activeTitle') }}</h2>
+            <h2 class="popup-title text-body-2">{{ t('project.activeTitle') }}</h2>
           </div>
           <button
             class="popup-close"
@@ -100,7 +100,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
         <div class="popup-body py-4 px-5 ga-3">
           <!-- Project info -->
           <div class="project-info ga-1">
-            <p class="project-name" :title="store.projectPath ?? undefined">
+            <p class="project-name text-body-2" :title="store.projectPath ?? undefined">
               {{ projectName }}
             </p>
             <p
@@ -117,7 +117,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 
           <!-- Error -->
           <div v-if="store.error" class="project-error py-2 px-3">
-            <p class="project-error-text">{{ store.error }}</p>
+            <p class="project-error-text text-caption">{{ store.error }}</p>
           </div>
         </div>
 
@@ -132,7 +132,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
           </button>
           <button
             v-if="store.projectPath"
-            class="btn-close-project ga-2 py-2 px-4"
+            class="btn-close-project ga-2 py-2 px-4 text-body-2"
             @click="handleCloseProject"
           >
             <v-icon class="icon-xs" size="14">mdi-close</v-icon>
@@ -183,7 +183,6 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 }
 
 .popup-title {
-  font-size: 0.875rem;
   font-weight: 600;
   color: var(--content-primary);
   margin: 0;
@@ -219,7 +218,6 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 }
 
 .project-name {
-  font-size: 0.875rem;
   font-weight: 500;
   color: var(--content-primary);
   overflow: hidden;
@@ -251,7 +249,6 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
   border-radius: 6px;
 }
 .project-error-text {
-  font-size: 0.75rem;
   color: #f87171;
   word-break: break-all;
   margin: 0;
@@ -272,7 +269,6 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s, border-color 0.15s;

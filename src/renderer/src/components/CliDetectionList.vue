@@ -57,7 +57,7 @@ function isEnabled(cli: CliType): boolean {
     <div class="cli-refresh-row">
       <button
         :disabled="loading"
-        class="cli-refresh-btn"
+        class="cli-refresh-btn text-overline"
         @click="emit('refresh')"
       >
         <!-- spinner while loading -->
@@ -76,11 +76,11 @@ function isEnabled(cli: CliType): boolean {
       <!-- Left: name + vendor + version badge -->
       <div class="cli-row-left">
         <div class="cli-labels">
-          <span class="cli-label">{{ meta.label }}</span>
-          <span class="cli-vendor">{{ meta.vendor }}</span>
+          <span class="cli-label text-caption">{{ meta.label }}</span>
+          <span class="cli-vendor text-overline">{{ meta.vendor }}</span>
         </div>
         <span
-          class="cli-version-badge"
+          class="cli-version-badge text-overline"
           :class="{ 'cli-version-badge--detected': isDetected(meta.cli) }"
         >
           {{ versionLabel(meta.cli) }}
@@ -121,7 +121,6 @@ function isEnabled(cli: CliType): boolean {
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  font-size: 11px;
   background: var(--surface-secondary);
   border: 1px solid var(--edge-subtle);
   border-radius: 6px;
@@ -165,13 +164,11 @@ function isEnabled(cli: CliType): boolean {
   min-width: 0;
 }
 .cli-label {
-  font-size: 13px;
   font-weight: 500;
   color: var(--content-primary);
   line-height: 1.2;
 }
 .cli-vendor {
-  font-size: 10px;
   color: var(--content-subtle);
   line-height: 1.2;
 }
@@ -180,7 +177,6 @@ function isEnabled(cli: CliType): boolean {
   align-items: center;
   padding: 2px 6px;
   border-radius: 4px;
-  font-size: 10px;
   font-weight: 500;
   flex-shrink: 0;
   background: var(--surface-tertiary);

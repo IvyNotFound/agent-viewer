@@ -173,9 +173,9 @@ onUnmounted(() => {
         <!-- Header -->
         <div class="task-header ga-3 py-4 px-5">
           <div class="task-header-left">
-            <p class="task-title mb-2">{{ task.title }}</p>
+            <p class="task-title mb-2 text-body-2">{{ task.title }}</p>
             <div class="d-flex flex-wrap ga-2">
-              <span :class="STATUS_BADGE_CLASS[task.status] ?? 'status-badge'">
+              <span class="text-caption" :class="STATUS_BADGE_CLASS[task.status] ?? 'status-badge'">
                 {{ statusLabel(task.status) }}
               </span>
               <span
@@ -193,7 +193,7 @@ onUnmounted(() => {
               >{{ EFFORT_LABEL[task.effort] }}</span>
             </div>
           </div>
-          <button class="btn-close" @click="store.closeTask()">✕</button>
+          <button class="btn-close text-body-2" @click="store.closeTask()">✕</button>
         </div>
 
         <!-- Body : 2 colonnes -->
@@ -203,11 +203,11 @@ onUnmounted(() => {
           <div class="task-left-col py-4 px-5 ga-5">
             <!-- Description -->
             <div v-if="task.description">
-              <p class="section-label mb-2">{{ t('taskDetail.description') }}</p>
+              <p class="section-label mb-2 text-overline">{{ t('taskDetail.description') }}</p>
               <div class="md-content" v-html="renderedDescription"></div>
             </div>
 
-            <p v-if="!task.description" class="empty-text pt-2">
+            <p v-if="!task.description" class="empty-text pt-2 text-caption">
               {{ t('taskDetail.noDescription') }}
             </p>
           </div>
@@ -217,12 +217,12 @@ onUnmounted(() => {
 
             <!-- T553: Blocked indicator -->
             <div v-if="isBlocked" class="blocked-banner py-2 px-4">
-              <p class="section-label mb-1" style="color: #fbbf24;">{{ t('taskDetail.blockedTitle') }}</p>
+              <p class="section-label mb-1 text-overline" style="color: #fbbf24;">{{ t('taskDetail.blockedTitle') }}</p>
               <ul class="blocked-list">
                 <li
                   v-for="link in unresolvedBlockers"
                   :key="link.id"
-                  class="blocked-item"
+                  class="blocked-item text-overline"
                 >
                   #{{ link.from_task === task.id ? link.to_task : link.from_task }}
                   {{ link.from_task === task.id ? link.to_titre : link.from_titre }}
@@ -232,18 +232,18 @@ onUnmounted(() => {
 
             <!-- Section Agents (créateur / assigné / valideur) -->
             <div class="right-section">
-              <p class="section-label mb-2">{{ t('taskDetail.agents') }}</p>
+              <p class="section-label mb-2 text-overline">{{ t('taskDetail.agents') }}</p>
               <div class="d-flex flex-column ga-2">
                 <div v-if="task.agent_creator_name" class="d-flex align-center ga-2">
-                  <span class="meta-label">{{ t('taskDetail.creator') }}</span>
+                  <span class="meta-label text-overline">{{ t('taskDetail.creator') }}</span>
                   <AgentBadge :name="task.agent_creator_name" />
                 </div>
                 <div v-if="task.agent_name" class="d-flex align-center ga-2">
-                  <span class="meta-label">{{ t('taskDetail.assigned') }}</span>
+                  <span class="meta-label text-overline">{{ t('taskDetail.assigned') }}</span>
                   <AgentBadge :name="task.agent_name" />
                 </div>
                 <div v-if="valideurAgent" class="d-flex align-center ga-2">
-                  <span class="meta-label">{{ t('taskDetail.validator') }}</span>
+                  <span class="meta-label text-overline">{{ t('taskDetail.validator') }}</span>
                   <AgentBadge :name="valideurAgent.name" />
                 </div>
               </div>
@@ -251,7 +251,7 @@ onUnmounted(() => {
 
             <!-- Section Dependencies -->
             <div class="right-section">
-              <p class="section-label mb-2">{{ t('taskDetail.dependencies') }}</p>
+              <p class="section-label mb-2 text-overline">{{ t('taskDetail.dependencies') }}</p>
               <TaskDependencyGraph
                 v-if="task"
                 :task-id="task.id"
@@ -266,7 +266,7 @@ onUnmounted(() => {
                 class="commits-toggle py-3 px-4"
                 @click="gitCommitsOpen = !gitCommitsOpen"
               >
-                <p class="section-label">
+                <p class="section-label text-overline">
                   {{ t('taskDetail.commits') }}
                   <span class="meta-count">({{ gitCommits.length }})</span>
                 </p>
@@ -286,7 +286,7 @@ onUnmounted(() => {
 
             <!-- Section Assignés (read-only — T571) -->
             <div class="right-section">
-              <p class="section-label mb-2">
+              <p class="section-label mb-2 text-overline">
                 {{ t('taskDetail.assignees') }}
               </p>
 
@@ -302,14 +302,14 @@ onUnmounted(() => {
                   <span class="text-caption" style="color: var(--content-faint); flex-shrink: 0;">{{ a.role ?? '—' }}</span>
                 </div>
               </div>
-              <p v-else class="empty-text pt-2">
+              <p v-else class="empty-text pt-2 text-caption">
                 {{ t('taskDetail.noAssignees') }}
               </p>
             </div>
 
             <!-- Comments header -->
             <div class="right-section right-section--no-bottom">
-              <p class="section-label">
+              <p class="section-label text-overline">
                 {{ t('taskDetail.comments') }}
                 <span v-if="store.taskComments.length > 0" class="meta-count ml-1">({{ store.taskComments.length }})</span>
               </p>
@@ -328,13 +328,13 @@ onUnmounted(() => {
                     class="comment-author"
                     :style="{ color: agentFg(comment.agent_name ?? 'unknown') }"
                   >{{ comment.agent_name ?? '?' }}</span>
-                  <span class="comment-time" :title="formatDateFull(comment.created_at)">
+                  <span class="comment-time text-overline" :title="formatDateFull(comment.created_at)">
                     {{ relativeTime(comment.created_at) }}
                   </span>
                 </div>
                 <!-- Bulle -->
                 <div
-                  class="md-bubble py-2 px-3"
+                  class="md-bubble py-2 px-3 text-caption"
                   :style="{
                     color: agentFg(comment.agent_name ?? 'unknown'),
                     backgroundColor: agentBg(comment.agent_name ?? 'unknown'),
@@ -344,7 +344,7 @@ onUnmounted(() => {
                 ></div>
               </div>
 
-              <p v-if="store.taskComments.length === 0" class="empty-text text-center py-4">
+              <p v-if="store.taskComments.length === 0" class="empty-text text-center py-4 text-caption">
                 {{ t('taskDetail.noComments') }}
               </p>
             </div>
@@ -402,7 +402,6 @@ onUnmounted(() => {
   min-width: 0;
 }
 .task-title {
-  font-size: 14px;
   font-weight: 600;
   color: var(--content-primary);
   line-height: 1.4;
@@ -419,7 +418,6 @@ onUnmounted(() => {
   background: none;
   color: var(--content-subtle);
   cursor: pointer;
-  font-size: 14px;
   transition: all 150ms;
 }
 .btn-close:hover {
@@ -429,8 +427,7 @@ onUnmounted(() => {
 
 /* Status badges */
 .status-badge {
-  font-size: 12px;
-  padding: 2px 8px;
+padding: 2px 8px;
   border-radius: 9999px;
   border: 1px solid;
   font-weight: 500;
@@ -493,7 +490,6 @@ onUnmounted(() => {
 
 /* Section headings */
 .section-label {
-  font-size: 10px;
   font-weight: 600;
   color: var(--content-subtle);
   text-transform: uppercase;
@@ -526,13 +522,11 @@ onUnmounted(() => {
   gap: 2px;
 }
 .blocked-item {
-  font-size: 10px;
   color: rgba(251, 191, 36, 0.8);
 }
 
 /* Meta labels */
 .meta-label {
-  font-size: 10px;
   color: var(--content-faint);
   width: 56px;
   flex-shrink: 0;
@@ -600,7 +594,6 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 .comment-time {
-  font-size: 10px;
   color: var(--content-faint);
   flex-shrink: 0;
 }
@@ -608,7 +601,6 @@ onUnmounted(() => {
 /* md-bubble: keep class for tests */
 .md-bubble {
   border-radius: 8px;
-  font-size: 12px;
   line-height: 1.5;
   word-break: break-words;
   border: 1px solid;
@@ -616,7 +608,6 @@ onUnmounted(() => {
 
 /* Empty states */
 .empty-text {
-  font-size: 12px;
   color: var(--content-faint);
   font-style: italic;
 }

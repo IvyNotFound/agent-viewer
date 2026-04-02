@@ -60,7 +60,7 @@ function rowLabel(e: HookEvent): string {
       <div v-if="activeTool" class="active-tool">
         <v-progress-circular class="spinner" indeterminate :size="16" :width="2" />
         <span class="tool-name-active" :style="{ color: toolColor(activeTool) }">{{ activeTool }}</span>
-        <span class="tool-in-progress">{{ t('hooks.inProgress') }}</span>
+        <span class="tool-in-progress text-overline">{{ t('hooks.inProgress') }}</span>
       </div>
       <!-- Idle: last event summary -->
       <div v-else-if="events.length > 0" class="event-count">
@@ -90,7 +90,7 @@ function rowLabel(e: HookEvent): string {
           {{ new Date(e.ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
         </span>
       </div>
-      <div v-if="events.length === 0" class="no-events py-1">{{ t('hooks.noEvents') }}</div>
+      <div v-if="events.length === 0" class="no-events py-1 text-overline">{{ t('hooks.noEvents') }}</div>
     </div>
   </div>
 
@@ -158,7 +158,6 @@ function rowLabel(e: HookEvent): string {
 }
 
 .tool-in-progress {
-  font-size: 0.625rem;
   color: var(--content-faint);
 }
 
@@ -227,7 +226,6 @@ function rowLabel(e: HookEvent): string {
 }
 
 .no-events {
-  font-size: 0.625rem;
   color: var(--content-faint);
   font-style: italic;
 }

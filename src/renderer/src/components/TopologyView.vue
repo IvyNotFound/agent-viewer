@@ -81,18 +81,18 @@ function onAgentClick(row: TopologyRow): void {
   <div class="tp-view">
     <!-- Header -->
     <div class="tp-header">
-      <h2 class="tp-title">{{ t('topology.title') }}</h2>
-      <button class="tp-refresh-btn" @click="store.refresh()">{{ t('common.refresh') }}</button>
+      <h2 class="tp-title text-h6">{{ t('topology.title') }}</h2>
+      <button class="tp-refresh-btn text-caption" @click="store.refresh()">{{ t('common.refresh') }}</button>
     </div>
 
     <!-- Loading -->
     <div v-if="store.loading && rows.length === 0" class="tp-state-center">
-      <p class="tp-loading">{{ t('common.loading') }}</p>
+      <p class="tp-loading text-body-2">{{ t('common.loading') }}</p>
     </div>
 
     <!-- Empty -->
     <div v-else-if="!store.loading && rows.length === 0" class="tp-state-center">
-      <p class="tp-empty">{{ t('topology.noAgents') }}</p>
+      <p class="tp-empty text-body-2">{{ t('topology.noAgents') }}</p>
     </div>
 
     <!-- Columns by perimeter -->
@@ -141,7 +141,7 @@ function onAgentClick(row: TopologyRow): void {
                 </span>
               </div>
               <p class="tp-agent-type">{{ agent.type }}</p>
-              <p v-if="agent.current_task" class="tp-task" :title="agent.current_task">{{ agent.current_task }}</p>
+              <p v-if="agent.current_task" class="tp-task text-overline" :title="agent.current_task">{{ agent.current_task }}</p>
               <p v-if="agent.session_tokens != null && agent.session_tokens > 0" class="tp-tokens">
                 {{ agent.session_tokens.toLocaleString() }} {{ t('topology.tokens') }}
               </p>
@@ -169,9 +169,8 @@ function onAgentClick(row: TopologyRow): void {
   padding: 12px 20px;
   border-bottom: 1px solid var(--edge-subtle);
 }
-.tp-title { font-size: 20px; font-weight: 600; color: var(--content-primary); margin: 0; }
+.tp-title {}
 .tp-refresh-btn {
-  font-size: 12px;
   color: var(--content-subtle);
   background: none;
   border: none;
@@ -186,8 +185,8 @@ function onAgentClick(row: TopologyRow): void {
   flex: 1;
   padding: 48px;
 }
-.tp-loading { font-size: 14px; color: var(--content-faint); animation: tpPulse 1.5s ease-in-out infinite; }
-.tp-empty { font-size: 14px; color: var(--content-faint); font-style: italic; }
+.tp-loading {}
+.tp-empty {}
 @keyframes tpPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
 .tp-scroll { flex: 1; min-height: 0; overflow-y: auto; }
@@ -254,6 +253,6 @@ function onAgentClick(row: TopologyRow): void {
 .tp-dot--blocked { background: #fb923c; }
 .tp-dot--idle    { background: var(--content-faint); }
 .tp-agent-type { font-size: 10px; color: var(--content-faint); font-family: ui-monospace, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0; }
-.tp-task { font-size: 10px; color: var(--content-subtle); margin: 4px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tp-task {}
 .tp-tokens { font-size: 10px; color: var(--content-faint); font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; margin: 2px 0 0; }
 </style>

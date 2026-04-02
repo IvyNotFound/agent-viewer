@@ -82,7 +82,7 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
   <div class="telemetry-panel">
 <!-- Header -->
     <div class="telemetry-header">
-      <span class="telemetry-title">
+      <span class="telemetry-title text-overline">
         {{ t('dashboard.codeTelemetry') }}
       </span>
       <button
@@ -104,7 +104,7 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
     <div class="telemetry-body">
 <!-- No project -->
       <div v-if="!props.projectPath" class="telemetry-center">
-        <p class="telemetry-empty-text">{{ t('common.noProject') }}</p>
+        <p class="telemetry-empty-text text-overline">{{ t('common.noProject') }}</p>
       </div>
 
       <!-- Loading skeleton -->
@@ -119,13 +119,13 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
 
       <!-- Error -->
       <div v-else-if="error" class="telemetry-center">
-        <p class="telemetry-error-text">{{ error }}</p>
+        <p class="telemetry-error-text text-overline">{{ error }}</p>
       </div>
 
       <!-- Not yet scanned -->
       <div v-else-if="!data" class="telemetry-not-scanned">
-        <p class="telemetry-empty-text">{{ t('dashboard.notScanned') }}</p>
-        <button class="telemetry-scan-btn" @click="scan">
+        <p class="telemetry-empty-text text-overline">{{ t('dashboard.notScanned') }}</p>
+        <button class="telemetry-scan-btn text-overline" @click="scan">
           {{ t('dashboard.scan') }}
         </button>
       </div>
@@ -134,13 +134,13 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
       <template v-else>
 <!-- Main LOC metric -->
         <div class="telemetry-loc-row">
-          <span class="telemetry-loc-value">
+          <span class="telemetry-loc-value text-h5">
             {{ formatLines(totalLines) }}
           </span>
-          <span class="telemetry-loc-label">{{ t('dashboard.linesOfCode') }}</span>
+          <span class="telemetry-loc-label text-overline">{{ t('dashboard.linesOfCode') }}</span>
           <span
             v-if="testRatioVal !== null"
-            class="telemetry-test-ratio"
+            class="telemetry-test-ratio text-overline"
           >
             {{ testRatioVal.toFixed(1) }}% {{ t('dashboard.testRatio') }}
           </span>
@@ -169,8 +169,8 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
                 class="telemetry-lang-dot"
                 :style="{ backgroundColor: lang.color }"
               />
-              <span class="telemetry-lang-name">{{ lang.name }}</span>
-              <span class="telemetry-lang-pct">
+              <span class="telemetry-lang-name text-overline">{{ lang.name }}</span>
+              <span class="telemetry-lang-pct text-overline">
                 {{ lang.percent.toFixed(1) }}%
               </span>
             </div>
@@ -200,7 +200,6 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
   justify-content: space-between;
 }
 .telemetry-title {
-  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -241,14 +240,12 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
   justify-content: center;
 }
 .telemetry-empty-text {
-  font-size: 11px;
   color: var(--content-faint);
   font-style: italic;
   margin: 0;
   text-align: center;
 }
 .telemetry-error-text {
-  font-size: 11px;
   color: #f87171;
   margin: 0;
 }
@@ -262,7 +259,6 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
 }
 .telemetry-scan-btn {
   padding: 4px 12px;
-  font-size: 11px;
   border-radius: 4px;
   background: var(--surface-tertiary);
   border: 1px solid var(--edge-default);
@@ -298,19 +294,16 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
   gap: 6px;
 }
 .telemetry-loc-value {
-  font-size: 24px;
   font-weight: 700;
   color: var(--content-primary);
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 .telemetry-loc-label {
-  font-size: 11px;
   color: var(--content-tertiary);
 }
 .telemetry-test-ratio {
   margin-left: auto;
-  font-size: 11px;
   font-weight: 500;
   color: #fbbf24;
   font-variant-numeric: tabular-nums;
@@ -347,7 +340,6 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
   border-radius: 9999px;
 }
 .telemetry-lang-name {
-  font-size: 11px;
   color: var(--content-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -355,7 +347,6 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
   flex: 1;
 }
 .telemetry-lang-pct {
-  font-size: 11px;
   color: var(--content-faint);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;

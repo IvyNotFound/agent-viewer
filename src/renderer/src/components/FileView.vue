@@ -232,11 +232,11 @@ watch(() => props.filePath, async () => {
       <span class="fv-filename">{{ filePath.split(/[/\\]/).pop() }}</span>
       <span v-if="isDirty" class="fv-dirty-dot" :title="t('fileView.unsaved')" />
       <span class="fv-actions">
-        <span v-if="saved" class="fv-saved">{{ t('fileView.saved') }}</span>
-        <span v-if="saveError" class="fv-save-error">{{ saveError }}</span>
+        <span v-if="saved" class="fv-saved text-caption">{{ t('fileView.saved') }}</span>
+        <span v-if="saveError" class="fv-save-error text-caption">{{ saveError }}</span>
         <button
           v-if="!error && !loading"
-          class="fv-save-btn"
+          class="fv-save-btn text-caption"
           :disabled="saving || !isDirty"
           @click="save"
         >{{ saving ? t('common.saving') : t('common.save') }}</button>
@@ -246,10 +246,10 @@ watch(() => props.filePath, async () => {
     <!-- Content -->
     <div class="fv-content">
       <div v-if="loading" class="fv-loading-overlay">
-        <span class="fv-loading-text">{{ t('common.loading') }}</span>
+        <span class="fv-loading-text text-caption">{{ t('common.loading') }}</span>
       </div>
       <div v-if="error" class="fv-error-state">
-        <span class="fv-error-text">{{ error }}</span>
+        <span class="fv-error-text text-caption">{{ error }}</span>
       </div>
       <div v-show="!error" ref="editorEl" class="fv-editor" />
     </div>
@@ -295,11 +295,10 @@ watch(() => props.filePath, async () => {
   gap: 8px;
   flex-shrink: 0;
 }
-.fv-saved { font-size: 12px; color: #34d399; }
-.fv-save-error { font-size: 12px; color: #f87171; }
+.fv-saved {}
+.fv-save-error {}
 .fv-save-btn {
   padding: 4px 10px;
-  font-size: 12px;
   border-radius: 4px;
   background: var(--surface-tertiary);
   color: var(--content-secondary);
@@ -320,13 +319,12 @@ watch(() => props.filePath, async () => {
   background: rgba(24,24,27,0.8);
 }
 .fv-loading-text {
-  font-size: 12px;
   color: var(--content-faint);
   animation: fvPulse 1.5s ease-in-out infinite;
 }
 @keyframes fvPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 .fv-error-state { display: flex; align-items: center; justify-content: center; height: 100%; padding: 0 32px; }
-.fv-error-text { font-size: 12px; color: var(--content-subtle); font-style: italic; text-align: center; }
+.fv-error-text {}
 .fv-editor { height: 100%; }
 </style>
 

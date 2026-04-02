@@ -158,7 +158,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
 <template>
   <div class="agent-section py-3 px-4">
     <div v-if="store.selectedAgentId !== null" class="reset-row mb-2">
-      <button class="reset-btn" @click="store.selectedAgentId = null">{{ t('sidebar.reset') }}</button>
+      <button class="reset-btn text-caption" @click="store.selectedAgentId = null">{{ t('sidebar.reset') }}</button>
     </div>
 
     <!-- Création de groupe inline (top-level) -->
@@ -166,13 +166,13 @@ async function duplicateAgent(agent: Agent): Promise<void> {
       <input
         ref="createGroupInputEl"
         v-model="newGroupName"
-        class="group-name-input py-1 px-2"
+        class="group-name-input py-1 px-2 text-caption"
         :placeholder="t('sidebar.newGroupPlaceholder')"
         @keydown.enter="confirmCreateGroup"
         @keydown.esc="cancelCreateGroup"
       />
-      <button class="icon-btn icon-btn--confirm" @click="confirmCreateGroup">✓</button>
-      <button class="icon-btn icon-btn--cancel" @click="cancelCreateGroup">✕</button>
+      <button class="icon-btn icon-btn--confirm text-caption" @click="confirmCreateGroup">✓</button>
+      <button class="icon-btn icon-btn--cancel text-caption" @click="cancelCreateGroup">✕</button>
     </div>
 
     <!-- ── Groupes hiérarchiques ── -->
@@ -191,9 +191,9 @@ async function duplicateAgent(agent: Agent): Promise<void> {
       @drop="onGroupDrop($event, null)"
     >
       <div class="section-header px-1" :class="{ 'drag-target': dragOverGroupId === '__ungrouped__' }">
-        <span class="section-label">{{ t('sidebar.ungrouped') }}</span>
+        <span class="section-label text-overline">{{ t('sidebar.ungrouped') }}</span>
       </div>
-      <div v-if="dragOverGroupId === '__ungrouped__'" class="drop-hint">{{ t('sidebar.dropAgentHere') }}</div>
+      <div v-if="dragOverGroupId === '__ungrouped__'" class="drop-hint text-overline">{{ t('sidebar.dropAgentHere') }}</div>
       <div class="agents-list">
         <div
           v-for="agent in ungroupedAgents"
@@ -223,18 +223,18 @@ async function duplicateAgent(agent: Agent): Promise<void> {
           </div>
         </div>
       </div>
-      <div v-if="ungroupedAgents.length === 0 && store.agents.length > 0 && dragOverGroupId !== '__ungrouped__'" class="empty-msg py-1 px-2">{{ t('sidebar.dropAgentHere') }}</div>
-      <div v-if="store.agents.length === 0" class="no-agents-msg pa-2">{{ t('sidebar.noAgent') }}</div>
+      <div v-if="ungroupedAgents.length === 0 && store.agents.length > 0 && dragOverGroupId !== '__ungrouped__'" class="empty-msg py-1 px-2 text-overline">{{ t('sidebar.dropAgentHere') }}</div>
+      <div v-if="store.agents.length === 0" class="no-agents-msg pa-2 text-body-2">{{ t('sidebar.noAgent') }}</div>
     </div>
 
     <!-- Bouton nouveau groupe -->
-    <button v-if="!creatingGroup" class="add-btn ga-2" @click="startCreateGroup">
+    <button v-if="!creatingGroup" class="add-btn ga-2 text-caption" @click="startCreateGroup">
       <v-icon size="12" class="icon-sm">mdi-plus</v-icon>
       {{ t('sidebar.newGroup') }}
     </button>
 
     <!-- Bouton ajouter agent -->
-    <button class="add-btn add-btn--mt ga-2 mt-1" @click="showCreateAgent = true">
+    <button class="add-btn add-btn--mt ga-2 mt-1 text-caption" @click="showCreateAgent = true">
       <v-icon size="12" class="icon-sm">mdi-plus</v-icon>
       {{ t('sidebar.addAgent') }}
     </button>
@@ -259,7 +259,6 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   justify-content: flex-end;
 }
 .reset-btn {
-  font-size: 0.75rem;
   color: rgb(var(--v-theme-primary));
   background: none;
   border: none;
@@ -278,7 +277,6 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
   border-radius: 4px;
-  font-size: 0.75rem;
   color: var(--content-primary);
   outline: none;
   font-weight: 600;
@@ -293,7 +291,6 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  font-size: 0.75rem;
   transition: background 150ms;
   border: none;
   cursor: pointer;
@@ -319,7 +316,6 @@ async function duplicateAgent(agent: Agent): Promise<void> {
 }
 .section-label {
   flex: 1;
-  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--content-subtle);
   text-transform: uppercase;
@@ -330,7 +326,6 @@ async function duplicateAgent(agent: Agent): Promise<void> {
 .drop-hint {
   margin: 0 4px 4px;
   padding: 4px 0;
-  font-size: 0.625rem;
   color: rgba(var(--v-theme-primary), 0.7);
   text-align: center;
   border: 1px dashed rgba(var(--v-theme-primary), 0.4);
@@ -443,12 +438,10 @@ async function duplicateAgent(agent: Agent): Promise<void> {
 .action-btn:hover { color: var(--content-secondary); background: var(--surface-tertiary); }
 .action-btn--launch:hover { filter: brightness(1.15); }
 .empty-msg {
-  font-size: 0.6875rem;
   color: var(--content-dim);
   font-style: italic;
 }
 .no-agents-msg {
-  font-size: 0.875rem;
   color: var(--content-faint);
 }
 .add-btn {
@@ -456,7 +449,6 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   align-items: center;
   padding: 6px 8px;
   border-radius: 6px;
-  font-size: 0.75rem;
   color: var(--content-faint);
   transition: all 150ms;
   width: 100%;

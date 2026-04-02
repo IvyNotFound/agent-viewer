@@ -244,7 +244,7 @@ onUnmounted(() => {
     <div ref="scrollContainer" class="stream-scroll pa-4 ga-3">
       <div
         v-if="displayEvents.length === 0 && !isStreaming"
-        class="stream-empty"
+        class="stream-empty text-caption"
         data-testid="empty-state"
       >
         {{ t('stream.waitingMessages') }}
@@ -254,7 +254,7 @@ onUnmounted(() => {
         <!-- system:init -->
         <div
           v-if="event.type === 'system' && event.subtype === 'init'"
-          class="block-system-init"
+          class="block-system-init text-caption"
           data-testid="block-system-init"
         >
           {{ t('stream.sessionStarted') }}
@@ -281,7 +281,7 @@ onUnmounted(() => {
           <div class="error-body">
             <span class="error-type">{{ event.type }}</span>
             <span class="error-text ml-2">{{ event.error }}</span>
-            <pre v-if="event.stderr" class="error-stderr mt-2">{{ event.stderr }}</pre>
+            <pre v-if="event.stderr" class="error-stderr mt-2 text-caption">{{ event.stderr }}</pre>
           </div>
         </div>
 
@@ -292,7 +292,7 @@ onUnmounted(() => {
           data-testid="block-user"
         >
           <div
-            class="user-bubble py-3 px-4"
+            class="user-bubble py-3 px-4 text-body-2"
             :style="{ borderColor: accentBorder }"
           >
             <template v-for="(block, bIdx) in event.message.content" :key="bIdx">
@@ -331,7 +331,7 @@ onUnmounted(() => {
         <!-- result footer — cost / duration / turns -->
         <div
           v-if="event.type === 'result'"
-          class="block-result ga-4 pt-2"
+          class="block-result ga-4 pt-2 text-caption"
           data-testid="block-result"
         >
           <span v-if="event.num_turns !== undefined">{{ t('stream.turns', event.num_turns, { named: { n: event.num_turns } }) }}</span>
@@ -363,7 +363,7 @@ onUnmounted(() => {
       <!-- Streaming indicator — thinking preview (T731) or generic dots -->
       <div
         v-if="isStreaming"
-        class="streaming-indicator ga-2"
+        class="streaming-indicator ga-2 text-caption"
         :style="{ color: accentFg }"
         data-testid="streaming-indicator"
       >
@@ -427,13 +427,11 @@ onUnmounted(() => {
   justify-content: center;
   height: 100%;
   color: var(--content-subtle);
-  font-size: 12px;
 }
 
 /* system:init */
 .block-system-init {
   color: var(--content-subtle);
-  font-size: 12px;
   font-style: italic;
 }
 .init-session-id {
@@ -486,7 +484,6 @@ onUnmounted(() => {
 }
 .error-stderr {
   color: #fecaca;
-  font-size: 12px;
   white-space: pre-wrap;
 }
 .error-body-inline {
@@ -507,7 +504,6 @@ onUnmounted(() => {
   max-width: 80%;
   white-space: pre-wrap;
   overflow-wrap: break-word;
-  font-size: 14px;
   color: var(--content-primary);
   line-height: 1.625;
   user-select: text;
@@ -528,7 +524,6 @@ onUnmounted(() => {
 .block-result {
   display: flex;
   flex-wrap: wrap;
-  font-size: 12px;
   color: var(--content-subtle);
   border-top: 1px solid var(--edge-subtle);
 }
@@ -542,7 +537,6 @@ onUnmounted(() => {
 .streaming-indicator {
   display: flex;
   align-items: center;
-  font-size: 12px;
   min-width: 0;
 }
 .bounce-dots {

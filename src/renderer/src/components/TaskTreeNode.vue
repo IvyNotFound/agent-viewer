@@ -63,7 +63,7 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
       <div class="node-content">
         <!-- Title row -->
         <div class="node-title-row ga-2">
-          <p class="node-title">{{ node.title }}</p>
+          <p class="node-title text-body-2">{{ node.title }}</p>
           <!-- Badges -->
           <div class="node-badges ga-1">
             <span
@@ -86,12 +86,12 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
               borderColor: perimeterBorder(node.scope),
             }"
           >{{ node.scope }}</span>
-          <AgentBadge v-if="node.agent_name" :name="node.agent_name" :perimetre="node.agent_scope" class="agent-badge-sm" />
+          <AgentBadge v-if="node.agent_name" :name="node.agent_name" :perimetre="node.agent_scope" class="agent-badge-sm text-overline" />
           <span class="node-date">{{ formatDate(node.updated_at) }}</span>
         </div>
 
         <!-- Children count hint when collapsed -->
-        <p v-if="hasChildren && !expanded" class="children-hint">
+        <p v-if="hasChildren && !expanded" class="children-hint text-overline">
           {{ t('task.subtasks', node.children.length, { named: { n: node.children.length } }) }}
         </p>
       </div>
@@ -180,7 +180,6 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
 }
 
 .node-title {
-  font-size: 0.875rem;
   color: var(--content-primary);
   font-weight: 500;
   line-height: 1.4;
@@ -226,9 +225,7 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
   font-family: ui-monospace, monospace;
 }
 
-.agent-badge-sm {
-  font-size: 0.625rem;
-}
+
 
 .node-date {
   font-size: 0.625rem;
@@ -238,7 +235,6 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
 }
 
 .children-hint {
-  font-size: 0.625rem;
   color: var(--content-subtle);
   font-style: italic;
   margin: 0;

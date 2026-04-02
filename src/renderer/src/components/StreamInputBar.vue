@@ -47,7 +47,7 @@ function stopAgent(): void {
       auto-grow
       placeholder="Envoyer un message…"
       hide-details
-      class="flex-1-1"
+      class="flex-1-1 text-body-2"
       @keydown="handleKeydown"
     />
     <!-- Stop button (T683) — visible only while agent is streaming and not yet stopped -->
@@ -62,6 +62,7 @@ function stopAgent(): void {
     <v-btn
       :disabled="!inputText.trim() || !sessionId"
       variant="flat"
+      class="text-body-2"
       data-testid="send-button"
       :style="inputText.trim() && sessionId ? { backgroundColor: accentFg } : {}"
       @click="sendMessage"

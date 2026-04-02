@@ -38,13 +38,13 @@ const { t } = useI18n()
         <v-card-actions>
           <v-spacer />
           <button
-            class="btn-cancel"
+            class="btn-cancel text-body-2"
             @click="emit('cancel')"
           >
             {{ props.cancelLabel ?? t('common.cancel') }}
           </button>
           <button
-            class="btn-confirm"
+            class="btn-confirm text-body-2"
             :class="props.danger ? 'btn-confirm--danger' : 'btn-confirm--primary'"
             @click="emit('confirm')"
           >
@@ -59,7 +59,6 @@ const { t } = useI18n()
 <style scoped>
 .btn-cancel {
   padding: 8px 16px;
-  font-size: 0.875rem;
   border-radius: 8px;
   color: rgba(var(--v-theme-on-surface), 0.6);
   transition: background-color 0.15s, color 0.15s;
@@ -71,7 +70,6 @@ const { t } = useI18n()
 
 .btn-confirm {
   padding: 8px 16px;
-  font-size: 0.875rem;
   font-weight: 500;
   border-radius: 8px;
   color: #fff;

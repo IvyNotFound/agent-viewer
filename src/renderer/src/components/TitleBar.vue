@@ -37,7 +37,7 @@ onUnmounted(() => {
       <!-- Left: App identity -->
       <div class="titlebar-left">
         <div class="titlebar-dot"></div>
-        <span class="titlebar-name">KanbAgent</span>
+        <span class="titlebar-name text-overline">KanbAgent</span>
       </div>
 
       <!-- Center: Search bar (always visible, VS Code style) -->
@@ -49,7 +49,7 @@ onUnmounted(() => {
           @click="$emit('open-search')"
         >
           <v-icon class="search-icon">mdi-magnify</v-icon>
-          <span class="search-text">{{ t('titleBar.searchPlaceholder') }}</span>
+          <span class="search-text text-caption">{{ t('titleBar.searchPlaceholder') }}</span>
           <kbd class="search-kbd">Ctrl+K</kbd>
         </button>
       </div>
@@ -129,7 +129,6 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 .titlebar-name {
-  font-size: 11px;
   font-weight: 600;
   color: rgba(var(--v-theme-on-surface), 0.5);
   letter-spacing: 0.1em;
@@ -166,7 +165,6 @@ onUnmounted(() => {
 .search-text {
   flex: 1;
   text-align: left;
-  font-size: 12px;
 }
 .search-kbd {
   font-size: 10px;

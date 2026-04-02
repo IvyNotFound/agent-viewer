@@ -141,7 +141,7 @@ function toggleSection(section: Section) {
 
           <!-- Header -->
           <div class="panel-header">
-            <p class="panel-title">
+            <p class="panel-title text-overline">
               {{ activeSection ? sectionTitles[activeSection] : '' }}
             </p>
             <v-btn
@@ -258,7 +258,6 @@ function toggleSection(section: Section) {
   flex-shrink: 0;
 }
 .panel-title {
-  font-size: 11px;
   font-weight: 600;
   color: rgba(var(--v-theme-on-surface), 0.5);
   text-transform: uppercase;

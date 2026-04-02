@@ -203,7 +203,7 @@ watch(() => props.initialAgentId, (v) => {
 
     <!-- ── Title ──────────────────────────────────────────────────────────── -->
     <div class="al-title-bar">
-      <h2 class="al-title">{{ t('tokenStats.logsTab') }}</h2>
+      <h2 class="al-title text-h6">{{ t('tokenStats.logsTab') }}</h2>
     </div>
 
     <!-- ── Filter bar ──────────────────────────────────────────────────── -->
@@ -278,7 +278,7 @@ watch(() => props.initialAgentId, (v) => {
       <!-- Empty state -->
       <div v-if="paginatedLogs.length === 0 && !loading" class="al-empty">
         <v-icon class="al-empty-icon" size="24">mdi-file-document-outline</v-icon>
-        <p class="al-empty-text">{{ t('logs.noLogs') }}</p>
+        <p class="al-empty-text text-body-2">{{ t('logs.noLogs') }}</p>
       </div>
 
       <!-- Log rows -->
@@ -304,7 +304,7 @@ watch(() => props.initialAgentId, (v) => {
             }"
           >{{ log.agent_name }}</span>
           <span v-else class="al-agent-badge al-agent-badge--none">—</span>
-          <span class="al-action">{{ log.action }}</span>
+          <span class="al-action text-body-2">{{ log.action }}</span>
           <v-icon
             v-if="log.detail || log.parsedFiles.length > 0"
             class="al-chevron"
@@ -315,7 +315,7 @@ watch(() => props.initialAgentId, (v) => {
 
         <!-- Expandable detail -->
         <div v-if="isExpanded(log.id)" class="al-detail">
-          <p v-if="log.detail" class="al-detail-text">{{ log.detail }}</p>
+          <p v-if="log.detail" class="al-detail-text text-body-2">{{ log.detail }}</p>
           <div v-if="log.parsedFiles.length > 0" class="al-files">
             <span
               v-for="f in log.parsedFiles"
@@ -345,7 +345,7 @@ watch(() => props.initialAgentId, (v) => {
   padding: 12px 24px;
   border-bottom: 1px solid var(--edge-default);
 }
-.al-title { font-size: 20px; font-weight: 600; color: var(--content-primary); margin: 0; }
+.al-title {}
 
 /* filter bar */
 .al-filter-bar {
@@ -376,7 +376,7 @@ watch(() => props.initialAgentId, (v) => {
   gap: 8px;
 }
 .al-empty-icon { width: 32px; height: 32px; color: var(--content-dim); }
-.al-empty-text { font-size: 14px; color: var(--content-faint); }
+.al-empty-text {}
 
 /* log rows */
 .al-row {
@@ -439,7 +439,6 @@ watch(() => props.initialAgentId, (v) => {
 }
 .al-agent-badge--none { color: var(--content-dim); }
 .al-action {
-  font-size: 14px;
   font-weight: 600;
   color: var(--content-secondary);
   overflow: hidden;
@@ -465,7 +464,6 @@ watch(() => props.initialAgentId, (v) => {
   gap: 6px;
 }
 .al-detail-text {
-  font-size: 14px;
   color: var(--content-tertiary);
   line-height: 1.625;
   white-space: pre-wrap;

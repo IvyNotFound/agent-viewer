@@ -109,6 +109,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
 
     <!-- Onglet Backlog (fixe) -->
     <button
+      class="text-body-2"
       :class="['tab-fixed', store.activeTabId === 'backlog' && 'tab-fixed--active']"
       @click="store.setActive('backlog')"
     >
@@ -123,6 +124,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
 
     <!-- Onglet Stat (fixe) -->
     <button
+      class="text-body-2"
       :class="['tab-fixed', store.activeTabId === 'dashboard' && 'tab-fixed--active']"
       @click="store.setActive('dashboard')"
     >
@@ -154,6 +156,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
       <button
         v-for="tab in fileTabs"
         :key="tab.id"
+        class="text-caption"
         :class="['tab-file', store.activeTabId === tab.id && 'tab-file--active']"
         :title="tab.title"
         :aria-label="t('explorer.files') + ': ' + tab.title"
@@ -164,7 +167,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
         <span class="tab-title-mono">{{ tab.title }}</span>
         <span v-if="tab.dirty" class="tab-dirty" :title="t('tabBar.unsaved')" />
         <span
-          class="tab-close"
+          class="tab-close text-overline"
           :title="t('tabBar.closeTab')"
           @click.stop="handleCloseTab(tab)"
         >✕</span>
@@ -183,7 +186,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
       >
         <!-- Onglet-agent (bouton principal du groupe) -->
         <button
-          class="tab-agent"
+          class="tab-agent text-body-2"
           :style="agentTabStyleMap.get(group.agentName)"
           @click="activateAgentGroup(group)"
           @contextmenu.prevent="openGroupMenu($event, group)"
@@ -213,7 +216,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
           <template v-for="tab in group.tabs" :key="tab.id">
             <button
               v-if="isGroupActive(group)"
-              class="tab-sub"
+              class="tab-sub text-body-2"
               :style="tabStyleMap.get(tab.id)"
               :title="subTabLabel(tab)"
               @click="store.setActive(tab.id)"
@@ -222,7 +225,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
               <span class="tab-sub-label">{{ subTabLabel(tab) }}</span>
               <span v-if="tab.dirty" class="tab-dirty" :title="t('tabBar.unsaved')" />
               <span
-                class="tab-close"
+                class="tab-close text-overline"
                 :title="t('tabBar.closeTab')"
                 @click.stop="handleCloseTab(tab)"
               >✕</span>
@@ -260,11 +263,11 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
 
     <!-- Bouton + WSL -->
     <button
-      class="btn-wsl"
+      class="btn-wsl text-body-2"
       :title="t('tabBar.openWslTerminal')"
       @click="openWslTerminal()"
     >
-      <span class="btn-wsl-plus">+</span>
+      <span class="btn-wsl-plus text-body-1">+</span>
       <span>WSL</span>
     </button>
     <div style="width: 12px; flex-shrink: 0;"></div>
@@ -296,7 +299,6 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   align-items: center;
   gap: 8px;
   padding: 0 20px;
-  font-size: 14px;
   font-weight: 600;
   transition: all 150ms;
   user-select: none;
@@ -356,7 +358,6 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   align-items: center;
   gap: 6px;
   padding: 0 12px;
-  font-size: 13px;
   font-weight: 500;
   transition: all 150ms;
   user-select: none;
@@ -399,7 +400,6 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   height: 16px;
   border-radius: 3px;
   opacity: 0.4;
-  font-size: 11px;
   cursor: pointer;
   margin-left: 16px;
   transition: all 150ms;
@@ -421,7 +421,6 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   align-items: center;
   gap: 6px;
   padding: 0 12px;
-  font-size: 14px;
   font-weight: 600;
   transition: all 150ms;
   user-select: none;
@@ -456,7 +455,6 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   gap: 6px;
   padding: 0 16px;
   min-width: 90px;
-  font-size: 14px;
   font-weight: 500;
   transition: all 150ms;
   user-select: none;
@@ -507,7 +505,6 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   padding: 0 12px;
   height: 28px;
   align-self: center;
-  font-size: 14px;
   font-weight: 600;
   color: rgb(var(--v-theme-primary));
   background: rgba(var(--v-theme-primary), 0.1);
@@ -524,7 +521,6 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   border-color: rgba(var(--v-theme-primary), 0.5);
 }
 .btn-wsl-plus {
-  font-size: 16px;
   line-height: 1;
 }
 .tab-indicator {

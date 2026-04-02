@@ -95,8 +95,8 @@ async function create() {
         <v-icon class="logo-icon" size="32">mdi-shield-check</v-icon>
       </div>
       <div class="home-titles ga-1">
-        <h2 class="app-name">KanbAgent</h2>
-        <p class="app-tagline">{{ t('dbSelector.tagline') }}</p>
+        <h2 class="app-name text-h6">KanbAgent</h2>
+        <p class="app-tagline text-body-2">{{ t('dbSelector.tagline') }}</p>
       </div>
 
       <!-- 2 options -->
@@ -107,8 +107,8 @@ async function create() {
             <v-icon class="action-icon" size="20">mdi-folder-outline</v-icon>
           </div>
           <div>
-            <p class="action-label">{{ t('dbSelector.open') }}</p>
-            <p class="action-sublabel">{{ t('dbSelector.existingProject') }}</p>
+            <p class="action-label text-body-2">{{ t('dbSelector.open') }}</p>
+            <p class="action-sublabel text-caption">{{ t('dbSelector.existingProject') }}</p>
           </div>
         </button>
 
@@ -118,13 +118,13 @@ async function create() {
             <v-icon class="action-icon action-icon--primary" size="20">mdi-plus</v-icon>
           </div>
           <div>
-            <p class="action-label action-label--primary">{{ t('dbSelector.createNew') }}</p>
-            <p class="action-sublabel">{{ t('setup.newProject') }}</p>
+            <p class="action-label action-label--primary text-body-2">{{ t('dbSelector.createNew') }}</p>
+            <p class="action-sublabel text-caption">{{ t('setup.newProject') }}</p>
           </div>
         </button>
       </div>
 
-      <p v-if="store.error" class="error-msg py-2 px-3">{{ store.error }}</p>
+      <p v-if="store.error" class="error-msg py-2 px-3 text-caption">{{ store.error }}</p>
 
       <!-- Language selector -->
       <div class="lang-row">
@@ -132,7 +132,7 @@ async function create() {
           :value="locale"
           @change="setLocale(($event.target as HTMLSelectElement).value as Language)"
           aria-label="Language"
-          class="lang-select"
+          class="lang-select text-caption"
         >
           <option value="fr">Français</option>
           <option value="en">English</option>
@@ -162,23 +162,23 @@ async function create() {
     <div class="create-content ga-5 px-6">
       <!-- Header -->
       <div class="create-header ga-3">
-        <button class="back-btn" @click="step = 'home'">
+        <button class="back-btn text-caption" @click="step = 'home'">
           <v-icon class="back-icon" size="16">mdi-arrow-left</v-icon>
           {{ t('dbSelector.back') }}
         </button>
-        <h2 class="create-title">{{ t('setup.newProject') }}</h2>
+        <h2 class="create-title text-body-1">{{ t('setup.newProject') }}</h2>
       </div>
 
       <!-- Explication -->
-      <div class="create-info pa-3 ga-1">
+      <div class="create-info pa-3 ga-1 text-caption">
         <p>Le <code class="code-inline">CLAUDE.md</code> sera initialisé dans le dossier choisi.</p>
         <p>Un terminal <span class="code-agent">setup</span> sera lancé automatiquement pour initialiser le projet.</p>
       </div>
 
       <!-- Instance selector (hidden when ≤ 1 instance — auto-selected) -->
       <div v-if="availableInstances.length > 1">
-        <p class="instance-label mb-2">{{ t('dbSelector.instance') }}</p>
-        <div v-if="loadingInstances" class="loading-text">{{ t('common.loading') }}</div>
+        <p class="instance-label mb-2 text-caption">{{ t('dbSelector.instance') }}</p>
+        <div v-if="loadingInstances" class="loading-text text-body-2">{{ t('common.loading') }}</div>
         <div v-else class="instance-list">
           <label
             v-for="inst in availableInstances"
@@ -198,7 +198,7 @@ async function create() {
 
       <!-- Bouton lancer -->
       <button
-        class="create-btn ga-2"
+        class="create-btn ga-2 text-body-2"
         :disabled="creating || loadingInstances || (availableInstances.length > 1 && !selectedInstance)"
         @click="create"
       >
@@ -207,7 +207,7 @@ async function create() {
         {{ creating ? t('setup.creating') : t('dbSelector.selectAndInit') }}
       </button>
 
-      <p v-if="creatingError" class="error-msg py-2 px-3">{{ creatingError }}</p>
+      <p v-if="creatingError" class="error-msg py-2 px-3 text-caption">{{ creatingError }}</p>
     </div>
   </div>
 </template>
@@ -243,12 +243,10 @@ async function create() {
 }
 .home-titles { display: flex; flex-direction: column; }
 .app-name {
-  font-size: 1.25rem;
   font-weight: 600;
   color: var(--content-primary);
 }
 .app-tagline {
-  font-size: 0.875rem;
   color: var(--content-subtle);
 }
 .action-grid {
@@ -297,18 +295,15 @@ async function create() {
 }
 .action-icon--primary { color: rgb(var(--v-theme-primary)); }
 .action-label {
-  font-size: 0.875rem;
   font-weight: 500;
   color: var(--content-secondary);
 }
 .action-label--primary { color: rgb(var(--v-theme-primary)); }
 .action-sublabel {
-  font-size: 0.75rem;
   color: var(--content-subtle);
   margin-top: 2px;
 }
 .error-msg {
-  font-size: 0.75rem;
   color: #f87171;
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
@@ -318,7 +313,6 @@ async function create() {
 .lang-select {
   background: transparent;
   color: var(--content-subtle);
-  font-size: 0.75rem;
   border: none;
   outline: none;
   cursor: pointer;
@@ -339,7 +333,6 @@ async function create() {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.75rem;
   color: var(--content-subtle);
   background: none;
   border: none;
@@ -349,7 +342,6 @@ async function create() {
 .back-btn:hover { color: var(--content-tertiary); }
 .back-icon { width: 14px; height: 14px; }
 .create-title {
-  font-size: 1rem;
   font-weight: 600;
   color: var(--content-primary);
 }
@@ -357,7 +349,6 @@ async function create() {
   border-radius: 8px;
   background: rgba(var(--v-theme-on-surface), 0.04);
   border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  font-size: 0.75rem;
   color: var(--content-muted);
   line-height: 1.6;
   display: flex;
@@ -376,14 +367,12 @@ async function create() {
   font-weight: 600;
 }
 .instance-label {
-  font-size: 0.75rem;
   font-weight: 600;
   color: var(--content-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 .loading-text {
-  font-size: 0.875rem;
   color: var(--content-subtle);
   animation: pulse 2s ease-in-out infinite;
 }
@@ -423,7 +412,6 @@ async function create() {
   justify-content: center;
   padding: 10px 16px;
   border-radius: 8px;
-  font-size: 0.875rem;
   font-weight: 500;
   background: rgb(var(--v-theme-primary));
   color: #fff;

@@ -102,9 +102,9 @@ onMounted(scan)
   <div class="telemetry-view pa-6 ga-6">
     <!-- Header -->
     <div class="telem-header">
-      <h2 class="telem-title">{{ t('telemetry.title') }}</h2>
+      <h2 class="telem-title text-h6">{{ t('telemetry.title') }}</h2>
       <button
-        class="telem-rescan-btn ga-2"
+        class="telem-rescan-btn ga-2 text-body-2"
         :disabled="loading || !store.projectPath"
         @click="scan"
       >
@@ -117,18 +117,18 @@ onMounted(scan)
     </div>
 
     <!-- No project guard -->
-    <div v-if="!store.projectPath" class="telem-state-center telem-subtle ga-3">
+    <div v-if="!store.projectPath" class="telem-state-center telem-subtle ga-3 text-body-2">
       {{ t('telemetry.noProject') }}
     </div>
 
     <!-- Loading state -->
-    <div v-else-if="loading && !data" class="telem-state-center telem-muted ga-3">
+    <div v-else-if="loading && !data" class="telem-state-center telem-muted ga-3 text-body-2">
       <v-progress-circular class="telem-spin telem-spin-lg" indeterminate :size="32" :width="3" />
       {{ t('telemetry.scanningProject') }}
     </div>
 
     <!-- Error state -->
-    <div v-else-if="error" class="telem-state-center telem-error ga-3">
+    <div v-else-if="error" class="telem-state-center telem-error ga-3 text-body-2">
       {{ error }}
     </div>
 
@@ -137,30 +137,30 @@ onMounted(scan)
       <!-- Stat cards -->
       <div class="telem-stat-grid ga-4" :class="hasAdvancedMetrics ? 'telem-stat-grid--wide' : ''">
         <div class="telem-stat-card">
-          <span class="telem-stat-label">{{ t('telemetry.totalLines') }}</span>
-          <span class="telem-stat-value">{{ formatLines(data.totalLines) }}</span>
+          <span class="telem-stat-label text-overline">{{ t('telemetry.totalLines') }}</span>
+          <span class="telem-stat-value text-h5">{{ formatLines(data.totalLines) }}</span>
         </div>
         <div v-if="hasAdvancedMetrics" class="telem-stat-card">
-          <span class="telem-stat-label">{{ t('telemetry.realCode') }}</span>
-          <span class="telem-stat-value">{{ formatLines(data.totalCodeLines ?? 0) }}</span>
+          <span class="telem-stat-label text-overline">{{ t('telemetry.realCode') }}</span>
+          <span class="telem-stat-value text-h5">{{ formatLines(data.totalCodeLines ?? 0) }}</span>
         </div>
         <div class="telem-stat-card">
-          <span class="telem-stat-label">{{ t('telemetry.totalFiles') }}</span>
-          <span class="telem-stat-value">{{ data.totalFiles.toLocaleString() }}</span>
+          <span class="telem-stat-label text-overline">{{ t('telemetry.totalFiles') }}</span>
+          <span class="telem-stat-value text-h5">{{ data.totalFiles.toLocaleString() }}</span>
         </div>
         <div v-if="hasAdvancedMetrics" class="telem-stat-card">
-          <span class="telem-stat-label">{{ t('telemetry.testFiles') }}</span>
-          <span class="telem-stat-value">{{ (data.totalTestFiles ?? 0).toLocaleString() }}</span>
+          <span class="telem-stat-label text-overline">{{ t('telemetry.testFiles') }}</span>
+          <span class="telem-stat-value text-h5">{{ (data.totalTestFiles ?? 0).toLocaleString() }}</span>
         </div>
         <div class="telem-stat-card">
-          <span class="telem-stat-label">{{ t('telemetry.languages') }}</span>
-          <span class="telem-stat-value">{{ data.languages.length }}</span>
+          <span class="telem-stat-label text-overline">{{ t('telemetry.languages') }}</span>
+          <span class="telem-stat-value text-h5">{{ data.languages.length }}</span>
         </div>
       </div>
 
       <!-- Language bar (GitHub-style) -->
       <div class="telem-section ga-2">
-        <span class="telem-section-label">{{ t('telemetry.languageBreakdown') }}</span>
+        <span class="telem-section-label text-body-2">{{ t('telemetry.languageBreakdown') }}</span>
         <div class="telem-lang-bar">
           <div
             v-for="lang in data.languages"
@@ -174,7 +174,7 @@ onMounted(scan)
           <div
             v-for="lang in data.languages"
             :key="lang.name"
-            class="telem-lang-legend-item"
+            class="telem-lang-legend-item text-caption"
           >
             <span class="telem-dot" :style="{ backgroundColor: lang.color }" />
             {{ lang.name }}
@@ -186,8 +186,8 @@ onMounted(scan)
       <!-- Source / Test bar -->
       <div v-if="hasAdvancedMetrics" class="telem-section ga-2">
         <div class="telem-section-header">
-          <span class="telem-section-label">{{ t('telemetry.sourceVsTests') }}</span>
-          <span class="telem-test-pct">{{ testPercent.toFixed(1) }}% tests</span>
+          <span class="telem-section-label text-body-2">{{ t('telemetry.sourceVsTests') }}</span>
+          <span class="telem-test-pct text-caption">{{ testPercent.toFixed(1) }}% tests</span>
         </div>
         <div class="telem-lang-bar">
           <div
@@ -201,7 +201,7 @@ onMounted(scan)
             :title="`Tests — ${testPercent.toFixed(1)}%`"
           />
         </div>
-        <div class="telem-legend-row ga-4">
+        <div class="telem-legend-row ga-4 text-caption">
           <span class="telem-legend-item">
             <span class="telem-dot" style="background:#22c55e;" />
             {{ t('telemetry.sourceLabel', { percent: sourcePercent.toFixed(1) }) }}
@@ -215,28 +215,28 @@ onMounted(scan)
 
       <!-- Code quality section -->
       <div v-if="hasAdvancedMetrics" class="telem-section ga-2">
-        <span class="telem-section-label">{{ t('telemetry.codeQuality') }}</span>
+        <span class="telem-section-label text-body-2">{{ t('telemetry.codeQuality') }}</span>
         <div class="telem-quality-grid ga-3">
           <div class="telem-stat-card pa-4 ga-1">
-            <span class="telem-stat-label">{{ t('telemetry.percentRealCode') }}</span>
-            <span class="telem-stat-value telem-value--green">{{ codePercent.toFixed(1) }}%</span>
+            <span class="telem-stat-label text-overline">{{ t('telemetry.percentRealCode') }}</span>
+            <span class="telem-stat-value telem-value--green text-h5">{{ codePercent.toFixed(1) }}%</span>
           </div>
           <div class="telem-stat-card pa-4 ga-1">
-            <span class="telem-stat-label">{{ t('telemetry.percentComments') }}</span>
-            <span class="telem-stat-value telem-value--blue">{{ commentPercent.toFixed(1) }}%</span>
+            <span class="telem-stat-label text-overline">{{ t('telemetry.percentComments') }}</span>
+            <span class="telem-stat-value telem-value--blue text-h5">{{ commentPercent.toFixed(1) }}%</span>
           </div>
           <div class="telem-stat-card pa-4 ga-1">
-            <span class="telem-stat-label">{{ t('telemetry.percentBlank') }}</span>
-            <span class="telem-stat-value telem-muted">{{ blankPercent.toFixed(1) }}%</span>
+            <span class="telem-stat-label text-overline">{{ t('telemetry.percentBlank') }}</span>
+            <span class="telem-stat-value telem-muted text-h5">{{ blankPercent.toFixed(1) }}%</span>
           </div>
         </div>
       </div>
 
       <!-- Detailed table -->
-      <div class="telem-table-wrap">
-        <table class="telem-table">
+      <div class="telem-table-wrap text-body-2">
+        <table class="telem-table text-body-2">
           <thead>
-            <tr class="telem-thead-row">
+            <tr class="telem-thead-row text-overline">
               <th class="telem-th telem-th--left">{{ t('telemetry.colLanguage') }}</th>
               <th class="telem-th telem-th--right">{{ t('telemetry.colLines') }}</th>
               <th v-if="hasLangAdvanced" class="telem-th telem-th--right">{{ t('telemetry.colSource') }}</th>
@@ -266,7 +266,7 @@ onMounted(scan)
       </div>
 
       <!-- Footer -->
-      <p class="telem-footer">
+      <p class="telem-footer text-caption">
         {{ t('telemetry.scannedAt', { date: formatDate(data.scannedAt) }) }}
       </p>
     </template>
@@ -290,7 +290,6 @@ onMounted(scan)
   flex-shrink: 0;
 }
 .telem-title {
-  font-size: 20px;
   font-weight: 600;
   color: var(--content-primary);
   margin: 0;
@@ -302,7 +301,6 @@ onMounted(scan)
   border-radius: 6px;
   background: var(--surface-tertiary);
   color: var(--content-secondary);
-  font-size: 14px;
   border: none;
   cursor: pointer;
   transition: background 0.15s;
@@ -323,7 +321,6 @@ onMounted(scan)
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
 }
 .telem-subtle { color: var(--content-subtle); }
 .telem-muted { color: var(--content-muted); }
@@ -344,13 +341,11 @@ onMounted(scan)
   border: 1px solid var(--edge-default);
 }
 .telem-stat-label {
-  font-size: 11px;
   color: var(--content-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 .telem-stat-value {
-  font-size: 24px;
   font-weight: 700;
   color: var(--content-primary);
 }
@@ -362,8 +357,8 @@ onMounted(scan)
 /* sections */
 .telem-section { display: flex; flex-direction: column; }
 .telem-section-header { display: flex; align-items: center; justify-content: space-between; }
-.telem-section-label { font-size: 14px; font-weight: 500; color: var(--content-tertiary); }
-.telem-test-pct { font-size: 12px; color: #f59e0b; font-weight: 500; }
+.telem-section-label {}
+.telem-test-pct {}
 
 /* language bar */
 .telem-lang-bar {
@@ -384,10 +379,9 @@ onMounted(scan)
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
   color: var(--content-muted);
 }
-.telem-legend-row { display: flex; font-size: 12px; color: var(--content-muted); }
+.telem-legend-row { display: flex; color: var(--content-muted); }
 .telem-legend-item { display: flex; align-items: center; gap: 6px; }
 .telem-dot {
   width: 10px;
@@ -407,11 +401,11 @@ onMounted(scan)
   border: 1px solid var(--edge-default);
   overflow-x: auto;
 }
-.telem-table { width: 100%; font-size: 14px; border-collapse: collapse; }
+.telem-table { width: 100%; border-collapse: collapse; 
+}
 .telem-thead-row {
   border-bottom: 1px solid var(--edge-default);
   color: var(--content-muted);
-  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -429,5 +423,5 @@ onMounted(scan)
 .telem-td--num { text-align: right; font-variant-numeric: tabular-nums; }
 .telem-td-text { color: var(--content-secondary); }
 
-.telem-footer { font-size: 12px; color: var(--content-subtle); }
+.telem-footer {}
 </style>

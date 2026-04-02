@@ -146,7 +146,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
         <input
           :ref="(el) => { if (el) renameGroupInputEl = el as HTMLInputElement }"
           v-model="renameGroupName"
-          class="rename-input"
+          class="rename-input text-overline"
           @keydown.enter="confirmRename(group.id)"
           @keydown.esc="cancelRename"
           @blur="confirmRename(group.id)"
@@ -154,6 +154,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
       </template>
       <span
         v-else
+        class="text-overline"
         :class="['group-name', { 'group-name--deep': level >= 5 }]"
         :title="level >= 5 ? `Profondeur ${level} — organisation complexe` : undefined"
         @dblclick="startRename(group)"
@@ -169,7 +170,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
     </div>
 
     <!-- Drop hint -->
-    <div v-if="dragOverGroupId === group.id" class="drop-hint">{{ t('sidebar.dropAgentHere') }}</div>
+    <div v-if="dragOverGroupId === group.id" class="drop-hint text-overline">{{ t('sidebar.dropAgentHere') }}</div>
 
     <!-- Content (hidden when collapsed) -->
     <div v-if="!collapsed">
@@ -178,13 +179,13 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
         <input
           :ref="(el) => { if (el) createSubgroupInputEl = el as HTMLInputElement }"
           v-model="newSubgroupName"
-          class="group-name-input py-1 px-2"
+          class="group-name-input py-1 px-2 text-caption text-overline"
           :placeholder="t('sidebar.newGroupPlaceholder')"
           @keydown.enter="confirmCreateSubgroup"
           @keydown.esc="cancelCreateSubgroup"
         />
-        <button class="icon-btn icon-btn--confirm" @click="confirmCreateSubgroup">✓</button>
-        <button class="icon-btn icon-btn--cancel" @click="cancelCreateSubgroup">✕</button>
+        <button class="icon-btn icon-btn--confirm text-caption" @click="confirmCreateSubgroup">✓</button>
+        <button class="icon-btn icon-btn--cancel text-caption" @click="cancelCreateSubgroup">✕</button>
       </div>
 
       <!-- Child groups (recursive) -->
@@ -226,7 +227,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
             </div>
           </div>
         </div>
-        <div v-if="groupAgents.length === 0 && dragOverGroupId !== group.id" class="empty-msg py-1 px-2">{{ t('sidebar.dropAgentHere') }}</div>
+        <div v-if="groupAgents.length === 0 && dragOverGroupId !== group.id" class="empty-msg py-1 px-2 text-overline">{{ t('sidebar.dropAgentHere') }}</div>
       </div>
     </div>
   </div>
@@ -291,7 +292,6 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   border: 1px solid var(--edge-default);
   border-radius: 4px;
   padding: 2px 6px;
-  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -303,7 +303,6 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
 }
 .group-name {
   flex: 1;
-  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -336,7 +335,6 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
 .drop-hint {
   margin: 0 4px 4px;
   padding: 4px 0;
-  font-size: 0.625rem;
   color: rgba(var(--v-theme-primary), 0.7);
   text-align: center;
   border: 1px dashed rgba(var(--v-theme-primary), 0.4);
@@ -351,7 +349,6 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
   border-radius: 4px;
-  font-size: 0.75rem;
   color: var(--content-primary);
   outline: none;
   font-weight: 600;
@@ -366,7 +363,6 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  font-size: 0.75rem;
   transition: background 150ms;
   border: none;
   cursor: pointer;
@@ -479,7 +475,6 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
 .action-btn:hover { color: var(--content-secondary); background: var(--surface-tertiary); }
 .action-btn--launch:hover { filter: brightness(1.15); }
 .empty-msg {
-  font-size: 0.6875rem;
   color: var(--content-dim);
   font-style: italic;
 }

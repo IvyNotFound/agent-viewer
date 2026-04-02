@@ -47,7 +47,7 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
     data-testid="block-tool-use"
   >
     <button
-      class="tool-header ga-2 py-2 px-3"
+      class="tool-header ga-2 py-2 px-3 text-caption"
       :style="{ backgroundColor: accentBg, color: accentFg }"
       @click="emit('toggleCollapsed', collapseKey(eventId, blockIdx), true)"
     >
@@ -57,7 +57,7 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
     </button>
     <div
       v-show="!isCollapsed(eventId, blockIdx, true)"
-      class="tool-body pt-3 px-4 pb-2"
+      class="tool-body pt-3 px-4 pb-2 text-caption"
     >
       <pre>{{ toolInputPreview(block.input) }}</pre>
     </div>
@@ -71,7 +71,7 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
     data-testid="block-tool-result"
   >
     <button
-      class="tool-header tool-header--result ga-2 py-2 px-3"
+      class="tool-header tool-header--result ga-2 py-2 px-3 text-caption"
       :class="block.is_error ? 'tool-header--error' : ''"
       @click="emit('toggleCollapsed', collapseKey(eventId, blockIdx), !block.is_error && !!block._isLong)"
     >
@@ -88,7 +88,7 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
     <!-- eslint-disable vue/no-v-html -->
     <div
       v-show="!isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong)"
-      class="stream-markdown tool-body pt-3 px-4 pb-2"
+      class="stream-markdown tool-body pt-3 px-4 pb-2 text-caption"
       v-html="block._html ?? ''"
     />
     <!-- eslint-enable vue/no-v-html -->
@@ -117,7 +117,6 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-size: 0.75rem;
   border: none;
   text-align: left;
   transition: filter 0.15s;
@@ -165,7 +164,6 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
 }
 
 .tool-body {
-  font-size: 0.75rem;
   color: var(--content-muted);
   overflow-x: auto;
   user-select: text;

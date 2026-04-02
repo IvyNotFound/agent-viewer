@@ -51,7 +51,7 @@ function formatDate(iso: string): string {
 
       <!-- Subject + author -->
       <div class="commit-body">
-        <p class="commit-subject">{{ commit.subject }}</p>
+        <p class="commit-subject text-caption">{{ commit.subject }}</p>
         <p class="commit-meta">
           <span>{{ commit.author }}</span>
           <span class="commit-sep">·</span>
@@ -100,7 +100,6 @@ T{{ id }}
   min-width: 0;
 }
 .commit-subject {
-  font-size: 12px;
   color: var(--content-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;

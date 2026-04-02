@@ -58,19 +58,19 @@ function onDrop(e: DragEvent): void {
     <div class="column-header">
       <div class="column-title-row ga-2">
         <div class="column-accent" :style="{ backgroundColor: accentColor }"></div>
-        <span class="column-title">{{ title }}</span>
+        <span class="column-title text-caption">{{ title }}</span>
       </div>
-      <span class="column-count">{{ tasks.length }}</span>
+      <span class="column-count text-caption">{{ tasks.length }}</span>
     </div>
     <!-- List mode -->
     <div v-if="!treeMode" class="column-body pa-2 ga-2" style="contain: content;">
       <TaskCard v-for="task in tasks" :key="task.id" :task="task" />
-      <div v-if="tasks.length === 0" class="column-empty py-8">{{ t('statusColumn.noTasks') }}</div>
+      <div v-if="tasks.length === 0" class="column-empty py-8 text-caption">{{ t('statusColumn.noTasks') }}</div>
     </div>
     <!-- Tree mode -->
     <div v-else class="column-body-tree pa-2" style="contain: content;">
       <TaskTreeNode v-for="root in treeRoots" :key="root.id" :node="root" />
-      <div v-if="treeRoots.length === 0" class="column-empty py-8">{{ t('statusColumn.noTasks') }}</div>
+      <div v-if="treeRoots.length === 0" class="column-empty py-8 text-caption">{{ t('statusColumn.noTasks') }}</div>
     </div>
   </div>
 </template>
@@ -109,14 +109,12 @@ function onDrop(e: DragEvent): void {
   flex-shrink: 0;
 }
 .column-title {
-  font-size: 0.75rem;
   font-weight: 600;
   color: var(--content-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 .column-count {
-  font-size: 0.75rem;
   color: var(--content-subtle);
   background-color: var(--surface-secondary);
   padding: 2px 6px;
@@ -138,7 +136,6 @@ function onDrop(e: DragEvent): void {
   gap: 2px;
 }
 .column-empty {
-  font-size: 0.75rem;
   color: var(--content-faint);
   text-align: center;
 }

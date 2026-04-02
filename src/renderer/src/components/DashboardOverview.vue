@@ -207,7 +207,7 @@ function priorityColor(priority: string): string {
               <div class="metric-values">
                 <div class="text-h6 font-weight-bold tabular-nums lh-tight">{{ activeAgentsCount }}</div>
                 <div class="text-caption text-medium-emphasis text-truncate">{{ t('dashboard.activeAgents') }}</div>
-                <div class="metric-sublabel text-truncate">{{ t('dashboard.sessionsStarted') }}</div>
+                <div class="metric-sublabel text-truncate text-overline">{{ t('dashboard.sessionsStarted') }}</div>
               </div>
             </v-card-text>
           </v-card>
@@ -223,7 +223,7 @@ function priorityColor(priority: string): string {
               <div class="metric-values">
                 <div class="text-h6 font-weight-bold tabular-nums lh-tight">{{ store.stats.in_progress }}</div>
                 <div class="text-caption text-medium-emphasis text-truncate">{{ t('dashboard.inProgress') }}</div>
-                <div class="metric-sublabel text-truncate">{{ t('dashboard.activeTasks') }}</div>
+                <div class="metric-sublabel text-truncate text-overline">{{ t('dashboard.activeTasks') }}</div>
               </div>
             </v-card-text>
           </v-card>
@@ -239,7 +239,7 @@ function priorityColor(priority: string): string {
               <div class="metric-values">
                 <div class="text-h6 font-weight-bold tabular-nums lh-tight">{{ store.stats.todo }}</div>
                 <div class="text-caption text-medium-emphasis text-truncate">{{ t('dashboard.todo') }}</div>
-                <div class="metric-sublabel text-truncate">{{ t('dashboard.pendingTasks') }}</div>
+                <div class="metric-sublabel text-truncate text-overline">{{ t('dashboard.pendingTasks') }}</div>
               </div>
             </v-card-text>
           </v-card>
@@ -255,7 +255,7 @@ function priorityColor(priority: string): string {
               <div class="metric-values">
                 <div class="text-h6 font-weight-bold tabular-nums lh-tight">{{ sessionsTodayCount }}</div>
                 <div class="text-caption text-medium-emphasis text-truncate">{{ t('dashboard.today') }}</div>
-                <div class="metric-sublabel text-truncate">{{ t('dashboard.sessionsStarted') }}</div>
+                <div class="metric-sublabel text-truncate text-overline">{{ t('dashboard.sessionsStarted') }}</div>
               </div>
             </v-card-text>
           </v-card>
@@ -459,7 +459,6 @@ function priorityColor(priority: string): string {
 }
 
 .metric-sublabel {
-  font-size: 11px;
   color: var(--content-tertiary);
 }
 

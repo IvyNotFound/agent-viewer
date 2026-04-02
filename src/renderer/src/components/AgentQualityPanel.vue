@@ -75,47 +75,47 @@ watch(() => store.dbPath, fetchQuality)
     <!-- Header -->
     <div class="quality-header py-3 px-4">
       <div class="quality-header-left ga-3">
-        <h2 class="quality-title">{{ t('quality.title') }}</h2>
+        <h2 class="quality-title text-caption">{{ t('quality.title') }}</h2>
         <!-- Perimetre filter -->
         <select
           v-if="perimetres.length > 1"
           v-model="filterPerimetre"
-          class="quality-select"
+          class="quality-select text-overline"
         >
           <option :value="null">{{ t('quality.all') }}</option>
           <option v-for="p in perimetres" :key="p" :value="p">{{ p }}</option>
         </select>
       </div>
-      <button class="quality-refresh-btn" @click="fetchQuality">{{ t('quality.refresh') }}</button>
+      <button class="quality-refresh-btn text-overline" @click="fetchQuality">{{ t('quality.refresh') }}</button>
     </div>
 
     <!-- Loading -->
     <div v-if="loading" class="quality-state pa-8">
-      <p class="quality-state-text quality-state-text--pulse">{{ t('quality.loading') }}</p>
+      <p class="quality-state-text quality-state-text--pulse text-caption">{{ t('quality.loading') }}</p>
     </div>
 
     <!-- Error -->
     <div v-else-if="error" class="quality-state pa-8">
-      <p class="quality-state-text quality-state-text--error">{{ t('quality.error', { msg: error }) }}</p>
+      <p class="quality-state-text quality-state-text--error text-caption">{{ t('quality.error', { msg: error }) }}</p>
     </div>
 
     <!-- Empty -->
     <div v-else-if="filteredRows.length === 0" class="quality-state pa-8">
-      <p class="quality-state-text">{{ t('quality.empty') }}</p>
+      <p class="quality-state-text text-caption">{{ t('quality.empty') }}</p>
     </div>
 
     <template v-else>
       <!-- Global indicator -->
       <div class="quality-global py-3 px-4">
         <div class="quality-global-rate ga-4">
-          <span class="quality-rate-label">{{ t('quality.rejectionRate') }}</span>
+          <span class="quality-rate-label text-overline">{{ t('quality.rejectionRate') }}</span>
           <span
             class="quality-rate-value"
             :style="{ color: rateColor(globalRejectionRate) }"
           >{{ globalRejectionRate }}%</span>
-          <span v-if="!hasRejections" class="quality-no-rejections">{{ t('quality.noRejections') }}</span>
+          <span v-if="!hasRejections" class="quality-no-rejections text-overline">{{ t('quality.noRejections') }}</span>
         </div>
-        <p class="quality-heuristic-note mt-1">
+        <p class="quality-heuristic-note text-overline mt-1">
           {{ t('quality.heuristicNote') }}
         </p>
       </div>
@@ -123,7 +123,7 @@ watch(() => store.dbPath, fetchQuality)
       <!-- Table -->
       <div class="quality-table py-3 px-4 ga-2">
         <!-- Column headers -->
-        <div class="quality-row ga-3 quality-header-row pb-1">
+        <div class="quality-row ga-3 quality-header-row text-overline pb-1">
           <span>Agent</span>
           <span class="quality-col-right">{{ t('quality.colTotal') }}</span>
           <span class="quality-col-right">{{ t('quality.colRejected') }}</span>
@@ -195,13 +195,11 @@ watch(() => store.dbPath, fetchQuality)
   align-items: center;
 }
 .quality-title {
-  font-size: 13px;
   font-weight: 600;
   color: var(--content-secondary);
   margin: 0;
 }
 .quality-select {
-  font-size: 11px;
   background: var(--surface-secondary);
   border: 1px solid var(--edge-subtle);
   border-radius: 4px;
@@ -210,7 +208,6 @@ watch(() => store.dbPath, fetchQuality)
   outline: none;
 }
 .quality-refresh-btn {
-  font-size: 11px;
   color: var(--content-subtle);
   background: transparent;
   border: none;
@@ -224,7 +221,6 @@ watch(() => store.dbPath, fetchQuality)
   justify-content: center;
 }
 .quality-state-text {
-  font-size: 13px;
   color: var(--content-faint);
   font-style: italic;
   margin: 0;
@@ -245,7 +241,6 @@ watch(() => store.dbPath, fetchQuality)
   align-items: center;
 }
 .quality-rate-label {
-  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--content-faint);
@@ -257,12 +252,10 @@ watch(() => store.dbPath, fetchQuality)
   font-weight: 700;
 }
 .quality-no-rejections {
-  font-size: 11px;
   color: #4ade80;
   font-style: italic;
 }
 .quality-heuristic-note {
-  font-size: 10px;
   color: var(--content-faint);
   margin: 0;
   font-style: italic;
@@ -277,7 +270,6 @@ watch(() => store.dbPath, fetchQuality)
   align-items: center;
 }
 .quality-header-row {
-  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;

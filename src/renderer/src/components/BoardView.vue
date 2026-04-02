@@ -136,7 +136,7 @@ const archivedGroupsSorted = computed(() => {
         <button
           v-for="tab in (['backlog', 'archive'] as BoardTab[])"
           :key="tab"
-          :class="['tab-btn', { active: activeTab === tab }]"
+          class="text-caption" :class="['tab-btn', { active: activeTab === tab }]"
           @click="activeTab = tab"
         >
           {{ tab === 'backlog' ? t('board.backlog') : t('board.archive', { count: store.stats.archived }) }}
@@ -146,14 +146,14 @@ const archivedGroupsSorted = computed(() => {
       <!-- List / Tree toggle (backlog only) -->
       <div v-if="activeTab === 'backlog'" class="view-toggle">
         <button
-          :class="['toggle-btn', { active: !treeMode }]"
+          class="text-caption" :class="['toggle-btn', { active: !treeMode }]"
           :title="t('board.listView')"
           @click="treeMode = false"
         >
           <v-icon class="toggle-icon" size="18">mdi-view-list</v-icon>
         </button>
         <button
-          :class="['toggle-btn', 'toggle-btn-separator', { active: treeMode }]"
+          class="text-caption" :class="['toggle-btn', 'toggle-btn-separator', { active: treeMode }]"
           :title="t('board.treeView')"
           @click="treeMode = true"
         >
@@ -266,7 +266,7 @@ const archivedGroupsSorted = computed(() => {
         <div class="pagination py-2 px-4">
           <button
             :disabled="pagination.page.value === 0"
-            :class="['pag-btn', { disabled: pagination.page.value === 0 }]"
+            class="text-caption" :class="['pag-btn', { disabled: pagination.page.value === 0 }]"
             @click="pagination.loadPage(pagination.page.value - 1)"
           >
             {{ t('board.prevPage') }}
@@ -282,7 +282,7 @@ const archivedGroupsSorted = computed(() => {
 
           <button
             :disabled="pagination.page.value >= pagination.totalPages.value - 1"
-            :class="['pag-btn', { disabled: pagination.page.value >= pagination.totalPages.value - 1 }]"
+            class="text-caption" :class="['pag-btn', { disabled: pagination.page.value >= pagination.totalPages.value - 1 }]"
             @click="pagination.loadPage(pagination.page.value + 1)"
           >
             {{ t('board.nextPage') }}
@@ -313,7 +313,6 @@ const archivedGroupsSorted = computed(() => {
 }
 .tab-btn {
   padding: 4px 12px;
-  font-size: 0.75rem;
   font-weight: 500;
   border-radius: 6px;
   transition: background-color 150ms, color 150ms;
@@ -340,7 +339,6 @@ const archivedGroupsSorted = computed(() => {
 }
 .toggle-btn {
   padding: 4px 10px;
-  font-size: 0.75rem;
   font-weight: 500;
   transition: background-color 150ms, color 150ms;
   color: var(--content-subtle);
@@ -571,7 +569,6 @@ const archivedGroupsSorted = computed(() => {
 }
 .pag-btn {
   padding: 4px 12px;
-  font-size: 0.75rem;
   font-weight: 500;
   border-radius: 6px;
   transition: background-color 150ms, color 150ms;

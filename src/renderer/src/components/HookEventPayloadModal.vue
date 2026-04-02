@@ -45,7 +45,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
           <div class="flex-grow-1" />
           <!-- Native button for wrapper.find('button') test compat -->
           <button
-            class="close-btn"
+            class="close-btn text-subtitle-2"
             @click="emit('close')"
           >×</button>
         </div>
@@ -81,7 +81,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
 .close-btn {
   opacity: 0.5;
-  font-size: 1.125rem;
   line-height: 1;
   transition: opacity 0.15s;
 }

@@ -44,32 +44,32 @@ function sortIcon(key: SortKey): string {
   <div class="tool-stats-panel">
     <!-- Header -->
     <div class="tool-stats-header py-3 px-6">
-      <h2 class="tool-stats-title">{{ t('toolStats.title') }}</h2>
+      <h2 class="tool-stats-title text-h6">{{ t('toolStats.title') }}</h2>
     </div>
     <!-- Empty state -->
     <div v-if="toolStats.length === 0" class="tool-stats-empty pa-12">
-      <p class="tool-stats-empty-text px-4">{{ t('toolStats.empty') }}</p>
+      <p class="tool-stats-empty-text px-4 text-caption">{{ t('toolStats.empty') }}</p>
     </div>
 
     <!-- Table -->
     <div v-else class="tool-stats-body pa-6">
       <div class="tool-stats-table-wrap">
-        <table class="tool-stats-table">
+        <table class="tool-stats-table text-caption">
           <thead>
             <tr class="tool-stats-thead-row">
-              <th class="tool-stats-th tool-stats-th--left" @click="setSort('calls')">
+              <th class="tool-stats-th tool-stats-th--left text-overline" @click="setSort('calls')">
                 {{ t('toolStats.tool') }}
               </th>
-              <th class="tool-stats-th" @click="setSort('calls')">
+              <th class="tool-stats-th text-overline" @click="setSort('calls')">
                 {{ t('toolStats.calls') }}{{ sortIcon('calls') }}
               </th>
-              <th class="tool-stats-th" @click="setSort('errors')">
+              <th class="tool-stats-th text-overline" @click="setSort('errors')">
                 {{ t('toolStats.errors') }}{{ sortIcon('errors') }}
               </th>
-              <th class="tool-stats-th" @click="setSort('errorRate')">
+              <th class="tool-stats-th text-overline" @click="setSort('errorRate')">
                 {{ t('toolStats.errorRate') }}{{ sortIcon('errorRate') }}
               </th>
-              <th class="tool-stats-th" @click="setSort('avgDurationMs')">
+              <th class="tool-stats-th text-overline" @click="setSort('avgDurationMs')">
                 {{ t('toolStats.avgDuration') }}{{ sortIcon('avgDurationMs') }}
               </th>
             </tr>
@@ -129,7 +129,6 @@ function sortIcon(key: SortKey): string {
   border-bottom: 1px solid var(--edge-default);
 }
 .tool-stats-title {
-  font-size: 20px;
   font-weight: 600;
   color: var(--content-primary);
   margin: 0;
@@ -141,7 +140,6 @@ function sortIcon(key: SortKey): string {
   flex: 1;
 }
 .tool-stats-empty-text {
-  font-size: 13px;
   color: var(--content-faint);
   font-style: italic;
   text-align: center;
@@ -159,7 +157,6 @@ function sortIcon(key: SortKey): string {
 }
 .tool-stats-table {
   width: 100%;
-  font-size: 13px;
   border-collapse: collapse;
 }
 .tool-stats-thead-row {
@@ -167,7 +164,6 @@ function sortIcon(key: SortKey): string {
 }
 .tool-stats-th {
   padding: 10px 16px;
-  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--content-muted);

@@ -133,7 +133,7 @@ const PRIORITY_LABEL: Record<string, string> = {
           :title="t('task.running')"
           :aria-label="t('task.running')"
         />
-        <p class="card-title">{{ task.title }}</p>
+        <p class="card-title text-body-2">{{ task.title }}</p>
       </div>
       <div class="card-badge-row ga-1">
         <span
@@ -184,10 +184,10 @@ const PRIORITY_LABEL: Record<string, string> = {
     <!-- Footer: dates left, #id right -->
     <div :class="['card-footer', 'ga-2', 'pt-2', { 'card-footer-bordered': task.scope || task.agent_name }]">
       <div class="card-dates">
-        <p class="card-date">
+        <p class="card-date text-caption">
           <span class="date-label">{{ t('taskDetail.created') }}</span> {{ formattedCreatedAt }}
         </p>
-        <p class="card-date">
+        <p class="card-date text-caption">
           <span class="date-label">{{ t('taskDetail.updated') }}</span> {{ formattedUpdatedAt }}
         </p>
       </div>
@@ -244,7 +244,6 @@ const PRIORITY_LABEL: Record<string, string> = {
   50% { opacity: 0.5; }
 }
 .card-title {
-  font-size: 0.875rem;
   color: var(--content-primary);
   font-weight: 500;
   line-height: 1.35;
@@ -347,7 +346,6 @@ const PRIORITY_LABEL: Record<string, string> = {
   gap: 2px;
 }
 .card-date {
-  font-size: 0.75rem;
   color: var(--content-subtle);
 }
 .date-label {
