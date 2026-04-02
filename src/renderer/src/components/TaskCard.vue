@@ -322,7 +322,7 @@ const PRIORITY_LABEL: Record<string, string> = {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   border: 1px solid transparent;
 }

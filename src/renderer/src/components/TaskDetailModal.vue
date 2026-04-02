@@ -520,7 +520,7 @@ padding: 2px 8px;
 
 /* Meta labels */
 .meta-label {
-  color: var(--content-faint);
+  color: var(--content-secondary);
   width: 56px;
   flex-shrink: 0;
 }

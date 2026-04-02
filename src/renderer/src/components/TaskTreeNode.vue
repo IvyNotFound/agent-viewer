@@ -89,7 +89,7 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
               borderColor: perimeterBorder(node.scope),
             }"
           >{{ node.scope }}</span>
-          <AgentBadge v-if="node.agent_name" :name="node.agent_name" :perimetre="node.agent_scope" class="agent-badge-sm text-overline" />
+          <AgentBadge v-if="node.agent_name" :name="node.agent_name" :perimetre="node.agent_scope" class="agent-badge-sm" />
           <span class="node-date">{{ formatDate(node.updated_at) }}</span>
         </div>
 
