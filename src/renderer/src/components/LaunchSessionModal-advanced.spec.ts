@@ -44,7 +44,7 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
     api.buildAgentPrompt.mockResolvedValue('test prompt')
   })
 
-  it('shows resume checkbox when previous convId exists', async () => {
+  it('shows resume switch when previous convId exists', async () => {
     const wrapper = shallowMount(LaunchSessionModal, {
       props: { agent: mockAgent as never },
       global: {
@@ -56,9 +56,9 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
     })
     await flushPromises()
 
-    // Resume checkbox should be present
-    const checkbox = wrapper.find('input[type="checkbox"]')
-    expect(checkbox.exists()).toBe(true)
+    // Resume switch should be present
+    const switchComp = wrapper.find('[data-testid="switch-resume"]')
+    expect(switchComp.exists()).toBe(true)
   })
 
   it('useResume defaults to false when convId exists', async () => {
@@ -73,8 +73,7 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
     })
     await flushPromises()
 
-    const checkbox = wrapper.find('input[type="checkbox"]')
-    expect((checkbox.element as HTMLInputElement).checked).toBe(false)
+    expect(wrapper.vm.useResume).toBe(false)
   })
 
   it('fullSystemPrompt combines system_prompt + suffix', async () => {
@@ -89,9 +88,8 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
     })
     await flushPromises()
 
-    // Uncheck resume to show system prompt section
-    const checkbox = wrapper.find('input[type="checkbox"]')
-    await checkbox.setValue(false)
+    // Ensure resume is off so system prompt is used
+    wrapper.vm.useResume = false
     await nextTick()
 
     // The system prompt preview should show combined prompt
@@ -114,21 +112,22 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
     })
     await flushPromises()
 
-    // Find the 'Disabled' / 'Désactivé' button
-    const buttons = wrapper.findAll('button')
-    const disabledBtn = buttons.find(b => {
+    // Find the 'Disabled' / 'Désactivé' button among v-btn custom elements
+    // Vuetify not registered in test env — v-btn renders as custom HTML element <v-btn>
+    const vbtns = wrapper.findAll('v-btn')
+    const disabledBtn = vbtns.find(b => {
       const text = b.text().toLowerCase()
       return text.includes('désactivé') || text.includes('disabled')
     })
     expect(disabledBtn).toBeDefined()
 
-    // Click it
+    // Click it — triggers @click="thinkingMode = 'disabled'"
     await disabledBtn!.trigger('click')
     await nextTick()
 
-    // After clicking, re-query the button (Vue re-renders the DOM)
-    const updatedButtons = wrapper.findAll('button')
-    const updatedDisabledBtn = updatedButtons.find(b => {
+    // After clicking, re-query the v-btn elements (Vue re-renders the DOM)
+    const updatedVbtns = wrapper.findAll('v-btn')
+    const updatedDisabledBtn = updatedVbtns.find(b => {
       const text = b.text().toLowerCase()
       return text.includes('désactivé') || text.includes('disabled')
     })
@@ -156,16 +155,12 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
     const { useTabsStore } = await import('@renderer/stores/tabs')
     const tabsStore = useTabsStore()
 
-    // useResume defaults to false — check the checkbox first to enable resume mode
-    const checkbox = wrapper.find('input[type="checkbox"]')
-    await checkbox.setValue(true)
+    // useResume defaults to false — enable resume mode directly on the vm
+    wrapper.vm.useResume = true
     await nextTick()
 
-    const launchBtn = wrapper.findAll('button').find(b => {
-      const text = b.text().toLowerCase()
-      return text.includes('lancer') || text.includes('launch')
-    })
-    await launchBtn!.trigger('click')
+    const launchBtn = wrapper.find('[data-testid="btn-launch"]')
+    await launchBtn.trigger('click')
     await flushPromises()
 
     expect(tabsStore.addTerminal).toHaveBeenCalledWith(

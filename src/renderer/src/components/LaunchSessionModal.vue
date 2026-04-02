@@ -202,8 +202,19 @@ async function launch() {
               {{ agent.name }}
             </p>
           </div>
-          <button class="btn-close" @click="emit('close')">✕</button>
+          <v-btn
+            data-testid="btn-close"
+            icon
+            size="small"
+            variant="text"
+            @click="emit('close')"
+          >
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
         </div>
+
+        <!-- Loading bar -->
+        <v-progress-linear v-if="loading" indeterminate color="primary" height="2" />
 
         <!-- Body -->
         <div class="modal-body">
@@ -212,7 +223,7 @@ async function launch() {
           <div>
             <p class="section-title mb-2">{{ t('launch.instance') }}</p>
 
-            <div v-if="loading" class="text-body-2 loading-pulse">{{ t('common.loading') }}</div>
+            <div v-if="loading" class="text-body-2 text-medium-emphasis">{{ t('common.loading') }}</div>
 
             <div v-else-if="allAvailableInstances.length === 0" class="text-body-2" style="color: var(--content-subtle); font-style: italic;">
               {{ noInstanceText }}
@@ -266,15 +277,16 @@ async function launch() {
           >
             <div v-if="caps.convResume && lastConvId">
               <p class="section-title mb-2">{{ t('launch.prevSession') }}</p>
-              <label
-                class="instance-row"
-                :class="useResume ? '' : 'instance-row--idle'"
-                :style="useResume ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '15' } : {}"
-              >
-                <input v-model="useResume" type="checkbox" :style="{ accentColor: agentFg(agent.name) }" />
-                <span class="text-body-2" style="color: var(--content-secondary)">{{ t('launch.resume', { resume: '--resume' }) }}</span>
-              </label>
-              <p class="field-hint">{{ t('launch.resumeNote') }}</p>
+              <v-switch
+                v-model="useResume"
+                data-testid="switch-resume"
+                density="compact"
+                hide-details
+                :color="agentFg(agent.name)"
+                :label="t('launch.resume', { resume: '--resume' })"
+                class="launch-switch"
+              />
+              <p class="field-hint mt-1">{{ t('launch.resumeNote') }}</p>
             </div>
           </Transition>
 
@@ -289,25 +301,33 @@ async function launch() {
           >
             <div v-if="caps.thinkingMode">
               <p class="section-title mb-2">{{ t('launch.thinkingMode') }}</p>
-              <div class="d-flex ga-2">
-                <button
-                  class="toggle-btn"
-                  :class="thinkingMode !== 'auto' ? 'toggle-btn--idle' : ''"
+              <v-btn-toggle
+                v-model="thinkingMode"
+                density="compact"
+                rounded="lg"
+                class="w-100"
+              >
+                <v-btn
+                  value="auto"
+                  size="small"
+                  flex-grow-1
+                  class="flex-1"
                   :style="thinkingMode === 'auto' ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
                   @click="thinkingMode = 'auto'"
                 >
                   {{ t('launch.auto') }}
-                </button>
-                <button
-                  class="toggle-btn"
-                  :class="thinkingMode !== 'disabled' ? 'toggle-btn--idle' : ''"
+                </v-btn>
+                <v-btn
+                  value="disabled"
+                  size="small"
+                  class="flex-1"
                   :style="thinkingMode === 'disabled' ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name) } : {}"
                   @click="thinkingMode = 'disabled'"
                 >
                   {{ t('launch.disabled') }}
-                </button>
-              </div>
-              <p class="field-hint">
+                </v-btn>
+              </v-btn-toggle>
+              <p class="field-hint mt-1">
                 {{ t('launch.thinkingNote') }}
               </p>
             </div>
@@ -315,14 +335,19 @@ async function launch() {
 
           <!-- Custom prompt -->
           <div>
-            <p class="section-title mb-2">{{ t('launch.startPrompt') }}</p>
-            <textarea
+            <v-textarea
               v-model="customPrompt"
-              rows="3"
-              spellcheck="true"
+              :label="t('launch.startPrompt')"
               :placeholder="t('launch.startPromptPlaceholder')"
-              class="form-textarea"
-              :style="{ '--focus-color': agentFg(agent.name) }"
+              rows="3"
+              auto-grow
+              spellcheck="true"
+              variant="outlined"
+              density="compact"
+              hide-details="auto"
+              :base-color="agentFg(agent.name)"
+              :color="agentFg(agent.name)"
+              class="launch-textarea"
             />
             <div class="d-flex align-center ga-2 mt-2">
               <v-icon size="12" style="color: var(--content-faint); flex-shrink: 0;">mdi-information-outline</v-icon>
@@ -332,15 +357,16 @@ async function launch() {
 
           <!-- Multi-instance toggle (ADR-006) — worktree: true for all CLIs -->
           <div>
-            <label
-              class="instance-row"
-              :class="multiInstance ? '' : 'instance-row--idle'"
-              :style="multiInstance ? { borderColor: agentBorder(agent.name), backgroundColor: agentFg(agent.name) + '15' } : {}"
-            >
-              <input v-model="multiInstance" type="checkbox" :style="{ accentColor: agentFg(agent.name) }" />
-              <span class="text-body-2" style="color: var(--content-secondary)">{{ t('launch.multiInstance') }}</span>
-            </label>
-            <p class="field-hint">{{ t('launch.multiInstanceNote') }}</p>
+            <v-switch
+              v-model="multiInstance"
+              data-testid="switch-worktree"
+              density="compact"
+              hide-details
+              :color="agentFg(agent.name)"
+              :label="t('launch.multiInstance')"
+              class="launch-switch"
+            />
+            <p class="field-hint mt-1">{{ t('launch.multiInstanceNote') }}</p>
             <p class="field-hint" style="font-style: italic;">
               {{ t('launch.worktreeSource', { source: worktreeSource === 'global' ? t('launch.worktreeSourceGlobal') : worktreeSource === 'agent' ? t('launch.worktreeSourceAgent') : t('launch.worktreeSourceManual') }) }}
             </p>
@@ -356,28 +382,37 @@ async function launch() {
             {{ noInstanceText }}
           </p>
           <div class="d-flex align-center justify-space-between ga-2">
-            <button
-              class="btn-refresh"
-              :disabled="settingsStore.detectingClis"
-              :title="t('launch.refreshDetection')"
+            <v-btn
+              data-testid="btn-refresh"
+              variant="text"
+              size="small"
+              density="compact"
+              :loading="settingsStore.detectingClis"
+              prepend-icon="mdi-refresh"
               @click="settingsStore.refreshCliDetection(true)"
             >
-              <v-icon size="14" :class="settingsStore.detectingClis ? 'spin' : ''">mdi-refresh</v-icon>
               {{ t('launch.refreshDetection') }}
-            </button>
+            </v-btn>
             <div class="d-flex align-center ga-2">
-              <button class="btn-ghost" @click="emit('close')">
+              <v-btn
+                data-testid="btn-cancel"
+                variant="text"
+                size="small"
+                @click="emit('close')"
+              >
                 {{ t('launch.cancel') }}
-              </button>
-              <button
-                class="btn-launch"
+              </v-btn>
+              <v-btn
+                data-testid="btn-launch"
+                size="small"
                 :style="{ backgroundColor: agentFg(agent.name) + '22', color: agentFg(agent.name), borderColor: agentBorder(agent.name) }"
                 :disabled="loading || launching || allAvailableInstances.length === 0"
+                :loading="launching"
                 @click="launch"
               >
                 <v-icon size="14">mdi-play</v-icon>
-                {{ launching ? t('launch.launching') : t('launch.launch') }}
-              </button>
+                {{ t('launch.launch') }}
+              </v-btn>
             </div>
           </div>
         </div>
@@ -439,27 +474,7 @@ async function launch() {
   color: #f87171;
 }
 
-/* Close button */
-.btn-close {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  border: none;
-  background: none;
-  color: var(--content-subtle);
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 150ms;
-}
-.btn-close:hover {
-  color: var(--content-secondary);
-  background: var(--surface-secondary);
-}
-
-/* Instance rows (radio/checkbox) */
+/* Instance rows (radio) */
 .instance-row {
   display: flex;
   align-items: center;
@@ -514,121 +529,18 @@ async function launch() {
   flex-shrink: 0;
 }
 
-/* Toggle buttons */
-.toggle-btn {
-  flex: 1;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 150ms;
-}
-.toggle-btn--idle {
-  border-color: var(--edge-default);
-  background: rgba(var(--v-theme-surface-variant, 39, 39, 42), 0.4);
-  color: var(--content-muted);
-}
-.toggle-btn--idle:hover {
-  border-color: var(--content-faint);
+/* Switch label font size override */
+.launch-switch :deep(.v-label) {
+  font-size: 14px;
+  color: var(--content-secondary);
 }
 
-/* Textarea */
-.form-textarea {
-  width: 100%;
-  background: var(--surface-secondary);
-  border: 1px solid var(--edge-default);
-  border-radius: 8px;
-  padding: 8px 12px;
+/* Textarea font override for monospace feel */
+.launch-textarea :deep(textarea) {
   font-size: 12px;
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
-  color: var(--content-secondary);
-  outline: none;
-  transition: border-color 150ms;
-  resize: none;
-  box-sizing: border-box;
-}
-.form-textarea::placeholder {
-  color: var(--content-faint);
-}
-.form-textarea:focus {
-  border-color: var(--focus-color, #8b5cf6);
-  box-shadow: 0 0 0 1px var(--focus-color, #8b5cf6);
 }
 
-/* Loading pulse */
-.loading-pulse {
-  color: var(--content-subtle);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-/* Spin animation for refresh icon */
-.spin {
-  animation: spin 1s linear infinite;
-}
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Footer buttons */
-.btn-refresh {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  font-size: 12px;
-  color: var(--content-subtle);
-  background: none;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 150ms;
-}
-.btn-refresh:hover:not(:disabled) {
-  color: var(--content-secondary);
-  background: var(--surface-secondary);
-}
-.btn-refresh:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.btn-ghost {
-  padding: 8px 16px;
-  font-size: 14px;
-  color: var(--content-muted);
-  background: none;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 150ms;
-}
-.btn-ghost:hover {
-  color: var(--content-secondary);
-  background: var(--surface-secondary);
-}
-.btn-launch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  border-style: solid;
-  border-width: 1px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 150ms;
-}
-.btn-launch:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
 .no-instance-warning {
   font-size: 12px;
   color: #f59e0b;
