@@ -62,7 +62,7 @@ describe('TaskCard', () => {
       props: { task: makeTask({ effort: 1 }) },
       global: { plugins: [i18n] },
     })
-    const badges = wrapper.findAll('span').filter(s => s.text() === 'S')
+    const badges = wrapper.findAll('v-chip').filter(s => s.text() === 'S')
     expect(badges.length).toBeGreaterThanOrEqual(1)
   })
 
@@ -71,7 +71,7 @@ describe('TaskCard', () => {
       props: { task: makeTask({ effort: 2 }) },
       global: { plugins: [i18n] },
     })
-    const badges = wrapper.findAll('span').filter(s => s.text() === 'M')
+    const badges = wrapper.findAll('v-chip').filter(s => s.text() === 'M')
     expect(badges.length).toBeGreaterThanOrEqual(1)
   })
 
@@ -80,7 +80,7 @@ describe('TaskCard', () => {
       props: { task: makeTask({ effort: 3 }) },
       global: { plugins: [i18n] },
     })
-    const badges = wrapper.findAll('span').filter(s => s.text() === 'L')
+    const badges = wrapper.findAll('v-chip').filter(s => s.text() === 'L')
     expect(badges.length).toBeGreaterThanOrEqual(1)
   })
 
@@ -98,7 +98,7 @@ describe('TaskCard', () => {
       global: { plugins: [i18n] },
     })
     // Has "!" but not "!!"
-    const badges = wrapper.findAll('span').filter(s => s.text().trim() === '!')
+    const badges = wrapper.findAll('v-chip').filter(s => s.text().trim() === '!')
     expect(badges.length).toBeGreaterThanOrEqual(1)
   })
 

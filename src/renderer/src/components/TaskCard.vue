@@ -96,24 +96,7 @@ const staleTooltip = computed(() => {
 })
 
 const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
-const EFFORT_CLASS: Record<number, string> = {
-  1: 'badge-effort-1',
-  2: 'badge-effort-2',
-  3: 'badge-effort-3',
-}
-
-const PRIORITY_CLASS: Record<string, string> = {
-  critical: 'badge-priority-critical',
-  high:     'badge-priority-high',
-  normal:   'badge-priority-normal',
-  low:      '',
-}
-const PRIORITY_LABEL: Record<string, string> = {
-  critical: '!!',
-  high:     '!',
-  normal:   '—',
-  low:      '',
-}
+const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 'error' }
 </script>
 
 <template>
@@ -136,19 +119,11 @@ const PRIORITY_LABEL: Record<string, string> = {
         <p class="card-title text-body-2">{{ task.title }}</p>
       </div>
       <div class="card-badge-row ga-1">
-        <span
-          v-if="isStaleTask"
-          class="badge badge-stale"
-          :title="staleTooltip"
-        >⚠</span>
-        <span
-          v-if="task.priority && task.priority !== 'normal' && task.priority !== 'low'"
-          :class="['badge', PRIORITY_CLASS[task.priority]]"
-        >{{ PRIORITY_LABEL[task.priority] }}</span>
-        <span
-          v-if="task.effort"
-          :class="['badge', EFFORT_CLASS[task.effort]]"
-        >{{ EFFORT_LABEL[task.effort] }}</span>
+        <v-chip v-if="isStaleTask" size="x-small" variant="tonal" color="warning" :title="staleTooltip">⚠</v-chip>
+        <v-chip v-if="task.priority === 'critical'" size="x-small" variant="tonal" color="error">!!</v-chip>
+        <v-chip v-if="task.priority === 'high'" size="x-small" variant="tonal" color="warning">!</v-chip>
+        <v-chip v-if="task.priority === 'normal'" size="x-small" variant="tonal" color="default">—</v-chip>
+        <v-chip v-if="task.effort" size="x-small" variant="tonal" :color="EFFORT_COLOR[task.effort]">{{ EFFORT_LABEL[task.effort] }}</v-chip>
       </div>
     </div>
 
@@ -171,11 +146,15 @@ const PRIORITY_LABEL: Record<string, string> = {
           class="avatar"
           :style="{ color: agentFg(av.agent_name), backgroundColor: agentBg(av.agent_name), borderColor: agentBorder(av.agent_name) }"
           :title="av.agent_name"
-        >{{ av.agent_name.slice(0, 2).toUpperCase() }}</div>
+        >
+          {{ av.agent_name.slice(0, 2).toUpperCase() }}
+        </div>
         <div
           v-if="overflowCount > 0"
           class="avatar avatar-overflow"
-        >+{{ overflowCount }}</div>
+        >
+          +{{ overflowCount }}
+        </div>
       </div>
       <!-- Fallback: single agent badge when no task_agents rows -->
       <AgentBadge v-else-if="task.agent_name" :name="task.agent_name" :perimetre="task.agent_scope" />
@@ -254,50 +233,6 @@ const PRIORITY_LABEL: Record<string, string> = {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-}
-/* Base badge */
-.badge {
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-  border: 1px solid transparent;
-}
-.badge-stale {
-  background-color: rgba(var(--v-theme-warning), 0.2);
-  color: rgb(var(--v-theme-warning));
-  border-color: rgba(var(--v-theme-warning), 0.3);
-}
-.badge-effort-1 {
-  background-color: rgba(var(--v-theme-secondary), 0.2);
-  color: rgb(var(--v-theme-secondary));
-  border-color: rgba(var(--v-theme-secondary), 0.3);
-}
-.badge-effort-2 {
-  background-color: rgba(var(--v-theme-warning), 0.2);
-  color: rgb(var(--v-theme-warning));
-  border-color: rgba(var(--v-theme-warning), 0.3);
-}
-.badge-effort-3 {
-  background-color: rgba(var(--v-theme-error), 0.2);
-  color: rgb(var(--v-theme-error));
-  border-color: rgba(var(--v-theme-error), 0.3);
-}
-.badge-priority-critical {
-  background-color: rgba(var(--v-theme-error), 0.2);
-  color: rgb(var(--v-theme-error));
-  border-color: rgba(var(--v-theme-error), 0.3);
-}
-.badge-priority-high {
-  background-color: rgba(var(--v-theme-warning), 0.2);
-  color: rgb(var(--v-theme-warning));
-  border-color: rgba(var(--v-theme-warning), 0.3);
-}
-.badge-priority-normal {
-  background-color: var(--surface-tertiary);
-  color: var(--content-muted);
-  border-color: var(--edge-default);
 }
 .card-meta {
   display: flex;
