@@ -7,6 +7,21 @@ import * as directives from 'vuetify/directives'
 export default createVuetify({
   components,
   directives,
+  defaults: {
+    VBtn: { variant: 'flat', density: 'comfortable', rounded: 'lg' },
+    VTextField: { variant: 'outlined', density: 'compact', color: 'primary', hideDetails: 'auto' },
+    VSelect: { variant: 'outlined', density: 'compact', color: 'primary', hideDetails: 'auto' },
+    VTextarea: { variant: 'outlined', density: 'compact', color: 'primary', hideDetails: 'auto' },
+    VSwitch: { color: 'primary', density: 'compact' },
+    VCheckbox: { color: 'primary', density: 'compact' },
+    VCard: { rounded: 'lg', variant: 'elevated' },
+    VChip: { size: 'small', variant: 'tonal' },
+    VList: { density: 'compact' },
+    VDialog: { scrim: true, scrollable: true },
+    VSnackbar: { timeout: 5000, location: 'bottom end' },
+    VTab: { density: 'compact' },
+    VMenu: { offset: 4 },
+  },
   theme: {
     defaultTheme: 'dark',
     themes: {
