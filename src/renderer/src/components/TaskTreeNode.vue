@@ -28,11 +28,7 @@ function formatDate(iso: string): string {
 }
 
 const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
-const EFFORT_STYLE: Record<number, { color: string; background: string; border: string }> = {
-  1: { color: 'rgb(var(--v-theme-secondary))', background: 'rgba(var(--v-theme-secondary),0.12)', border: 'rgba(var(--v-theme-secondary),0.3)' },
-  2: { color: 'rgb(var(--v-theme-warning))',   background: 'rgba(var(--v-theme-warning),0.12)',   border: 'rgba(var(--v-theme-warning),0.3)' },
-  3: { color: 'rgb(var(--v-theme-error))',     background: 'rgba(var(--v-theme-error),0.12)',     border: 'rgba(var(--v-theme-error),0.3)' },
-}
+const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 'error' }
 </script>
 
 <template>
@@ -69,26 +65,30 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
           <p class="node-title text-body-2">{{ node.title }}</p>
           <!-- Badges -->
           <div class="node-badges ga-1">
-            <span
+            <v-chip
               v-if="node.effort"
-              class="effort-badge"
-              :style="{ color: EFFORT_STYLE[node.effort]?.color, backgroundColor: EFFORT_STYLE[node.effort]?.background, borderColor: EFFORT_STYLE[node.effort]?.border }"
-            >{{ EFFORT_LABEL[node.effort] }}</span>
+              size="x-small"
+              variant="tonal"
+              :color="EFFORT_COLOR[node.effort]"
+              density="compact"
+            >{{ EFFORT_LABEL[node.effort] }}</v-chip>
             <span class="task-id">#{{ node.id }}</span>
           </div>
         </div>
 
         <!-- Meta: perimetre + agent + date -->
         <div class="node-meta">
-          <span
+          <v-chip
             v-if="node.scope"
-            class="scope-badge"
+            size="x-small"
+            variant="outlined"
+            density="compact"
             :style="{
               color: perimeterFg(node.scope),
-              backgroundColor: perimeterBg(node.scope),
               borderColor: perimeterBorder(node.scope),
+              backgroundColor: perimeterBg(node.scope),
             }"
-          >{{ node.scope }}</span>
+          >{{ node.scope }}</v-chip>
           <AgentBadge v-if="node.agent_name" :name="node.agent_name" :perimetre="node.agent_scope" class="agent-badge-sm" />
           <span class="node-date">{{ formatDate(node.updated_at) }}</span>
         </div>
@@ -194,15 +194,6 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
   flex-shrink: 0;
 }
 
-.effort-badge {
-  font-size: 0.625rem;
-  font-weight: 700;
-  padding: 1px 4px;
-  border-radius: 3px;
-  border: 1px solid;
-  font-family: ui-monospace, monospace;
-}
-
 .task-id {
   font-size: 0.625rem;
   color: var(--content-faint);
@@ -215,16 +206,6 @@ const EFFORT_STYLE: Record<number, { color: string; background: string; border: 
   gap: 6px;
   flex-wrap: wrap;
 }
-
-.scope-badge {
-  font-size: 0.625rem;
-  padding: 0 4px;
-  border-radius: 3px;
-  border: 1px solid;
-  font-family: ui-monospace, monospace;
-}
-
-
 
 .node-date {
   font-size: 0.625rem;
