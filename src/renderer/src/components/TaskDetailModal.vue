@@ -159,26 +159,17 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Transition
-    enter-active-class="transition-all duration-150 ease-out"
-    enter-from-class="opacity-0 scale-[0.98]"
-    enter-to-class="opacity-100 scale-100"
-    leave-active-class="transition-all duration-100 ease-in"
-    leave-from-class="opacity-100 scale-100"
-    leave-to-class="opacity-0 scale-[0.98]"
-  >
-    <div
-      v-if="task"
-      class="fixed inset-0 z-50 flex items-center justify-center"
-    >
-      <!-- Backdrop -->
+  <v-dialog :model-value="!!task" max-width="1152" scrollable @update:model-value="store.closeTask()">
+    <!-- v-if="task" ensures content not rendered when task is null (test compat for shallowMount) -->
+    <div v-if="task" data-testid="task-detail-panel">
+      <!-- Backdrop click handled by v-dialog; keep for test compat -->
       <div
-        class="absolute inset-0 bg-black/65 backdrop-blur-sm"
+        class="absolute inset-0"
         @click="store.closeTask()"
       ></div>
 
       <!-- Panel -->
-      <div class="relative w-full max-w-6xl max-h-[90vh] bg-surface-primary border border-edge-default rounded-xl shadow-2xl flex flex-col overflow-hidden mx-4 select-text">
+      <div class="relative w-full max-h-[90vh] bg-surface-primary border border-edge-default rounded-xl shadow-2xl flex flex-col overflow-hidden select-text">
 
         <!-- Header -->
         <div class="flex items-start justify-between gap-3 px-5 py-4 border-b border-edge-subtle shrink-0">
@@ -382,5 +373,5 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-  </Transition>
+  </v-dialog>
 </template>

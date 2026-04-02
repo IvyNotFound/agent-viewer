@@ -74,20 +74,20 @@ const subTabs = computed<{ id: SubTab; label: string }[]>(() => [
 <template>
   <div class="flex flex-col h-full bg-surface-primary min-h-0">
 
-    <!-- Sub-tab bar -->
-    <div class="subtab-scroll shrink-0 flex items-center gap-0.5 px-4 pt-2.5 pb-0 bg-surface-base border-b border-edge-subtle overflow-x-scroll">
-      <button
+    <!-- Sub-tab bar using Vuetify v-tabs -->
+    <v-tabs
+      v-model="activeSubTab"
+      density="compact"
+      class="shrink-0 border-b border-edge-subtle"
+      show-arrows
+    >
+      <v-tab
         v-for="tab in subTabs"
         :key="tab.id"
-        :class="[
-          'px-3 py-1 rounded-t text-xs font-semibold transition-colors border border-b-0 shrink-0',
-          activeSubTab === tab.id
-            ? 'text-content-secondary bg-surface-primary border-edge-subtle mb-[-1px]'
-            : 'text-content-faint bg-transparent border-transparent hover:text-content-tertiary hover:bg-surface-secondary/40'
-        ]"
-        @click="activeSubTab = tab.id"
-      >{{ tab.label }}</button>
-    </div>
+        :value="tab.id"
+        class="text-xs font-semibold"
+      >{{ tab.label }}</v-tab>
+    </v-tabs>
 
     <!-- Overview -->
     <DashboardOverview v-if="activeSubTab === 'overview'" class="flex-1 min-h-0" />
@@ -161,7 +161,3 @@ const subTabs = computed<{ id: SubTab; label: string }[]>(() => [
   </div>
 </template>
 
-<style scoped>
-.subtab-scroll::-webkit-scrollbar { display: none; }
-.subtab-scroll { scrollbar-width: none; -ms-overflow-style: none; }
-</style>

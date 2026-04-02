@@ -17,11 +17,12 @@ const COLOR: Record<Toast['type'], string> = {
 </script>
 
 <template>
+  <!-- MD3: fixed bottom-right, stacked toasts with elevation shadow -->
   <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none">
     <div
       v-for="toast in toasts"
       :key="toast.id"
-      :class="['flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-sm backdrop-blur-sm shadow-xl pointer-events-auto', COLOR[toast.type]]"
+      :class="['flex items-start gap-2.5 px-3 py-2.5 rounded-xl border text-sm shadow-lg pointer-events-auto', COLOR[toast.type]]"
     >
       <span class="shrink-0 text-xs font-mono mt-0.5">{{ ICON[toast.type] }}</span>
       <span class="flex-1 leading-relaxed break-words min-w-0">{{ toast.message }}</span>

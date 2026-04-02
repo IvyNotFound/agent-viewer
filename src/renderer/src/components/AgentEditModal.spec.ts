@@ -83,7 +83,7 @@ describe('AgentEditModal', () => {
         stubs: teleportStub,
       },
     })
-    const backdrop = wrapper.find('.fixed.inset-0')
+    const backdrop = wrapper.find('[data-testid="agent-edit-backdrop"]')
     await backdrop.trigger('click')
     expect(wrapper.emitted('close')).toHaveLength(1)
   })

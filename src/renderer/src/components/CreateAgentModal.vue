@@ -194,13 +194,9 @@ function handleKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <Teleport to="body">
-    <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-      @click.self="emit('close')"
-      @keydown="handleKeydown"
-    >
-      <div class="bg-surface-primary border border-edge-default rounded-xl shadow-2xl w-[750px] flex flex-col max-h-[85vh]">
+  <v-dialog model-value max-width="750" scrollable @update:model-value="emit('close')">
+    <div data-testid="create-agent-backdrop" @click.self="emit('close')">
+    <v-card class="flex flex-col" style="max-height: 85vh;" @keydown="handleKeydown">
         <!-- Header -->
         <div class="flex items-center justify-between px-5 py-4 border-b border-edge-subtle shrink-0">
           <h2 class="text-base font-semibold text-content-primary">{{ isEditMode ? t('agent.editTitle') : t('agent.newTitle') }}</h2>
@@ -419,7 +415,7 @@ function handleKeydown(e: KeyboardEvent) {
             </div>
           </div>
         </div>
-      </div>
+    </v-card>
     </div>
-  </Teleport>
+  </v-dialog>
 </template>

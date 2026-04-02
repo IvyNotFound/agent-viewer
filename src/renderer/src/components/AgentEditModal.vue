@@ -117,12 +117,9 @@ async function save() {
 </script>
 
 <template>
-  <Teleport to="body">
-    <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      @click.self="emit('close')"
-    >
-      <div class="w-[750px] bg-surface-primary border border-edge-default rounded-xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+  <v-dialog model-value max-width="750" scrollable @update:model-value="emit('close')">
+    <div data-testid="agent-edit-backdrop" @click.self="emit('close')">
+    <v-card class="flex flex-col" style="max-height: 85vh;">
 
         <!-- Header -->
         <div
@@ -374,7 +371,7 @@ async function save() {
           </div>
         </div>
 
-      </div>
+    </v-card>
     </div>
-  </Teleport>
+  </v-dialog>
 </template>

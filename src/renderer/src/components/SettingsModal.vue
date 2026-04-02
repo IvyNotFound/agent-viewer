@@ -106,13 +106,8 @@ function handleKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <Teleport to="body">
-    <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-      @click.self="emit('close')"
-      @keydown="handleKeydown"
-    >
-      <div class="bg-surface-primary border border-edge-default rounded-xl shadow-2xl w-[700px] max-w-[95vw] h-[600px] max-h-[85vh] flex flex-col">
+  <v-dialog model-value max-width="700" :height="600" scrollable @update:model-value="emit('close')">
+    <v-card class="flex flex-col" style="max-height: 85vh;" @keydown="handleKeydown">
 
         <!-- Header -->
         <div class="flex items-center justify-between px-5 py-4 border-b border-edge-subtle shrink-0">
@@ -341,30 +336,25 @@ function handleKeydown(e: KeyboardEvent) {
 
           </div>
         </div>
-      </div>
-    </div>
+    </v-card>
+  </v-dialog>
 
-    <!-- Export confirmation dialog -->
-    <div
-      v-if="showExportConfirm"
-      class="fixed inset-0 z-60 flex items-center justify-center bg-black/60"
-      @click.self="showExportConfirm = false"
-    >
-      <div class="bg-surface-primary border border-edge-default rounded-xl shadow-2xl w-[360px] p-5">
-        <h3 class="text-base font-semibold text-content-primary mb-2">{{ t('settings.exportConfirmTitle') }}</h3>
-        <p class="text-sm text-content-muted mb-2">{{ t('settings.exportConfirmMsg') }}</p>
-        <p class="text-xs text-amber-400 mb-4">{{ t('settings.exportConfirmWarn') }}</p>
-        <div class="flex gap-2 justify-end">
-          <button
-            class="px-3 py-1.5 text-sm bg-surface-secondary hover:bg-surface-tertiary text-content-primary rounded-md transition-colors"
-            @click="showExportConfirm = false"
-          >{{ t('settings.exportCancel') }}</button>
-          <button
-            class="px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-500 text-white rounded-md transition-colors"
-            @click="exportZip"
-          >{{ t('settings.exportConfirm') }}</button>
-        </div>
+  <!-- Export confirmation nested dialog -->
+  <v-dialog v-model="showExportConfirm" max-width="360">
+    <v-card class="pa-5">
+      <h3 class="text-base font-semibold text-content-primary mb-2">{{ t('settings.exportConfirmTitle') }}</h3>
+      <p class="text-sm text-content-muted mb-2">{{ t('settings.exportConfirmMsg') }}</p>
+      <p class="text-xs text-amber-400 mb-4">{{ t('settings.exportConfirmWarn') }}</p>
+      <div class="flex gap-2 justify-end">
+        <button
+          class="px-3 py-1.5 text-sm bg-surface-secondary hover:bg-surface-tertiary text-content-primary rounded-md transition-colors"
+          @click="showExportConfirm = false"
+        >{{ t('settings.exportCancel') }}</button>
+        <button
+          class="px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-500 text-white rounded-md transition-colors"
+          @click="exportZip"
+        >{{ t('settings.exportConfirm') }}</button>
       </div>
-    </div>
-  </Teleport>
+    </v-card>
+  </v-dialog>
 </template>

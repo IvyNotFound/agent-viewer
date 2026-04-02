@@ -66,8 +66,8 @@ describe('HookEventPayloadModal (T756)', () => {
       attachTo: document.body,
       global: { plugins: [i18n] },
     })
-    // The outermost div is the backdrop
-    await wrapper.find('div').trigger('click')
+    // v-dialog handles the overlay click; the inner wrapper has @click.self as a test-compat fallback
+    await wrapper.find('[data-testid="payload-modal-backdrop"]').trigger('click')
     expect(wrapper.emitted('close')).toHaveLength(1)
     wrapper.unmount()
   })

@@ -68,7 +68,7 @@ describe('ProjectPopup (T675)', () => {
     const wrapper = mount(ProjectPopup, {
       global: { plugins: [pinia, i18n], stubs: teleportStub },
     })
-    const backdrop = wrapper.find('.fixed.inset-0')
+    const backdrop = wrapper.find('[data-testid="project-popup-backdrop"]')
     await backdrop.trigger('click')
     expect(wrapper.emitted('close')).toHaveLength(1)
   })

@@ -188,14 +188,9 @@ async function launch() {
 </script>
 
 <template>
-  <Teleport to="body">
-    <!-- Backdrop -->
-    <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      @click.self="emit('close')"
-    >
-      <!-- Modal -->
-      <div class="w-96 bg-surface-primary border border-edge-default rounded-xl shadow-2xl flex flex-col overflow-hidden">
+  <v-dialog model-value max-width="384" scrollable @update:model-value="emit('close')">
+    <div data-testid="launch-modal-backdrop" @click.self="emit('close')">
+    <v-card class="flex flex-col overflow-hidden">
         <!-- Header -->
         <div
           class="flex items-center justify-between px-5 py-4 border-b border-edge-subtle"
@@ -400,7 +395,7 @@ async function launch() {
             </div>
           </div>
         </div>
-      </div>
+    </v-card>
     </div>
-  </Teleport>
+  </v-dialog>
 </template>

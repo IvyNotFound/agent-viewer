@@ -94,7 +94,7 @@ describe('LaunchSessionModal', () => {
     })
     await flushPromises()
 
-    const backdrop = wrapper.find('.fixed.inset-0')
+    const backdrop = wrapper.find('[data-testid="launch-modal-backdrop"]')
     await backdrop.trigger('click')
     expect(wrapper.emitted('close')).toBeTruthy()
   })

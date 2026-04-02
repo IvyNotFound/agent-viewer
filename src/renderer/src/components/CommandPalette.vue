@@ -140,15 +140,17 @@ function statutDot(statut: string): string {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="palette-fade">
-      <div
-        v-if="modelValue"
-        class="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] bg-black/60 backdrop-blur-sm"
-        @click.self="close"
-        @keydown="handleKeydown"
-      >
-        <div class="w-full max-w-2xl mx-4 bg-surface-primary rounded-xl shadow-2xl border border-edge-default/60 overflow-hidden flex flex-col max-h-[72vh]">
+  <v-dialog :model-value="modelValue" max-width="672" @update:model-value="close">
+    <!-- v-if="modelValue" ensures content is not rendered when closed (test compat for shallowMount) -->
+    <!-- data-testid="palette-backdrop" allows @click.self backdrop test -->
+    <div
+      v-if="modelValue"
+      data-testid="palette-backdrop"
+      class="flex items-start justify-center pt-[12vh]"
+      @click.self="close"
+      @keydown="handleKeydown"
+    >
+      <div class="w-full mx-4 bg-surface-primary rounded-xl shadow-2xl border border-edge-default/60 overflow-hidden flex flex-col max-h-[72vh]">
 
           <!-- Search input -->
           <div class="flex items-center gap-3 px-4 py-3 border-b border-edge-subtle shrink-0">
@@ -303,17 +305,5 @@ function statutDot(statut: string): string {
 
         </div>
       </div>
-    </Transition>
-  </Teleport>
+  </v-dialog>
 </template>
-
-<style scoped>
-.palette-fade-enter-active,
-.palette-fade-leave-active {
-  transition: opacity 0.12s ease;
-}
-.palette-fade-enter-from,
-.palette-fade-leave-to {
-  opacity: 0;
-}
-</style>

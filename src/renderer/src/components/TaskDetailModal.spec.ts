@@ -47,7 +47,7 @@ describe('TaskDetailModal', () => {
       },
     })
     // The panel with task content should not be in DOM
-    const panel = wrapper.find('.fixed.inset-0')
+    const panel = wrapper.find('[data-testid="task-detail-panel"]')
     expect(panel.exists()).toBe(false)
   })
 
@@ -60,7 +60,7 @@ describe('TaskDetailModal', () => {
       },
     })
     await nextTick()
-    const panel = wrapper.find('.fixed.inset-0')
+    const panel = wrapper.find('[data-testid="task-detail-panel"]')
     expect(panel.exists()).toBe(true)
   })
 

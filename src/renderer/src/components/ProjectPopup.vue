@@ -72,16 +72,9 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 </script>
 
 <template>
-  <Transition
-    enter-active-class="popup-enter-active"
-    leave-active-class="popup-leave-active"
-    enter-from-class="popup-enter-from"
-    leave-to-class="popup-leave-to"
-    appear
-  >
-    <!-- Overlay — .fixed.inset-0 kept for test selector compatibility -->
+  <v-dialog model-value max-width="320" @update:model-value="emit('close')">
     <div
-      class="popup-overlay fixed inset-0"
+      data-testid="project-popup-backdrop"
       @click.self="emit('close')"
     >
       <!-- Card -->
@@ -157,29 +150,10 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
         </div>
       </div>
     </div>
-  </Transition>
+  </v-dialog>
 </template>
 
 <style scoped>
-/* Utility classes kept for test selector compatibility */
-.fixed  { position: fixed; }
-.inset-0 { inset: 0; }
-
-/* Transition — :global() needed: Transition system adds classes without scoped attr */
-:global(.popup-enter-active),
-:global(.popup-leave-active) { transition: opacity 0.15s; }
-:global(.popup-enter-from),
-:global(.popup-leave-to) { opacity: 0; }
-
-.popup-overlay {
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-}
-
 .popup-card {
   background-color: var(--surface-primary);
   border: 1px solid var(--edge-default);

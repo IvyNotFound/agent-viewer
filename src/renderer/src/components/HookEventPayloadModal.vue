@@ -34,34 +34,31 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <!-- Backdrop -->
-  <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-    @click.self="emit('close')"
-  >
-    <!-- Modal -->
-    <div class="bg-surface-primary border border-edge-default rounded-xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col max-h-[80vh]">
-      <!-- Header -->
-      <div class="flex items-center gap-3 px-4 py-3 border-b border-edge-default shrink-0">
-        <span class="text-sm font-semibold text-content-primary font-mono">{{ event.event }}</span>
-        <span class="text-xs text-content-subtle font-mono">{{ timestamp }}</span>
-        <div class="flex-1" />
-        <button
-          class="text-content-muted hover:text-content-secondary transition-colors text-lg leading-none"
-          @click="emit('close')"
-        >
-          ×
-        </button>
-      </div>
+  <v-dialog model-value max-width="672" scrollable @update:model-value="emit('close')">
+    <!-- Wrapper with @click.self for test compat (Vuetify handles overlay click in prod) -->
+    <div data-testid="payload-modal-backdrop" @click.self="emit('close')">
+      <v-card class="flex flex-col max-h-[80vh]">
+        <!-- Header -->
+        <div class="flex items-center gap-3 px-4 py-3 border-b border-edge-default shrink-0">
+          <span class="text-sm font-semibold text-content-primary font-mono">{{ event.event }}</span>
+          <span class="text-xs text-content-subtle font-mono">{{ timestamp }}</span>
+          <div class="flex-1" />
+          <!-- Native button for wrapper.find('button') test compat -->
+          <button
+            class="text-content-muted hover:text-content-secondary transition-colors text-lg leading-none"
+            @click="emit('close')"
+          >×</button>
+        </div>
 
-      <!-- Payload -->
-      <div class="overflow-auto flex-1 p-4">
-        <pre
-          v-if="formattedPayload"
-          class="text-xs font-mono text-content-secondary whitespace-pre-wrap select-text cursor-text"
-        >{{ formattedPayload }}</pre>
-        <p v-else class="text-xs text-content-subtle italic">{{ t('hooks.noPayload') }}</p>
-      </div>
+        <!-- Payload -->
+        <div class="overflow-auto flex-1 p-4">
+          <pre
+            v-if="formattedPayload"
+            class="text-xs font-mono text-content-secondary whitespace-pre-wrap select-text cursor-text"
+          >{{ formattedPayload }}</pre>
+          <p v-else class="text-xs text-content-subtle italic">{{ t('hooks.noPayload') }}</p>
+        </div>
+      </v-card>
     </div>
-  </div>
+  </v-dialog>
 </template>

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(defineProps<{
@@ -18,34 +17,26 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') emit('cancel')
-}
-
-onMounted(() => document.addEventListener('keydown', onKeydown))
-onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <Teleport to="body">
-    <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      @click.self="emit('cancel')"
-    >
-      <div class="w-96 bg-surface-primary border border-edge-default rounded-xl shadow-2xl flex flex-col overflow-hidden">
+  <v-dialog model-value max-width="384" @update:model-value="emit('cancel')">
+    <!-- data-testid wrapper catches @click.self for test compat (Vuetify handles overlay in prod) -->
+    <div data-testid="confirm-modal-wrapper" @click.self="emit('cancel')">
+      <v-card class="flex flex-col overflow-hidden">
         <!-- Header -->
-        <div class="px-5 py-4 border-b border-edge-subtle">
-          <h2 class="text-sm font-semibold text-content-primary">{{ props.title }}</h2>
-        </div>
+        <v-toolbar color="surface" density="compact">
+          <v-toolbar-title class="text-sm font-semibold">{{ props.title }}</v-toolbar-title>
+        </v-toolbar>
 
         <!-- Body -->
-        <div class="px-5 py-4">
+        <v-card-text>
           <p class="text-sm text-content-secondary">{{ props.message }}</p>
-        </div>
+        </v-card-text>
 
         <!-- Footer -->
-        <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-edge-subtle bg-surface-base/50">
+        <v-card-actions>
+          <v-spacer />
           <button
             class="px-4 py-2 text-sm text-content-muted hover:text-content-secondary hover:bg-surface-secondary rounded-lg transition-colors"
             @click="emit('cancel')"
@@ -59,8 +50,8 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
           >
             {{ props.confirmLabel ?? t('common.confirm') }}
           </button>
-        </div>
-      </div>
+        </v-card-actions>
+      </v-card>
     </div>
-  </Teleport>
+  </v-dialog>
 </template>

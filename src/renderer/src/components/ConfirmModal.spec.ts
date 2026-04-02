@@ -47,7 +47,8 @@ describe('ConfirmModal (T675)', () => {
       props: { title: 'Confirmation', message: 'Continuer ?' },
       global: { plugins: [i18n], stubs: teleportStub },
     })
-    const backdrop = wrapper.find('.fixed.inset-0')
+    // v-dialog handles the overlay click; the inner wrapper has @click.self as a test-compat fallback
+    const backdrop = wrapper.find('[data-testid="confirm-modal-wrapper"]')
     await backdrop.trigger('click')
     expect(wrapper.emitted('cancel')).toHaveLength(1)
   })

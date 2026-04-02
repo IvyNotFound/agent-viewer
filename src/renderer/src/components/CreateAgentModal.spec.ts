@@ -90,7 +90,7 @@ describe('CreateAgentModal', () => {
       },
     })
 
-    const backdrop = wrapper.find('.fixed.inset-0')
+    const backdrop = wrapper.find('[data-testid="create-agent-backdrop"]')
     await backdrop.trigger('click')
     expect(wrapper.emitted('close')).toHaveLength(1)
   })
