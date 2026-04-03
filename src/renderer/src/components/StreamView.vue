@@ -521,6 +521,7 @@ onUnmounted(() => {
 .block-text {
   border-radius: 8px;
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  font-size: 0.875rem;
   line-height: 1.625;
   user-select: text;
   cursor: text;

@@ -190,7 +190,7 @@
    Non-scoped: injected via v-html so Vue scoped attributes won't match.
    ────────────────────────────────────────────────────────────────────────── */
 
-.stream-markdown { line-height: 1.65; }
+.stream-markdown { font-size: 0.875rem; line-height: 1.65; }
 .stream-markdown p { margin: 0.5em 0; }
 .stream-markdown p:first-child { margin-top: 0; }
 .stream-markdown p:last-child { margin-bottom: 0; }
