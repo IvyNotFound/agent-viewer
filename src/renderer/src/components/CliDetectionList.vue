@@ -58,7 +58,7 @@ function isEnabled(cli: CliType): boolean {
       <v-btn
         color="primary"
         :disabled="loading"
-        class="cli-refresh-btn text-caption font-weight-medium"
+        class="cli-refresh-btn"
         @click="emit('refresh')"
       >
         <!-- spinner while loading -->
@@ -88,21 +88,21 @@ function isEnabled(cli: CliType): boolean {
         </span>
       </div>
 
-      <!-- Right: toggle -->
-      <v-btn
-        :title="isEnabled(meta.cli) ? t('settings.cliEnabled') : t('settings.cliDisabled')"
-        variant="text"
+      <!-- Right: toggle (native button — avoids Vuetify flex centering that mispositions the thumb) -->
+      <button
+        type="button"
         class="cli-toggle"
         :class="{ 'cli-toggle--on': isEnabled(meta.cli) }"
+        :title="isEnabled(meta.cli) ? t('settings.cliEnabled') : t('settings.cliDisabled')"
         role="switch"
         :aria-checked="isEnabled(meta.cli)"
         @click="emit('toggle', meta.cli)"
       >
         <span
-          class="cli-toggle-thumb elevation-1"
+          class="cli-toggle-thumb"
           :class="{ 'cli-toggle-thumb--on': isEnabled(meta.cli) }"
         />
-      </v-btn>
+      </button>
     </div>
   </div>
 </template>
@@ -176,23 +176,26 @@ function isEnabled(cli: CliType): boolean {
   color: rgb(var(--v-theme-secondary));
   border-color: rgba(var(--v-theme-secondary), 0.3);
 }
-/* Toggle switch */
+/* Toggle switch — native <button>, no Vuetify flex override needed */
 .cli-toggle {
-  width: 36px !important;
-  min-width: 36px !important;
-  height: 20px !important;
-  min-height: 20px !important;
-  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 36px;
+  height: 20px;
+  padding: 0;
   flex-shrink: 0;
-  border-radius: 9999px !important;
-  border: 1px solid var(--edge-default) !important;
-  background: var(--surface-tertiary) !important;
-  transition: background-color 0.2s;
+  border-radius: 9999px;
+  border: 1px solid var(--edge-default);
+  background: var(--surface-tertiary);
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.2s, border-color 0.2s;
   overflow: hidden;
 }
 .cli-toggle--on {
-  background: rgb(var(--v-theme-primary)) !important;
-  border-color: rgb(var(--v-theme-primary)) !important;
+  background: rgb(var(--v-theme-primary));
+  border-color: rgb(var(--v-theme-primary));
 }
 .cli-toggle-thumb {
   pointer-events: none;
