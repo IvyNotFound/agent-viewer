@@ -301,6 +301,7 @@ onUnmounted(() => {
         >
           <div
             class="user-bubble py-3 px-4 text-body-2"
+            :style="{ background: accentFg }"
           >
             <template v-for="(block, bIdx) in event.message.content" :key="bIdx">
               <span v-if="block.type === 'text'">{{ parsePromptContext(block.text ?? '').base }}</span>
@@ -503,7 +504,6 @@ onUnmounted(() => {
   justify-content: flex-end;
 }
 .user-bubble {
-  background: rgb(var(--v-theme-primary));
   border-radius: 20px 20px 4px 20px;
   max-width: 70%;
   white-space: pre-wrap;
