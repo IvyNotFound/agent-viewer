@@ -90,6 +90,21 @@ const displayEvents = computed(() =>
   })
 )
 
+// Only show first system:init per session — subsequent inits (same session_id) are silent (T1458).
+const visibleInitIds = computed(() => {
+  const ids = new Set<number>()
+  let lastSessionId: string | undefined
+  for (const event of events.value) {
+    if (event.type === 'system' && event.subtype === 'init') {
+      if (event.session_id !== lastSessionId) {
+        if (event._id != null) ids.add(event._id)
+        lastSessionId = event.session_id ?? undefined
+      }
+    }
+  }
+  return ids
+})
+
 /**
  * Extract session/task context block from a launch prompt.
  * Returns { context, base } — context is null if no prefix detected.
@@ -251,9 +266,9 @@ onUnmounted(() => {
       </div>
 
       <template v-for="event in displayEvents" :key="event._id">
-        <!-- system:init -->
+        <!-- system:init — only first per session_id (T1458) -->
         <div
-          v-if="event.type === 'system' && event.subtype === 'init'"
+          v-if="event.type === 'system' && event.subtype === 'init' && visibleInitIds.has(event._id!)"
           class="block-system-init"
           data-testid="block-system-init"
         >
