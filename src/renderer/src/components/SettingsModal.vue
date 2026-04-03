@@ -179,6 +179,9 @@ function onDefaultCliChange(v: string) {
                 <v-btn-toggle
                   :model-value="settingsStore.theme"
                   mandatory
+                  color="primary"
+                  variant="outlined"
+                  density="compact"
                   data-testid="theme-toggle"
                   @update:model-value="(v) => settingsStore.setTheme(v as Theme)"
                 >
