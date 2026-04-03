@@ -334,7 +334,7 @@ function effortColor(effort: number): string {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 4px 16px 4px 4px;
+  padding: 4px 16px 4px 12px;
   border-bottom: 1px solid var(--edge-subtle);
   flex-shrink: 0;
 }
