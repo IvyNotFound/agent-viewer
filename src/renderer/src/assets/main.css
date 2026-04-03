@@ -10,6 +10,7 @@
   --surface-primary:   rgb(var(--v-theme-surface-primary));
   --surface-secondary: rgb(var(--v-theme-surface-secondary));
   --surface-tertiary:  rgb(var(--v-theme-surface-tertiary));
+  --surface-dialog:    rgb(var(--v-theme-surface-dialog));
   /* Content (text) */
   --content-primary:   rgb(var(--v-theme-content-primary));
   --content-secondary: rgb(var(--v-theme-content-secondary));
@@ -227,10 +228,14 @@
 .stream-markdown th { background: var(--surface-secondary); font-weight: 600; color: var(--content-secondary); }
 .stream-markdown tr:nth-child(even) td { background: var(--surface-secondary); }
 
-/* M3 dialog depth — backdrop blur signals layer separation (v-dialog only, menus/tooltips have no scrim) */
-.v-overlay__scrim {
+/* MD3 dialog depth — backdrop blur + elevated surface tint (v-dialog only, not menus/tooltips) */
+.v-dialog .v-overlay__scrim {
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+}
+/* MD3 elevation tint: dialog cards float above the app base surface */
+.v-dialog .v-card {
+  background-color: rgb(var(--v-theme-surface-dialog)) !important;
 }
 
 /* ── MD3 compliance — remove MD2 uppercase on all buttons ────────────────────

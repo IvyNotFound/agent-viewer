@@ -19,7 +19,7 @@ const vuetifyPlugin = createVuetify({
     VCard: { rounded: 'lg', variant: 'elevated' },
     VChip: { size: 'small', variant: 'tonal' },
     VList: { density: 'compact' },
-    VDialog: { scrim: 'rgba(0, 0, 0, 0.32)', scrollable: true },
+    VDialog: { scrim: 'rgba(0, 0, 0, 0.54)', scrollable: true },
     VSnackbar: { timeout: 5000, location: 'bottom end' },
     VTab: { density: 'compact' },
     VMenu: { offset: 4 },
@@ -42,6 +42,7 @@ const vuetifyPlugin = createVuetify({
           'surface-primary': '#18181b',    // zinc-900
           'surface-secondary': '#27272a',  // zinc-800
           'surface-tertiary': '#3f3f46',   // zinc-700
+          'surface-dialog': '#27272a',     // zinc-800 — MD3 elevation tint for dialogs
           // Content tokens
           'content-primary': '#f4f4f5',    // zinc-100
           'content-secondary': '#e4e4e7',  // zinc-200
@@ -83,6 +84,7 @@ const vuetifyPlugin = createVuetify({
           'surface-primary': '#ffffff',    // white
           'surface-secondary': '#f4f4f5',  // zinc-100
           'surface-tertiary': '#e4e4e7',   // zinc-200
+          'surface-dialog': '#ffffff',     // white — dialogs float on white in light mode
           // Content tokens
           'content-primary': '#18181b',    // zinc-900
           'content-secondary': '#27272a',  // zinc-800
