@@ -72,7 +72,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 </script>
 
 <template>
-  <v-dialog model-value max-width="320" @update:model-value="emit('close')">
+  <v-dialog model-value max-width="420" @update:model-value="emit('close')">
     <div
       data-testid="project-popup-backdrop"
       @click.self="emit('close')"
@@ -128,7 +128,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
           <v-btn
             variant="outlined"
             block
-            class="btn-change ga-2 py-2 px-4"
+            class="btn-change ga-2 py-2 px-4 text-body-2"
             @click="handleChangeProject"
           >
             <v-icon class="icon-xs" size="14">mdi-folder-outline</v-icon>
@@ -157,7 +157,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
   background-color: var(--surface-primary);
   border: 1px solid var(--edge-default);
   border-radius: 12px;
-  width: 20rem;
+  width: 26rem;
   display: flex;
   flex-direction: column;
   overflow: hidden;
