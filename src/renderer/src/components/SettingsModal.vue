@@ -117,7 +117,8 @@ function onDefaultCliChange(v: string) {
 </script>
 
 <template>
-  <v-dialog model-value max-width="700" :height="600" scrollable @update:model-value="emit('close')">
+  <!-- scrollable removed: content panel handles its own scroll independently (Discord-style) -->
+  <v-dialog model-value max-width="700" :height="700" @update:model-value="emit('close')">
     <v-card class="d-flex flex-column" style="max-height: 85vh;" @keydown="handleKeydown">
 
         <!-- Header -->
@@ -155,12 +156,12 @@ function onDefaultCliChange(v: string) {
             />
           </v-list>
 
-          <!-- Content panel -->
+          <!-- Content panel: scrolls independently, sidebar stays fixed -->
           <div class="settings-content">
 
             <!-- Appearance: Language + Theme -->
             <template v-if="activeSection === 'appearance'">
-              <v-card variant="outlined" class="py-3 px-4">
+              <div class="settings-section">
                 <p class="settings-label text-overline">{{ t('settings.language') }}</p>
                 <v-select
                   :model-value="settingsStore.language"
@@ -172,8 +173,8 @@ function onDefaultCliChange(v: string) {
                   data-testid="lang-select"
                   @update:model-value="(v) => settingsStore.setLanguage(v as Language)"
                 />
-              </v-card>
-              <v-card variant="outlined" class="py-3 px-4">
+              </div>
+              <div class="settings-section">
                 <p class="settings-label text-overline">{{ t('settings.theme') }}</p>
                 <v-btn-toggle
                   :model-value="settingsStore.theme"
@@ -184,12 +185,12 @@ function onDefaultCliChange(v: string) {
                   <v-btn value="dark">{{ t('settings.dark') }}</v-btn>
                   <v-btn value="light">{{ t('settings.light') }}</v-btn>
                 </v-btn-toggle>
-              </v-card>
+              </div>
             </template>
 
             <!-- Automation: Auto-launch + Auto-review -->
             <template v-else-if="activeSection === 'automation'">
-              <v-card variant="outlined" class="py-3 px-4">
+              <div class="settings-section">
                 <div class="d-flex align-center justify-space-between ga-4">
                   <div>
                     <p class="settings-label text-overline">{{ t('settings.autoLaunch') }}</p>
@@ -197,8 +198,8 @@ function onDefaultCliChange(v: string) {
                   </div>
                   <v-switch hide-details density="compact" color="primary" :model-value="settingsStore.autoLaunchAgentSessions" @update:model-value="settingsStore.setAutoLaunchAgentSessions(Boolean($event))" />
                 </div>
-              </v-card>
-              <v-card variant="outlined" class="py-3 px-4">
+              </div>
+              <div class="settings-section">
                 <div class="d-flex align-center justify-space-between ga-4 mb-2">
                   <div>
                     <p class="settings-label text-overline">{{ t('settings.autoReview') }}</p>
@@ -219,8 +220,8 @@ function onDefaultCliChange(v: string) {
                     @update:model-value="(v) => settingsStore.setAutoReviewThreshold(Number(v))"
                   />
                 </div>
-              </v-card>
-              <v-card variant="outlined" class="py-3 px-4">
+              </div>
+              <div class="settings-section">
                 <div class="d-flex align-center justify-space-between ga-4">
                   <div>
                     <p class="settings-label text-overline">{{ t('settings.worktreeDefault') }}</p>
@@ -228,12 +229,12 @@ function onDefaultCliChange(v: string) {
                   </div>
                   <v-switch hide-details density="compact" color="primary" :model-value="settingsStore.worktreeDefault" @update:model-value="store.dbPath && settingsStore.setWorktreeDefault(store.dbPath, Boolean($event))" />
                 </div>
-              </v-card>
+              </div>
             </template>
 
             <!-- Editor: Max file lines -->
             <template v-else-if="activeSection === 'editor'">
-              <v-card variant="outlined" class="py-3 px-4">
+              <div class="settings-section">
                 <div class="d-flex align-center justify-space-between ga-4 mb-2">
                   <div>
                     <p class="settings-label text-overline">{{ t('settings.maxFileLinesEnabled') }}</p>
@@ -255,12 +256,12 @@ function onDefaultCliChange(v: string) {
                     @update:model-value="(v) => settingsStore.setMaxFileLinesCount(Number(v))"
                   />
                 </div>
-              </v-card>
+              </div>
             </template>
 
             <!-- CLI & Agents -->
             <template v-else-if="activeSection === 'cli'">
-              <v-card variant="outlined" class="py-3 px-4">
+              <div class="settings-section">
                 <p class="settings-label text-overline">{{ t('settings.aiCodingAssistants') }}</p>
                 <p class="settings-desc mb-3 text-caption">{{ t('settings.aiCodingAssistantsDesc') }}</p>
                 <CliDetectionList
@@ -270,8 +271,8 @@ function onDefaultCliChange(v: string) {
                   @refresh="settingsStore.refreshCliDetection()"
                   @toggle="settingsStore.toggleCli($event)"
                 />
-              </v-card>
-              <v-card variant="outlined" class="py-3 px-4">
+              </div>
+              <div class="settings-section">
                 <p class="settings-label text-overline">{{ t('settings.defaultCliInstance') }}</p>
                 <div v-if="availableDistros.length === 0" class="settings-desc text-caption">—</div>
                 <v-select
@@ -282,8 +283,8 @@ function onDefaultCliChange(v: string) {
                   hide-details
                   @update:model-value="(v) => onDefaultCliChange(v as string)"
                 />
-              </v-card>
-              <v-card variant="outlined" class="py-3 px-4">
+              </div>
+              <div class="settings-section">
                 <p class="settings-label text-overline">{{ t('settings.opencodeDefaultModel') }}</p>
                 <p class="settings-desc mb-2 text-caption">{{ t('settings.opencodeDefaultModelHint') }}</p>
                 <v-text-field
@@ -293,12 +294,12 @@ function onDefaultCliChange(v: string) {
                   hide-details
                   @blur="(e: FocusEvent) => store.dbPath && settingsStore.setOpencodeDefaultModel(store.dbPath, (e.target as HTMLInputElement).value)"
                 />
-              </v-card>
+              </div>
             </template>
 
             <!-- Notifications -->
             <template v-else-if="activeSection === 'notifications'">
-              <v-card variant="outlined" class="py-3 px-4">
+              <div class="settings-section">
                 <div class="d-flex align-center justify-space-between ga-4">
                   <div>
                     <p class="settings-label text-overline">{{ t('settings.notifications') }}</p>
@@ -306,12 +307,12 @@ function onDefaultCliChange(v: string) {
                   </div>
                   <v-switch hide-details density="compact" color="primary" :model-value="settingsStore.notificationsEnabled" @update:model-value="settingsStore.setNotificationsEnabled(Boolean($event))" />
                 </div>
-              </v-card>
+              </div>
             </template>
 
             <!-- Application: Updates + About + Export + DB -->
             <template v-else-if="activeSection === 'application'">
-              <v-card variant="outlined" class="py-3 px-4">
+              <div class="settings-section">
                 <p class="settings-label mb-3 text-overline">{{ t('settings.updates') }}</p>
                 <div class="d-flex align-center justify-space-between">
                   <span class="settings-desc text-caption">
@@ -332,13 +333,13 @@ function onDefaultCliChange(v: string) {
                     <template v-else-if="updaterStatus === 'error'">{{ t('settings.updateError') }}</template>
                   </span>
                 </div>
-              </v-card>
-              <v-card variant="outlined" class="py-3 px-4">
+              </div>
+              <div class="settings-section">
                 <p class="settings-label mb-2 text-overline">{{ t('settings.about') }}</p>
                 <p class="settings-desc text-caption">{{ settingsStore.appInfo.name }} v{{ settingsStore.appInfo.version }}</p>
                 <p class="settings-desc mt-1 text-caption">{{ t('settings.aboutDesc') }}</p>
-              </v-card>
-              <v-card v-if="store.dbPath" variant="outlined" class="py-3 px-4">
+              </div>
+              <div v-if="store.dbPath" class="settings-section">
                 <p class="settings-label mb-3 text-overline">{{ t('settings.exportData') }}</p>
                 <v-btn
                   color="primary"
@@ -346,11 +347,11 @@ function onDefaultCliChange(v: string) {
                   :disabled="exporting"
                   @click="showExportConfirm = true"
                 >{{ exporting ? t('settings.exporting') : t('settings.exportBtn') }}</v-btn>
-              </v-card>
-              <v-card v-if="store.dbPath" variant="outlined" class="py-3 px-4">
+              </div>
+              <div v-if="store.dbPath" class="settings-section">
                 <p class="settings-label mb-2 text-overline">{{ t('settings.database') }}</p>
                 <p class="settings-desc font-mono text-caption" style="word-break: break-all;">{{ store.dbPath }}</p>
-              </v-card>
+              </div>
             </template>
 
           </div>
@@ -383,7 +384,7 @@ function onDefaultCliChange(v: string) {
   flex-shrink: 0;
 }
 
-/* Content panel */
+/* Content panel: scrolls independently — sidebar stays fixed (Discord-style) */
 .settings-content {
   flex: 1;
   overflow-y: auto;
@@ -391,6 +392,13 @@ function onDefaultCliChange(v: string) {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* Section containers: subtle MD3-style divider — 8% white opacity, not the harsh Vuetify outlined border */
+.settings-section {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px 16px;
 }
 
 /* Settings labels and descriptions */
