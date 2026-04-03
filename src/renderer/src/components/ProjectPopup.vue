@@ -78,7 +78,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
       @click.self="emit('close')"
     >
       <!-- Card -->
-      <div class="popup-card elevation-8">
+      <v-card class="popup-card" elevation="8">
         <!-- Header -->
         <div class="popup-header py-4 px-5">
           <div class="popup-header-left">
@@ -147,17 +147,14 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
           </v-btn>
           <p class="popup-version pt-1">v{{ appVersion }}</p>
         </div>
-      </div>
+      </v-card>
     </div>
   </v-dialog>
 </template>
 
 <style scoped>
 .popup-card {
-  background-color: var(--surface-primary);
-  border: 1px solid var(--edge-default);
   border-radius: 12px;
-  width: 26rem;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -250,7 +247,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 /* Footer */
 .popup-footer {
   border-top: 1px solid var(--edge-subtle);
-  background-color: rgba(0, 0, 0, 0.1);
+  background: var(--surface-base);
   display: flex;
   flex-direction: column;
 }
