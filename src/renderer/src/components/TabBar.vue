@@ -465,9 +465,11 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   border: none;
 }
 .tab-sub-label {
-  font-family: monospace;
   font-size: 12px;
   flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .tab-sub-dot {
   position: relative;
