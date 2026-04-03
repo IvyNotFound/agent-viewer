@@ -10,7 +10,7 @@ const vuetifyPlugin = createVuetify({
   components,
   directives,
   defaults: {
-    VBtn: { variant: 'flat', density: 'comfortable', rounded: 'lg' },
+    VBtn: { variant: 'flat', density: 'default', rounded: 'xl' },
     VTextField: { variant: 'outlined', density: 'compact', color: 'primary', hideDetails: 'auto' },
     VSelect: { variant: 'outlined', density: 'compact', color: 'primary', hideDetails: 'auto' },
     VTextarea: { variant: 'outlined', density: 'compact', color: 'primary', hideDetails: 'auto' },
