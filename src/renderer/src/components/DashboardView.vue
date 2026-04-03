@@ -85,7 +85,6 @@ const subTabs = computed<{ id: SubTab; label: string }[]>(() => [
         v-for="tab in subTabs"
         :key="tab.id"
         :value="tab.id"
-        class="text-caption font-weight-medium"
       >{{ tab.label }}</v-tab>
     </v-tabs>
 
@@ -173,6 +172,18 @@ const subTabs = computed<{ id: SubTab; label: string }[]>(() => [
 .dashboard-tabs {
   flex-shrink: 0;
   border-bottom: 1px solid var(--edge-subtle);
+}
+
+/* Uniform vertical alignment for all tab titles — text-caption interferes with
+   Vuetify's internal line-height in density="compact", causing uneven baselines */
+.dashboard-tabs :deep(.v-tab) {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  align-items: center;
+  min-height: 36px;
+  padding-inline: 12px;
+  text-transform: none;
 }
 
 .tab-content {
