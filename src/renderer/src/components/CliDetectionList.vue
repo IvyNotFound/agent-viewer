@@ -56,9 +56,8 @@ function isEnabled(cli: CliType): boolean {
     <!-- Refresh button -->
     <div class="cli-refresh-row">
       <v-btn
+        color="primary"
         :disabled="loading"
-        variant="outlined"
-        size="small"
         class="cli-refresh-btn text-overline"
         @click="emit('refresh')"
       >
