@@ -2,13 +2,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
+import { useSettingsStore } from '@renderer/stores/settings'
+import { getLangColor } from '@renderer/utils/lang-colors'
 
 const { t } = useI18n()
 const store = useTasksStore()
+const settings = useSettingsStore()
 
 interface LangStat {
   name: string
-  color: string
   files: number
   lines: number
   percent: number
@@ -170,7 +172,7 @@ onMounted(scan)
           <div
             v-for="lang in data.languages"
             :key="lang.name"
-            :style="{ width: lang.percent + '%', backgroundColor: lang.color }"
+            :style="{ width: lang.percent + '%', backgroundColor: getLangColor(lang.name, settings.theme === 'dark') }"
             :title="`${lang.name} — ${lang.percent.toFixed(1)}%`"
             class="telem-lang-segment"
           />
@@ -181,7 +183,7 @@ onMounted(scan)
             :key="lang.name"
             class="telem-lang-legend-item text-caption"
           >
-            <span class="telem-dot" :style="{ backgroundColor: lang.color }" />
+            <span class="telem-dot" :style="{ backgroundColor: getLangColor(lang.name, settings.theme === 'dark') }" />
             {{ lang.name }}
             <span class="telem-subtle">{{ lang.percent.toFixed(1) }}%</span>
           </div>
@@ -257,7 +259,7 @@ onMounted(scan)
               class="telem-tbody-row"
             >
               <td class="telem-td telem-td--lang ga-2">
-                <span class="telem-dot" :style="{ backgroundColor: lang.color }" />
+                <span class="telem-dot" :style="{ backgroundColor: getLangColor(lang.name, settings.theme === 'dark') }" />
                 <span class="telem-td-text">{{ lang.name }}</span>
               </td>
               <td class="telem-td telem-td--num telem-tertiary">{{ lang.lines.toLocaleString() }}</td>

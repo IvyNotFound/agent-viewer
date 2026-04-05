@@ -9,8 +9,11 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useSettingsStore } from '@renderer/stores/settings'
+import { getLangColor } from '@renderer/utils/lang-colors'
 
 const { t } = useI18n()
+const settings = useSettingsStore()
 
 const props = defineProps<{
   projectPath: string | null
@@ -18,7 +21,6 @@ const props = defineProps<{
 
 interface LangStat {
   name: string
-  color: string
   files: number
   lines: number
   percent: number
@@ -69,7 +71,7 @@ const displayLangs = computed(() => {
   const rest = sorted.slice(5)
   if (rest.length > 0) {
     const othersPercent = rest.reduce((s, l) => s + l.percent, 0)
-    top.push({ name: t('dashboard.others'), color: 'rgb(var(--v-theme-content-faint))', files: 0, lines: 0, percent: othersPercent })
+    top.push({ name: t('dashboard.others'), files: 0, lines: 0, percent: othersPercent })
   }
   return top
 })
@@ -154,7 +156,7 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
             <div
               v-for="lang in displayLangs"
               :key="lang.name"
-              :style="{ width: lang.percent + '%', backgroundColor: lang.color }"
+              :style="{ width: lang.percent + '%', backgroundColor: getLangColor(lang.name, settings.theme === 'dark') }"
               :title="`${lang.name} — ${lang.percent.toFixed(1)}%`"
               class="telemetry-lang-segment"
             />
@@ -169,7 +171,7 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
             >
               <span
                 class="telemetry-lang-dot"
-                :style="{ backgroundColor: lang.color }"
+                :style="{ backgroundColor: getLangColor(lang.name, settings.theme === 'dark') }"
               />
               <span class="telemetry-lang-name text-label-medium">{{ lang.name }}</span>
               <span class="telemetry-lang-pct text-label-medium">
