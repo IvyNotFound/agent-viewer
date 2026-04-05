@@ -315,31 +315,26 @@ onUnmounted(() => {
 
             <div class="comments-list pa-3 ga-3">
               <!-- Messages conversation -->
-              <div
-                v-for="comment in renderedComments"
-                :key="comment.id"
-                class="d-flex flex-column ga-1"
-              >
-                <!-- Auteur + temps -->
-                <div class="d-flex align-center justify-space-between ga-2 px-1">
-                  <span
-                    class="comment-author"
-                    :style="{ color: agentFg(comment.agent_name ?? 'unknown') }"
-                  >{{ comment.agent_name ?? '?' }}</span>
-                  <span class="comment-time text-caption" :title="formatDateFull(comment.created_at)">
-                    {{ relativeTime(comment.created_at) }}
-                  </span>
-                </div>
-                <!-- Bulle -->
+              <div v-for="comment in renderedComments" :key="comment.id">
                 <div
-                  class="md-bubble py-2 px-3 text-caption"
+                  class="md-bubble text-caption"
                   :style="{
                     color: agentFg(comment.agent_name ?? 'unknown'),
                     backgroundColor: agentBg(comment.agent_name ?? 'unknown'),
                     borderColor: agentBorder(comment.agent_name ?? 'unknown'),
                   }"
-                  v-html="comment._html"
-                ></div>
+                >
+                  <div
+                    class="comment-bubble-header"
+                    :style="{ borderBottomColor: agentBorder(comment.agent_name ?? 'unknown') }"
+                  >
+                    <span class="comment-author">{{ comment.agent_name ?? '?' }}</span>
+                    <span class="comment-time" :title="formatDateFull(comment.created_at)">
+                      {{ relativeTime(comment.created_at) }}
+                    </span>
+                  </div>
+                  <div class="comment-bubble-body" v-html="comment._html"></div>
+                </div>
               </div>
 
               <p v-if="store.taskComments.length === 0" class="empty-text text-center py-4 text-caption">
@@ -517,16 +512,26 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
 }
+.comment-bubble-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid;
+}
+.comment-bubble-body {
+  padding: 8px 12px;
+}
 .comment-author {
   font-size: 11px;
   font-weight: 600;
-  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .comment-time {
-  color: var(--content-faint);
+  opacity: 0.65;
   flex-shrink: 0;
 }
 
