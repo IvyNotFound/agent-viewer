@@ -85,9 +85,7 @@ defineExpose({ loadSidebarTree })
 <template>
   <!-- MD3 v-list for file tree items (default slot only — avoids Vue 3.5 named-slot + v-for compiler issue) -->
   <div class="file-tree-content">
-    <div v-if="loadingSidebarTree" class="loading-state">
-      <span class="loading-text text-caption">{{ t('common.loading') }}</span>
-    </div>
+    <v-progress-linear v-if="loadingSidebarTree" indeterminate color="primary" />
     <div v-else-if="!projectPath" class="empty-state text-caption">
       {{ t('common.noProject') }}
     </div>
@@ -100,6 +98,7 @@ defineExpose({ loadSidebarTree })
         v-for="item in flatSidebarTree"
         :key="item.node.path"
         density="compact"
+        rounded="sm"
         :class="[item.node.isDir ? 'tree-item--dir' : 'tree-item--file']"
         :style="{ paddingLeft: `${6 + item.depth * 12}px` }"
         @click="item.node.isDir ? toggleSidebarDir(item.node.path, item.node) : tabsStore.openFile(item.node.path, item.node.name)"
@@ -112,13 +111,14 @@ defineExpose({ loadSidebarTree })
           >
             {{ item.node.isDir && isDirOpen(item.node.path) ? 'mdi-folder-open' : item.node.isDir ? 'mdi-folder' : 'mdi-file-outline' }}
           </v-icon>
-          <span :class="['tree-name', item.node.isDir ? 'tree-name--dir' : 'tree-name--file']">{{ item.node.name }}</span>
+          <span :class="['tree-name', 'text-label-medium', item.node.isDir ? 'tree-name--dir' : 'tree-name--file']">{{ item.node.name }}</span>
         </div>
       </v-list-item>
     </v-list>
   </div>
+  <v-divider />
   <div class="tree-footer">
-    <v-btn variant="text" size="small" class="refresh-btn text-caption" @click="loadSidebarTree">↺ {{ t('common.refresh') }}</v-btn>
+    <v-btn variant="text" size="small" class="refresh-btn text-caption" prepend-icon="mdi-refresh" @click="loadSidebarTree">{{ t('common.refresh') }}</v-btn>
   </div>
 </template>
 
@@ -129,20 +129,6 @@ defineExpose({ loadSidebarTree })
   min-height: 0;
   padding: 4px 0;
   min-width: 0;
-}
-.loading-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 0;
-}
-.loading-text {
-  color: var(--content-faint);
-  animation: pulse 2s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
 }
 .empty-state {
   padding: 12px 16px;
@@ -161,16 +147,19 @@ defineExpose({ loadSidebarTree })
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  transition: color var(--md-duration-short3) var(--md-easing-standard);
 }
-.tree-icon--open { color: rgb(var(--v-theme-warning)); }
-.tree-icon--closed { color: rgba(var(--v-theme-warning), 0.7); }
+/* MD3 primary color for folder icons instead of warning */
+.tree-icon--open { color: rgb(var(--v-theme-primary)); }
+.tree-icon--closed { color: rgba(var(--v-theme-primary), 0.7); }
 .tree-icon--file { color: var(--content-subtle); }
 .tree-item--file:hover .tree-icon--file { color: var(--content-muted); }
 .tree-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: monospace;
+  /* font-family: monospace removed — inherits system-ui via main.css (MD3 Label Large) */
+  transition: color var(--md-duration-short3) var(--md-easing-standard);
 }
 .tree-name--dir {
   color: var(--content-secondary);
@@ -181,7 +170,6 @@ defineExpose({ loadSidebarTree })
 .tree-item--file:hover .tree-name--file { color: var(--content-secondary); }
 .tree-footer {
   padding: 8px 16px;
-  border-top: 1px solid var(--edge-subtle);
   flex-shrink: 0;
   display: flex;
   align-items: center;
