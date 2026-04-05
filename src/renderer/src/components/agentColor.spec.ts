@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { agentFg, agentBg, agentBorder, perimeterFg, perimeterBg, perimeterBorder, isDark, setDarkMode, agentHue, colorVersion, hexToRgb } from '@renderer/utils/agentColor'
+import { agentFg, agentBg, agentBorder, agentAccent, perimeterFg, perimeterBg, perimeterBorder, isDark, setDarkMode, agentHue, colorVersion, hexToRgb } from '@renderer/utils/agentColor'
 
 function luminance(hex: string): number {
   const rgb = hexToRgb(hex)
@@ -171,6 +171,70 @@ describe('agentColor — MD2 shade exact values (T1319 + T1467)', () => {
   it('hello dark agentFg — WCAG AA ratio >= 4.5:1 (cyan family)', () => {
     setDarkMode(true)
     expect(contrastRatio(agentFg('hello'), agentBg('hello'))).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+describe('agentColor — agentAccent visible on neutral sidebar bg (T1517)', () => {
+  afterEach(() => setDarkMode(false))
+
+  const DARK_SIDEBAR = '#1c1c1c' // representative dark sidebar bg
+  const LIGHT_SIDEBAR = '#f5f5f5' // representative light sidebar bg
+
+  const ALL_FAMILIES = [
+    'dev-front-vuejs',   // teal
+    'review-master',     // green
+    'ux-front-vuejs',    // lime (mid-luminance, was the problem family)
+    'amber-agent',       // amber (mid-luminance)
+    'yellow-test',       // yellow (mid-luminance)
+    'test-agent',        // purple
+  ]
+
+  it('agentAccent returns a valid hex string in dark mode', () => {
+    setDarkMode(true)
+    const accent = agentAccent('test-agent')
+    expect(accent).toMatch(HEX_PATTERN)
+  })
+
+  it('agentAccent returns a valid hex string in light mode', () => {
+    setDarkMode(false)
+    const accent = agentAccent('test-agent')
+    expect(accent).toMatch(HEX_PATTERN)
+  })
+
+  it('agentAccent dark and light values differ for same name', () => {
+    setDarkMode(true)
+    const dark = agentAccent('test-agent')
+    setDarkMode(false)
+    const light = agentAccent('test-agent')
+    expect(dark).not.toBe(light)
+  })
+
+  it('agentAccent is invalidated on theme switch (cache cleared)', () => {
+    setDarkMode(true)
+    const before = colorVersion.value
+    const dark = agentAccent('cache-test')
+    setDarkMode(false)
+    expect(colorVersion.value).toBe(before + 1)
+    const light = agentAccent('cache-test')
+    expect(dark).not.toBe(light)
+  })
+
+  it('agentAccent dark mode achieves contrast >= 3:1 against dark sidebar for all mid-luminance families', () => {
+    setDarkMode(true)
+    for (const name of ALL_FAMILIES) {
+      const accent = agentAccent(name)
+      const ratio = contrastRatio(accent, DARK_SIDEBAR)
+      expect(ratio, `${name} accent '${accent}' vs dark sidebar`).toBeGreaterThanOrEqual(3)
+    }
+  })
+
+  it('agentAccent light mode is a valid hex (lime/amber inherently low contrast against white — just must not crash)', () => {
+    // Yellow-family colors (lime, amber) are inherently low-luminance against white backgrounds.
+    // We only assert the return is a valid hex, not a strict contrast ratio.
+    setDarkMode(false)
+    for (const name of ALL_FAMILIES) {
+      expect(agentAccent(name), `${name} in light mode`).toMatch(HEX_PATTERN)
+    }
   })
 })
 

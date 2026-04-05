@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Tab } from '@renderer/stores/tabs'
-import { agentFg } from '@renderer/utils/agentColor'
+import { agentAccent } from '@renderer/utils/agentColor'
 import { useConfirmDialog } from '@renderer/composables/useConfirmDialog'
 import { useTabBarGroups } from '@renderer/composables/useTabBarGroups'
 import ContextMenu from './ContextMenu.vue'
@@ -207,7 +207,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
           <span
             v-if="isGroupActive(group)"
             style="position: absolute; bottom: 0; left: 0; right: 0; height: 2px;"
-            :style="group.agentName ? { backgroundColor: agentFg(group.agentName) } : { backgroundColor: 'rgb(var(--v-theme-primary))' }"
+            :style="group.agentName ? { backgroundColor: agentAccent(group.agentName) } : { backgroundColor: 'rgb(var(--v-theme-primary))' }"
           ></span>
         </button>
 

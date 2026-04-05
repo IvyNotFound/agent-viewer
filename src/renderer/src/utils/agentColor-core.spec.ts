@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { agentHue, agentFg, agentBg, agentBorder, perimeterFg, perimeterBg, perimeterBorder, setDarkMode as setDarkModeReactive, colorVersion } from '@renderer/utils/agentColor'
+import { agentHue, agentFg, agentBg, agentBorder, agentAccent, perimeterFg, perimeterBg, perimeterBorder, setDarkMode as setDarkModeReactive, colorVersion } from '@renderer/utils/agentColor'
 
 /** Toggle dark mode on document.documentElement and reactive ref for testing */
 function setDarkMode(enabled: boolean) {
@@ -240,6 +240,45 @@ describe('agentColor', () => {
       const idx = agentHue('a')
       expect(idx).toBeGreaterThan(0)
       expect(idx).toBeLessThan(15)
+    })
+  })
+
+  describe('agentAccent (T1517)', () => {
+    it('returns a valid hex color string in dark mode', () => {
+      setDarkMode(true)
+      expect(agentAccent('test-agent')).toMatch(HEX_PATTERN)
+    })
+
+    it('returns a valid hex color string in light mode', () => {
+      setDarkMode(false)
+      expect(agentAccent('test-agent')).toMatch(HEX_PATTERN)
+    })
+
+    it('dark and light values differ for same name', () => {
+      setDarkMode(false)
+      const light = agentAccent('test-agent')
+      setDarkMode(true)
+      const dark = agentAccent('test-agent')
+      expect(dark).not.toBe(light)
+    })
+
+    it('is deterministic for same name and mode', () => {
+      setDarkMode(true)
+      expect(agentAccent('test-agent')).toBe(agentAccent('test-agent'))
+    })
+
+    it('cache is cleared when dark mode changes', () => {
+      setDarkMode(true)
+      const v0 = colorVersion.value
+      agentAccent('cache-accent')
+      setDarkMode(false)
+      expect(colorVersion.value).toBe(v0 + 1)
+      // After mode change, value should differ
+      setDarkMode(true)
+      const dark = agentAccent('cache-accent')
+      setDarkMode(false)
+      const light = agentAccent('cache-accent')
+      expect(dark).not.toBe(light)
     })
   })
 })

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
-import { agentFg } from '@renderer/utils/agentColor'
+import { agentAccent } from '@renderer/utils/agentColor'
 
 const { t } = useI18n()
 const store = useTasksStore()
@@ -83,7 +83,7 @@ const maxEffort = computed(() =>
         :key="row.agentId"
         class="wl-cols wl-cols-row"
       >
-        <span class="wl-agent-name" :style="{ color: agentFg(row.agentName) }">{{ row.agentName }}</span>
+        <span class="wl-agent-name" :style="{ color: agentAccent(row.agentName) }">{{ row.agentName }}</span>
         <span class="wl-num wl-right">{{ row.taskCount }}</span>
         <span class="wl-num wl-right">{{ row.totalEffort }}</span>
         <div class="wl-bar-bg">
@@ -91,7 +91,7 @@ const maxEffort = computed(() =>
             class="wl-bar-fill"
             :style="{
               width: maxEffort > 0 ? (row.totalEffort / maxEffort * 100) + '%' : '0%',
-              backgroundColor: agentFg(row.agentName)
+              backgroundColor: agentAccent(row.agentName)
             }"
           />
         </div>

@@ -9,7 +9,7 @@ import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useAgentsStore } from '@renderer/stores/agents'
 import { useTabsStore } from '@renderer/stores/tabs'
-import { agentFg, agentBg } from '@renderer/utils/agentColor'
+import { agentFg, agentBg, agentAccent } from '@renderer/utils/agentColor'
 import { useToast } from '@renderer/composables/useToast'
 import { useSidebarDragDrop, sidebarDragDropKey } from '@renderer/composables/useSidebarDragDrop'
 import { useSidebarGroups, sidebarGroupsKey } from '@renderer/composables/useSidebarGroups'
@@ -211,9 +211,9 @@ async function duplicateAgent(agent: Agent): Promise<void> {
               @click="store.toggleAgentFilter(agent.id)"
             >
               <span class="agent-status">
-                <v-progress-circular v-if="tabsStore.isAgentActive(agent.name)" class="status-spinner" indeterminate :size="12" :width="2" :style="{ color: agentFg(agent.name) }" />
-                <v-icon v-else-if="hasOpenTerminal(agent.name) && !tabsStore.isAgentActive(agent.name)" class="status-pulse" size="12" :style="{ color: agentFg(agent.name) }">mdi-circle-medium</v-icon>
-                <span v-else class="status-dot" :style="{ backgroundColor: agentFg(agent.name) }" />
+                <v-progress-circular v-if="tabsStore.isAgentActive(agent.name)" class="status-spinner" indeterminate :size="12" :width="2" :style="{ color: agentAccent(agent.name) }" />
+                <v-icon v-else-if="hasOpenTerminal(agent.name) && !tabsStore.isAgentActive(agent.name)" class="status-pulse" size="12" :style="{ color: agentAccent(agent.name) }">mdi-circle-medium</v-icon>
+                <span v-else class="status-dot" :style="{ backgroundColor: agentAccent(agent.name) }" />
               </span>
               <span :class="['agent-name', isAgentSelected(agent.id) ? 'agent-name--active' : '']">{{ agent.name }}</span>
             </v-btn>

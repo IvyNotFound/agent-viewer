@@ -63,6 +63,7 @@ const hueCache = new Map<string, number>()
 const agentFgCache = new Map<string, string>()
 const agentBgCache = new Map<string, string>()
 const agentBorderCache = new Map<string, string>()
+const agentAccentCache = new Map<string, string>()
 const perimeterFgCache = new Map<string, string>()
 const perimeterBgCache = new Map<string, string>()
 const perimeterBorderCache = new Map<string, string>()
@@ -82,6 +83,7 @@ export function setDarkMode(dark: boolean): void {
   agentFgCache.clear()
   agentBgCache.clear()
   agentBorderCache.clear()
+  agentAccentCache.clear()
   perimeterFgCache.clear()
   perimeterBgCache.clear()
   perimeterBorderCache.clear()
@@ -243,6 +245,25 @@ export function agentBorder(name: string): string {
     const family = agentFamily(name)
     v = isDark() ? family.darken2 : family.lighten2
     cacheSet(agentBorderCache, name, v)
+  }
+  return v
+}
+
+/**
+ * Accent color for standalone colored elements (dots, bars, spinners)
+ * on neutral sidebar backgrounds — NOT for text on badge backgrounds.
+ * Dark: lighten2 (300 shade) — colorful and visible on dark bg.
+ * Light: darken1 (600 shade) — colorful and visible on light bg.
+ */
+export function agentAccent(name: string): string {
+  void colorVersion.value // track reactive dependency
+  let v = agentAccentCache.get(name)
+  if (v === undefined) {
+    const family = agentFamily(name)
+    v = isDark()
+      ? (family.lighten2 ?? family.lighten1 ?? family.base)
+      : (family.darken1 ?? family.base)
+    cacheSet(agentAccentCache, name, v)
   }
   return v
 }
