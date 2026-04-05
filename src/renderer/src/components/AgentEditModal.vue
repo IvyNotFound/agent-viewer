@@ -266,12 +266,14 @@ async function save() {
                 density="compact"
                 variant="outlined"
                 hide-details
+                :color="agentAccent(agent.name)"
                 class="flex-grow-1"
                 @keydown.enter="addPerimetre"
                 @keydown.esc="newPerimetreName = ''"
               />
               <v-btn
                 :disabled="addingPerimetre || !newPerimetreName.trim()"
+                :color="agentAccent(agent.name)"
                 size="small"
                 variant="outlined"
                 @click="addPerimetre"
