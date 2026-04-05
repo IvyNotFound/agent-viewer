@@ -127,7 +127,7 @@ function onAgentClick(row: TopologyRow): void {
               v-for="agent in perimAgents"
               :key="agent.id"
               :variant="agentStatus(agent) === 'idle' ? 'outlined' : 'tonal'"
-              :color="agentStatus(agent) === 'active' ? 'secondary' : agentStatus(agent) === 'blocked' ? 'warning' : undefined"
+              :color="agentStatus(agent) === 'active' ? 'primary' : agentStatus(agent) === 'blocked' ? 'warning' : undefined"
               class="tp-card"
               @click="onAgentClick(agent)"
             >
@@ -135,7 +135,7 @@ function onAgentClick(row: TopologyRow): void {
                 <div class="tp-card-top">
                   <span class="tp-agent-name" :style="{ color: agentFg(agent.name) }">{{ agent.name }}</span>
                   <v-chip
-                    :color="agentStatus(agent) === 'active' ? 'secondary' : agentStatus(agent) === 'blocked' ? 'warning' : undefined"
+                    :color="agentStatus(agent) === 'active' ? 'primary' : agentStatus(agent) === 'blocked' ? 'warning' : undefined"
                     size="x-small"
                     variant="tonal"
                     class="tp-status-chip"
@@ -221,7 +221,7 @@ function onAgentClick(row: TopologyRow): void {
 }
 .tp-status-chip { font-family: ui-monospace, monospace; flex-shrink: 0; }
 .tp-status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.tp-dot--active  { background: rgb(var(--v-theme-secondary)); }
+.tp-dot--active  { background: rgb(var(--v-theme-primary)); }
 .tp-dot--blocked { background: rgb(var(--v-theme-warning)); }
 .tp-dot--idle    { background: var(--content-faint); }
 .tp-agent-type { font-size: 10px; color: var(--content-faint); font-family: ui-monospace, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0; }
