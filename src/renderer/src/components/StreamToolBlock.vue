@@ -134,6 +134,22 @@ function writeLines(input: Record<string, unknown> | undefined): DiffLine[] {
   }
   return result
 }
+
+// T1532: extract plain-text preview from rendered HTML (strip tags + decode entities)
+function resultPreview(html: string | undefined): string {
+  if (!html) return ''
+  const text = html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return text.length > 80 ? text.slice(0, 80) + '…' : text
+}
 </script>
 
 <template>
@@ -309,11 +325,19 @@ function writeLines(input: Record<string, unknown> | undefined): DiffLine[] {
         size="small"
       />
       <span>{{ block.is_error ? t('stream.error') : t('stream.result') }}</span>
+      <!-- T1532: line count badge pushed to right, styled as pill -->
       <span
         v-if="isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong)"
-        class="line-count ml-1"
-      >({{ block._lineCount ?? 0 }} {{ t('stream.lines') }})</span>
+        class="line-count ml-auto"
+      >{{ block._lineCount ?? 0 }} {{ t('stream.lines') }}</span>
     </v-btn>
+    <!-- T1532: text preview shown only when long non-error result is collapsed -->
+    <div
+      v-if="!block.is_error && !!block._isLong && isCollapsed(eventId, blockIdx, true)"
+      class="tool-result-preview px-4 pb-2"
+    >
+      {{ resultPreview(block._html) }}
+    </div>
     <!-- eslint-disable vue/no-v-html -->
     <div
       v-show="!isCollapsed(eventId, blockIdx, !block.is_error && !!block._isLong)"
@@ -386,8 +410,27 @@ function writeLines(input: Record<string, unknown> | undefined): DiffLine[] {
   opacity: 0.6;
 }
 
+/* T1532: line count as pill badge, pushed to right via ml-auto on the span */
 .line-count {
-  opacity: 0.6;
+  font-size: 0.78em;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  color: var(--content-muted);
+  white-space: nowrap;
+}
+
+/* T1532: text preview of first ~80 chars below the header when collapsed */
+.tool-result-preview {
+  font-family: monospace;
+  font-size: 0.78em;
+  color: var(--content-muted);
+  opacity: 0.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+  user-select: none;
 }
 
 .tool-body {
