@@ -195,6 +195,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
   border: 1px solid var(--edge-default) !important; /* MD3: default border — visible against surface-primary column bg */
   border-radius: var(--shape-md) !important; /* MD3 medium shape (was 8px) */
   cursor: pointer;
+  min-height: 96px;
   position: relative;
   overflow: hidden;
   transition: box-shadow var(--md-duration-short3) var(--md-easing-standard);
