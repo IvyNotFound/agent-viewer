@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useSettingsStore } from '@renderer/stores/settings'
+import { agentAccent, agentBorder } from '@renderer/utils/agentColor'
 import type { Agent } from '@renderer/types'
 
 const props = defineProps<{
@@ -205,7 +206,10 @@ function handleKeydown(e: KeyboardEvent) {
     <div data-testid="create-agent-backdrop" @click.self="emit('close')">
     <v-card class="d-flex flex-column" style="max-height: 85vh;" @keydown="handleKeydown">
         <!-- Header -->
-        <div class="modal-header">
+        <div
+          class="modal-header"
+          :style="isEditMode && agent ? { borderLeftColor: agentBorder(agent.name), borderLeftWidth: '3px', borderLeftStyle: 'solid' } : {}"
+        >
           <h2 class="text-body-1 font-weight-medium" style="color: var(--content-primary)">{{ isEditMode ? t('agent.editTitle') : t('agent.newTitle') }}</h2>
           <v-btn
             icon="mdi-close"
@@ -228,6 +232,9 @@ function handleKeydown(e: KeyboardEvent) {
             :error-messages="nameError"
             :hint="t('agent.nameFormatShort')"
             persistent-hint
+            variant="outlined"
+            :color="isEditMode && agent ? agentAccent(agent.name) : undefined"
+            :base-color="isEditMode && agent ? agentAccent(agent.name) : undefined"
             @update:model-value="onNameInput"
           />
 
@@ -257,11 +264,12 @@ function handleKeydown(e: KeyboardEvent) {
             v-if="!isEditMode"
             v-model="description"
             :label="`${t('sidebar.description')} (CLAUDE.md)`"
+            variant="outlined"
           />
 
           <!-- Thinking mode -->
           <div>
-            <div class="field-label mb-2">{{ t('launch.thinkingMode') }}</div>
+            <div class="field-label text-label-medium mb-2">{{ t('launch.thinkingMode') }}</div>
             <v-btn-toggle v-model="thinkingMode" mandatory color="primary" variant="outlined" density="compact">
               <v-btn value="auto">{{ t('launch.auto') }}</v-btn>
               <v-btn value="disabled">{{ t('launch.disabled') }}</v-btn>
@@ -275,6 +283,9 @@ function handleKeydown(e: KeyboardEvent) {
             placeholder="anthropic/claude-opus-4-5"
             :hint="t('agent.preferredModelNote')"
             persistent-hint
+            variant="outlined"
+            :color="isEditMode && agent ? agentAccent(agent.name) : undefined"
+            :base-color="isEditMode && agent ? agentAccent(agent.name) : undefined"
           />
 
           <!-- Sessions parallèles max (edit mode uniquement) -->
@@ -287,11 +298,14 @@ function handleKeydown(e: KeyboardEvent) {
             :error-messages="maxSessionsInvalid ? t('agent.maxSessionsError') : ''"
             :hint="t('agent.maxSessionsNote')"
             persistent-hint
+            variant="outlined"
+            :color="isEditMode && agent ? agentAccent(agent.name) : undefined"
+            :base-color="isEditMode && agent ? agentAccent(agent.name) : undefined"
           />
 
           <!-- Worktree isolation (edit mode uniquement) -->
           <div v-if="isEditMode">
-            <div class="field-label mb-2">{{ t('agent.worktreeEnabled') }}</div>
+            <div class="field-label text-label-medium mb-2">{{ t('agent.worktreeEnabled') }}</div>
             <v-btn-toggle v-model="worktreeToggleValue" mandatory color="primary" variant="outlined" density="compact">
               <v-btn value="inherit">{{ t('agent.worktreeInherit') }}</v-btn>
               <v-btn value="on">{{ t('agent.worktreeOn') }}</v-btn>
@@ -321,9 +335,12 @@ function handleKeydown(e: KeyboardEvent) {
                 spellcheck="true"
                 :placeholder="t('agent.systemPromptPlaceholder')"
                 hide-details
+                variant="outlined"
+                :color="isEditMode && agent ? agentAccent(agent.name) : undefined"
+                :base-color="isEditMode && agent ? agentAccent(agent.name) : undefined"
               />
               <div v-if="isEditMode">
-                <div class="field-label-subtle mb-1">
+                <div class="field-label-subtle text-label-medium mb-1">
                   {{ t('agent.hiddenSuffix') }}
                   <span class="field-label-note">({{ t('agent.hiddenSuffixCode') }})</span>
                 </div>
@@ -333,6 +350,9 @@ function handleKeydown(e: KeyboardEvent) {
                   spellcheck="true"
                   :placeholder="t('agent.systemPromptSuffixPlaceholder')"
                   hide-details
+                  variant="outlined"
+                  :color="isEditMode && agent ? agentAccent(agent.name) : undefined"
+                  :base-color="isEditMode && agent ? agentAccent(agent.name) : undefined"
                 />
               </div>
             </div>

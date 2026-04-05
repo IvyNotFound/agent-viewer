@@ -163,13 +163,16 @@ async function save() {
             v-model="name"
             :label="t('sidebar.name')"
             placeholder="nom-de-l-agent"
+            variant="outlined"
+            :color="agentAccent(agent.name)"
+            :base-color="agentAccent(agent.name)"
             @keydown.enter="save"
             @keydown.esc="emit('close')"
           />
 
           <!-- Thinking mode -->
           <div>
-            <div class="field-label mb-2">{{ t('launch.thinkingMode') }}</div>
+            <div class="field-label text-label-medium mb-2">{{ t('launch.thinkingMode') }}</div>
             <v-btn-toggle v-model="thinkingMode" mandatory color="primary" variant="outlined" density="compact">
               <v-btn value="auto">{{ t('launch.auto') }}</v-btn>
               <v-btn value="disabled">{{ t('launch.disabled') }}</v-btn>
@@ -184,6 +187,9 @@ async function save() {
             placeholder="anthropic/claude-opus-4-5"
             :hint="t('agent.preferredModelNote')"
             persistent-hint
+            variant="outlined"
+            :color="agentAccent(agent.name)"
+            :base-color="agentAccent(agent.name)"
           />
 
           <!-- Tâches autorisées (--allowedTools) -->
@@ -194,6 +200,9 @@ async function save() {
             spellcheck="false"
             :hint="t('agent.allowedToolsNote')"
             persistent-hint
+            variant="outlined"
+            :color="agentAccent(agent.name)"
+            :base-color="agentAccent(agent.name)"
           />
 
           <!-- Auto-launch toggle -->
@@ -203,6 +212,7 @@ async function save() {
             :hint="t('agent.autoLaunchDesc')"
             persistent-hint
             color="primary"
+            density="compact"
             inset
           />
 
@@ -215,21 +225,26 @@ async function save() {
             :error-messages="maxSessionsInvalid ? t('agent.maxSessionsError') : ''"
             :hint="t('agent.maxSessionsNote')"
             persistent-hint
+            variant="outlined"
+            :color="agentAccent(agent.name)"
+            :base-color="agentAccent(agent.name)"
           />
 
           <!-- Permission mode -->
           <div>
-            <div class="field-label mb-2">{{ t('agent.permissionMode') }}</div>
+            <div class="field-label text-label-medium mb-2">{{ t('agent.permissionMode') }}</div>
             <v-btn-toggle v-model="permissionMode" mandatory color="primary" variant="outlined" density="compact">
               <v-btn value="default">{{ t('agent.permissionModeDefault') }}</v-btn>
               <v-btn value="auto">{{ t('agent.permissionModeAuto') }}</v-btn>
             </v-btn-toggle>
-            <p v-if="permissionMode === 'auto'" class="text-caption text-error mt-1">⚠ {{ t('agent.permissionModeWarning') }}</p>
+            <p v-if="permissionMode === 'auto'" class="text-caption text-error mt-1">
+              <v-icon size="small" color="error">mdi-alert</v-icon> {{ t('agent.permissionModeWarning') }}
+            </p>
           </div>
 
           <!-- Worktree isolation (T1143) -->
           <div>
-            <div class="field-label mb-2">{{ t('agent.worktreeEnabled') }}</div>
+            <div class="field-label text-label-medium mb-2">{{ t('agent.worktreeEnabled') }}</div>
             <v-btn-toggle v-model="worktreeToggleValue" mandatory color="primary" variant="outlined" density="compact">
               <v-btn value="inherit">{{ t('agent.worktreeInherit') }}</v-btn>
               <v-btn value="on">{{ t('agent.worktreeOn') }}</v-btn>
@@ -243,7 +258,7 @@ async function save() {
 
           <!-- Périmètres -->
           <div>
-            <div class="field-label mb-2">{{ t('agent.perimeter') }}</div>
+            <div class="field-label text-label-medium mb-2">{{ t('agent.perimeter') }}</div>
             <div v-if="store.perimetresData.length === 0" class="text-caption text-disabled mb-2" style="font-style: italic;">{{ t('agent.noPerimetre') }}</div>
             <div v-else class="d-flex flex-wrap ga-1 mb-2">
               <v-chip v-for="p in store.perimetresData" :key="p.id" size="small" label>{{ p.name }}</v-chip>
@@ -253,6 +268,7 @@ async function save() {
                 v-model="newPerimetreName"
                 :placeholder="t('agent.newPerimetrePlaceholder')"
                 density="compact"
+                variant="outlined"
                 hide-details
                 class="flex-grow-1"
                 @keydown.enter="addPerimetre"
