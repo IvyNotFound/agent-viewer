@@ -87,7 +87,7 @@ const childContentStyle = computed(() => ({ paddingLeft: `${props.level * 12 + 8
 const subgroupInputStyle = computed(() => ({ paddingLeft: `${props.level * 12 + 12}px` }))
 
 /** Guide line left position: aligns with the parent group's chevron icon center. */
-const guideLineStyle = computed(() => ({ left: `${(props.level - 1) * 12 + 8}px` }))
+const guideLineStyle = computed(() => ({ left: `${(props.level - 1) * 12 + 12}px` }))
 
 function isAgentSelected(id: number): boolean {
   return store.selectedAgentId !== null && Number(store.selectedAgentId) === id
@@ -193,7 +193,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
       </div>
 
       <!-- Child groups (recursive) -->
-      <div v-if="group.children?.length" :style="childContentStyle">
+      <div v-if="group.children?.length">
         <SidebarGroupNode
           v-for="child in group.children"
           :key="child.id"
@@ -284,8 +284,6 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   padding: 0 !important;
 }
 .chevron-icon {
-  width: 10px;
-  height: 10px;
   transition: transform var(--md-duration-short3) var(--md-easing-standard);
 }
 /* MD3 v-text-field for inline rename — flex: 1 to fill header */
