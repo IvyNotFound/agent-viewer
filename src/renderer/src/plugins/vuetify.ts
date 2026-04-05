@@ -29,7 +29,7 @@ const vuetifyPlugin = createVuetify({
     // density not in md3 blueprint → kept (blueprint adds prependGap: 16)
     VList: { density: 'compact' },
     // not in md3 blueprint → kept as-is
-    VDialog: { scrim: 'rgba(0, 0, 0, 0.54)', scrollable: true },
+    VDialog: { scrim: 'rgba(0, 0, 0, 0.32)', scrollable: true },
     VSnackbar: { timeout: 5000, location: 'bottom end' },
     VTab: { density: 'compact' },
     VMenu: { offset: 4 },
