@@ -181,7 +181,7 @@ function onDefaultCliChange(v: string) {
                   :model-value="settingsStore.theme"
                   mandatory
                   color="primary"
-                  variant="outlined"
+                  variant="flat"
                   density="compact"
                   data-testid="theme-toggle"
                   @update:model-value="(v) => settingsStore.setTheme(v as Theme)"
@@ -398,9 +398,9 @@ function onDefaultCliChange(v: string) {
   gap: 16px;
 }
 
-/* Section containers: subtle MD3-style divider — 8% white opacity, not the harsh Vuetify outlined border */
+/* Section containers */
 .settings-section {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--edge-subtle);
   border-radius: var(--shape-sm);
   padding: 12px 16px;
 }
@@ -411,7 +411,6 @@ function onDefaultCliChange(v: string) {
 .settings-label {
   font-weight: 500;
   color: var(--content-tertiary);
-  letter-spacing: 0.02em;
   margin-bottom: 8px;
 }
 .settings-desc {
