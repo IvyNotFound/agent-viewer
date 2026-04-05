@@ -164,8 +164,7 @@ async function save() {
             :label="t('sidebar.name')"
             placeholder="nom-de-l-agent"
             variant="outlined"
-            :color="agentAccent(agent.name)"
-            :base-color="agentAccent(agent.name)"
+            color="primary"
             @keydown.enter="save"
             @keydown.esc="emit('close')"
           />
@@ -188,8 +187,7 @@ async function save() {
             :hint="t('agent.preferredModelNote')"
             persistent-hint
             variant="outlined"
-            :color="agentAccent(agent.name)"
-            :base-color="agentAccent(agent.name)"
+            color="primary"
           />
 
           <!-- Tâches autorisées (--allowedTools) -->
@@ -201,8 +199,7 @@ async function save() {
             :hint="t('agent.allowedToolsNote')"
             persistent-hint
             variant="outlined"
-            :color="agentAccent(agent.name)"
-            :base-color="agentAccent(agent.name)"
+            color="primary"
           />
 
           <!-- Auto-launch toggle -->
@@ -226,8 +223,7 @@ async function save() {
             :hint="t('agent.maxSessionsNote')"
             persistent-hint
             variant="outlined"
-            :color="agentAccent(agent.name)"
-            :base-color="agentAccent(agent.name)"
+            color="primary"
           />
 
           <!-- Permission mode -->
@@ -303,7 +299,8 @@ async function save() {
             <v-btn variant="text" @click="emit('close')">{{ t('common.cancel') }}</v-btn>
             <v-btn
               data-testid="btn-save"
-              :style="{ backgroundColor: agentAccent(agent.name) + '22', color: agentAccent(agent.name), borderColor: agentBorder(agent.name) }"
+              color="primary"
+              variant="outlined"
               :disabled="saving || deleting || !name.trim() || maxSessionsInvalid"
               @click="save"
             >{{ saving ? t('common.saving') : t('common.save') }}</v-btn>
