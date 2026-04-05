@@ -63,8 +63,8 @@ const vuetifyPlugin = createVuetify({
           'surface-secondary': '#2b292d',  // neutral T17
           'surface-tertiary': '#363438',   // neutral T22
           'surface-dialog': '#1c1b1e',     // neutral T10 — dialog elevation (darkened to restore contrast with internal sections T17/T22)
-          'surface-variant': '73,69,78',       // MD3 surfaceVariant dark — NV tone 30
-          'on-surface-variant': '202,196,207', // MD3 onSurfaceVariant dark — NV tone 80
+          'surface-variant': '#49454E',        // MD3 surfaceVariant dark — NV tone 30
+          'on-surface-variant': '#CAC4CF',     // MD3 onSurfaceVariant dark — NV tone 80
           // Content tokens (MD3 neutral palette)
           'content-primary': '#e6e1e6',    // neutral T90
           'content-secondary': '#ddd8dd',  // neutral T87
@@ -117,8 +117,8 @@ const vuetifyPlugin = createVuetify({
           'surface-secondary': '#ece7eb',  // neutral T92
           'surface-tertiary': '#ece7eb',   // neutral T92
           'surface-dialog': '#fdf8fd',     // neutral T98 — dialogs float near white
-          'surface-variant': '231,224,235',    // MD3 surfaceVariant light — NV tone 90
-          'on-surface-variant': '97,93,102',   // MD3 onSurfaceVariant light — NV tone 40
+          'surface-variant': '#E7E0EB',        // MD3 surfaceVariant light — NV tone 90
+          'on-surface-variant': '#615D66',     // MD3 onSurfaceVariant light — NV tone 40
           // Content tokens (MD3 neutral palette)
           'content-primary': '#1c1b1e',    // neutral T10
           'content-secondary': '#323033',  // neutral T20
