@@ -23,16 +23,16 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- elevation="0" flat desktop look; height="36" = original h-9 titlebar.
+  <!-- elevation="0" flat desktop look; height="48" = MD3 compact app bar.
        All controls in default slot (not named slots) so shallowMount renders them correctly.
        -webkit-app-region: drag is applied to the inner div (not v-app-bar) to avoid
        the Electron 41 Windows issue where a position:fixed element with right:0 and
        drag causes the OS to treat the full right window border as a drag zone, blocking
        native resize. The static inner div correctly scopes the drag region to the
-       visible 36px title bar area only. -->
+       visible 48px title bar area only. -->
   <v-app-bar
     elevation="0"
-    :height="36"
+    :height="48"
     color="surface"
     class="titlebar"
   >
@@ -51,7 +51,7 @@ onUnmounted(() => {
           :title="t('titleBar.searchTitle')"
           @click="$emit('open-search')"
         >
-          <v-icon class="search-icon">mdi-magnify</v-icon>
+          <v-icon size="18">mdi-magnify</v-icon>
           <span class="search-text text-caption">{{ t('titleBar.searchPlaceholder') }}</span>
           <kbd class="search-kbd">Ctrl+K</kbd>
         </button>
@@ -115,7 +115,7 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
-  height: 36px;
+  height: 48px;
   width: 100%;
 }
 .titlebar-left {
@@ -143,26 +143,21 @@ onUnmounted(() => {
 .search-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  height: 24px;
-  border-radius: var(--shape-xs);
-  background: rgba(var(--v-theme-on-surface), 0.06);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  gap: 10px;
+  padding: 0 16px 0 12px;
+  height: 36px;
+  border-radius: 18px;
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  border: none;
+  color: rgba(var(--v-theme-on-surface), 0.6);
   transition: all var(--md-duration-short3) var(--md-easing-standard);
-  width: 208px;
+  width: 300px;
   cursor: pointer;
 }
 .search-btn:hover {
-  color: rgba(var(--v-theme-on-surface), 0.7);
-  border-color: rgba(var(--v-theme-on-surface), 0.2);
-  background: rgba(var(--v-theme-on-surface), 0.1);
-}
-.search-icon {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
+  background: rgba(var(--v-theme-on-surface), 0.12);
+  color: rgba(var(--v-theme-on-surface), 0.87);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 .search-text {
   flex: 1;
@@ -177,7 +172,7 @@ onUnmounted(() => {
 .titlebar-controls {
   display: flex;
   align-items: stretch;
-  height: 36px;
+  height: 48px;
   justify-content: flex-end;
 }
 .win-btn {
