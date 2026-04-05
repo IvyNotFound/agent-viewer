@@ -315,7 +315,7 @@ onMounted(scan)
 .telem-rescan-btn {
   background: var(--surface-tertiary) !important;
   color: var(--content-secondary) !important;
-  border-radius: 6px !important;
+  border-radius: var(--shape-xs) !important;
   transition: background var(--md-duration-short3) var(--md-easing-standard);
 }
 .telem-rescan-btn:hover:not(:disabled) { background: var(--surface-secondary) !important; }
@@ -347,7 +347,7 @@ onMounted(scan)
 .telem-stat-grid--wide { grid-template-columns: repeat(5, 1fr); }
 .telem-stat-card {
   background: var(--surface-secondary);
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   display: flex;
   flex-direction: column;
   border: 1px solid var(--edge-default);
@@ -375,7 +375,7 @@ onMounted(scan)
 .telem-lang-bar {
   display: flex;
   height: 12px;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   overflow: hidden;
   width: 100%;
 }
@@ -408,7 +408,7 @@ onMounted(scan)
 /* table */
 .telem-table-wrap {
   background: var(--surface-secondary);
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   border: 1px solid var(--edge-default);
   overflow-x: auto;
 }

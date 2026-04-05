@@ -408,7 +408,7 @@ watch(() => props.initialAgentId, (v) => {
   flex-shrink: 0;
   font-size: 12px;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   font-weight: 500;
 }
 .al-agent-badge--none { color: var(--content-dim); }
@@ -449,7 +449,7 @@ watch(() => props.initialAgentId, (v) => {
   font-size: 12px;
   font-family: ui-monospace, monospace;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   background: var(--surface-secondary);
   color: var(--content-subtle);
   border: 1px solid rgba(var(--v-theme-surface-tertiary),0.5);

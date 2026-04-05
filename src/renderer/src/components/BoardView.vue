@@ -331,7 +331,7 @@ const archivedGroupsSorted = computed(() => {
   align-items: center;
   gap: 6px;
   padding: 2px 8px;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   font-size: 0.75rem;
   background-color: rgba(var(--v-theme-primary), 0.2);
   color: rgb(var(--v-theme-primary));
@@ -343,7 +343,7 @@ const archivedGroupsSorted = computed(() => {
   align-items: center;
   gap: 6px;
   padding: 2px 8px;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   font-size: 0.75rem;
   border: 1px solid transparent;
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
@@ -370,7 +370,7 @@ const archivedGroupsSorted = computed(() => {
   flex-shrink: 0;
   background-color: rgba(var(--v-theme-warning), 0.1);
   border: 1px solid rgba(var(--v-theme-warning), 0.3);
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   display: flex;
   align-items: flex-start;
 }
@@ -443,7 +443,7 @@ const archivedGroupsSorted = computed(() => {
   align-items: center;
   gap: 6px;
   padding: 2px 8px;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   font-size: 0.75rem;
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
   border: 1px solid transparent;
@@ -468,7 +468,7 @@ const archivedGroupsSorted = computed(() => {
   padding: 12px 16px;
   background-color: var(--surface-primary);
   border: 1px solid var(--edge-subtle);
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   cursor: pointer;
   transition: background-color var(--md-duration-short3) var(--md-easing-standard), border-color var(--md-duration-short3) var(--md-easing-standard);
   display: flex;
@@ -504,7 +504,7 @@ const archivedGroupsSorted = computed(() => {
   display: inline-flex;
   align-items: center;
   padding: 2px 7px;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   font-size: 0.6875rem;
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
   border: 1px solid transparent;
@@ -520,7 +520,7 @@ const archivedGroupsSorted = computed(() => {
   display: inline-flex;
   align-items: center;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   font-size: 0.6875rem;
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
   border: 1px solid transparent;
@@ -535,7 +535,7 @@ const archivedGroupsSorted = computed(() => {
   display: inline-flex;
   align-items: center;
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   font-size: 10px;
   font-weight: 600;
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;

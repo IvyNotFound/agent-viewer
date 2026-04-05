@@ -113,7 +113,7 @@ function formatTokens(n: number): string {
 
 <style scoped>
 .token-panel {
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
   overflow: hidden;
@@ -135,7 +135,7 @@ function formatTokens(n: number): string {
 }
 .token-tab {
   padding: 2px 8px !important;
-  border-radius: 4px !important;
+  border-radius: var(--shape-xs) !important;
   font-weight: 500 !important;
   color: var(--content-tertiary) !important;
   transition: color var(--md-duration-short3) var(--md-easing-standard), background-color var(--md-duration-short3) var(--md-easing-standard);

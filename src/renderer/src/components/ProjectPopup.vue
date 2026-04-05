@@ -151,7 +151,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 
 <style scoped>
 .popup-card {
-  border-radius: 12px;
+  border-radius: var(--shape-md);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -174,7 +174,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 .popup-icon {
   width: 2rem;
   height: 2rem;
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   background-color: var(--surface-secondary);
   display: flex;
   align-items: center;
@@ -233,7 +233,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
 .project-error {
   background-color: rgba(var(--v-theme-error), 0.15);
   border: 1px solid rgba(var(--v-theme-error), 0.3);
-  border-radius: 6px;
+  border-radius: var(--shape-xs);
 }
 .project-error-text {
   color: rgb(var(--v-theme-error));

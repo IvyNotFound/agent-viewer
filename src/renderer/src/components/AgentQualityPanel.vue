@@ -183,7 +183,7 @@ watch(() => store.dbPath, fetchQuality)
 .quality-panel {
   display: flex;
   flex-direction: column;
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
   overflow: hidden;
@@ -285,12 +285,12 @@ watch(() => store.dbPath, fetchQuality)
 .quality-rate-bar-track {
   height: 6px;
   background: var(--surface-tertiary);
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   overflow: hidden;
 }
 .quality-rate-bar-fill {
   height: 100%;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   transition: width var(--md-duration-medium4) var(--md-easing-emphasized-decelerate);
 }
 .rate-bar--green { background: rgb(var(--v-theme-secondary)); }

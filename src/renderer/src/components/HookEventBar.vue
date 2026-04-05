@@ -189,7 +189,7 @@ function rowLabel(e: HookEvent): string {
   gap: 6px;
   padding: 2px 4px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   transition: background-color var(--md-duration-short3) var(--md-easing-standard);
 }
 .event-row:hover {

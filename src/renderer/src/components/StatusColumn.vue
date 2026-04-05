@@ -70,7 +70,7 @@ function onDrop(e: DragEvent): void {
   flex: 1;
   min-width: 0;
   background-color: color-mix(in srgb, var(--surface-primary) 50%, transparent);
-  border-radius: 12px;
+  border-radius: var(--shape-md);
   border: 1px solid var(--edge-subtle);
   transition: border-color var(--md-duration-short3) var(--md-easing-standard), background-color var(--md-duration-short3) var(--md-easing-standard);
 }
@@ -106,7 +106,7 @@ function onDrop(e: DragEvent): void {
   color: var(--content-subtle);
   background-color: var(--surface-secondary);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
 }
 .column-body {
   flex: 1;

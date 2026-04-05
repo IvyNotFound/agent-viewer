@@ -216,7 +216,7 @@ async function handleSetup() {
 .wizard-icon {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: var(--shape-md);
 }
 
 .wizard-icon--amber {
@@ -248,14 +248,14 @@ async function handleSetup() {
 
 .info-box {
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
 }
 
 .option-box {
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
 }

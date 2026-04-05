@@ -110,7 +110,7 @@ const maxEffort = computed(() =>
 .wl-view {
   display: flex;
   flex-direction: column;
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
   overflow: hidden;
@@ -168,12 +168,12 @@ const maxEffort = computed(() =>
 .wl-bar-bg {
   height: 8px;
   background: var(--surface-tertiary);
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   overflow: hidden;
 }
 .wl-bar-fill {
   height: 100%;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   transition: width var(--md-duration-medium4) var(--md-easing-emphasized-decelerate);
 }
 .wl-current {

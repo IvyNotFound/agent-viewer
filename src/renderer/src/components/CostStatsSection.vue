@@ -352,7 +352,7 @@ const hoveredBar = ref<number | null>(null)
 }
 .cost-period-btn {
   border: 1px solid var(--edge-default) !important;
-  border-radius: 9999px !important;
+  border-radius: var(--shape-full) !important;
   color: var(--content-secondary) !important;
 }
 .cost-period-btn--active {
@@ -374,7 +374,7 @@ const hoveredBar = ref<number | null>(null)
   flex-direction: column;
   gap: 4px;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
 }
@@ -430,7 +430,7 @@ const hoveredBar = ref<number | null>(null)
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   white-space: nowrap;
   background: var(--surface-secondary);
   color: var(--content-primary);
@@ -452,7 +452,7 @@ const hoveredBar = ref<number | null>(null)
   width: 128px;
   font-size: 0.6875rem;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -463,13 +463,13 @@ const hoveredBar = ref<number | null>(null)
   flex: 1;
   height: 20px;
   background: var(--surface-secondary);
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   overflow: hidden;
   position: relative;
 }
 .cost-bar-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   background: linear-gradient(to right, rgba(var(--v-theme-primary), 0.6), rgba(var(--v-theme-secondary), 0.6));
   transition: width var(--md-duration-medium2) var(--md-easing-standard);
 }

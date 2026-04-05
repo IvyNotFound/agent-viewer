@@ -153,7 +153,7 @@ function relativeTime(ts: number): string {
   align-items: center;
   gap: 8px;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   cursor: pointer;
   transition: background var(--md-duration-short3) var(--md-easing-standard);
 }

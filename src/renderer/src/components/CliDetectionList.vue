@@ -130,7 +130,7 @@ function isEnabled(cli: CliType): boolean {
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--shape-xs);
   background: var(--surface-secondary);
   border: 1px solid var(--edge-subtle);
 }
@@ -158,7 +158,7 @@ function isEnabled(cli: CliType): boolean {
   display: inline-flex;
   align-items: center;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   font-weight: 500;
   flex-shrink: 0;
   background: var(--surface-tertiary);

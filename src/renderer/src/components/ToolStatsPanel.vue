@@ -152,7 +152,7 @@ function sortIcon(key: SortKey): string {
 }
 .tool-stats-table-wrap {
   background: var(--surface-secondary);
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   border: 1px solid var(--edge-default);
   overflow-x: auto;
 }

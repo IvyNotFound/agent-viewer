@@ -82,6 +82,15 @@ body,
   --scrollbar-track:       rgb(var(--v-theme-scrollbar-track));
   --scrollbar-thumb:       rgb(var(--v-theme-scrollbar-thumb));
   --scrollbar-thumb-hover: rgb(var(--v-theme-scrollbar-thumb-hover));
+  /* MD3 Shape Scale */
+  --shape-none: 0px;
+  --shape-xs:   4px;
+  --shape-sm:   8px;
+  --shape-md:   12px;
+  --shape-lg:   16px;
+  --shape-xl:   28px;
+  --shape-full: 9999px;
+
   /* MD3 State Layer opacities */
   --md-state-hover:    0.08;
   --md-state-focus:    0.12;
@@ -175,7 +184,7 @@ body,
   & pre {
     background-color: var(--md-pre-bg);
     border: 1px solid var(--md-pre-border);
-    border-radius: 6px;
+    border-radius: var(--shape-xs);
     padding: 0.6em 0.75em;
     overflow-x: auto;
     margin: 0.5em 0;
@@ -268,7 +277,7 @@ body,
   background: var(--md-code-bg); border-radius: 3px;
   padding: 0.1em 0.35em; font-size: 0.85em; color: var(--md-code-text);
 }
-.stream-markdown pre { margin: 0.6em 0; border-radius: 6px; overflow-x: auto; }
+.stream-markdown pre { margin: 0.6em 0; border-radius: var(--shape-xs); overflow-x: auto; }
 .stream-markdown pre code { font-size: 0.8em; padding: 0.85em 1em; display: block; }
 .stream-markdown blockquote {
   border-left: 3px solid var(--md-bq-border);
@@ -305,7 +314,7 @@ body,
   padding: 2px 8px;
   font-size: 11px;
   line-height: 1.6;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(0, 0, 0, 0.4);
   color: rgba(255, 255, 255, 0.7);

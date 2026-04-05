@@ -375,7 +375,7 @@ const legendItems = computed(() => [
 .tl-select {
   background: var(--surface-base);
   border: 1px solid var(--edge-subtle);
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   color: var(--content-primary);
   cursor: pointer;
   outline: none;
@@ -396,7 +396,7 @@ const legendItems = computed(() => [
 .tl-shrink { flex-shrink: 0; }
 .tl-chip {
   padding: 2px 8px !important;
-  border-radius: 9999px !important;
+  border-radius: var(--shape-full) !important;
   border: 1px solid !important;
   transition: border-color var(--md-duration-short3) var(--md-easing-standard), color var(--md-duration-short3) var(--md-easing-standard);
 }
@@ -452,7 +452,7 @@ const legendItems = computed(() => [
   position: absolute;
   top: 8px;
   height: 24px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   cursor: pointer;
   transition: opacity var(--md-duration-short3) var(--md-easing-standard);
 }
@@ -480,7 +480,7 @@ const legendItems = computed(() => [
   z-index: 50;
   background: var(--surface-primary, var(--surface-base));
   border: 1px solid var(--edge-default);
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   pointer-events: none;
   max-width: 280px;
 }

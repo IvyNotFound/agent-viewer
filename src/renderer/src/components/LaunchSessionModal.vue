@@ -482,7 +482,7 @@ async function launch() {
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   border: 1px solid transparent;
   cursor: pointer;
   transition: all var(--md-duration-short3) var(--md-easing-standard);

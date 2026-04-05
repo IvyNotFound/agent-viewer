@@ -497,7 +497,7 @@ onUnmounted(() => {
   align-items: flex-start;
   background: rgba(var(--v-theme-error), 0.12);
   border: 1px solid rgba(var(--v-theme-error), 0.4);
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   color: rgb(var(--v-theme-error));
   font-size: 12px;
   font-family: ui-monospace, monospace;

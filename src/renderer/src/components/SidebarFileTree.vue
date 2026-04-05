@@ -149,7 +149,7 @@ defineExpose({ loadSidebarTree })
   padding-right: 8px !important;
   text-align: left !important;
   justify-content: flex-start !important;
-  border-radius: 4px !important;
+  border-radius: var(--shape-xs) !important;
   height: auto !important;
   min-height: 0 !important;
 }

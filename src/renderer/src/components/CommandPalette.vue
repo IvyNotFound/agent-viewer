@@ -321,7 +321,7 @@ function effortColor(effort: number): string {
   width: 100%;
   margin: 0 16px;
   background: var(--surface-dialog);
-  border-radius: 12px;
+  border-radius: var(--shape-md);
   border: 1px solid rgba(var(--v-theme-on-surface, 255, 255, 255), 0.1);
   overflow: hidden;
   display: flex;
@@ -487,7 +487,7 @@ function effortColor(effort: number): string {
   font-size: 0.75rem; /* text-caption */
   background: var(--surface-secondary);
   color: var(--content-subtle);
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   border: 1px solid var(--edge-default);
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
 }

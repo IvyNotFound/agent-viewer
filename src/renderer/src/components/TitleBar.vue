@@ -146,7 +146,7 @@ onUnmounted(() => {
   gap: 8px;
   padding: 0 12px;
   height: 24px;
-  border-radius: 6px;
+  border-radius: var(--shape-xs);
   background: rgba(var(--v-theme-on-surface), 0.06);
   border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   color: rgba(var(--v-theme-on-surface), 0.5);

@@ -261,7 +261,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   align-items: center;
   gap: 2px;
   margin-bottom: 2px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   transition: background var(--md-duration-short3) var(--md-easing-standard);
   cursor: pointer;
 }
@@ -287,7 +287,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   flex: 1;
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   padding: 2px 6px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -327,7 +327,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   color: rgba(var(--v-theme-primary), 0.7);
   text-align: center;
   border: 1px dashed rgba(var(--v-theme-primary), 0.4);
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
 }
 .subgroup-create-row {
   display: flex;
@@ -337,7 +337,7 @@ const groupContextMenuItems = computed<ContextMenuItem[]>(() => [
   flex: 1;
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   color: var(--content-primary);
   outline: none;
   font-weight: 600;

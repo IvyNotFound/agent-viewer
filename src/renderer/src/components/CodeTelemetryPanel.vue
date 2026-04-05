@@ -185,7 +185,7 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
 
 <style scoped>
 .telemetry-panel {
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
   overflow: hidden;
@@ -263,7 +263,7 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
 }
 .telemetry-skeleton-block {
   height: 8px;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   background: rgba(var(--v-theme-surface-tertiary), 0.5);
 }
 .telemetry-skeleton-block--wide { height: 24px; width: 96px; }
@@ -300,7 +300,7 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
 .telemetry-lang-bar {
   display: flex;
   height: 8px;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   overflow: hidden;
   width: 100%;
   gap: 1px; /* intentional: thin segment separator in bar chart, not layout spacing */
@@ -320,7 +320,7 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
   flex-shrink: 0;
   width: 8px;
   height: 8px;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
 }
 .telemetry-lang-name {
   color: var(--content-secondary);

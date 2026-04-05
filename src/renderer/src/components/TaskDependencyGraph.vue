@@ -218,7 +218,7 @@ function typeBadgeLabel(link: TaskLink): string {
 .dep-badge {
   font-size: 0.5625rem;
   padding: 2px 8px;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   border: 1px solid;
   font-weight: 500;
   flex-shrink: 0;

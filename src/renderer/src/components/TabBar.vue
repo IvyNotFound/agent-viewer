@@ -347,7 +347,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   font-weight: 500;
   transition: all var(--md-duration-short3) var(--md-easing-standard);
   user-select: none;
-  border-radius: 4px 4px 0 0;
+  border-radius: var(--shape-xs) var(--shape-xs) 0 0;
   flex-shrink: 0;
   cursor: pointer;
   background: none;
@@ -410,7 +410,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   font-weight: 600;
   transition: all var(--md-duration-short3) var(--md-easing-standard);
   user-select: none;
-  border-radius: 4px 4px 0 0;
+  border-radius: var(--shape-xs) var(--shape-xs) 0 0;
   flex-shrink: 0;
   cursor: pointer;
   background: none;
@@ -444,7 +444,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   font-weight: 500;
   transition: all var(--md-duration-short3) var(--md-easing-standard);
   user-select: none;
-  border-radius: 4px 4px 0 0;
+  border-radius: var(--shape-xs) var(--shape-xs) 0 0;
   flex-shrink: 0;
   cursor: pointer;
   background: none;
@@ -497,7 +497,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   color: rgb(var(--v-theme-primary));
   background: rgba(var(--v-theme-primary), 0.1);
   border: 1px solid rgba(var(--v-theme-primary), 0.3);
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   transition: all var(--md-duration-short3) var(--md-easing-standard);
   margin-left: 4px;
   margin-right: 8px;

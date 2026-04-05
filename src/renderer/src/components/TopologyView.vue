@@ -197,7 +197,7 @@ function onAgentClick(row: TopologyRow): void {
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
   font-size: 12px;
   font-family: ui-monospace, monospace;
   border: 1px solid;
@@ -217,7 +217,7 @@ function onAgentClick(row: TopologyRow): void {
   align-items: flex-start !important;
   height: auto !important;
   min-height: 0 !important;
-  border-radius: 8px !important;
+  border-radius: var(--shape-sm) !important;
   border: 1px solid !important;
   padding: 10px 12px !important;
   overflow: hidden;
@@ -252,7 +252,7 @@ function onAgentClick(row: TopologyRow): void {
   font-size: 10px;
   font-family: ui-monospace, monospace;
   padding: 2px 6px;
-  border-radius: 9999px;
+  border-radius: var(--shape-full);
 }
 .tp-badge--active  { background: rgba(var(--v-theme-secondary),0.2); color: rgb(var(--v-theme-secondary)); }
 .tp-badge--blocked { background: rgba(var(--v-theme-warning),0.2); color: rgb(var(--v-theme-warning)); }

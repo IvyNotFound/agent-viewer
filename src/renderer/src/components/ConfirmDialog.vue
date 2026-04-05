@@ -126,7 +126,7 @@ const confirmBtnColor = computed(() =>
 .icon-wrapper {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   flex-shrink: 0;
 }
 .icon-danger  { background-color: rgba(var(--v-theme-error), 0.15); }

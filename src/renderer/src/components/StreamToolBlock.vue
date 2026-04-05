@@ -414,7 +414,7 @@ function resultPreview(html: string | undefined): string {
 .line-count {
   font-size: 0.78em;
   padding: 1px 8px;
-  border-radius: 10px;
+  border-radius: var(--shape-sm);
   background: rgba(var(--v-theme-on-surface), 0.08);
   color: var(--content-muted);
   white-space: nowrap;
@@ -479,7 +479,7 @@ function resultPreview(html: string | undefined): string {
 .tool-command {
   background: rgba(var(--v-theme-on-surface), 0.06);
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--shape-xs);
   white-space: pre-wrap;
   margin: 0;
   word-break: break-all;
@@ -490,7 +490,7 @@ function resultPreview(html: string | undefined): string {
 .diff-view {
   font-family: monospace;
   font-size: 0.9em;
-  border-radius: 6px;
+  border-radius: var(--shape-xs);
   overflow: hidden;
 }
 

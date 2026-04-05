@@ -268,7 +268,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   flex: 1;
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   color: var(--content-primary);
   outline: none;
   font-weight: 600;
@@ -291,7 +291,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   align-items: center;
   gap: 2px;
   margin-bottom: 2px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   transition: all var(--md-duration-short3) var(--md-easing-standard);
 }
 .section-header.drag-target {
@@ -312,7 +312,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   color: rgba(var(--v-theme-primary), 0.7);
   text-align: center;
   border: 1px dashed rgba(var(--v-theme-primary), 0.4);
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
 }
 .agents-list {
   display: flex;

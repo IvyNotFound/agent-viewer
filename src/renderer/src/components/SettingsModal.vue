@@ -401,7 +401,7 @@ function onDefaultCliChange(v: string) {
 /* Section containers: subtle MD3-style divider — 8% white opacity, not the harsh Vuetify outlined border */
 .settings-section {
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   padding: 12px 16px;
 }
 

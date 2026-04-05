@@ -126,7 +126,7 @@ function formatDate(iso: string): string {
   background: rgba(var(--v-theme-primary), 0.2) !important;
   color: rgb(var(--v-theme-primary)) !important;
   border: 1px solid rgba(var(--v-theme-primary), 0.3) !important;
-  border-radius: 4px !important;
+  border-radius: var(--shape-xs) !important;
 }
 .commit-task-badge:hover { background: rgba(var(--v-theme-primary), 0.3) !important; }
 </style>

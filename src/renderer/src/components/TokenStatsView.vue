@@ -242,7 +242,7 @@ const {
 .ts-period-btns { display: flex; }
 .ts-period-btn {
   padding: 2px 10px !important;
-  border-radius: 9999px !important;
+  border-radius: var(--shape-full) !important;
   border: 1px solid var(--edge-default) !important;
   background: var(--surface-secondary) !important;
   color: var(--content-secondary) !important;
@@ -262,7 +262,7 @@ const {
 .ts-card {
   display: flex;
   flex-direction: column;
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
 }
@@ -336,7 +336,7 @@ const {
   transform: translateX(-50%);
   z-index: 10;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   white-space: nowrap;
   background: var(--surface-secondary);
   color: var(--content-primary);
@@ -367,7 +367,7 @@ const {
   width: 128px;
   font-size: 0.6875rem;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -378,13 +378,13 @@ const {
   flex: 1;
   height: 20px;
   background: var(--surface-secondary);
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   overflow: hidden;
   position: relative;
 }
 .ts-bar-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   background: linear-gradient(to right, rgba(var(--v-theme-secondary),0.6), rgba(var(--v-theme-primary),0.6));
   transition: width var(--md-duration-medium2) var(--md-easing-standard);
 }
@@ -421,7 +421,7 @@ const {
 .ts-tbody-row:hover { background: rgba(var(--v-theme-on-surface), var(--md-state-hover)); }
 .ts-td { padding: 6px 8px; }
 .ts-td--right { text-align: right; }
-.ts-agent-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.6875rem; font-weight: 500; }
+.ts-agent-badge { padding: 2px 6px; border-radius: var(--shape-xs); font-size: 0.6875rem; font-weight: 500; }
 
 /* footer */
 .ts-footer {
@@ -436,7 +436,7 @@ const {
   width: 24px !important;
   height: 24px !important;
   min-width: 24px !important;
-  border-radius: 4px !important;
+  border-radius: var(--shape-xs) !important;
   color: var(--content-subtle) !important;
   transition: color var(--md-duration-short3) var(--md-easing-standard), background var(--md-duration-short3) var(--md-easing-standard);
 }

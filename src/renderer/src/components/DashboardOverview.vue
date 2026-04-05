@@ -465,7 +465,7 @@ function priorityColor(priority: string): string {
 .metric-icon {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: var(--shape-xs);
   display: flex;
   align-items: center;
   justify-content: center;

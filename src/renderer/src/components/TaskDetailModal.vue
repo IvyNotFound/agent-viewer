@@ -380,7 +380,7 @@ onUnmounted(() => {
   max-height: 90vh;
   background: var(--surface-dialog);
   border: 1px solid var(--edge-default);
-  border-radius: 12px;
+  border-radius: var(--shape-md);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -409,7 +409,7 @@ onUnmounted(() => {
   width: 28px !important;
   height: 28px !important;
   min-width: 28px !important;
-  border-radius: 6px !important;
+  border-radius: var(--shape-xs) !important;
   color: var(--content-subtle) !important;
   transition: all var(--md-duration-short3) var(--md-easing-standard);
 }
@@ -532,7 +532,7 @@ onUnmounted(() => {
 
 /* md-bubble: keep class for tests */
 .md-bubble {
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   line-height: 1.5;
   word-break: break-words;
   border: 1px solid;

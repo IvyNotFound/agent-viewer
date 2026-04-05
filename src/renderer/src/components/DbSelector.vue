@@ -238,7 +238,7 @@ async function create() {
 .logo-wrap {
   width: 56px;
   height: 56px;
-  border-radius: 16px;
+  border-radius: var(--shape-lg);
   background: rgba(var(--v-theme-primary), 0.2);
   border: 1px solid rgba(var(--v-theme-primary), 0.3);
   display: flex;
@@ -265,7 +265,7 @@ async function create() {
 }
 .action-card {
   height: auto !important;
-  border-radius: 12px !important;
+  border-radius: var(--shape-md) !important;
   border: 1px solid var(--edge-default) !important;
   background: rgba(var(--v-theme-on-surface), 0.02) !important;
 }
@@ -287,7 +287,7 @@ async function create() {
 .action-icon-wrap {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   background: var(--surface-tertiary);
   display: flex;
   align-items: center;
@@ -316,7 +316,7 @@ async function create() {
   color: rgb(var(--v-theme-error));
   background: rgba(var(--v-theme-error), 0.1);
   border: 1px solid rgba(var(--v-theme-error), 0.3);
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
 }
 .lang-row { display: flex; justify-content: center; }
 
@@ -341,7 +341,7 @@ async function create() {
   color: var(--content-primary);
 }
 .create-info {
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   background: rgba(var(--v-theme-on-surface), 0.04);
   border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
   color: var(--content-muted);
@@ -383,7 +383,7 @@ async function create() {
 .instance-option {
   display: flex;
   align-items: center;
-  border-radius: 8px;
+  border-radius: var(--shape-sm);
   border: 1px solid var(--edge-default);
   cursor: pointer;
   transition: all var(--md-duration-short3) var(--md-easing-standard);

@@ -168,7 +168,7 @@ async function addPerimetre() {
   justify-content: flex-end;
 }
 .perimetre-item {
-  border-radius: 6px;
+  border-radius: var(--shape-xs);
 }
 .perimetre-row-wrap {
   position: relative;
@@ -207,7 +207,7 @@ async function addPerimetre() {
   font-size: 0.6875rem;
   font-family: monospace;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--shape-xs);
   border: 1px solid;
 }
 .badge-icon {
@@ -258,7 +258,7 @@ async function addPerimetre() {
 .modal-card {
   background: var(--surface-primary);
   border: 1px solid var(--edge-default);
-  border-radius: 12px;
+  border-radius: var(--shape-md);
   width: 384px;
   display: flex;
   flex-direction: column;
@@ -280,7 +280,7 @@ async function addPerimetre() {
   width: 100%;
   background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
-  border-radius: 6px;
+  border-radius: var(--shape-xs);
   padding: 6px 12px;
   font-size: 0.875rem;
   color: var(--content-primary);
