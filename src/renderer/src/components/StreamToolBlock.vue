@@ -73,10 +73,20 @@ function diffLines(input: Record<string, unknown> | undefined): DiffLine[] {
   return result
 }
 
-function writePreview(input: Record<string, unknown> | undefined): string {
-  if (!input?.content) return ''
+function writeLines(input: Record<string, unknown> | undefined): DiffLine[] {
+  if (!input?.content) return []
   const lines = String(input.content).split('\n')
-  return lines.slice(0, 50).join('\n') + (lines.length > 50 ? `\n… (${lines.length - 50} more lines)` : '')
+  const limit = Math.min(lines.length, 50)
+  const result: DiffLine[] = lines.slice(0, limit).map((text, i) => ({
+    idx: i,
+    type: 'add' as const,
+    prefix: '+',
+    text,
+  }))
+  if (lines.length > limit) {
+    result.push({ idx: limit, type: 'add', prefix: '…', text: `(${lines.length - limit} more lines)` })
+  }
+  return result
 }
 </script>
 
@@ -159,7 +169,7 @@ function writePreview(input: Record<string, unknown> | undefined): string {
         </div>
       </template>
 
-      <!-- Write: file_path header + content preview truncated to 50 lines (T1514) -->
+      <!-- Write: file_path header + all-green diff (T1529) -->
       <template v-else-if="block.name === 'Write'">
         <div
           v-if="block.input?.file_path"
@@ -167,10 +177,15 @@ function writePreview(input: Record<string, unknown> | undefined): string {
         >
           {{ block.input.file_path }}
         </div>
-        <pre
-          v-if="block.input?.content"
-          class="tool-command"
-        >{{ writePreview(block.input) }}</pre>
+        <div class="diff-view">
+          <div
+            v-for="line in writeLines(block.input)"
+            :key="line.idx"
+            class="diff-add"
+          >
+            <span class="diff-prefix">{{ line.prefix }}</span>{{ line.text }}
+          </div>
+        </div>
       </template>
 
       <!-- Grep: pattern highlight + path (T1514) -->
