@@ -33,82 +33,81 @@ function formatDuration(ms: number | null): string {
   if (ms < 1000) return `${ms}ms`
   return `${(ms / 1000).toFixed(1)}s`
 }
-
-function sortIcon(key: SortKey): string {
-  if (sortKey.value !== key) return ''
-  return sortDesc.value ? ' ↓' : ' ↑'
-}
 </script>
 
 <template>
   <div class="tool-stats-panel">
     <!-- Header -->
     <div class="tool-stats-header">
-      <h2 class="tool-stats-title text-h6 font-weight-medium">{{ t('toolStats.title') }}</h2>
+      <h2 class="text-h6 font-weight-medium">{{ t('toolStats.title') }}</h2>
     </div>
+
     <!-- Empty state -->
-    <div v-if="toolStats.length === 0" class="tool-stats-empty pa-12">
-      <p class="tool-stats-empty-text px-4 text-caption">{{ t('toolStats.empty') }}</p>
+    <div v-if="toolStats.length === 0" class="d-flex flex-column align-center justify-center flex-1 pa-12 ga-3">
+      <v-icon size="32" color="medium-emphasis">mdi-tools</v-icon>
+      <p class="text-caption text-medium-emphasis font-italic">{{ t('toolStats.empty') }}</p>
     </div>
 
     <!-- Table -->
     <div v-else class="tool-stats-body pa-6">
-      <div class="tool-stats-table-wrap">
-        <table class="tool-stats-table text-caption">
-          <thead>
-            <tr class="tool-stats-thead-row">
-              <th class="tool-stats-th tool-stats-th--left text-label-medium" @click="setSort('calls')">
-                {{ t('toolStats.tool') }}
-              </th>
-              <th class="tool-stats-th text-label-medium" @click="setSort('calls')">
-                {{ t('toolStats.calls') }}{{ sortIcon('calls') }}
-              </th>
-              <th class="tool-stats-th text-label-medium" @click="setSort('errors')">
-                {{ t('toolStats.errors') }}{{ sortIcon('errors') }}
-              </th>
-              <th class="tool-stats-th text-label-medium" @click="setSort('errorRate')">
-                {{ t('toolStats.errorRate') }}{{ sortIcon('errorRate') }}
-              </th>
-              <th class="tool-stats-th text-label-medium" @click="setSort('avgDurationMs')">
-                {{ t('toolStats.avgDuration') }}{{ sortIcon('avgDurationMs') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in sorted"
-              :key="row.name"
-              class="tool-stats-row"
-            >
-              <!-- Tool name -->
-              <td class="tool-stats-td py-2 px-4 tool-stats-td--mono" :style="{ color: toolColor(row.name) }">{{ row.name }}</td>
-              <!-- Calls -->
-              <td class="tool-stats-td py-2 px-4 tool-stats-td--mono tool-stats-td--right tool-stats-td--muted">{{ row.calls }}</td>
-              <!-- Errors -->
-              <td
-                class="tool-stats-td py-2 px-4 tool-stats-td--mono tool-stats-td--right"
-                :class="row.errors > 0 ? 'tool-stats-td--error' : 'tool-stats-td--faint'"
-              >
-                {{ row.errors }}
-              </td>
-              <!-- Error rate -->
-              <td
-                class="tool-stats-td py-2 px-4 tool-stats-td--mono tool-stats-td--right"
-                :class="row.errorRate > 0 ? 'tool-stats-td--error' : 'tool-stats-td--faint'"
-              >
-                {{ row.errors > 0 ? (row.errorRate * 100).toFixed(0) + '%' : '—' }}
-              </td>
-              <!-- Avg duration -->
-              <td
-                class="tool-stats-td py-2 px-4 tool-stats-td--mono tool-stats-td--right"
-                :class="row.avgDurationMs !== null && row.avgDurationMs > 5000 ? 'tool-stats-td--warn' : 'tool-stats-td--faint'"
-              >
-                {{ formatDuration(row.avgDurationMs) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <v-table density="compact" hover class="rounded">
+        <thead>
+          <tr>
+            <th class="text-left text-label-medium ts-th" @click="setSort('calls')">
+              {{ t('toolStats.tool') }}
+            </th>
+            <th class="text-right text-label-medium ts-th" @click="setSort('calls')">
+              {{ t('toolStats.calls') }}
+              <v-icon v-if="sortKey === 'calls'" size="14">
+                {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+              </v-icon>
+            </th>
+            <th class="text-right text-label-medium ts-th" @click="setSort('errors')">
+              {{ t('toolStats.errors') }}
+              <v-icon v-if="sortKey === 'errors'" size="14">
+                {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+              </v-icon>
+            </th>
+            <th class="text-right text-label-medium ts-th" @click="setSort('errorRate')">
+              {{ t('toolStats.errorRate') }}
+              <v-icon v-if="sortKey === 'errorRate'" size="14">
+                {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+              </v-icon>
+            </th>
+            <th class="text-right text-label-medium ts-th" @click="setSort('avgDurationMs')">
+              {{ t('toolStats.avgDuration') }}
+              <v-icon v-if="sortKey === 'avgDurationMs'" size="14">
+                {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+              </v-icon>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in sorted" :key="row.name">
+            <td class="py-2">
+              <v-chip
+                :color="toolColor(row.name)"
+                size="small"
+                variant="tonal"
+                class="font-weight-medium ts-chip"
+              >{{ row.name }}</v-chip>
+            </td>
+            <td class="text-right text-medium-emphasis ts-mono">{{ row.calls }}</td>
+            <td
+              class="text-right ts-mono"
+              :class="row.errors > 0 ? 'text-error' : 'text-medium-emphasis'"
+            >{{ row.errors }}</td>
+            <td
+              class="text-right ts-mono"
+              :class="row.errorRate > 0 ? 'text-error' : 'text-medium-emphasis'"
+            >{{ row.errors > 0 ? (row.errorRate * 100).toFixed(0) + '%' : '—' }}</td>
+            <td
+              class="text-right ts-mono"
+              :class="row.avgDurationMs !== null && row.avgDurationMs > 5000 ? 'text-warning' : 'text-medium-emphasis'"
+            >{{ formatDuration(row.avgDurationMs) }}</td>
+          </tr>
+        </tbody>
+      </v-table>
     </div>
   </div>
 </template>
@@ -119,8 +118,6 @@ function sortIcon(key: SortKey): string {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: var(--surface-base);
-  color: var(--content-primary);
 }
 .tool-stats-header {
   flex-shrink: 0;
@@ -130,64 +127,19 @@ function sortIcon(key: SortKey): string {
   padding: 0 16px;
   border-bottom: 1px solid var(--edge-subtle);
 }
-.tool-stats-title {
-  color: var(--content-primary);
-  margin: 0;
-}
-.tool-stats-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-}
-.tool-stats-empty-text {
-  color: var(--content-faint);
-  font-style: italic;
-  text-align: center;
-  margin: 0;
-}
 .tool-stats-body {
   flex: 1;
   overflow-y: auto;
 }
-.tool-stats-table-wrap {
-  background: var(--surface-secondary);
-  border-radius: var(--shape-sm);
-  border: 1px solid var(--edge-default);
-  overflow-x: auto;
-}
-.tool-stats-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.tool-stats-thead-row {
-  border-bottom: 1px solid var(--edge-default);
-}
-.tool-stats-th {
-  padding: 10px 16px;
-  letter-spacing: 0.02em;
-  color: var(--content-muted);
-  text-align: right;
+.ts-th {
   cursor: pointer;
   user-select: none;
-  font-weight: 600;
-  position: sticky;
-  top: 0;
-  background: var(--surface-secondary);
-  transition: color var(--md-duration-short3) var(--md-easing-standard);
 }
-.tool-stats-th:hover { color: var(--content-secondary); }
-.tool-stats-th--left { text-align: left; }
-.tool-stats-row {
-  border-bottom: 1px solid rgba(var(--v-theme-surface-tertiary), 0.5);
-  transition: background-color var(--md-duration-short3) var(--md-easing-standard);
+.ts-mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
 }
-.tool-stats-row:last-child { border-bottom: none; }
-.tool-stats-row:hover { background: rgba(var(--v-theme-on-surface), var(--md-state-hover)); }
-.tool-stats-td--mono { font-family: ui-monospace, monospace; }
-.tool-stats-td--right { text-align: right; }
-.tool-stats-td--muted { color: var(--content-tertiary); }
-.tool-stats-td--faint { color: var(--content-faint); }
-.tool-stats-td--error { color: rgb(var(--v-theme-error)); }
-.tool-stats-td--warn { color: rgb(var(--v-theme-warning)); }
+.ts-chip {
+  font-family: ui-monospace, monospace;
+}
 </style>
