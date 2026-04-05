@@ -167,7 +167,7 @@ function tooltip(day: DayBars): string {
   min-height: 0;
   border: 1px solid var(--edge-default);
   overflow: hidden;
-  background: var(--surface-secondary) !important;
+  background: var(--surface-primary) !important;
 }
 
 .chart-header {

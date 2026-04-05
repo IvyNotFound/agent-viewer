@@ -461,7 +461,7 @@ function priorityColor(priority: string): string {
 /* ── Metric cards ── */
 .metric-card {
   border: 1px solid var(--edge-default) !important;
-  background: var(--surface-secondary) !important;
+  background: var(--surface-primary) !important;
   transition: border-color var(--md-duration-short3) var(--md-easing-standard);
 }
 
@@ -555,6 +555,6 @@ function priorityColor(priority: string): string {
 /* ── Workload fallback ── */
 .workload-fallback {
   border: 1px solid var(--edge-default) !important;
-  background: var(--surface-secondary) !important;
+  background: var(--surface-primary) !important;
 }
 </style>

@@ -184,7 +184,7 @@ watch(() => store.dbPath, fetchQuality)
   display: flex;
   flex-direction: column;
   border-radius: var(--shape-sm);
-  background: var(--surface-secondary);
+  background: var(--surface-primary);
   border: 1px solid var(--edge-default);
   overflow: hidden;
 }
@@ -194,7 +194,6 @@ watch(() => store.dbPath, fetchQuality)
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--edge-subtle);
-  background: var(--surface-base);
 }
 .quality-header-left {
   display: flex;
@@ -223,7 +222,6 @@ watch(() => store.dbPath, fetchQuality)
 .quality-global {
   flex-shrink: 0;
   border-bottom: 1px solid var(--edge-subtle);
-  background: var(--surface-base);
 }
 .quality-global-rate {
   display: flex;

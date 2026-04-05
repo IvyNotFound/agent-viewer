@@ -111,7 +111,7 @@ const maxEffort = computed(() =>
   display: flex;
   flex-direction: column;
   border-radius: var(--shape-sm);
-  background: var(--surface-secondary);
+  background: var(--surface-primary);
   border: 1px solid var(--edge-default);
   overflow: hidden;
 }
@@ -122,7 +122,6 @@ const maxEffort = computed(() =>
   justify-content: space-between;
   padding: 12px 16px;
   border-bottom: 1px solid var(--edge-subtle);
-  background: var(--surface-base);
 }
 .wl-title { color: var(--content-secondary); }
 .wl-refresh-btn {
