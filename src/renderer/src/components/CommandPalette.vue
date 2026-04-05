@@ -347,7 +347,7 @@ function effortColor(effort: number): string {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 4px 16px 4px 12px;
+  padding: 4px 20px 4px 16px;
   border-bottom: 1px solid var(--edge-subtle);
   flex-shrink: 0;
 }
@@ -366,7 +366,7 @@ function effortColor(effort: number): string {
 
 /* Filters */
 .palette-filters {
-  padding: 8px 16px;
+  padding: 8px 20px;
   border-bottom: 1px solid var(--edge-subtle);
   flex-shrink: 0;
   display: flex;
@@ -414,7 +414,7 @@ function effortColor(effort: number): string {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 16px;
+  padding: 48px 20px;
   gap: 8px;
 }
 .empty-icon {
@@ -423,7 +423,7 @@ function effortColor(effort: number): string {
   color: var(--content-dim);
 }
 .palette-count {
-  padding: 8px 16px;
+  padding: 8px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -431,7 +431,7 @@ function effortColor(effort: number): string {
 .palette-item {
   cursor: pointer;
   border-left: 2px solid transparent !important;
-  padding: 8px 16px !important;
+  padding: 8px 20px !important;
   min-height: 0 !important;
   transition: background var(--md-duration-short2) var(--md-easing-standard);
 }
@@ -482,7 +482,7 @@ function effortColor(effort: number): string {
 
 /* Footer */
 .palette-footer {
-  padding: 8px 16px;
+  padding: 8px 20px;
   border-top: 1px solid var(--edge-subtle);
   display: flex;
   align-items: center;
