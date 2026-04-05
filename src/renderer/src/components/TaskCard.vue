@@ -114,12 +114,6 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
       <!-- Top row: title + effort/priority badges -->
       <div class="card-top ga-2">
         <div class="card-title-area">
-          <span
-            v-if="task.status === 'in_progress'"
-            class="card-pulse mt-1"
-            :title="t('task.running')"
-            :aria-label="t('task.running')"
-          />
           <p class="card-title text-body-2">{{ task.title }}</p>
         </div>
         <div class="card-badge-row ga-1">
@@ -171,11 +165,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
     <!-- Footer: dates left, #id right -->
     <v-card-text
       class="card-footer-section mt-auto"
-      :class="{
-        'card-footer-bordered': task.scope || task.agent_name,
-        'card-footer--critical': task.priority === 'critical',
-        'card-footer--in-progress': task.status === 'in_progress' && task.priority !== 'critical',
-      }"
+      :class="{ 'card-footer-bordered': task.scope || task.agent_name }"
     >
       <div class="card-footer ga-2">
         <div class="card-dates">
@@ -239,19 +229,6 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
   position: relative;
   z-index: 1;
 }
-.card-pulse {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: rgba(var(--v-theme-secondary), 0.8);
-  animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  display: inline-block;
-}
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
 .card-title {
   color: var(--content-primary);
   font-weight: 500;
@@ -301,16 +278,6 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
 }
 .card-footer-bordered {
   border-top: 1px solid color-mix(in srgb, var(--edge-subtle) 50%, transparent);
-}
-/* MD3 tonal footer accent — critical (errorContainer) takes priority */
-.card-footer--critical {
-  background-color: rgb(var(--v-theme-error-container));
-  border-top-color: rgba(var(--v-theme-on-error-container), 0.20);
-}
-/* MD3 tonal footer accent — in_progress (secondaryContainer) */
-.card-footer--in-progress {
-  background-color: rgb(var(--v-theme-secondary-container));
-  border-top-color: rgba(var(--v-theme-on-secondary-container), 0.20);
 }
 .card-dates {
   display: flex;
