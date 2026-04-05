@@ -464,18 +464,13 @@
   },
   "quality": {
     "title": "Qualité agents",
-    "all": "Tous",
     "refresh": "Rafraîchir",
     "loading": "Chargement…",
     "error": "Erreur : {msg}",
     "empty": "Aucune tâche done/archived trouvée.",
     "rejectionRate": "Taux de rejet projet",
     "noRejections": "Aucun rejet détecté",
-    "heuristicNote": "Détection heuristique — commentaires reviewer contenant \"rejet\", \"retour\" ou \"todo\"",
-    "colTotal": "Total",
-    "colRejected": "Rejets",
-    "colRate": "Taux",
-    "colBar": "Barre"
+    "heuristicNote": "Détection heuristique — commentaires reviewer contenant \"rejet\", \"retour\" ou \"todo\""
   },
   "sessionActivityChart": {
     "title": "Activité des sessions — 14 derniers jours",

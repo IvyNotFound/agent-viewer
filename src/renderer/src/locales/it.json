@@ -464,18 +464,13 @@
   },
   "quality": {
     "title": "Qualità agenti",
-    "all": "Tutti",
     "refresh": "Aggiorna",
     "loading": "Caricamento…",
     "error": "Errore: {msg}",
     "empty": "Nessuna attività completata/archiviata trovata.",
     "rejectionRate": "Tasso di rifiuto del progetto",
     "noRejections": "Nessun rifiuto rilevato",
-    "heuristicNote": "Rilevamento euristico — commenti del revisore contenenti \"reject\", \"return\" o \"todo\"",
-    "colTotal": "Totale",
-    "colRejected": "Rifiuti",
-    "colRate": "Tasso",
-    "colBar": "Barra"
+    "heuristicNote": "Rilevamento euristico — commenti del revisore contenenti \"reject\", \"return\" o \"todo\""
   },
   "sessionActivityChart": {
     "title": "Attività sessioni — ultimi 14 giorni",

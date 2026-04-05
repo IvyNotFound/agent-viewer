@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
-import { agentFg } from '@renderer/utils/agentColor'
+import { agentAccent } from '@renderer/utils/agentColor'
 import type { AgentQualityRow } from '@renderer/types'
 
 const { t } = useI18n()
@@ -11,33 +11,15 @@ const store = useTasksStore()
 const rows = ref<AgentQualityRow[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
-const filterPerimetre = ref<string | null>(null)
-
-const perimetres = computed<string[]>(() => {
-  const set = new Set<string>()
-  rows.value.forEach(r => { if (r.agent_scope) set.add(r.agent_scope) })
-  return Array.from(set).sort()
-})
-
-const perimeterItems = computed<Array<{ title: string; value: string | null }>>(() => [
-  { title: t('quality.all'), value: null },
-  ...perimetres.value.map(p => ({ title: p, value: p }))
-])
-
-const filteredRows = computed(() =>
-  filterPerimetre.value
-    ? rows.value.filter(r => r.agent_scope === filterPerimetre.value)
-    : rows.value
-)
 
 const globalRejectionRate = computed(() => {
-  const total = filteredRows.value.reduce((s, r) => s + r.total_tasks, 0)
-  const rejected = filteredRows.value.reduce((s, r) => s + r.rejected_tasks, 0)
+  const total = rows.value.reduce((s, r) => s + r.total_tasks, 0)
+  const rejected = rows.value.reduce((s, r) => s + r.rejected_tasks, 0)
   if (total === 0) return 0
   return Math.round((rejected / total) * 1000) / 10
 })
 
-const hasRejections = computed(() => filteredRows.value.some(r => r.rejected_tasks > 0))
+const hasRejections = computed(() => rows.value.some(r => r.rejected_tasks > 0))
 
 async function fetchQuality(): Promise<void> {
   if (!store.dbPath) return
@@ -65,12 +47,6 @@ function rateColor(rate: number): string {
   return 'rgb(var(--v-theme-error))'
 }
 
-function rateBarClass(rate: number): string {
-  if (rate === 0) return 'rate-bar--green'
-  if (rate < 20) return 'rate-bar--orange'
-  return 'rate-bar--red'
-}
-
 onMounted(fetchQuality)
 watch(() => store.dbPath, fetchQuality)
 </script>
@@ -79,19 +55,7 @@ watch(() => store.dbPath, fetchQuality)
   <div class="quality-panel">
     <!-- Header -->
     <div class="quality-header py-3 px-4">
-      <div class="quality-header-left ga-3">
-        <h2 class="quality-title text-body-2 font-weight-medium">{{ t('quality.title') }}</h2>
-        <!-- Perimetre filter -->
-        <v-select
-          v-if="perimetres.length > 1"
-          v-model="filterPerimetre"
-          :items="perimeterItems"
-          density="compact"
-          variant="outlined"
-          hide-details
-          style="max-width: 160px"
-        />
-      </div>
+      <h2 class="quality-title text-body-2 font-weight-medium">{{ t('quality.title') }}</h2>
       <v-btn variant="text" size="small" class="text-overline" @click="fetchQuality">{{ t('quality.refresh') }}</v-btn>
     </div>
 
@@ -106,7 +70,7 @@ watch(() => store.dbPath, fetchQuality)
     </div>
 
     <!-- Empty -->
-    <div v-else-if="filteredRows.length === 0" class="quality-state pa-8">
+    <div v-else-if="rows.length === 0" class="quality-state pa-8">
       <p class="quality-state-text text-caption">{{ t('quality.empty') }}</p>
     </div>
 
@@ -126,55 +90,33 @@ watch(() => store.dbPath, fetchQuality)
         </p>
       </div>
 
-      <!-- Table -->
-      <div class="quality-table py-3 px-4 ga-2">
-        <!-- Column headers -->
-        <div class="quality-row ga-3 quality-header-row text-overline pb-1">
-          <span>Agent</span>
-          <span class="quality-col-right">{{ t('quality.colTotal') }}</span>
-          <span class="quality-col-right">{{ t('quality.colRejected') }}</span>
-          <span class="quality-col-right">{{ t('quality.colRate') }}</span>
-          <span>{{ t('quality.colBar') }}</span>
-        </div>
-
-        <!-- Rows -->
-        <div
-          v-for="row in filteredRows"
-          :key="row.agent_id"
-          class="quality-row ga-3 quality-data-row"
-        >
-          <!-- Agent name -->
-          <span
-            class="quality-agent-name"
-            :style="{ color: agentFg(row.agent_name) }"
-            :title="row.agent_name"
-          >{{ row.agent_name }}</span>
-
-          <!-- Total tasks -->
-          <span class="quality-col-mono quality-col-right quality-col-muted">{{ row.total_tasks }}</span>
-
-          <!-- Rejected tasks -->
-          <span
-            class="quality-col-mono quality-col-right quality-col-bold"
-            :style="{ color: row.rejected_tasks > 0 ? rateColor(row.rejection_rate) : 'inherit' }"
-          >{{ row.rejected_tasks }}</span>
-
-          <!-- Rate -->
-          <span
-            class="quality-col-mono quality-col-right"
-            :style="{ color: rateColor(row.rejection_rate) }"
-          >{{ row.rejection_rate }}%</span>
-
-          <!-- Rate bar -->
-          <div class="quality-rate-bar-track">
-            <div
-              class="quality-rate-bar-fill"
-              :class="rateBarClass(row.rejection_rate)"
-              :style="{ width: row.rejection_rate + '%' }"
-            />
+      <!-- Agent list -->
+      <v-list density="compact" class="pa-0">
+        <v-list-item v-for="row in rows" :key="row.agent_id" class="px-4 py-2">
+          <div class="d-flex align-center justify-space-between mb-1">
+            <span
+              class="text-caption font-weight-medium"
+              :style="{ color: agentAccent(row.agent_name) }"
+            >{{ row.agent_name }}</span>
+            <div class="d-flex align-center ga-2">
+              <span class="text-caption text-disabled">
+                {{ row.rejected_tasks }}/{{ row.total_tasks }}
+              </span>
+              <span
+                class="text-caption font-weight-medium"
+                :style="{ color: rateColor(row.rejection_rate) }"
+              >{{ row.rejection_rate }}%</span>
+            </div>
           </div>
-        </div>
-      </div>
+          <v-progress-linear
+            :model-value="row.rejection_rate"
+            :color="rateColor(row.rejection_rate)"
+            bg-color="rgba(var(--v-border-color), var(--v-border-opacity))"
+            rounded
+            height="3"
+          />
+        </v-list-item>
+      </v-list>
     </template>
   </div>
 </template>
@@ -194,10 +136,6 @@ watch(() => store.dbPath, fetchQuality)
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--edge-subtle);
-}
-.quality-header-left {
-  display: flex;
-  align-items: center;
 }
 .quality-title {
   color: var(--content-secondary);
@@ -247,50 +185,4 @@ watch(() => store.dbPath, fetchQuality)
   margin: 0;
   font-style: italic;
 }
-.quality-table {
-  display: flex;
-  flex-direction: column;
-}
-.quality-row {
-  display: grid;
-  grid-template-columns: minmax(130px, 1fr) 70px 60px 50px minmax(0, 2fr);
-  align-items: center;
-}
-.quality-header-row {
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--content-faint);
-  border-bottom: 1px solid var(--edge-subtle);
-}
-.quality-data-row { padding: 2px 0; }
-.quality-col-right { text-align: right; }
-.quality-agent-name {
-  font-size: 0.75rem; /* text-caption */
-  font-family: ui-monospace, monospace;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.quality-col-mono {
-  font-size: 0.75rem; /* text-caption */
-  font-family: ui-monospace, monospace;
-}
-.quality-col-muted { color: var(--content-tertiary); }
-.quality-col-bold { font-weight: 600; }
-.quality-rate-bar-track {
-  height: 6px;
-  background: var(--surface-tertiary);
-  border-radius: var(--shape-full);
-  overflow: hidden;
-}
-.quality-rate-bar-fill {
-  height: 100%;
-  border-radius: var(--shape-full);
-  transition: width var(--md-duration-medium4) var(--md-easing-emphasized-decelerate);
-}
-.rate-bar--green { background: rgb(var(--v-theme-secondary)); }
-.rate-bar--orange { background: rgb(var(--v-theme-warning)); }
-.rate-bar--red { background: rgb(var(--v-theme-error)); }
 </style>

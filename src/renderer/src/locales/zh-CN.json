@@ -464,18 +464,13 @@
   },
   "quality": {
     "title": "Agent 质量",
-    "all": "全部",
     "refresh": "刷新",
     "loading": "加载中…",
     "error": "错误：{msg}",
     "empty": "未找到已完成/已归档的任务。",
     "rejectionRate": "项目拒绝率",
     "noRejections": "未检测到拒绝",
-    "heuristicNote": "启发式检测 — 检测包含\"reject\"、\"return\"或\"todo\"的审核评论",
-    "colTotal": "总计",
-    "colRejected": "拒绝",
-    "colRate": "比率",
-    "colBar": "柱状图"
+    "heuristicNote": "启发式检测 — 检测包含\"reject\"、\"return\"或\"todo\"的审核评论"
   },
   "sessionActivityChart": {
     "title": "会话活动 — 最近14天",

@@ -464,18 +464,13 @@
   },
   "quality": {
     "title": "Ajan Kalitesi",
-    "all": "Tümü",
     "refresh": "Yenile",
     "loading": "Yükleniyor…",
     "error": "Hata: {msg}",
     "empty": "Tamamlanmış/arşivlenmiş görev bulunamadı.",
     "rejectionRate": "Proje red oranı",
     "noRejections": "Red tespit edilmedi",
-    "heuristicNote": "Buluşsal tespit — 'reject', 'return', 'todo' içeren inceleme yorumlarını algılar",
-    "colTotal": "Toplam",
-    "colRejected": "Reddedilen",
-    "colRate": "Oran",
-    "colBar": "Çubuk"
+    "heuristicNote": "Buluşsal tespit — 'reject', 'return', 'todo' içeren inceleme yorumlarını algılar"
   },
   "sessionActivityChart": {
     "title": "Oturum Aktivitesi — Son 14 Gün",

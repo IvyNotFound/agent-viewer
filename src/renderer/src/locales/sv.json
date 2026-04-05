@@ -464,18 +464,13 @@
   },
   "quality": {
     "title": "Agentkvalitet",
-    "all": "Alla",
     "refresh": "Uppdatera",
     "loading": "Laddar…",
     "error": "Fel: {msg}",
     "empty": "Inga klara/arkiverade uppgifter hittades.",
     "rejectionRate": "Projektets avslagsfrekevens",
     "noRejections": "Inga avslag hittades",
-    "heuristicNote": "Heuristisk detektering — granskarkommentarer med \"reject\", \"return\" eller \"todo\"",
-    "colTotal": "Totalt",
-    "colRejected": "Avslag",
-    "colRate": "Frekvens",
-    "colBar": "Stapel"
+    "heuristicNote": "Heuristisk detektering — granskarkommentarer med \"reject\", \"return\" eller \"todo\""
   },
   "sessionActivityChart": {
     "title": "Sessionsaktivitet — senaste 14 dagarna",

@@ -464,18 +464,13 @@
   },
   "quality": {
     "title": "Agenttien laatu",
-    "all": "Kaikki",
     "refresh": "Päivitä",
     "loading": "Ladataan…",
     "error": "Virhe: {msg}",
     "empty": "Ei valmiita tai arkistoituja tehtäviä löydetty.",
     "rejectionRate": "Projektin hylkäysaste",
     "noRejections": "Hylkäyksiä ei havaittu",
-    "heuristicNote": "Heuristinen tunnistus — tarkistajan kommentit, jotka sisältävät \"reject\", \"return\" tai \"todo\"",
-    "colTotal": "Yhteensä",
-    "colRejected": "Hylkäykset",
-    "colRate": "Aste",
-    "colBar": "Pylväs"
+    "heuristicNote": "Heuristinen tunnistus — tarkistajan kommentit, jotka sisältävät \"reject\", \"return\" tai \"todo\""
   },
   "sessionActivityChart": {
     "title": "Istuntoaktiivisuus — viimeiset 14 päivää",

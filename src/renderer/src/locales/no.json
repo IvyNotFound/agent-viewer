@@ -464,18 +464,13 @@
   },
   "quality": {
     "title": "Agentkvalitet",
-    "all": "Alle",
     "refresh": "Oppdater",
     "loading": "Laster…",
     "error": "Feil: {msg}",
     "empty": "Ingen ferdige/arkiverte oppgaver funnet.",
     "rejectionRate": "Prosjektavslagsrate",
     "noRejections": "Ingen avslag funnet",
-    "heuristicNote": "Heuristisk deteksjon — gjennomgangskommentarer som inneholder \"reject\", \"return\" eller \"todo\"",
-    "colTotal": "Total",
-    "colRejected": "Avslag",
-    "colRate": "Frekvens",
-    "colBar": "Stolpe"
+    "heuristicNote": "Heuristisk deteksjon — gjennomgangskommentarer som inneholder \"reject\", \"return\" eller \"todo\""
   },
   "sessionActivityChart": {
     "title": "Øktaktivitet — siste 14 dager",

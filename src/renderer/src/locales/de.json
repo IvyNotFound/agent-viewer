@@ -464,18 +464,13 @@
   },
   "quality": {
     "title": "Agentenqualität",
-    "all": "Alle",
     "refresh": "Aktualisieren",
     "loading": "Laden…",
     "error": "Fehler: {msg}",
     "empty": "Keine erledigten/archivierten Aufgaben gefunden.",
     "rejectionRate": "Projekt-Ablehnungsrate",
     "noRejections": "Keine Ablehnungen erkannt",
-    "heuristicNote": "Heuristische Erkennung — Reviewer-Kommentare mit \"reject\", \"return\" oder \"todo\"",
-    "colTotal": "Gesamt",
-    "colRejected": "Ablehnungen",
-    "colRate": "Quote",
-    "colBar": "Balken"
+    "heuristicNote": "Heuristische Erkennung — Reviewer-Kommentare mit \"reject\", \"return\" oder \"todo\""
   },
   "sessionActivityChart": {
     "title": "Sitzungsaktivität — letzte 14 Tage",

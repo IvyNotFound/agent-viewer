@@ -464,18 +464,13 @@
   },
   "quality": {
     "title": "Jakość agentów",
-    "all": "Wszystkie",
     "refresh": "Odśwież",
     "loading": "Ładowanie…",
     "error": "Błąd: {msg}",
     "empty": "Nie znaleziono gotowych/zarchiwizowanych zadań.",
     "rejectionRate": "Wskaźnik odrzuceń projektu",
     "noRejections": "Nie wykryto odrzuceń",
-    "heuristicNote": "Detekcja heurystyczna — komentarze recenzenta zawierające \"reject\", \"return\" lub \"todo\"",
-    "colTotal": "Łącznie",
-    "colRejected": "Odrzucenia",
-    "colRate": "Wskaźnik",
-    "colBar": "Słupek"
+    "heuristicNote": "Detekcja heurystyczna — komentarze recenzenta zawierające \"reject\", \"return\" lub \"todo\""
   },
   "sessionActivityChart": {
     "title": "Aktywność sesji — ostatnie 14 dni",

@@ -464,18 +464,13 @@
   },
   "quality": {
     "title": "에이전트 품질",
-    "all": "전체",
     "refresh": "새로 고침",
     "loading": "로딩 중…",
     "error": "오류: {msg}",
     "empty": "완료/보관된 작업을 찾을 수 없습니다.",
     "rejectionRate": "프로젝트 반려율",
     "noRejections": "반려가 감지되지 않았습니다",
-    "heuristicNote": "휴리스틱 감지 — 'reject', 'return', 'todo'를 포함하는 검토 댓글을 감지",
-    "colTotal": "합계",
-    "colRejected": "반려",
-    "colRate": "율",
-    "colBar": "바"
+    "heuristicNote": "휴리스틱 감지 — 'reject', 'return', 'todo'를 포함하는 검토 댓글을 감지"
   },
   "sessionActivityChart": {
     "title": "세션 활동 — 최근 14일",

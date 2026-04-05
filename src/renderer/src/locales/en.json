@@ -472,18 +472,13 @@
   },
   "quality": {
     "title": "Agent quality",
-    "all": "All",
     "refresh": "Refresh",
     "loading": "Loading…",
     "error": "Error: {msg}",
     "empty": "No done/archived tasks found.",
     "rejectionRate": "Project rejection rate",
     "noRejections": "No rejections detected",
-    "heuristicNote": "Heuristic detection — reviewer comments containing \"reject\", \"return\" or \"todo\"",
-    "colTotal": "Total",
-    "colRejected": "Rejections",
-    "colRate": "Rate",
-    "colBar": "Bar"
+    "heuristicNote": "Heuristic detection — reviewer comments containing \"reject\", \"return\" or \"todo\""
   },
   "sessionActivityChart": {
     "title": "Session activity — last 14 days",

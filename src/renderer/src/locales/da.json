@@ -464,18 +464,13 @@
   },
   "quality": {
     "title": "Agentkvalitet",
-    "all": "Alle",
     "refresh": "Opdater",
     "loading": "Indlæser…",
     "error": "Fejl: {msg}",
     "empty": "Ingen færdige/arkiverede opgaver fundet.",
     "rejectionRate": "Projektafvisningsrate",
     "noRejections": "Ingen afvisninger fundet",
-    "heuristicNote": "Heuristisk detektion — reviewerkommentarer indeholdende \"reject\", \"return\" eller \"todo\"",
-    "colTotal": "I alt",
-    "colRejected": "Afvisninger",
-    "colRate": "Frekvens",
-    "colBar": "Søjle"
+    "heuristicNote": "Heuristisk detektion — reviewerkommentarer indeholdende \"reject\", \"return\" eller \"todo\""
   },
   "sessionActivityChart": {
     "title": "Sessionaktivitet — seneste 14 dage",

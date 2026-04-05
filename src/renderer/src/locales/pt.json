@@ -464,18 +464,13 @@
   },
   "quality": {
     "title": "Qualidade dos agentes",
-    "all": "Todos",
     "refresh": "Atualizar",
     "loading": "A carregar…",
     "error": "Erro: {msg}",
     "empty": "Nenhuma tarefa concluída/arquivada encontrada.",
     "rejectionRate": "Taxa de rejeição do projeto",
     "noRejections": "Nenhuma rejeição detetada",
-    "heuristicNote": "Deteção heurística — comentários de revisão contendo \"reject\", \"return\" ou \"todo\"",
-    "colTotal": "Total",
-    "colRejected": "Rejeições",
-    "colRate": "Taxa",
-    "colBar": "Barra"
+    "heuristicNote": "Deteção heurística — comentários de revisão contendo \"reject\", \"return\" ou \"todo\""
   },
   "sessionActivityChart": {
     "title": "Atividade de sessões — últimos 14 dias",
