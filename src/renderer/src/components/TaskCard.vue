@@ -264,12 +264,13 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
   color: var(--content-muted);
   line-height: 1.4;
   margin: 0;
-  /* T1601: !important prevents Vuetify v-card-text overrides that break line-clamp on todo/done cards */
+  /* T1607: pure max-height + overflow approach — more reliable in Electron/Chromium than -webkit-line-clamp
+     which can be defeated by Vuetify v-card-text flex/display overrides on todo/done columns */
+  overflow: hidden !important;
+  max-height: calc(2 * 1.4 * 0.875rem) !important; /* 2 lines × line-height × text-body-2 font-size */
   display: -webkit-box !important;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical !important;
-  overflow: hidden !important;
-  max-height: calc(2 * 1.4 * 0.875rem); /* T1601: fallback height cap — 2 lines × line-height × text-body-2 font-size */
 }
 .card-footer {
   display: flex;
