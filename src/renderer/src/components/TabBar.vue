@@ -182,7 +182,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
         v-for="(group, groupIdx) in groupedTerminalTabs"
         :key="group.agentName ?? '__misc__'"
         class="tab-group"
-        :style="groupIdx < groupedTerminalTabs.length - 1 ? { marginRight: '12px' } : {}"
+        :class="groupIdx < groupedTerminalTabs.length - 1 ? 'tab-group-sep' : ''"
       >
         <!-- Onglet-agent (bouton principal du groupe) -->
         <button
@@ -192,7 +192,6 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
           @contextmenu.prevent="openGroupMenu($event, group)"
         >
           <v-icon size="12" style="flex-shrink: 0;">mdi-console</v-icon>
-          <span style="opacity: 0.5; user-select: none;">·</span>
           <span class="tab-agent-name">{{ group.agentName ?? '?' }}</span>
           <v-icon
             class="tab-chevron"
@@ -274,7 +273,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
 .tabbar {
   display: flex;
   align-items: stretch;
-  height: 40px;
+  height: 48px;
   flex-shrink: 0;
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   background: rgb(var(--v-theme-surface));
@@ -400,13 +399,18 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   gap: 2px;
   flex-shrink: 0;
 }
+.tab-group-sep {
+  border-right: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  margin-right: 4px;
+  padding-right: 4px;
+}
 .tab-agent {
   position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 0 12px;
-  font-weight: 600;
+  font-weight: 500;
   transition: all var(--md-duration-short3) var(--md-easing-standard);
   user-select: none;
   border-radius: var(--shape-xs) var(--shape-xs) 0 0;
@@ -414,6 +418,9 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   cursor: pointer;
   background: none;
   border: none;
+}
+.tab-agent:hover {
+  background: rgba(var(--v-theme-on-surface), 0.08);
 }
 .tab-agent-name {
   max-width: 80px;
@@ -429,7 +436,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
 }
 .tab-group-count {
   font-size: 10px;
-  font-family: monospace;
+  font-family: inherit;
   opacity: 0.7;
   flex-shrink: 0;
 }
@@ -448,6 +455,9 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   cursor: pointer;
   background: none;
   border: none;
+}
+.tab-sub:hover {
+  background: rgba(var(--v-theme-on-surface), 0.08);
 }
 .tab-sub-label {
   font-size: 12px;
