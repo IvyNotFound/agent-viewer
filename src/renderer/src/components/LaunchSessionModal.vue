@@ -225,7 +225,7 @@ async function launch() {
 
             <div v-if="loading" class="text-body-2 text-medium-emphasis">{{ t('common.loading') }}</div>
 
-            <div v-else-if="allAvailableInstances.length === 0" class="text-body-2" style="color: var(--content-subtle); font-style: italic;">
+            <div v-else-if="allAvailableInstances.length === 0" class="text-body-2" style="color: var(--content-muted); font-style: italic;">
               {{ noInstanceText }}
             </div>
 
@@ -440,7 +440,9 @@ async function launch() {
 .modal-footer {
   padding: 16px 20px;
   border-top: 1px solid var(--edge-subtle);
-  background: var(--surface-base);
+  /* No explicit background — inherits surface-dialog from v-card (global main.css rule).
+     surface-base (zinc-950) would create an MD3-non-compliant inverted elevation:
+     footer would appear "deeper" than the card body, which contradicts MD3 surface levels. */
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -450,7 +452,9 @@ async function launch() {
 /* Header typography */
 .section-label {
   font-weight: 600;
-  color: var(--content-subtle);
+  /* content-muted (zinc-400) = 6.25:1 on surface-dialog (zinc-800) — WCAG AA compliant.
+     content-subtle (zinc-500) was only 3.36:1 which fails AA for 12px caption text. */
+  color: var(--content-muted);
   letter-spacing: 0.02em;
 }
 .agent-title {
@@ -463,7 +467,9 @@ async function launch() {
   color: var(--content-secondary);
 }
 .field-hint {
-  color: var(--content-faint);
+  /* content-muted (zinc-400) = 6.25:1 on surface-dialog (zinc-800) — WCAG AA compliant.
+     content-faint (zinc-600) was only 2.07:1, well below the 4.5:1 minimum for 12px text. */
+  color: var(--content-muted);
   margin-top: 4px;
 }
 .field-hint--error {
