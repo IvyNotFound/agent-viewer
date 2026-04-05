@@ -235,6 +235,52 @@ html {
 .stream-markdown tr:nth-child(odd) td { background: transparent; }
 .stream-markdown tr:nth-child(even) td { background: rgba(var(--v-theme-on-surface), 0.04); }
 
+/* ── Copy code button (T1516) ─────────────────────────────────────────────────
+   .code-block-wrapper wraps every <pre> injected by renderMarkdown.ts.
+   Button is hidden by default and revealed on hover.
+   ────────────────────────────────────────────────────────────────────────── */
+.code-block-wrapper {
+  position: relative;
+}
+
+.copy-code-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.4);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 1;
+  font-family: inherit;
+}
+
+.code-block-wrapper:hover .copy-code-btn {
+  opacity: 1;
+}
+
+.copy-code-btn.copied {
+  color: #4caf50;
+  border-color: #4caf50;
+}
+
+[data-v-theme="light"] .copy-code-btn {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.7);
+  color: rgba(0, 0, 0, 0.6);
+}
+
+[data-v-theme="light"] .copy-code-btn.copied {
+  color: #2e7d32;
+  border-color: #2e7d32;
+}
+
 /* MD3 dialog depth — backdrop blur + elevated surface tint (v-dialog only, not menus/tooltips) */
 .v-dialog .v-overlay__scrim {
   backdrop-filter: blur(6px);

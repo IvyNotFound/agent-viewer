@@ -12,6 +12,7 @@ import { useSettingsStore } from '@renderer/stores/settings'
 import { useAgentsStore } from '@renderer/stores/agents'
 import { agentFg, agentBg, agentBorder, colorVersion, getOnColor } from '@renderer/utils/agentColor'
 import { useStreamEvents } from '@renderer/composables/useStreamEvents'
+import { useCopyCode } from '@renderer/composables/useCopyCode'
 import HookEventBar from './HookEventBar.vue'
 import StreamToolBlock from './StreamToolBlock.vue'
 import StreamInputBar from './StreamInputBar.vue'
@@ -52,6 +53,7 @@ const {
   assignEventId, enqueueEvent,
   scrollToBottom, toggleCollapsed, cleanup,
 } = useStreamEvents(props.terminalId)
+useCopyCode(scrollContainer)
 
 import { ref } from 'vue'
 const sessionId = ref<string | null>(null)

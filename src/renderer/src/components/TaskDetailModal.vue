@@ -1,18 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
 import { useTasksStore } from '@renderer/stores/tasks'
+import { renderMarkdown as renderMarkdownShared } from '@renderer/utils/renderMarkdown'
+import { useCopyCode } from '@renderer/composables/useCopyCode'
 import AgentBadge from './AgentBadge.vue'
 import TaskDependencyGraph from './TaskDependencyGraph.vue'
 import GitCommitList from './GitCommitList.vue'
 import { agentFg, agentBg, agentBorder, perimeterFg, perimeterBg, perimeterBorder } from '@renderer/utils/agentColor'
 import { parseUtcDate } from '@renderer/utils/parseDate'
 import type { TaskAssignee, TaskLink } from '@renderer/types'
-
-// Configure marked for synchronous rendering
-marked.setOptions({ async: false })
 
 const { t, locale } = useI18n()
 const store = useTasksStore()
@@ -53,12 +50,12 @@ function normalizeNewlines(text: string): string {
   return text.replace(/\\n/g, '\n')
 }
 
-// Render markdown with DOMPurify sanitization
 function renderMarkdown(text: string): string {
-  const normalized = normalizeNewlines(text)
-  const raw = marked.parse(normalized) as string
-  return DOMPurify.sanitize(raw)
+  return renderMarkdownShared(normalizeNewlines(text))
 }
+
+const taskPanelRef = ref<HTMLElement | null>(null)
+useCopyCode(taskPanelRef)
 
 // Computed for description
 const renderedDescription = computed(() => {
@@ -162,7 +159,7 @@ onUnmounted(() => {
       <div class="backdrop-overlay" @click="store.closeTask()"></div>
 
       <!-- Panel -->
-      <div class="task-panel elevation-8">
+      <div ref="taskPanelRef" class="task-panel elevation-8">
 
         <!-- Header -->
         <div class="task-header ga-3 py-4 px-5">
