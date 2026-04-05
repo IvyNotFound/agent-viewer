@@ -165,14 +165,15 @@ function resultPreview(html: string | undefined): string {
       variant="text"
       block
       class="tool-header py-2 px-3 text-caption"
-      :style="{ color: accentFg, backgroundColor: accentBg }"
+      :style="{ backgroundColor: accentBg }"
       @click="emit('toggleCollapsed', collapseKey(eventId, blockIdx), false)"
     >
       <v-icon
         :icon="isCollapsed(eventId, blockIdx, false) ? 'mdi-chevron-right' : 'mdi-chevron-down'"
         size="small"
+        :style="{ color: accentFg }"
       />
-      <span class="tool-name">{{ block.name }}</span>
+      <span class="tool-name" :style="{ color: accentFg }">{{ block.name }}</span>
       <span class="tool-label">{{ t('stream.tool') }}</span>
     </v-btn>
     <div
