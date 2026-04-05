@@ -131,8 +131,10 @@ function effortColor(effort: number): string {
 
 <template>
   <v-dialog :model-value="modelValue" max-width="672" @update:model-value="close">
+    <!-- <Transition> wraps v-if to animate entry/exit per MD3 motion spec -->
     <!-- v-if="modelValue" ensures content is not rendered when closed (test compat for shallowMount) -->
     <!-- data-testid="palette-backdrop" allows @click.self backdrop test -->
+    <Transition name="palette">
     <div
       v-if="modelValue"
       data-testid="palette-backdrop"
@@ -300,13 +302,14 @@ function effortColor(effort: number): string {
 
         <!-- Footer -->
         <div class="palette-footer">
-          <span class="palette-hint text-caption"><kbd class="palette-kbd">↑↓</kbd> {{ t('commandPalette.navigate') }}</span>
-          <span class="palette-hint text-caption"><kbd class="palette-kbd">↵</kbd> {{ t('commandPalette.open') }}</span>
-          <span class="palette-hint text-caption" style="margin-left: auto;"><kbd class="palette-kbd">Ctrl+K</kbd> toggle</span>
+          <span class="palette-hint text-label-medium"><kbd class="palette-kbd">↑↓</kbd> {{ t('commandPalette.navigate') }}</span>
+          <span class="palette-hint text-label-medium"><kbd class="palette-kbd">↵</kbd> {{ t('commandPalette.open') }}</span>
+          <span class="palette-hint text-label-medium" style="margin-left: auto;"><kbd class="palette-kbd">Ctrl+K</kbd> toggle</span>
         </div>
 
       </div>
     </div>
+    </Transition>
   </v-dialog>
 </template>
 
@@ -321,13 +324,22 @@ function effortColor(effort: number): string {
   width: 100%;
   margin: 0 16px;
   background: var(--surface-dialog);
-  border-radius: var(--shape-md);
-  border: 1px solid rgba(var(--v-theme-on-surface, 255, 255, 255), 0.1);
+  border-radius: var(--shape-xl); /* MD3 Dialog spec — 28px */
+  border: 1px solid var(--edge-subtle);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   height: 72vh;
   max-height: 72vh;
+  transition: transform var(--md-duration-medium2) var(--md-easing-emphasized-decelerate),
+              opacity  var(--md-duration-short4)   var(--md-easing-standard);
+}
+
+/* MD3 entry/exit motion — panel slides from -8px above */
+.palette-enter-from .palette-panel,
+.palette-leave-to   .palette-panel {
+  transform: translateY(-8px);
+  opacity: 0;
 }
 
 /* Search row */
@@ -421,13 +433,14 @@ function effortColor(effort: number): string {
   border-left: 2px solid transparent !important;
   padding: 8px 16px !important;
   min-height: 0 !important;
+  transition: background var(--md-duration-short2) var(--md-easing-standard);
 }
 .palette-item:hover {
-  background: rgba(var(--v-theme-on-surface, 255, 255, 255), var(--md-state-hover)) !important;
+  background: rgba(var(--v-theme-on-surface), var(--md-state-hover)) !important;
   border-left-color: var(--content-faint) !important;
 }
 .palette-item--selected {
-  background: var(--surface-secondary) !important;
+  background: rgba(var(--v-theme-primary), 0.12) !important; /* MD3 tonal primary state layer */
   border-left-color: rgb(var(--v-theme-primary)) !important;
 }
 
