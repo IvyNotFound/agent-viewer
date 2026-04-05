@@ -133,19 +133,20 @@ const archivedGroupsSorted = computed(() => {
   <div class="board-root">
     <!-- Header -->
     <div class="board-header py-3 px-5">
-      <!-- Sub-tabs -->
-      <div class="board-tabs ga-1">
-        <v-btn
-          v-for="tab in (['backlog', 'archive'] as BoardTab[])"
-          :key="tab"
-          variant="text"
-          size="small"
-          class="text-caption" :class="['tab-btn', { active: activeTab === tab }]"
-          @click="activeTab = tab"
-        >
-          {{ tab === 'backlog' ? t('board.backlog') : t('board.archive', { count: store.stats.archived }) }}
+      <!-- Sub-tabs: MD3 Segmented Button -->
+      <v-btn-toggle
+        v-model="activeTab"
+        mandatory
+        density="compact"
+        class="board-tabs"
+      >
+        <v-btn value="backlog" size="small" variant="outlined">
+          {{ t('board.backlog') }}
         </v-btn>
-      </div>
+        <v-btn value="archive" size="small" variant="outlined">
+          {{ t('board.archive', { count: store.stats.archived }) }}
+        </v-btn>
+      </v-btn-toggle>
 
       <!-- Active filters -->
       <div class="board-filters ga-2">
@@ -314,18 +315,6 @@ const archivedGroupsSorted = computed(() => {
   justify-content: space-between;
   border-bottom: 1px solid var(--edge-subtle);
   flex-shrink: 0;
-}
-.board-tabs {
-  display: flex;
-  align-items: center;
-}
-.tab-btn {
-  font-weight: 500 !important;
-  color: var(--content-subtle) !important;
-}
-.tab-btn.active {
-  background-color: var(--surface-tertiary) !important;
-  color: var(--content-primary) !important;
 }
 .board-filters {
   display: flex;
