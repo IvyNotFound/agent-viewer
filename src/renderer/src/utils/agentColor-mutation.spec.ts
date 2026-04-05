@@ -128,25 +128,25 @@ describe('agentColor mutation coverage (T1286 + T1467)', () => {
 
   // ── MD2 shade relationships ──────────────────────────────────────────────────
   describe('MD2 shade relationships — semantic invariants', () => {
-    it('agentBg dark differs from agentFg dark (darken4 vs lighten3)', () => {
+    it('agentBg dark differs from agentFg dark (darken2 vs lighten3+)', () => {
       setDarkMode(true)
       const name = 'sat-factor-test'
       expect(agentBg(name)).not.toBe(agentFg(name))
     })
 
-    it('agentBg light differs from agentFg light (lighten5 vs darken2)', () => {
+    it('agentBg light differs from agentFg light (lighten3 vs darken2+)', () => {
       setDarkMode(false)
       const name = 'sat-light-factor-test'
       expect(agentBg(name)).not.toBe(agentFg(name))
     })
 
-    it('agentBorder dark differs from agentFg dark (darken2 vs lighten3)', () => {
+    it('agentBorder dark differs from agentFg dark (lighten1 vs lighten3+)', () => {
       setDarkMode(true)
       const name = 'border-factor-check'
       expect(agentBorder(name)).not.toBe(agentFg(name))
     })
 
-    it('perimeterFg dark differs from agentBg dark (lighten4 vs darken4)', () => {
+    it('perimeterFg dark differs from agentBg dark (lighten4+ vs darken2)', () => {
       setDarkMode(true)
       const name = 'perimeter-factor-dark'
       expect(perimeterFg(name)).not.toBe(agentBg(name))
@@ -173,7 +173,7 @@ describe('agentColor mutation coverage (T1286 + T1467)', () => {
       expect(perimeterBg(name)).toMatch(HEX_PATTERN)
     })
 
-    it('perimeterBorder dark differs from agentBorder dark (darken3 vs darken2)', () => {
+    it('perimeterBorder dark differs from agentBorder dark (lighten2 vs lighten1)', () => {
       setDarkMode(true)
       const name = 'pborder-factor-test'
       expect(perimeterBorder(name)).not.toBe(agentBorder(name))

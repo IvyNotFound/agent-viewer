@@ -135,26 +135,26 @@ describe('agentColor MD2 palette (T1467)', () => {
     })
   })
 
-  // ── agentBg() — darken4 dark / lighten5 light ────────────────────────────────
+  // ── agentBg() — darken3 dark / lighten3 light ────────────────────────────────
   describe('agentBg() — exact MD2 hex values', () => {
-    it('"a" (pink idx=1) dark → pink darken4 #880e4f', () => {
+    it('"a" (pink idx=1) dark → pink darken3 #ad1457', () => {
       setDarkMode(true)
-      expect(agentBg('a')).toBe('#880e4f')
+      expect(agentBg('a')).toBe('#ad1457')
     })
 
-    it('"a" (pink idx=1) light → pink lighten5 #fce4ec', () => {
+    it('"a" (pink idx=1) light → pink lighten3 #f48fb1', () => {
       setDarkMode(false)
-      expect(agentBg('a')).toBe('#fce4ec')
+      expect(agentBg('a')).toBe('#f48fb1')
     })
 
-    it('"i" (brown idx=9) dark → brown darken4 #3e2723', () => {
+    it('"i" (brown idx=9) dark → brown darken3 #4e342e', () => {
       setDarkMode(true)
-      expect(agentBg('i')).toBe('#3e2723')
+      expect(agentBg('i')).toBe('#4e342e')
     })
 
-    it('"i" (brown idx=9) light → brown lighten5 #efebe9', () => {
+    it('"i" (brown idx=9) light → brown lighten3 #bcaaa4', () => {
       setDarkMode(false)
-      expect(agentBg('i')).toBe('#efebe9')
+      expect(agentBg('i')).toBe('#bcaaa4')
     })
 
     it('agentBg dark differs from agentFg dark (different shades)', () => {
@@ -172,11 +172,11 @@ describe('agentColor MD2 palette (T1467)', () => {
     })
   })
 
-  // ── agentBorder() — darken2 dark / lighten2 light ────────────────────────────
+  // ── agentBorder() — lighten1 dark (accent on darken3 bg) / lighten2 light ────
   describe('agentBorder() — exact MD2 hex values', () => {
-    it('"a" (pink idx=1) dark → pink darken2 #c2185b', () => {
+    it('"a" (pink idx=1) dark → pink lighten1 #ec407a', () => {
       setDarkMode(true)
-      expect(agentBorder('a')).toBe('#c2185b')
+      expect(agentBorder('a')).toBe('#ec407a')
     })
 
     it('"a" (pink idx=1) light → pink lighten2 #f06292', () => {
@@ -231,16 +231,16 @@ describe('agentColor MD2 palette (T1467)', () => {
     })
   })
 
-  // ── perimeterBg() — darken4 dark / lighten5 light (same as agentBg) ──────────
+  // ── perimeterBg() — darken3 dark / lighten3 light (same as agentBg) ──────────
   describe('perimeterBg() — exact MD2 hex values', () => {
-    it('"a" (pink idx=1) dark → pink darken4 #880e4f', () => {
+    it('"a" (pink idx=1) dark → pink darken3 #ad1457', () => {
       setDarkMode(true)
-      expect(perimeterBg('a')).toBe('#880e4f')
+      expect(perimeterBg('a')).toBe('#ad1457')
     })
 
-    it('"a" (pink idx=1) light → pink lighten5 #fce4ec', () => {
+    it('"a" (pink idx=1) light → pink lighten3 #f48fb1', () => {
       setDarkMode(false)
-      expect(perimeterBg('a')).toBe('#fce4ec')
+      expect(perimeterBg('a')).toBe('#f48fb1')
     })
 
     it('dark and light values always differ', () => {
@@ -254,19 +254,19 @@ describe('agentColor MD2 palette (T1467)', () => {
     })
   })
 
-  // ── perimeterBorder() — darken3 dark / lighten3 light ────────────────────────
+  // ── perimeterBorder() — lighten2 dark / lighten1 light ────────────────────────
   describe('perimeterBorder() — exact MD2 hex values', () => {
-    it('"a" (pink idx=1) dark → pink darken3 #ad1457', () => {
+    it('"a" (pink idx=1) dark → pink lighten2 #f06292', () => {
       setDarkMode(true)
-      expect(perimeterBorder('a')).toBe('#ad1457')
+      expect(perimeterBorder('a')).toBe('#f06292')
     })
 
-    it('"a" (pink idx=1) light → pink lighten3 #f48fb1', () => {
+    it('"a" (pink idx=1) light → pink lighten1 #ec407a', () => {
       setDarkMode(false)
-      expect(perimeterBorder('a')).toBe('#f48fb1')
+      expect(perimeterBorder('a')).toBe('#ec407a')
     })
 
-    it('perimeterBorder dark differs from agentBorder dark (different shade: darken3 vs darken2)', () => {
+    it('perimeterBorder dark differs from agentBorder dark (different shade: lighten2 vs lighten1)', () => {
       setDarkMode(true)
       for (const name of ['a', 'b', 'i', 'j', 'k']) {
         expect(perimeterBorder(name)).not.toBe(agentBorder(name))

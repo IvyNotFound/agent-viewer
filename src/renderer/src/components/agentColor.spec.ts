@@ -107,28 +107,28 @@ describe('agentColor — hash function exact palette indices (T1319, updated T16
   })
 })
 
-describe('agentColor — MD2 shade exact values (T1319 + T1467, updated T1625)', () => {
+describe('agentColor — MD2 shade exact values (T1319 + T1467, updated T1632)', () => {
   // test-agent: idx=2 (purple family), hash=621962762, 621962762%12=2
-  // agentBg dark=darken4=#4a148c, light=lighten5=#f3e5f5
-  // agentBorder dark=darken2=#7b1fa2, light=lighten2=#ba68c8
-  // perimeterBg dark=darken4=#4a148c, light=lighten5=#f3e5f5
-  // perimeterBorder dark=darken3=#6a1b9a, light=lighten3=#ce93d8
+  // agentBg dark=darken3=#6a1b9a, light=lighten3=#ce93d8
+  // agentBorder dark=lighten1=#ab47bc, light=lighten2=#ba68c8
+  // perimeterBg dark=darken3=#6a1b9a, light=lighten3=#ce93d8
+  // perimeterBorder dark=lighten2=#ba68c8, light=lighten1=#ab47bc
 
   afterEach(() => setDarkMode(false))
 
-  it('agentBg dark mode (test-agent: purple darken4 #4a148c)', () => {
+  it('agentBg dark mode (test-agent: purple darken3 #6a1b9a)', () => {
     setDarkMode(true)
-    expect(agentBg('test-agent')).toBe('#4a148c')
+    expect(agentBg('test-agent')).toBe('#6a1b9a')
   })
 
-  it('agentBg light mode (test-agent: purple lighten5 #f3e5f5)', () => {
+  it('agentBg light mode (test-agent: purple lighten3 #ce93d8)', () => {
     setDarkMode(false)
-    expect(agentBg('test-agent')).toBe('#f3e5f5')
+    expect(agentBg('test-agent')).toBe('#ce93d8')
   })
 
-  it('agentBorder dark mode (test-agent: purple darken2 #7b1fa2)', () => {
+  it('agentBorder dark mode (test-agent: purple lighten1 #ab47bc)', () => {
     setDarkMode(true)
-    expect(agentBorder('test-agent')).toBe('#7b1fa2')
+    expect(agentBorder('test-agent')).toBe('#ab47bc')
   })
 
   it('agentBorder light mode (test-agent: purple lighten2 #ba68c8)', () => {
@@ -146,24 +146,24 @@ describe('agentColor — MD2 shade exact values (T1319 + T1467, updated T1625)',
     expect(contrastRatio(perimeterFg('test-agent'), agentBg('test-agent'))).toBeGreaterThanOrEqual(4.5)
   })
 
-  it('perimeterBg dark mode (test-agent: purple darken4 #4a148c)', () => {
+  it('perimeterBg dark mode (test-agent: purple darken3 #6a1b9a)', () => {
     setDarkMode(true)
-    expect(perimeterBg('test-agent')).toBe('#4a148c')
+    expect(perimeterBg('test-agent')).toBe('#6a1b9a')
   })
 
-  it('perimeterBg light mode (test-agent: purple lighten5 #f3e5f5)', () => {
+  it('perimeterBg light mode (test-agent: purple lighten3 #ce93d8)', () => {
     setDarkMode(false)
-    expect(perimeterBg('test-agent')).toBe('#f3e5f5')
+    expect(perimeterBg('test-agent')).toBe('#ce93d8')
   })
 
-  it('perimeterBorder dark mode (test-agent: purple darken3 #6a1b9a)', () => {
+  it('perimeterBorder dark mode (test-agent: purple lighten2 #ba68c8)', () => {
     setDarkMode(true)
-    expect(perimeterBorder('test-agent')).toBe('#6a1b9a')
+    expect(perimeterBorder('test-agent')).toBe('#ba68c8')
   })
 
-  it('perimeterBorder light mode (test-agent: purple lighten3 #ce93d8)', () => {
+  it('perimeterBorder light mode (test-agent: purple lighten1 #ab47bc)', () => {
     setDarkMode(false)
-    expect(perimeterBorder('test-agent')).toBe('#ce93d8')
+    expect(perimeterBorder('test-agent')).toBe('#ab47bc')
   })
 
   it('hello dark agentFg — WCAG AA ratio >= 4.5:1 (blueGrey family)', () => {
