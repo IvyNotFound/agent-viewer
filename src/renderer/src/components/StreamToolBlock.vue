@@ -91,10 +91,11 @@ function writeLines(input: Record<string, unknown> | undefined): DiffLine[] {
 </script>
 
 <template>
-  <!-- tool_use block — carte collapsible couleur agent (T680) -->
+  <!-- tool_use block — inline action bar couleur agent, déplié par défaut (T680, T1530) -->
   <div
     v-if="block.type === 'tool_use'"
-    class="tool-block mb-2"
+    class="tool-block tool-block--use mb-2"
+    :style="{ borderLeftColor: accentFg, backgroundColor: accentBg }"
     data-testid="block-tool-use"
   >
     <v-btn
@@ -102,17 +103,17 @@ function writeLines(input: Record<string, unknown> | undefined): DiffLine[] {
       block
       class="tool-header py-2 px-3 text-caption"
       :style="{ color: accentFg }"
-      @click="emit('toggleCollapsed', collapseKey(eventId, blockIdx), true)"
+      @click="emit('toggleCollapsed', collapseKey(eventId, blockIdx), false)"
     >
       <v-icon
-        :icon="isCollapsed(eventId, blockIdx, true) ? 'mdi-chevron-right' : 'mdi-chevron-down'"
+        :icon="isCollapsed(eventId, blockIdx, false) ? 'mdi-chevron-right' : 'mdi-chevron-down'"
         size="small"
       />
       <span class="tool-name">{{ block.name }}</span>
       <span class="tool-label">{{ t('stream.tool') }}</span>
     </v-btn>
     <div
-      v-show="!isCollapsed(eventId, blockIdx, true)"
+      v-show="!isCollapsed(eventId, blockIdx, false)"
       class="tool-body pt-3 px-4 pb-2 text-caption"
     >
       <!-- Edit: diff view (T1514) -->
@@ -278,19 +279,24 @@ function writeLines(input: Record<string, unknown> | undefined): DiffLine[] {
 </template>
 
 <style scoped>
+/* T1530: redesign — left-accent bar (code-block pattern) instead of card */
 .tool-block {
-  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-  border-radius: 12px;
+  border-left: 3px solid var(--edge-default);
+  border-radius: 0 4px 4px 0;
   overflow: hidden;
 }
 
+/* tool_use: border-left color + bg injected via inline style (agent accent) */
+.tool-block--use {
+  border-left-width: 3px;
+}
+
 .tool-block--result {
-  border-color: var(--edge-default);
   background-color: var(--surface-primary);
 }
 
 .tool-block--error {
-  border-color: rgba(var(--v-theme-error), 0.4);
+  border-left-color: rgba(var(--v-theme-error), 0.8);
   background-color: rgba(var(--v-theme-error), 0.08);
 }
 
