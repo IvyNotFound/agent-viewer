@@ -59,6 +59,8 @@ const vuetifyPlugin = createVuetify({
           'surface-secondary': '#27272a',  // zinc-800
           'surface-tertiary': '#3f3f46',   // zinc-700
           'surface-dialog': '#27272a',     // zinc-800 — MD3 elevation tint for dialogs
+          'surface-variant': '63,63,70',       // zinc-700 — MD3 neutral-variant container
+          'on-surface-variant': '212,212,216', // zinc-300 — MD3 on-neutral-variant container
           // Content tokens
           'content-primary': '#f4f4f5',    // zinc-100
           'content-secondary': '#e4e4e7',  // zinc-200
@@ -112,6 +114,8 @@ const vuetifyPlugin = createVuetify({
           'surface-secondary': '#e4e4e7',  // zinc-200 — distinct from surface-base for visible chat bubbles
           'surface-tertiary': '#e4e4e7',   // zinc-200
           'surface-dialog': '#ffffff',     // white — dialogs float on white in light mode
+          'surface-variant': '228,228,231',    // zinc-200 — MD3 neutral-variant container
+          'on-surface-variant': '63,63,70',    // zinc-700 — MD3 on-neutral-variant container
           // Content tokens
           'content-primary': '#18181b',    // zinc-900
           'content-secondary': '#27272a',  // zinc-800
