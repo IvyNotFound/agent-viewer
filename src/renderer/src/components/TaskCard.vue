@@ -110,7 +110,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
     @contextmenu="onContextMenu"
   >
     <!-- Card body: unified section with consistent gap between zones -->
-    <v-card-text class="card-body pa-3 pb-0">
+    <v-card-text class="card-body pa-4 pb-0">
       <!-- Top row: title + effort/priority badges -->
       <div class="card-top ga-2">
         <div class="card-title-area">
@@ -126,7 +126,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
       </div>
 
       <!-- Badges: perimeter + agent avatars -->
-      <div v-if="task.scope || task.agent_name || assigneeAvatars.length > 0" class="card-meta mt-2">
+      <div v-if="task.scope || task.agent_name || assigneeAvatars.length > 0" class="card-meta mt-3">
         <v-chip
           v-if="task.scope"
           size="x-small"
@@ -159,7 +159,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
       </div>
 
       <!-- Description excerpt: up to 2 lines, fills body to balance footer -->
-      <p v-if="task.description" class="card-description text-body-2 mt-2">{{ task.description }}</p>
+      <p v-if="task.description" class="card-description text-body-2 mt-3">{{ task.description }}</p>
     </v-card-text>
 
     <!-- Footer: dates left, #id right -->
@@ -196,7 +196,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
   border: 1px solid var(--edge-subtle) !important; /* MD3: subtle at-rest border */
   border-radius: var(--shape-md) !important; /* MD3 medium shape (was 8px) */
   cursor: pointer;
-  min-height: 148px;
+  min-height: 180px;
   position: relative;
   overflow: hidden;
   transition: box-shadow var(--md-duration-short3) var(--md-easing-standard);
@@ -259,7 +259,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
 }
 /* Compact footer: reduces vertical padding vs Vuetify pa-3 default (12px → 6/8px) */
 .card-footer-section {
-  padding: 6px 12px 8px;
+  padding: 8px 16px 10px;
 }
 /* Description excerpt: max 2 lines, body-2 size (14sp), single opacity layer */
 .card-description {
