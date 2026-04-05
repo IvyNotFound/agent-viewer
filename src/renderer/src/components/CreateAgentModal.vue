@@ -232,24 +232,13 @@ function handleKeydown(e: KeyboardEvent) {
           />
 
           <!-- Type -->
-          <div>
-            <div class="field-label mb-2">{{ t('agent.type') }}</div>
-            <v-btn-toggle
-              v-model="type"
-              mandatory
-              color="primary"
-              variant="outlined"
-              density="default"
-              class="type-toggle"
-            >
-              <v-btn
-                v-for="tp in ALL_TYPES"
-                :key="tp"
-                :value="tp"
-                class="type-btn"
-              >{{ tp }}</v-btn>
-            </v-btn-toggle>
-          </div>
+          <v-select
+            v-model="type"
+            :items="ALL_TYPES"
+            :label="t('agent.type')"
+            variant="outlined"
+            hide-details
+          />
 
           <!-- Périmètre (scoped only) -->
           <v-combobox
@@ -423,19 +412,6 @@ function handleKeydown(e: KeyboardEvent) {
 .field-label-note {
   color: var(--content-faint);
   margin-left: 4px;
-}
-
-/* Type grid using v-btn-toggle */
-.type-toggle {
-  flex-wrap: wrap !important;
-  height: auto !important;
-  gap: 4px;
-  width: 100%;
-}
-.type-btn {
-  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace !important;
-  flex: 0 1 calc(25% - 3px) !important;
-  min-width: 0 !important;
 }
 
 /* System prompt toggle */
