@@ -181,6 +181,12 @@ function toggleSection(section: Section) {
 <style scoped>
 /* Scoped CSS justified: custom rail+panel pattern has no direct Vuetify equivalent;
    the rail (48px) + sliding panel (0-272px) pattern requires precise width control */
+
+/* MD3: Navigation Drawer — rounded right corners on exposed edge (LTR), left stays 0 */
+.sidebar-drawer {
+  border-radius: 0 var(--shape-lg) var(--shape-lg) 0 !important;
+}
+
 .sidebar-drawer :deep(.v-navigation-drawer__content) {
   overflow: hidden;
   display: flex;
