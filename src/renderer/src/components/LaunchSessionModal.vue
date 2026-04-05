@@ -190,36 +190,30 @@ async function launch() {
 <template>
   <v-dialog model-value max-width="560" scrollable @update:model-value="emit('close')">
     <div data-testid="launch-modal-backdrop" @click.self="emit('close')">
-    <v-card elevation="3" class="overflow-hidden">
+    <v-card elevation="3" class="d-flex flex-column" style="max-height: 85vh;">
         <!-- Header -->
-        <v-toolbar
-          color="transparent"
-          density="compact"
+        <div
+          class="modal-header"
           :style="{ borderLeft: '3px solid ' + agentBorder(agent.name) }"
         >
-          <v-toolbar-title class="pl-1">
+          <div>
             <p class="text-label-medium" style="color: var(--content-muted); letter-spacing: 0.02em; font-weight: 600; line-height: 1.2;">{{ t('launch.title') }}</p>
             <span class="agent-title" :style="{ color: agentAccent(agent.name) }">{{ agent.name }}</span>
-          </v-toolbar-title>
-          <v-spacer />
+          </div>
           <v-btn
             data-testid="btn-close"
-            icon
+            icon="mdi-close"
             size="small"
             variant="text"
             @click="emit('close')"
-          >
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-
-        <v-divider />
+          />
+        </div>
 
         <!-- Loading bar -->
         <v-progress-linear v-if="loading" indeterminate color="primary" height="2" />
 
         <!-- Body -->
-        <v-card-text class="d-flex flex-column ga-4 pa-5">
+        <div class="modal-body">
 
           <!-- Unified instance list: all CLIs × all environments (Windows, WSL distros, local) -->
           <div>
@@ -376,12 +370,10 @@ async function launch() {
               {{ t('launch.multiInstanceError', { error: worktreeError }) }}
             </p>
           </div>
-        </v-card-text>
-
-        <v-divider />
+        </div>
 
         <!-- Footer -->
-        <v-card-actions class="flex-column align-stretch pa-4 ga-2">
+        <div class="modal-footer">
           <p v-if="!loading && allAvailableInstances.length === 0" data-testid="no-instance-warning" class="no-instance-warning text-caption text-right">
             {{ noInstanceText }}
           </p>
@@ -420,20 +412,41 @@ async function launch() {
               </v-btn>
             </div>
           </div>
-        </v-card-actions>
+        </div>
     </v-card>
     </div>
   </v-dialog>
 </template>
 
 <style scoped>
+/* Card layout */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--edge-subtle);
+  flex-shrink: 0;
+}
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--edge-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 /* Header typography */
 .agent-title {
-  font-size: 16px;
-  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
-  font-weight: 600;
-}
-:deep(.v-toolbar-title.agent-title) {
   font-size: 16px;
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
   font-weight: 600;
@@ -466,7 +479,7 @@ async function launch() {
 }
 .instance-row--idle {
   border-color: var(--edge-default);
-  background: rgba(var(--v-theme-surface-variant, 39, 39, 42), 0.4);
+  background: var(--surface-secondary);
 }
 .instance-row--idle:hover {
   border-color: var(--content-faint);
