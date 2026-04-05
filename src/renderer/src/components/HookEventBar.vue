@@ -146,8 +146,7 @@ function rowLabel(e: HookEvent): string {
 }
 
 .tool-name-active {
-  font-size: 0.6875rem;
-  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -156,9 +155,8 @@ function rowLabel(e: HookEvent): string {
 }
 
 .event-count-text {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: var(--content-faint);
-  font-family: ui-monospace, monospace;
 }
 
 .header-spacer { flex: 1; }
@@ -186,22 +184,19 @@ function rowLabel(e: HookEvent): string {
 }
 
 .event-icon {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: var(--content-faint);
-  font-family: ui-monospace, monospace;
   flex-shrink: 0;
 }
 
 .event-label {
-  font-size: 0.625rem;
-  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
   flex-shrink: 0;
 }
 
 .event-time {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: var(--content-faint);
-  font-family: ui-monospace, monospace;
   margin-left: auto;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;

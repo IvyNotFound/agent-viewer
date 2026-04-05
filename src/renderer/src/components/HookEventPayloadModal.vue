@@ -40,8 +40,8 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
       <v-card class="payload-card">
         <!-- Header -->
         <v-card-title class="d-flex align-center gap-3 pa-4 pb-3">
-          <span class="text-subtitle-2 font-weight-medium" style="font-family: ui-monospace, monospace;">{{ event.event }}</span>
-          <span class="text-caption text-disabled" style="font-family: ui-monospace, monospace;">{{ timestamp }}</span>
+          <span class="text-subtitle-2 font-weight-medium modal-event-name">{{ event.event }}</span>
+          <span class="text-caption text-disabled modal-timestamp">{{ timestamp }}</span>
           <v-spacer />
           <v-btn
             icon="mdi-close"
@@ -75,9 +75,12 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
   overflow: auto;
 }
 
+.modal-event-name { /* event type label — inherits Roboto from Vuetify */ }
+.modal-timestamp { font-variant-numeric: tabular-nums; }
+
 .payload-pre {
   font-size: 0.75rem;
-  font-family: monospace;
+  font-family: ui-monospace, monospace;
   white-space: pre-wrap;
   user-select: text;
   cursor: text;

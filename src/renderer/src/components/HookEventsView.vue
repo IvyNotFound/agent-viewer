@@ -128,14 +128,12 @@ function relativeTime(ts: number): string {
   margin-right: 4px;
 }
 .he-chip-item :deep(.v-chip__content) {
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 .he-spacer { flex: 1; }
 .he-count {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--content-faint);
-  font-family: ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
 
@@ -159,16 +157,16 @@ function relativeTime(ts: number): string {
 }
 .he-event:hover { background: rgba(var(--v-theme-on-surface), var(--md-state-hover)); }
 .he-event-icon {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--content-faint);
-  font-family: ui-monospace, monospace;
   flex-shrink: 0;
   width: 16px;
   text-align: center;
 }
-.he-event-type { font-size: 11px; font-family: ui-monospace, monospace; flex-shrink: 0; }
+.he-event-type { font-size: 0.6875rem; flex-shrink: 0; }
+/* monospace retained: UUID fragment benefits from fixed-width legibility */
 .he-session-id {
-  font-size: 10px;
+  font-size: 0.6875rem;
   color: var(--content-faint);
   font-family: ui-monospace, monospace;
   overflow: hidden;
@@ -177,9 +175,8 @@ function relativeTime(ts: number): string {
   flex: 1;
 }
 .he-time {
-  font-size: 10px;
+  font-size: 0.6875rem;
   color: var(--content-faint);
-  font-family: ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
