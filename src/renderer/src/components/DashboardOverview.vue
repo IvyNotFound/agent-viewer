@@ -204,7 +204,7 @@ function priorityColor(priority: string): string {
 
         <!-- Active agents -->
         <v-col cols="3">
-          <v-card elevation="0" class="metric-card">
+          <v-card elevation="1" class="metric-card">
             <v-card-text class="d-flex align-center ga-3 pa-4">
               <div class="metric-icon metric-icon--cyan shrink-0">
                 <v-icon class="metric-svg" size="20" style="color: rgb(var(--v-theme-primary))">mdi-account-group</v-icon>
@@ -220,7 +220,7 @@ function priorityColor(priority: string): string {
 
         <!-- In-progress tasks -->
         <v-col cols="3">
-          <v-card elevation="0" class="metric-card">
+          <v-card elevation="1" class="metric-card">
             <v-card-text class="d-flex align-center ga-3 pa-4">
               <div class="metric-icon metric-icon--amber shrink-0">
                 <v-icon class="metric-svg" size="20" style="color: rgb(var(--v-theme-warning))">mdi-lightning-bolt</v-icon>
@@ -236,7 +236,7 @@ function priorityColor(priority: string): string {
 
         <!-- Todo tasks -->
         <v-col cols="3">
-          <v-card elevation="0" class="metric-card">
+          <v-card elevation="1" class="metric-card">
             <v-card-text class="d-flex align-center ga-3 pa-4">
               <div class="metric-icon metric-icon--violet shrink-0">
                 <v-icon class="metric-svg" size="20" style="color: rgb(var(--v-theme-primary))">mdi-clipboard-text-outline</v-icon>
@@ -252,7 +252,7 @@ function priorityColor(priority: string): string {
 
         <!-- Sessions today -->
         <v-col cols="3">
-          <v-card elevation="0" class="metric-card">
+          <v-card elevation="1" class="metric-card">
             <v-card-text class="d-flex align-center ga-3 pa-4">
               <div class="metric-icon metric-icon--emerald shrink-0">
                 <v-icon class="metric-svg" size="20" style="color: rgb(var(--v-theme-secondary))">mdi-calendar-today</v-icon>

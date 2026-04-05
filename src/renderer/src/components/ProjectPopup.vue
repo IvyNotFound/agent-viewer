@@ -78,7 +78,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
       @click.self="emit('close')"
     >
       <!-- Card -->
-      <v-card class="popup-card" elevation="8">
+      <v-card class="popup-card" elevation="2">
         <!-- Header -->
         <div class="popup-header py-4 px-5">
           <div class="popup-header-left">

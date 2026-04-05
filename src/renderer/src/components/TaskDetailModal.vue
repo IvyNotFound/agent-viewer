@@ -159,7 +159,7 @@ onUnmounted(() => {
       <div class="backdrop-overlay" @click="store.closeTask()"></div>
 
       <!-- Panel -->
-      <div ref="taskPanelRef" class="task-panel elevation-8">
+      <div ref="taskPanelRef" class="task-panel elevation-3">
 
         <!-- Header -->
         <div class="task-header ga-3 py-4 px-5">

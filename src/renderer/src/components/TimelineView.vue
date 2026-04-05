@@ -327,7 +327,7 @@ const legendItems = computed(() => [
     <Teleport to="body">
       <div
         v-if="tooltipTask"
-        class="tl-tooltip elevation-4 pa-3 text-caption"
+        class="tl-tooltip elevation-2 pa-3 text-caption"
         :style="{ left: (tooltipX + 14) + 'px', top: (tooltipY - 14) + 'px' }"
       >
         <div class="tl-tooltip-title">{{ tooltipTask.title }}</div>

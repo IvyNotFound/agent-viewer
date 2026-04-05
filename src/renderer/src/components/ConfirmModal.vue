@@ -23,7 +23,7 @@ const { t } = useI18n()
   <v-dialog model-value max-width="384" @update:model-value="emit('cancel')">
     <!-- data-testid wrapper catches @click.self for test compat (Vuetify handles overlay in prod) -->
     <div data-testid="confirm-modal-wrapper" @click.self="emit('cancel')">
-      <v-card elevation="8">
+      <v-card elevation="3">
         <!-- Header -->
         <v-toolbar color="transparent" density="compact">
           <v-toolbar-title>{{ props.title }}</v-toolbar-title>

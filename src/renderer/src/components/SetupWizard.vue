@@ -78,7 +78,7 @@ async function handleSetup() {
 <template>
   <!-- Overlay -->
   <div class="wizard-overlay">
-    <v-card class="wizard-card" elevation="8" rounded="xl">
+    <v-card class="wizard-card" elevation="3" rounded="xl">
 
       <!-- Header -->
       <div class="wizard-header d-flex align-center ga-3 px-6 pt-6 pb-4">
