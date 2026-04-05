@@ -205,7 +205,7 @@ async function launch() {
             icon="mdi-close"
             size="small"
             variant="text"
-            :style="{ color: 'rgb(var(--v-theme-on-surface-variant))' }"
+            :style="{ color: agentAccent(agent.name) }"
             @click="emit('close')"
           />
         </div>
@@ -303,10 +303,11 @@ async function launch() {
                 v-model="thinkingMode"
                 mandatory
                 :color="agentAccent(agent.name)"
+                :style="{ '--toggle-accent': agentAccent(agent.name) }"
                 variant="outlined"
                 density="compact"
                 rounded="lg"
-                class="w-100"
+                class="w-100 launch-toggle"
               >
                 <v-btn value="auto" size="small" class="flex-1">
                   {{ t('launch.auto') }}
@@ -376,7 +377,7 @@ async function launch() {
               variant="text"
               :loading="settingsStore.detectingClis"
               prepend-icon="mdi-refresh"
-              :style="{ color: 'rgb(var(--v-theme-on-surface-variant))' }"
+              :style="{ color: agentAccent(agent.name) }"
               @click="settingsStore.refreshCliDetection(true)"
             >
               {{ t('launch.refreshDetection') }}
@@ -387,7 +388,7 @@ async function launch() {
                 variant="text"
                 size="default"
                 style="min-width: 80px;"
-                :style="{ color: 'rgb(var(--v-theme-on-surface-variant))' }"
+                :style="{ color: agentAccent(agent.name) }"
                 @click="emit('close')"
               >
                 {{ t('launch.cancel') }}
@@ -562,5 +563,10 @@ async function launch() {
 .expand-leave-to {
   opacity: 0;
   max-height: 0;
+}
+
+/* v-btn-toggle active state — force agent color in teleported dialog (:color prop doesn't cascade) */
+.launch-toggle :deep(.v-btn--active) {
+  color: var(--toggle-accent) !important;
 }
 </style>
