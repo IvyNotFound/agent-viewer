@@ -158,14 +158,14 @@ function resultPreview(html: string | undefined): string {
   <div
     v-if="block.type === 'tool_use'"
     class="tool-block tool-block--use mb-2"
-    :style="{ borderLeftColor: accentFg, backgroundColor: accentBg }"
+    :style="{ borderLeftColor: accentFg }"
     data-testid="block-tool-use"
   >
     <v-btn
       variant="text"
       block
       class="tool-header py-2 px-3 text-caption"
-      :style="{ color: accentFg }"
+      :style="{ color: accentFg, backgroundColor: accentBg }"
       @click="emit('toggleCollapsed', collapseKey(eventId, blockIdx), false)"
     >
       <v-icon
@@ -178,7 +178,6 @@ function resultPreview(html: string | undefined): string {
     <div
       v-show="!isCollapsed(eventId, blockIdx, false)"
       class="tool-body pt-3 px-4 pb-2 text-caption"
-      :style="{ color: accentOnColor }"
     >
       <!-- Edit: diff view (T1514) -->
       <template v-if="block.name === 'Edit'">
@@ -442,6 +441,11 @@ function resultPreview(html: string | undefined): string {
   cursor: text;
 }
 
+/* T1570: tool_use body uses a neutral theme-based background, not agent color */
+.tool-block--use .tool-body {
+  background: rgba(var(--v-theme-surface-variant), 0.35);
+}
+
 .tool-body pre {
   white-space: pre-wrap;
   margin: 0;
@@ -494,7 +498,7 @@ function resultPreview(html: string | undefined): string {
 }
 
 .diff-remove {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.18);
   color: rgb(248, 113, 113);
   padding: 1px 4px;
   white-space: pre-wrap;
@@ -502,12 +506,16 @@ function resultPreview(html: string | undefined): string {
 }
 
 .diff-add {
-  background: rgba(34, 197, 94, 0.15);
+  background: rgba(34, 197, 94, 0.18);
   color: rgb(74, 222, 128);
   padding: 1px 4px;
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* T1570: adapt diff text colors for light theme (neutral bg) */
+:global(.v-theme--light) .diff-remove { color: rgb(185, 28, 28); }
+:global(.v-theme--light) .diff-add    { color: rgb(21, 128, 61); }
 
 .diff-prefix {
   user-select: none;
