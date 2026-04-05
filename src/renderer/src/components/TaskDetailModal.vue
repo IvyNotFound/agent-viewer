@@ -479,7 +479,7 @@ onUnmounted(() => {
   gap: 2px;
 }
 .blocked-item {
-  color: rgba(var(--v-theme-warning), 0.8);
+  color: rgb(var(--v-theme-warning));
 }
 
 /* Meta labels */

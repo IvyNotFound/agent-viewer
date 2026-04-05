@@ -192,6 +192,7 @@ function typeBadgeLabel(link: TaskLink): string {
 
 .dep-section {
   margin-bottom: 4px;
+  min-height: 48px;
 }
 
 .dep-section-label {
@@ -210,13 +211,13 @@ function typeBadgeLabel(link: TaskLink): string {
   text-align: left !important;
   justify-content: flex-start !important;
   height: auto !important;
-  min-height: 0 !important;
-  padding: 2px 4px !important;
+  min-height: 28px !important;
+  padding: 4px 8px !important;
 }
 
 .dep-badge {
   font-size: 0.5625rem;
-  padding: 1px 6px;
+  padding: 2px 8px;
   border-radius: 9999px;
   border: 1px solid;
   font-weight: 500;
