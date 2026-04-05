@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
-import { agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
+import { agentFg, agentBg, agentBorder, perimeterFg, perimeterBg, perimeterBorder } from '@renderer/utils/agentColor'
 import { isStale } from '@renderer/utils/staleTask'
 import { parseUtcDate } from '@renderer/utils/parseDate'
 import { useLaunchSession, MAX_AGENT_SESSIONS } from '@renderer/composables/useLaunchSession'
@@ -66,6 +66,8 @@ function formatDate(iso: string): string {
   const dateLocale = locale.value === 'fr' ? 'fr-FR' : 'en-US'
   return parseUtcDate(iso).toLocaleDateString(dateLocale, { day: '2-digit', month: 'short', year: 'numeric' })
 }
+
+const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
 
 async function onTaskDropped(taskId: number, targetStatut: string): Promise<void> {
   const task = store.tasks.find(t => t.id === taskId)
@@ -231,11 +233,11 @@ const archivedGroupsSorted = computed(() => {
       <template v-else>
         <!-- Scrollable tasks list -->
         <div class="archive-list py-3 px-4">
-          <div class="archive-groups ga-4">
+          <div class="archive-groups">
             <!-- Group by agent -->
             <div v-for="[agentName, agentTasks] in archivedGroupsSorted" :key="agentName" class="agent-group">
               <!-- Group header -->
-              <div class="agent-group-header ga-2 mb-2">
+              <div class="agent-group-header ga-2 mb-3">
                 <span
                   :class="['agent-badge', { 'agent-badge-unassigned': agentName === UNASSIGNED_SENTINEL }]"
                   :style="agentName !== UNASSIGNED_SENTINEL
@@ -246,25 +248,37 @@ const archivedGroupsSorted = computed(() => {
               </div>
               <!-- Tasks in group -->
               <div class="task-list">
-                <v-btn
+                <div
                   v-for="task in agentTasks"
                   :key="task.id"
-                  variant="text"
-                  block
-                  class="archive-task-btn py-3 px-4"
+                  class="archive-card"
                   @click="store.openTask(task)"
                 >
-                  <div class="archive-task-inner ga-3">
-                    <div class="archive-task-content">
-                      <p class="archive-task-title">{{ task.title }}</p>
-                      <span v-if="task.scope" class="archive-task-scope mt-1">{{ task.scope }}</span>
-                    </div>
-                    <div class="archive-task-meta">
-                      <p class="archive-task-date">{{ formatDate(task.updated_at) }}</p>
-                      <p class="archive-task-id">#{{ task.id }}</p>
-                    </div>
+                  <!-- Row 1: title + agent badge -->
+                  <div class="arc-row1">
+                    <p class="arc-title">{{ task.title }}</p>
+                    <span
+                      v-if="task.agent_name"
+                      class="arc-agent"
+                      :style="{ color: agentFg(task.agent_name), backgroundColor: agentBg(task.agent_name), borderColor: agentBorder(task.agent_name) }"
+                    >{{ task.agent_name }}</span>
                   </div>
-                </v-btn>
+                  <!-- Row 2: meta chips (scope, id, effort, date) -->
+                  <div class="arc-meta">
+                    <span
+                      v-if="task.scope"
+                      class="arc-scope"
+                      :style="{
+                        color: perimeterFg(task.scope),
+                        backgroundColor: perimeterBg(task.scope),
+                        borderColor: perimeterBorder(task.scope)
+                      }"
+                    >{{ task.scope }}</span>
+                    <span class="arc-id">#{{ task.id }}</span>
+                    <span v-if="task.effort" class="arc-effort" :class="`arc-effort-${task.effort}`">{{ EFFORT_LABEL[task.effort] }}</span>
+                    <span class="arc-date">{{ formatDate(task.updated_at) }}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -461,6 +475,11 @@ const archivedGroupsSorted = computed(() => {
   display: flex;
   flex-direction: column;
 }
+.agent-group:not(:first-child) {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--edge-subtle);
+}
 .agent-group-header {
   display: flex;
   align-items: center;
@@ -488,59 +507,102 @@ const archivedGroupsSorted = computed(() => {
 .task-list {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+/* Archive card */
+.archive-card {
+  padding: 12px 16px;
+  background-color: var(--surface-primary);
+  border: 1px solid var(--edge-subtle);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 150ms, border-color 150ms;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
 }
-.archive-task-btn {
-  text-align: left !important;
-  justify-content: flex-start !important;
-  background-color: var(--surface-primary) !important;
-  border: 1px solid var(--edge-subtle) !important;
-  border-radius: 8px !important;
+.archive-card:hover {
+  background-color: var(--surface-secondary);
+  border-color: var(--edge-default);
 }
-.archive-task-btn:hover {
-  background-color: var(--surface-secondary) !important;
-  border-color: var(--edge-default) !important;
-}
-.archive-task-inner {
+.arc-row1 {
   display: flex;
   align-items: flex-start;
+  gap: 12px;
   justify-content: space-between;
 }
-.archive-task-content {
+.arc-title {
   flex: 1;
   min-width: 0;
-}
-.archive-task-title {
   font-size: 0.875rem;
-  color: var(--content-muted);
+  color: var(--content-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.4;
   transition: color 150ms;
 }
-.archive-task-btn:hover .archive-task-title {
+.archive-card:hover .arc-title {
   color: var(--content-primary);
 }
-.archive-task-scope {
-  font-size: 10px;
-  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-  color: var(--content-subtle);
-  display: block;
-}
-.archive-task-meta {
+.arc-agent {
   flex-shrink: 0;
-  text-align: right;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  border: 1px solid transparent;
+  white-space: nowrap;
 }
-.archive-task-date {
-  font-size: 10px;
-  color: var(--content-muted);
+.arc-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.arc-scope {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  border: 1px solid transparent;
+}
+.arc-id {
+  font-size: 11px;
+  color: var(--content-faint);
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
   font-variant-numeric: tabular-nums;
 }
-.archive-task-id {
+.arc-effort {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  border-radius: 4px;
   font-size: 10px;
-  color: var(--content-subtle);
+  font-weight: 600;
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+.arc-effort-1 {
+  color: rgb(var(--v-theme-secondary));
+  background-color: rgba(var(--v-theme-secondary), 0.15);
+}
+.arc-effort-2 {
+  color: rgb(var(--v-theme-warning));
+  background-color: rgba(var(--v-theme-warning), 0.15);
+}
+.arc-effort-3 {
+  color: rgb(var(--v-theme-error));
+  background-color: rgba(var(--v-theme-error), 0.15);
+}
+.arc-date {
+  font-size: 11px;
+  color: var(--content-faint);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-variant-numeric: tabular-nums;
 }
 .pagination {
   flex-shrink: 0;
