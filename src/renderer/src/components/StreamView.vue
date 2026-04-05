@@ -330,30 +330,32 @@ onUnmounted(() => {
 
         <!-- assistant blocks -->
         <template v-if="event.type === 'assistant' && event.message">
-          <!-- Agent chip — once per assistant event -->
-          <v-chip v-if="agentName" size="x-small" :color="accentFg" variant="tonal" class="mb-1">{{ agentName }}</v-chip>
-          <template v-for="(block, bIdx) in event.message.content" :key="`${event._id}-${bIdx}`">
-            <!-- text block — Markdown + DOMPurify (T678) -->
-            <div
-              v-if="block.type === 'text'"
-              class="stream-markdown block-text py-3 px-4"
-              data-testid="block-text"
-              v-html="block._html ?? ''"
-            />
+          <div class="block-assistant">
+            <!-- Agent chip — once per assistant event -->
+            <v-chip v-if="agentName" size="x-small" :color="accentFg" variant="tonal" class="mb-1">{{ agentName }}</v-chip>
+            <template v-for="(block, bIdx) in event.message.content" :key="`${event._id}-${bIdx}`">
+              <!-- text block — Markdown + DOMPurify (T678) -->
+              <div
+                v-if="block.type === 'text'"
+                class="stream-markdown block-text py-3 px-4"
+                data-testid="block-text"
+                v-html="block._html ?? ''"
+              />
 
-            <!-- tool_use / tool_result — delegated to StreamToolBlock (T816) -->
-            <StreamToolBlock
-              v-else-if="block.type === 'tool_use' || block.type === 'tool_result'"
-              :block="block"
-              :event-id="event._id!"
-              :block-idx="bIdx"
-              :collapsed="collapsed"
-              :accent-fg="accentFg"
-              :accent-bg="accentBg"
-              :accent-border="accentBorder"
-              @toggle-collapsed="toggleCollapsed"
-            />
-          </template>
+              <!-- tool_use / tool_result — delegated to StreamToolBlock (T816) -->
+              <StreamToolBlock
+                v-else-if="block.type === 'tool_use' || block.type === 'tool_result'"
+                :block="block"
+                :event-id="event._id!"
+                :block-idx="bIdx"
+                :collapsed="collapsed"
+                :accent-fg="accentFg"
+                :accent-bg="accentBg"
+                :accent-border="accentBorder"
+                @toggle-collapsed="toggleCollapsed"
+              />
+            </template>
+          </div>
         </template>
 
         <!-- result footer — cost / duration / turns -->
@@ -375,12 +377,13 @@ onUnmounted(() => {
         </div>
 
         <!-- text block — plain text output from non-Claude CLIs (T1197) -->
-        <div
-          v-if="event.type === 'text'"
-          class="stream-markdown block-text py-3 px-4"
-          data-testid="block-text-raw"
-          v-html="event._html ?? event.text ?? ''"
-        />
+        <div v-if="event.type === 'text'" class="block-assistant">
+          <div
+            class="stream-markdown block-text py-3 px-4"
+            data-testid="block-text-raw"
+            v-html="event._html ?? event.text ?? ''"
+          />
+        </div>
 
         <!-- error block — error events from non-Claude CLIs (T1197) -->
         <div
@@ -535,10 +538,19 @@ onUnmounted(() => {
   cursor: text;
 }
 
-/* assistant text block */
+/* assistant wrapper — left-aligned flex column */
+.block-assistant {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* assistant text block — chat bubble, left side */
 .block-text {
-  border-radius: 8px;
-  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  border-radius: 4px 20px 20px 20px;
+  background: var(--surface-secondary);
+  border: none;
+  max-width: 85%;
   font-size: 0.875rem;
   line-height: 1.625;
   user-select: text;
