@@ -138,6 +138,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
           v-if="task.scope"
           size="x-small"
           variant="outlined"
+          rounded="sm"
           :style="{
             color: perimeterFg(task.scope),
             borderColor: perimeterBorder(task.scope),

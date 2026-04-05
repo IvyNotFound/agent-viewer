@@ -82,7 +82,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
             v-if="node.scope"
             size="x-small"
             variant="outlined"
-            density="compact"
+            rounded="sm"
             :style="{
               color: perimeterFg(node.scope),
               borderColor: perimeterBorder(node.scope),

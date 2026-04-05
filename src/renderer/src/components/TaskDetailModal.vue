@@ -174,8 +174,9 @@ onUnmounted(() => {
               </v-chip>
               <v-chip
                 v-if="task.scope"
-                size="small"
+                size="x-small"
                 variant="outlined"
+                rounded="sm"
                 :style="{
                   color: perimeterFg(task.scope),
                   borderColor: perimeterBorder(task.scope),

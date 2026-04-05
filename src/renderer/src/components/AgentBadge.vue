@@ -9,7 +9,7 @@ defineProps<{
 
 <template>
   <v-chip
-    size="small"
+    size="x-small"
     variant="outlined"
     :style="{
       color: agentFg(name),
