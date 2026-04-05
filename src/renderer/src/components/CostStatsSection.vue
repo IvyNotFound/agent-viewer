@@ -450,8 +450,7 @@ const hoveredBar = ref<number | null>(null)
 .cost-agent-badge {
   flex-shrink: 0;
   width: 128px;
-  font-size: 11px;
-  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
   padding: 4px 8px;
   border-radius: 4px;
   font-weight: 500;
@@ -479,14 +478,14 @@ const hoveredBar = ref<number | null>(null)
   inset: 0;
   display: flex;
   align-items: center;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-family: ui-monospace, monospace;
   color: var(--content-secondary);
 }
 .cost-cache-info {
   flex-shrink: 0;
   display: flex;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-family: ui-monospace, monospace;
   color: var(--content-subtle);
   width: 128px;

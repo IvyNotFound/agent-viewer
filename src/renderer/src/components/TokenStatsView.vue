@@ -16,7 +16,6 @@ const {
 
 <template>
   <div class="ts-view">
-
     <!-- ── Period selector ────────────────────────────────────────────── -->
     <div class="ts-period-bar ga-2 pt-3 px-4 pb-2">
       <h2 class="ts-title mr-2 text-h6">{{ t('tokenStats.title') }}</h2>
@@ -116,7 +115,6 @@ const {
 
     <!-- ── Content (scrollable) ───────────────────────────────────────── -->
     <div class="ts-content py-3 px-4 ga-4">
-
       <!-- Cost analytics section (T769) -->
       <CostStatsSection :db-path="store.dbPath" :period="costPeriod" />
 
@@ -364,8 +362,7 @@ const {
 .ts-agent-name {
   flex-shrink: 0;
   width: 128px;
-  font-size: 11px;
-  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: 500;
@@ -394,13 +391,13 @@ const {
   display: flex;
   align-items: center;
   padding: 0 8px;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--content-secondary);
 }
 .ts-agent-totals {
   flex-shrink: 0;
   display: flex;
-  font-size: 10px;
+  font-size: 0.625rem;
   width: 160px;
   justify-content: flex-end;
 }
@@ -421,7 +418,7 @@ const {
 .ts-tbody-row:hover { background: rgba(var(--v-theme-surface-secondary), 0.4); }
 .ts-td { padding: 6px 8px; }
 .ts-td--right { text-align: right; }
-.ts-agent-badge { padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+.ts-agent-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.6875rem; font-weight: 500; }
 
 /* footer */
 .ts-footer {
