@@ -151,7 +151,7 @@ async function save() {
             variant="text"
             size="small"
             data-testid="btn-close"
-            :style="{ color: 'rgb(var(--v-theme-on-surface-variant))' }"
+            :style="{ color: agentAccent(agent.name) }"
             @click="emit('close')"
           />
         </div>
@@ -173,7 +173,7 @@ async function save() {
           <!-- Thinking mode -->
           <div>
             <div class="field-label text-label-medium mb-2">{{ t('launch.thinkingMode') }}</div>
-            <v-btn-toggle v-model="thinkingMode" mandatory :color="agentAccent(agent.name)" variant="outlined" density="compact">
+            <v-btn-toggle v-model="thinkingMode" mandatory :color="agentAccent(agent.name)" variant="outlined" density="compact" class="agent-toggle" :style="{ '--toggle-accent': agentAccent(agent.name) }">
               <v-btn value="auto">{{ t('launch.auto') }}</v-btn>
               <v-btn value="disabled">{{ t('launch.disabled') }}</v-btn>
             </v-btn-toggle>
@@ -232,7 +232,7 @@ async function save() {
           <!-- Permission mode -->
           <div>
             <div class="field-label text-label-medium mb-2">{{ t('agent.permissionMode') }}</div>
-            <v-btn-toggle v-model="permissionMode" mandatory :color="agentAccent(agent.name)" variant="outlined" density="compact">
+            <v-btn-toggle v-model="permissionMode" mandatory :color="agentAccent(agent.name)" variant="outlined" density="compact" class="agent-toggle" :style="{ '--toggle-accent': agentAccent(agent.name) }">
               <v-btn value="default">{{ t('agent.permissionModeDefault') }}</v-btn>
               <v-btn value="auto">{{ t('agent.permissionModeAuto') }}</v-btn>
             </v-btn-toggle>
@@ -244,7 +244,7 @@ async function save() {
           <!-- Worktree isolation (T1143) -->
           <div>
             <div class="field-label text-label-medium mb-2">{{ t('agent.worktreeEnabled') }}</div>
-            <v-btn-toggle v-model="worktreeToggleValue" mandatory :color="agentAccent(agent.name)" variant="outlined" density="compact">
+            <v-btn-toggle v-model="worktreeToggleValue" mandatory :color="agentAccent(agent.name)" variant="outlined" density="compact" class="agent-toggle" :style="{ '--toggle-accent': agentAccent(agent.name) }">
               <v-btn value="inherit">{{ t('agent.worktreeInherit') }}</v-btn>
               <v-btn value="on">{{ t('agent.worktreeOn') }}</v-btn>
               <v-btn value="off">{{ t('agent.worktreeOff') }}</v-btn>
@@ -301,7 +301,7 @@ async function save() {
             @click="deleteAgent"
           >{{ deleting ? t('agent.deleting') : t('agent.deleteAgent') }}</v-btn>
           <div class="d-flex align-center ga-2">
-            <v-btn variant="text" @click="emit('close')">{{ t('common.cancel') }}</v-btn>
+            <v-btn variant="text" :style="{ color: agentAccent(agent.name) }" @click="emit('close')">{{ t('common.cancel') }}</v-btn>
             <v-btn
               data-testid="btn-save"
               :color="agentAccent(agent.name)"
@@ -368,5 +368,11 @@ async function save() {
 /* Switch track color — force agent hex in teleported dialog (Vuetify hex color doesn't cascade correctly) */
 .agent-switch :deep(.v-selection-control--dirty .v-switch__track) {
   background-color: var(--switch-accent) !important;
+}
+
+/* btn-toggle active state — :color prop ineffective in teleported dialog (T1608) */
+.agent-toggle :deep(.v-btn--active) {
+  color: var(--toggle-accent) !important;
+  border-color: var(--toggle-accent) !important;
 }
 </style>
