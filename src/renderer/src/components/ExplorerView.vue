@@ -237,7 +237,7 @@ function folderSvg(VIconComp: Component, open: boolean) {
   return h(VIconComp, {
     class: 'shrink-0',
     size: 16,
-    style: { color: open ? '#dcb67a' : '#c09553' },
+    style: { color: 'rgb(var(--v-theme-warning))' },
     icon: open ? 'mdi-folder-open' : 'mdi-folder',
   })
 }

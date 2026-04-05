@@ -123,7 +123,7 @@ export function useTabBarGroups(scrollContainer: Ref<HTMLDivElement | null>) {
       const isActive = activeId === tab.id
       if (!tab.agentName) {
         map.set(tab.id, isActive
-          ? (isDark() ? { color: '#f4f4f5', backgroundColor: '#27272a' } : { color: '#18181b', backgroundColor: '#e4e4e7' })
+          ? { color: 'rgb(var(--v-theme-on-surface))', backgroundColor: 'rgb(var(--v-theme-surface-variant))' }
           : {})
         continue
       }
@@ -141,7 +141,7 @@ export function useTabBarGroups(scrollContainer: Ref<HTMLDivElement | null>) {
     for (const group of groupedTerminalTabs.value) {
       const name = group.agentName
       if (!name) {
-        map.set(name, isDark() ? { color: '#a1a1aa', backgroundColor: '#27272a' } : { color: '#52525b', backgroundColor: '#e4e4e7' })
+        map.set(name, { color: 'rgb(var(--v-theme-on-surface-variant))', backgroundColor: 'rgb(var(--v-theme-surface-variant))' })
         continue
       }
       const isActive = group.tabs.some(t => t.id === activeId)

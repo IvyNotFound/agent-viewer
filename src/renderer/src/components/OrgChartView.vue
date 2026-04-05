@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useAgentsStore } from '@renderer/stores/agents'
-import { agentFg } from '@renderer/utils/agentColor'
+import { agentFg, isDark, colorVersion } from '@renderer/utils/agentColor'
 import {
   type AgentRow,
   type LayoutGroup,
@@ -13,7 +13,8 @@ import {
   GROUP_HEADER_H,
   GROUP_GAP,
   CANVAS_PAD,
-  DOT_COLORS,
+  DOT_COLORS_DARK,
+  DOT_COLORS_LIGHT,
   buildGroupLayout,
   buildFlatGroup,
   flattenGroups,
@@ -125,6 +126,11 @@ const layout = computed<{ groups: LayoutGroup[]; totalW: number; totalH: number 
 const allGroupsFlat = computed(() => flattenGroups(layout.value.groups))
 const allAgentsFlat = computed(() => allGroupsFlat.value.flatMap(g => g.agents))
 
+const dotColors = computed(() => {
+  void colorVersion.value
+  return isDark() ? DOT_COLORS_DARK : DOT_COLORS_LIGHT
+})
+
 // ── Pan/zoom ──────────────────────────────────────────────────────────────────
 
 const transform = ref({ x: 0, y: 0, scale: 1 })
@@ -199,7 +205,7 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
       <div class="oc-header-right">
         <!-- Legend -->
         <div class="oc-legend">
-          <span v-for="(color, key) in DOT_COLORS" :key="key" class="oc-legend-item text-caption font-weight-medium">
+          <span v-for="(color, key) in dotColors" :key="key" class="oc-legend-item text-caption font-weight-medium">
             <span class="oc-legend-dot" :style="{ background: color }"></span>
             <span>{{ key === 'cyan' ? t('orgchart.status.active') : key === 'green' ? t('orgchart.status.todo') : key === 'yellow' ? t('orgchart.status.idle') : key === 'red' ? t('orgchart.status.blocked') : t('orgchart.status.inactive') }}</span>
           </span>
@@ -263,7 +269,7 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             :cx="node.x + CARD_W - 12"
             :cy="node.y + 12"
             r="5"
-            :fill="DOT_COLORS[node.status]"
+            :fill="dotColors[node.status]"
           >
             <animate
               v-if="node.status === 'cyan'"
@@ -293,7 +299,7 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             :y="node.y + 56"
             font-size="10"
             font-family="ui-sans-serif, system-ui, sans-serif"
-            :fill="DOT_COLORS[node.status]"
+            :fill="dotColors[node.status]"
           >{{ node.status === 'cyan' ? t('orgchart.status.active') : node.status === 'green' ? t('orgchart.status.todoAssigned') : node.status === 'yellow' ? t('orgchart.status.idle') : node.status === 'red' ? t('orgchart.status.blocked') : t('orgchart.status.inactive') }}</text>
         </g>
       </g>

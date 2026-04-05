@@ -223,7 +223,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #22d3ee; /* cyan-400 */
+  background-color: rgba(var(--v-theme-secondary), 0.8);
   animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   display: inline-block;
 }

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import {
   eventIcon,
   toolColor,
@@ -10,6 +10,7 @@ import {
   TOOL_COLOR,
   EVENT_COLOR,
 } from './useHookEventDisplay'
+import { setDarkMode } from '@renderer/utils/agentColor'
 
 describe('useHookEventDisplay — eventIcon() (T779)', () => {
   it('returns correct icon for PreToolUse', () => {
@@ -64,6 +65,9 @@ describe('useHookEventDisplay — EVENT_ICON hardcoded values (T1074)', () => {
 })
 
 describe('useHookEventDisplay — toolColor() (T779)', () => {
+  beforeEach(() => { setDarkMode(true) })
+  afterEach(() => { setDarkMode(false) })
+
   it('returns #fbbf24 for Bash', () => {
     expect(toolColor('Bash')).toBe('#fbbf24')
   })
@@ -128,13 +132,19 @@ describe('useHookEventDisplay — isMcpTool() (T779)', () => {
 })
 
 describe('useHookEventDisplay — mcpToolColor() (T1074)', () => {
-  it('returns #2dd4bf (not empty string)', () => {
+  beforeEach(() => { setDarkMode(true) })
+  afterEach(() => { setDarkMode(false) })
+
+  it('returns #2dd4bf in dark mode (not empty string)', () => {
     expect(mcpToolColor()).toBe('#2dd4bf')
     expect(mcpToolColor()).not.toBe('')
   })
 })
 
 describe('useHookEventDisplay — eventColor() (T779)', () => {
+  beforeEach(() => { setDarkMode(true) })
+  afterEach(() => { setDarkMode(false) })
+
   it('returns #f87171 for PostToolUseFailure', () => {
     expect(eventColor('PostToolUseFailure')).toBe('#f87171')
   })

@@ -226,8 +226,8 @@ const maxCount = computed(() => Math.max(...Array.from(dayCountMap.value.values(
 }
 /* Heat intensity levels */
 .heat-0 { background-color: rgba(var(--v-theme-surface-tertiary), 0.4); }
-.heat-1 { background-color: #064e3b; }
-.heat-2 { background-color: #047857; }
+.heat-1 { background-color: rgba(var(--v-theme-secondary), 0.15); }
+.heat-2 { background-color: rgba(var(--v-theme-secondary), 0.35); }
 .heat-3 { background-color: rgb(var(--v-theme-secondary)); }
 .heat-4 { background-color: rgba(var(--v-theme-secondary), 0.7); }
 .heatmap-legend {

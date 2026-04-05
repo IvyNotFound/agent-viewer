@@ -77,9 +77,9 @@ const activeThinkingText = computed<string | null>(() => {
 
 const agentName = computed(() => tabsStore.tabs.find(t => t.id === props.terminalId)?.agentName ?? '')
 
-const accentFg = computed(() => { void colorVersion.value; return agentName.value ? agentFg(agentName.value) : 'hsl(270, 60%, 68%)' })
-const accentBg = computed(() => { void colorVersion.value; return agentName.value ? agentBg(agentName.value) : 'hsl(270, 30%, 18%)' })
-const accentBorder = computed(() => { void colorVersion.value; return agentName.value ? agentBorder(agentName.value) : 'hsl(270, 30%, 32%)' })
+const accentFg = computed(() => { void colorVersion.value; return agentName.value ? agentFg(agentName.value) : 'rgb(var(--v-theme-secondary))' })
+const accentBg = computed(() => { void colorVersion.value; return agentName.value ? agentBg(agentName.value) : 'rgba(var(--v-theme-secondary), 0.1)' })
+const accentBorder = computed(() => { void colorVersion.value; return agentName.value ? agentBorder(agentName.value) : 'rgba(var(--v-theme-secondary), 0.3)' })
 // MD3 on-color: dark text on light agent backgrounds, white on dark — ensures 4.5:1 contrast (T1500).
 const userBubbleTextColor = computed(() => getOnColor(accentFg.value))
 

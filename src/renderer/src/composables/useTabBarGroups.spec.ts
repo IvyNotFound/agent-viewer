@@ -466,7 +466,7 @@ describe('useTabBarGroups', () => {
       expect(style).toEqual({})
     })
 
-    it('returns dark styles for active tab without agentName (isDark=true)', async () => {
+    it('returns CSS var styles for active tab without agentName', async () => {
       const { useTabBarGroups } = await import('@renderer/composables/useTabBarGroups')
       const { setDarkMode } = await import('@renderer/utils/agentColor')
       const store = useTabsStore()
@@ -479,7 +479,7 @@ describe('useTabBarGroups', () => {
       store.setActive(nullTab.id)
 
       const style = tabStyleMap.value.get(nullTab.id)
-      expect(style).toEqual({ color: '#f4f4f5', backgroundColor: '#27272a' })
+      expect(style).toEqual({ color: 'rgb(var(--v-theme-on-surface))', backgroundColor: 'rgb(var(--v-theme-surface-variant))' })
     })
 
     it('returns agent colors for active terminal tab with agentName', async () => {
@@ -541,7 +541,7 @@ describe('useTabBarGroups', () => {
 
   // ── agentTabStyleMap ──────────────────────────────────────────────────────
   describe('agentTabStyleMap (L140-L159)', () => {
-    it('uses isDark colors for null agentName group', async () => {
+    it('uses CSS var styles for null agentName group (dark mode)', async () => {
       const { useTabBarGroups } = await import('@renderer/composables/useTabBarGroups')
       const { setDarkMode } = await import('@renderer/utils/agentColor')
       const store = useTabsStore()
@@ -552,10 +552,10 @@ describe('useTabBarGroups', () => {
       store.addTerminal(undefined)
 
       const style = agentTabStyleMap.value.get(null)
-      expect(style).toEqual({ color: '#a1a1aa', backgroundColor: '#27272a' })
+      expect(style).toEqual({ color: 'rgb(var(--v-theme-on-surface-variant))', backgroundColor: 'rgb(var(--v-theme-surface-variant))' })
     })
 
-    it('uses light mode colors for null agentName group', async () => {
+    it('uses CSS var styles for null agentName group (light mode)', async () => {
       const { useTabBarGroups } = await import('@renderer/composables/useTabBarGroups')
       const { setDarkMode } = await import('@renderer/utils/agentColor')
       const store = useTabsStore()
@@ -566,7 +566,7 @@ describe('useTabBarGroups', () => {
       store.addTerminal(undefined)
 
       const style = agentTabStyleMap.value.get(null)
-      expect(style).toEqual({ color: '#52525b', backgroundColor: '#e4e4e7' })
+      expect(style).toEqual({ color: 'rgb(var(--v-theme-on-surface-variant))', backgroundColor: 'rgb(var(--v-theme-surface-variant))' })
     })
 
     it('uses agentFg/agentBg for active named group (L152-L153)', async () => {
@@ -622,7 +622,7 @@ describe('useTabBarGroups', () => {
       expect(style).toEqual({ backgroundColor: agentFg('agent-alpha') })
     })
 
-    it('uses zinc-neutral for tabs without agentName', async () => {
+    it('uses neutral zinc for tabs without agentName (dark mode)', async () => {
       const { useTabBarGroups } = await import('@renderer/composables/useTabBarGroups')
       const { setDarkMode } = await import('@renderer/utils/agentColor')
       const store = useTabsStore()
@@ -634,7 +634,22 @@ describe('useTabBarGroups', () => {
       const tab = store.tabs.find(t => t.type === 'terminal')!
 
       const style = indicatorStyleMap.value.get(tab.id)
-      expect(style).toEqual({ backgroundColor: '#a1a1aa' }) // zinc-400 dark
+      expect(style).toEqual({ backgroundColor: '#a1a1aa' })
+    })
+
+    it('uses neutral zinc for tabs without agentName (light mode)', async () => {
+      const { useTabBarGroups } = await import('@renderer/composables/useTabBarGroups')
+      const { setDarkMode } = await import('@renderer/utils/agentColor')
+      const store = useTabsStore()
+      const scrollContainer = makeScrollContainer()
+      const { indicatorStyleMap } = useTabBarGroups(scrollContainer)
+
+      setDarkMode(false)
+      store.addTerminal(undefined) // null agentName
+      const tab = store.tabs.find(t => t.type === 'terminal')!
+
+      const style = indicatorStyleMap.value.get(tab.id)
+      expect(style).toEqual({ backgroundColor: '#71717a' })
     })
   })
 
