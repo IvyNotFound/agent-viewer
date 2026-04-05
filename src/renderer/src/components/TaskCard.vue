@@ -166,9 +166,14 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
       </div>
     </v-card-text>
 
+    <!-- Description excerpt: up to 2 lines, fills body to balance footer -->
+    <v-card-text v-if="task.description" class="pa-3 pt-1 pb-0">
+      <p class="card-description text-caption">{{ task.description }}</p>
+    </v-card-text>
+
     <!-- Footer: dates left, #id right -->
     <v-card-text
-      class="pa-3 pt-2 mt-auto"
+      class="card-footer-section mt-auto"
       :class="{
         'card-footer-bordered': task.scope || task.agent_name,
         'card-footer--critical': task.priority === 'critical',
@@ -277,6 +282,21 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
 }
 .card-avatars :deep(.v-avatar) {
   border: 1.5px solid var(--surface-secondary);
+}
+/* Compact footer: reduces vertical padding vs Vuetify pa-3 default (12px → 6/8px) */
+.card-footer-section {
+  padding: 6px 12px 8px;
+}
+/* Description excerpt: max 2 lines, fades out, body text feel */
+.card-description {
+  color: var(--content-subtle);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  opacity: 0.75;
+  margin: 0;
 }
 .card-footer {
   display: flex;

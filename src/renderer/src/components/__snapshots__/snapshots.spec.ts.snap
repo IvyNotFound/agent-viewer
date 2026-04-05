@@ -286,8 +286,11 @@ exports[`TaskCard — snapshots > matches snapshot: critical in_progress task wi
       <!-- Fallback: single agent badge when no task_agents rows -->
       <agent-badge-stub data-v-8da3d041="" name="dev-back" active="false"></agent-badge-stub>
     </div>
+  </v-card-text><!-- Description excerpt: up to 2 lines, fills body to balance footer -->
+  <v-card-text data-v-8da3d041="" class="pa-3 pt-1 pb-0">
+    <p data-v-8da3d041="" class="card-description text-caption">Description</p>
   </v-card-text><!-- Footer: dates left, #id right -->
-  <v-card-text data-v-8da3d041="" class="pa-3 pt-2 mt-auto card-footer-bordered card-footer--critical">
+  <v-card-text data-v-8da3d041="" class="card-footer-section mt-auto card-footer-bordered card-footer--critical">
     <div data-v-8da3d041="" class="card-footer ga-2">
       <div data-v-8da3d041="" class="card-dates">
         <p data-v-8da3d041="" class="card-date text-caption">
@@ -322,8 +325,11 @@ exports[`TaskCard — snapshots > matches snapshot: done task without agent or p
     </div>
   </v-card-text><!-- Badges: perimeter + agent avatars -->
   <!--v-if-->
-  <!-- Footer: dates left, #id right -->
-  <v-card-text data-v-8da3d041="" class="pa-3 pt-2 mt-auto">
+  <!-- Description excerpt: up to 2 lines, fills body to balance footer -->
+  <v-card-text data-v-8da3d041="" class="pa-3 pt-1 pb-0">
+    <p data-v-8da3d041="" class="card-description text-caption">Description</p>
+  </v-card-text><!-- Footer: dates left, #id right -->
+  <v-card-text data-v-8da3d041="" class="card-footer-section mt-auto">
     <div data-v-8da3d041="" class="card-footer ga-2">
       <div data-v-8da3d041="" class="card-dates">
         <p data-v-8da3d041="" class="card-date text-caption">
@@ -363,8 +369,11 @@ exports[`TaskCard — snapshots > matches snapshot: minimal todo task 1`] = `
       <!-- Fallback: single agent badge when no task_agents rows -->
       <agent-badge-stub data-v-8da3d041="" name="dev-front" active="false"></agent-badge-stub>
     </div>
+  </v-card-text><!-- Description excerpt: up to 2 lines, fills body to balance footer -->
+  <v-card-text data-v-8da3d041="" class="pa-3 pt-1 pb-0">
+    <p data-v-8da3d041="" class="card-description text-caption">Description</p>
   </v-card-text><!-- Footer: dates left, #id right -->
-  <v-card-text data-v-8da3d041="" class="pa-3 pt-2 mt-auto card-footer-bordered">
+  <v-card-text data-v-8da3d041="" class="card-footer-section mt-auto card-footer-bordered">
     <div data-v-8da3d041="" class="card-footer ga-2">
       <div data-v-8da3d041="" class="card-dates">
         <p data-v-8da3d041="" class="card-date text-caption">
