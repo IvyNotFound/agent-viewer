@@ -157,10 +157,8 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
         <AgentBadge v-else-if="task.agent_name" :name="task.agent_name" :perimetre="task.agent_scope" />
       </div>
 
-      <!-- Description zone: always rendered with fixed height to guarantee uniform card height -->
-      <div class="card-description-zone mt-2">
-        <p v-if="task.description" class="card-description text-body-2">{{ task.description }}</p>
-      </div>
+      <!-- Description excerpt: up to 2 lines, fills body to balance footer -->
+      <p v-if="task.description" class="card-description text-body-2 mt-3">{{ task.description }}</p>
     </v-card-text>
 
     <!-- Footer: dates left, #id right -->
@@ -197,9 +195,9 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
   border: 1px solid var(--edge-default) !important; /* MD3: default border — visible against surface-primary column bg */
   border-radius: var(--shape-md) !important; /* MD3 medium shape (was 8px) */
   cursor: pointer;
-  height: 148px; /* fixed — immune to title length / description presence variations */
-  overflow: hidden;
+  min-height: 96px;
   position: relative;
+  overflow: hidden;
   transition: box-shadow var(--md-duration-short3) var(--md-easing-standard);
 }
 /* MD3 state layer — translucent overlay on hover instead of border-color change */
@@ -215,12 +213,6 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
 }
 .task-card:hover::after {
   background-color: rgba(var(--v-theme-on-surface), var(--md-state-hover));
-}
-.card-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 }
 .card-top {
   display: flex;
@@ -241,10 +233,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
   font-weight: 500;
   line-height: 1.35;
   min-width: 0;
-  overflow: hidden !important;
-  display: -webkit-box !important;
-  -webkit-line-clamp: 2 !important;
-  -webkit-box-orient: vertical !important;
+  word-break: break-word;
 }
 .card-badge-row {
   display: flex;
@@ -271,18 +260,16 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
 .card-footer-section {
   padding: 8px 16px 10px;
 }
-.card-description-zone {
-  height: calc(2 * 1.4 * 0.875rem); /* 2 lines × 1.4 line-height × 14px (text-body-2) */
-  overflow: hidden;
-  flex-shrink: 0;
-}
 .card-description {
   color: var(--content-muted);
   line-height: 1.4;
   margin: 0;
+  /* T1607: pure max-height + overflow approach — more reliable in Electron/Chromium than -webkit-line-clamp
+     which can be defeated by Vuetify v-card-text flex/display overrides on todo/done columns */
   overflow: hidden !important;
+  max-height: calc(2 * 1.4 * 0.875rem) !important; /* 2 lines × line-height × text-body-2 font-size */
   display: -webkit-box !important;
-  -webkit-line-clamp: 2 !important;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical !important;
 }
 .card-footer {
