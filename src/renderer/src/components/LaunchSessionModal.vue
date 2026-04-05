@@ -205,6 +205,7 @@ async function launch() {
             icon="mdi-close"
             size="small"
             variant="text"
+            :style="{ color: 'rgb(var(--v-theme-on-surface-variant))' }"
             @click="emit('close')"
           />
         </div>
@@ -373,6 +374,7 @@ async function launch() {
               variant="text"
               :loading="settingsStore.detectingClis"
               prepend-icon="mdi-refresh"
+              :style="{ color: 'rgb(var(--v-theme-on-surface-variant))' }"
               @click="settingsStore.refreshCliDetection(true)"
             >
               {{ t('launch.refreshDetection') }}
@@ -383,6 +385,7 @@ async function launch() {
                 variant="text"
                 size="default"
                 style="min-width: 80px;"
+                :style="{ color: 'rgb(var(--v-theme-on-surface-variant))' }"
                 @click="emit('close')"
               >
                 {{ t('launch.cancel') }}
