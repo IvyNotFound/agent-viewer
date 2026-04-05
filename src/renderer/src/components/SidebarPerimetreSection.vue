@@ -155,8 +155,8 @@ async function addPerimetre() {
 
   <!-- Modal édition périmètre — MD3 v-dialog + v-card -->
   <v-dialog v-model="showEditDialog" max-width="384">
-    <v-card v-if="editPerimetre">
-      <v-card-title class="text-body-2 font-weight-bold">{{ t('sidebar.editPerimeter') }}</v-card-title>
+    <v-card v-if="editPerimetre" rounded="xl">
+      <v-card-title class="text-subtitle-1 font-weight-medium pt-4 pb-0 px-5">{{ t('sidebar.editPerimeter') }}</v-card-title>
       <v-card-text class="d-flex flex-column ga-3 pt-2">
         <v-text-field
           v-model="editPerimetreName"
@@ -182,7 +182,7 @@ async function addPerimetre() {
       <v-card-actions>
         <v-spacer />
         <v-btn variant="text" size="small" @click="editPerimetre = null">{{ t('common.cancel') }}</v-btn>
-        <v-btn color="primary" size="small" :disabled="savingPerimetre || !editPerimetreName.trim()" @click="savePerimetre">
+        <v-btn color="primary" variant="tonal" size="small" :disabled="savingPerimetre || !editPerimetreName.trim()" @click="savePerimetre">
           {{ savingPerimetre ? t('common.saving') : t('common.save') }}
         </v-btn>
       </v-card-actions>
@@ -219,9 +219,10 @@ async function addPerimetre() {
 .perimetre-name {
   flex: 1;
   min-width: 0;
-  font-size: 0.875rem;
+  font-size: 0.875rem; /* MD3 Label Large: 14sp */
   font-family: monospace;
   font-weight: 500;
+  letter-spacing: 0.00625em; /* MD3 Label Large: 0.1px/16px */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -233,7 +234,6 @@ async function addPerimetre() {
 }
 .perimetre-desc {
   color: var(--content-faint);
-  font-size: 0.75rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
