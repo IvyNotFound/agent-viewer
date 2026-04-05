@@ -4,6 +4,15 @@ html {
   overflow: hidden;
 }
 
+/* Constrain Vuetify app wrap to viewport height — required for the flex scroll chain.
+   Vuetify's default is min-height:100dvh (grows with content). Without an explicit height,
+   height:100% on .v-main__scroller resolves to auto, causing .stream-scroll to grow with
+   content instead of scrolling. T1522 regression fix. */
+.v-application__wrap {
+  height: 100dvh;
+  overflow: hidden;
+}
+
 /* ── Theme tokens ────────────────────────────────────────────────────────────
    Derived from Vuetify theme CSS vars (--v-theme-*).
    Vuetify sets --v-theme-* as RGB triplets on [data-v-theme="dark/light"].

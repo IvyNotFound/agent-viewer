@@ -46,20 +46,28 @@ interface DiffLine {
 
 function diffLines(input: Record<string, unknown> | undefined): DiffLine[] {
   if (!input) return []
-  const oldStr = String(input.old_string ?? '')
-  const newStr = String(input.new_string ?? '')
+  const oldLines = String(input.old_string ?? '').split('\n')
+  const newLines = String(input.new_string ?? '').split('\n')
   const result: DiffLine[] = []
   let idx = 0
-  if (oldStr) {
+  if (input.old_string) {
     result.push({ idx: idx++, type: 'separator', prefix: '', text: '', label: 'old' })
-    for (const line of oldStr.split('\n')) {
-      result.push({ idx: idx++, type: 'remove', prefix: '-', text: line })
+    const removeLimit = Math.min(oldLines.length, 50)
+    for (let i = 0; i < removeLimit; i++) {
+      result.push({ idx: idx++, type: 'remove', prefix: '-', text: oldLines[i] })
+    }
+    if (oldLines.length > 50) {
+      result.push({ idx: idx++, type: 'remove', prefix: '…', text: `(${oldLines.length - 50} more lines)` })
     }
   }
-  if (newStr) {
+  if (input.new_string) {
     result.push({ idx: idx++, type: 'separator', prefix: '', text: '', label: 'new' })
-    for (const line of newStr.split('\n')) {
-      result.push({ idx: idx++, type: 'add', prefix: '+', text: line })
+    const addLimit = Math.min(newLines.length, 50)
+    for (let i = 0; i < addLimit; i++) {
+      result.push({ idx: idx++, type: 'add', prefix: '+', text: newLines[i] })
+    }
+    if (newLines.length > 50) {
+      result.push({ idx: idx++, type: 'add', prefix: '…', text: `(${newLines.length - 50} more lines)` })
     }
   }
   return result
