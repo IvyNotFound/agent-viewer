@@ -1,7 +1,14 @@
 <script setup lang="ts">
 /**
  * StreamView — structured display of stream-json CLI messages (ADR-009 Option B).
- * Renders agent sessions as structured blocks: text, tool_use, tool_result, thinking, result.
+ *
+ * Chat-bubble layout: assistant messages rendered as left-aligned bubbles, user messages
+ * as right-aligned bubbles. Tool calls delegated to StreamToolBlock for per-tool structured
+ * display (Edit: diff view, Bash: command block, Read/Write/Grep/Glob: metadata, Agent: description).
+ * Copy-code button injected into all markdown code blocks via useCopyCode composable.
+ * Thinking text previewed live in the status bar (last 120 chars). Collapsible blocks
+ * auto-collapse when >15 lines. ANSI sequences stripped before rendering.
+ *
  * Used in App.vue for tabs with viewMode === 'stream' (T597).
  */
 import { computed, watch, onMounted, onUnmounted, nextTick } from 'vue'

@@ -1,4 +1,22 @@
 <script setup lang="ts">
+/**
+ * StreamToolBlock — renders a single tool_use or tool_result block from a stream event.
+ *
+ * For tool_use blocks, provides per-tool structured display:
+ *   - Edit: inline diff view (old/new lines, capped at 50 lines each)
+ *   - Bash: command block
+ *   - Read: file path + optional offset/limit metadata
+ *   - Write: file path + content preview (first 50 lines)
+ *   - Grep/Glob: pattern + path
+ *   - Agent: subagent_type + description
+ *   - Unknown tools: raw JSON fallback
+ *
+ * For tool_result blocks, renders the pre-processed HTML (ANSI-stripped, markdown-rendered)
+ * and applies error styling when `is_error` is set.
+ *
+ * Collapse state is managed externally by the parent (StreamView) via the `collapsed` prop
+ * and the `toggleCollapsed` emit.
+ */
 import { useI18n } from 'vue-i18n'
 import type { StreamContentBlock } from '@renderer/types/stream'
 
@@ -18,15 +36,35 @@ const emit = defineEmits<{
   toggleCollapsed: [key: string, defaultCollapsed: boolean]
 }>()
 
+/**
+ * Builds the collapse-state map key for a given event + block position.
+ * @param eventId - Unique event identifier from the stream.
+ * @param blockIdx - Index of the content block within the event.
+ * @returns Dot-separated string key used in the `collapsed` map.
+ */
 function collapseKey(eventId: number, blockIdx: number): string {
   return `${eventId}-${blockIdx}`
 }
 
+/**
+ * Returns whether a block is currently collapsed.
+ * Falls back to `defaultCollapsed` when no explicit state is stored yet.
+ * @param eventId - Unique event identifier.
+ * @param blockIdx - Block index within the event.
+ * @param defaultCollapsed - Initial collapse state when not yet tracked.
+ * @returns True if the block should be rendered collapsed.
+ */
 function isCollapsed(eventId: number, blockIdx: number, defaultCollapsed = false): boolean {
   const key = collapseKey(eventId, blockIdx)
   return props.collapsed[key] ?? defaultCollapsed
 }
 
+/**
+ * Serializes a tool input object to an indented JSON string for display.
+ * Used as fallback for tool types without a dedicated structured view.
+ * @param input - Raw tool input object from the stream event.
+ * @returns Formatted JSON string, or empty string if input is falsy.
+ */
 function toolInputPreview(input: Record<string, unknown> | undefined): string {
   if (!input) return ''
   try {
@@ -44,6 +82,14 @@ interface DiffLine {
   label?: string
 }
 
+/**
+ * Builds a flat list of diff lines from an Edit tool input for display.
+ * Old lines are prefixed with `-` (remove), new lines with `+` (add).
+ * Each group is preceded by a separator row labeled `old` or `new`.
+ * Truncates each group to 50 lines and appends a count row when over the limit.
+ * @param input - Tool input containing `old_string` and/or `new_string`.
+ * @returns Ordered array of DiffLine entries ready for template rendering.
+ */
 function diffLines(input: Record<string, unknown> | undefined): DiffLine[] {
   if (!input) return []
   const oldLines = String(input.old_string ?? '').split('\n')

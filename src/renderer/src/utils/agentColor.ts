@@ -1,13 +1,20 @@
 /**
  * Agent color utilities for KanbAgent.
  *
- * Generates deterministic Material Design 2 hex colors from agent names using a hash function.
- * Each agent always gets the same color family (0–14 palette index), ensuring consistent
- * visual identity across the UI (badges, borders, sidebar dots).
+ * Maps agent names to deterministic colors from a 15-family Material Design 2 palette
+ * (imported from `vuetify/util/colors`). Each agent always resolves to the same family
+ * (index 0–14) via a string hash, ensuring a consistent visual identity across all
+ * UI surfaces: badges, borders, sidebar dots, tab accents.
  *
- * Theme-aware: returns different MD2 shades for dark vs light mode.
- * Uses a Vue ref for reactivity — call setDarkMode() from the settings store
- * so that all computed styles update instantly on theme toggle.
+ * Four public color functions cover all use cases:
+ *   - `agentFg`     — text / icon color on badge background (WCAG AA contrast guaranteed)
+ *   - `agentBg`     — badge background fill
+ *   - `agentBorder` — badge border
+ *   - `agentAccent` — standalone accent on neutral surface (dots, bars, spinners)
+ *
+ * All functions are theme-aware (dark / light) and reactive via `colorVersion`.
+ * Call `setDarkMode()` from the settings store on theme toggle to invalidate caches
+ * and propagate the change to all bound components immediately.
  *
  * @module utils/agentColor
  */
