@@ -88,7 +88,7 @@ function formatTokens(n: number): string {
         </span>
       </div>
 
-      <!-- Cache read (emerald — économique) -->
+      <!-- Cache read (rose — économique) -->
       <div class="token-metric">
         <span class="token-metric-label text-label-medium">{{ t('dashboard.tokensCacheRead') }}</span>
         <span class="token-metric-value token-metric-value--cache-read text-subtitle-2">
