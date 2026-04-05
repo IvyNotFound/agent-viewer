@@ -36,6 +36,33 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
   }
 }
 
+interface DiffLine {
+  idx: number
+  type: 'remove' | 'add'
+  prefix: string
+  text: string
+}
+
+function diffLines(input: Record<string, unknown> | undefined): DiffLine[] {
+  if (!input) return []
+  const oldStr = String(input.old_string ?? '')
+  const newStr = String(input.new_string ?? '')
+  const result: DiffLine[] = []
+  let idx = 0
+  for (const line of oldStr.split('\n')) {
+    result.push({ idx: idx++, type: 'remove', prefix: '-', text: line })
+  }
+  for (const line of newStr.split('\n')) {
+    result.push({ idx: idx++, type: 'add', prefix: '+', text: line })
+  }
+  return result
+}
+
+function writePreview(input: Record<string, unknown> | undefined): string {
+  if (!input?.content) return ''
+  const lines = String(input.content).split('\n')
+  return lines.slice(0, 50).join('\n') + (lines.length > 50 ? `\n… (${lines.length - 50} more lines)` : '')
+}
 </script>
 
 <template>
@@ -63,7 +90,116 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
       v-show="!isCollapsed(eventId, blockIdx, true)"
       class="tool-body pt-3 px-4 pb-2 text-caption"
     >
-      <pre>{{ toolInputPreview(block.input) }}</pre>
+      <!-- Edit: diff view (T1514) -->
+      <template v-if="block.name === 'Edit'">
+        <div
+          v-if="block.input?.file_path"
+          class="tool-filepath"
+        >
+          {{ block.input.file_path }}
+        </div>
+        <div class="diff-view">
+          <div
+            v-for="line in diffLines(block.input)"
+            :key="line.idx"
+            :class="line.type === 'remove' ? 'diff-remove' : 'diff-add'"
+          >
+            <span class="diff-prefix">{{ line.prefix }}</span>{{ line.text }}
+          </div>
+        </div>
+      </template>
+
+      <!-- Bash: command block (T1514) -->
+      <template v-else-if="block.name === 'Bash'">
+        <pre class="tool-command">{{ block.input?.command ?? '' }}</pre>
+      </template>
+
+      <!-- Read: file_path + optional offset/limit (T1514) -->
+      <template v-else-if="block.name === 'Read'">
+        <div
+          v-if="block.input?.file_path"
+          class="tool-filepath"
+        >
+          {{ block.input.file_path }}
+        </div>
+        <div
+          v-if="block.input?.offset != null || block.input?.limit != null"
+          class="tool-meta"
+        >
+          <span v-if="block.input?.offset != null">offset: {{ block.input.offset }}</span>
+          <span
+            v-if="block.input?.limit != null"
+            class="tool-meta-sep"
+          >limit: {{ block.input.limit }}</span>
+        </div>
+      </template>
+
+      <!-- Write: file_path header + content preview truncated to 50 lines (T1514) -->
+      <template v-else-if="block.name === 'Write'">
+        <div
+          v-if="block.input?.file_path"
+          class="tool-filepath"
+        >
+          {{ block.input.file_path }}
+        </div>
+        <pre
+          v-if="block.input?.content"
+          class="tool-command"
+        >{{ writePreview(block.input) }}</pre>
+      </template>
+
+      <!-- Grep: pattern highlight + path (T1514) -->
+      <template v-else-if="block.name === 'Grep'">
+        <div
+          v-if="block.input?.pattern"
+          class="tool-pattern"
+        >
+          {{ block.input.pattern }}
+        </div>
+        <div
+          v-if="block.input?.path"
+          class="tool-filepath"
+        >
+          {{ block.input.path }}
+        </div>
+      </template>
+
+      <!-- Glob: pattern + path (T1514) -->
+      <template v-else-if="block.name === 'Glob'">
+        <div
+          v-if="block.input?.pattern"
+          class="tool-pattern"
+        >
+          {{ block.input.pattern }}
+        </div>
+        <div
+          v-if="block.input?.path"
+          class="tool-filepath"
+        >
+          {{ block.input.path }}
+        </div>
+      </template>
+
+      <!-- Agent: description + subagent_type (T1514) -->
+      <template v-else-if="block.name === 'Agent'">
+        <div
+          v-if="block.input?.subagent_type"
+          class="tool-filepath"
+        >
+          {{ block.input.subagent_type }}
+        </div>
+        <div
+          v-if="block.input?.description"
+          class="tool-meta"
+        >
+          {{ block.input.description }}
+        </div>
+      </template>
+
+      <!-- Fallback: raw JSON for unknown tools -->
+      <template v-else>
+        <pre>{{ toolInputPreview(block.input) }}</pre>
+      </template>
     </div>
   </div>
 
@@ -172,5 +308,69 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
 .tool-body pre {
   white-space: pre-wrap;
   margin: 0;
+}
+
+/* Per-tool structured display (T1514) */
+.tool-filepath {
+  opacity: 0.7;
+  margin-bottom: 6px;
+  font-size: 0.85em;
+  font-family: monospace;
+}
+
+.tool-pattern {
+  font-family: monospace;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--content-default);
+}
+
+.tool-meta {
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+.tool-meta-sep {
+  margin-left: 8px;
+}
+
+.tool-command {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px 12px;
+  border-radius: 6px;
+  white-space: pre-wrap;
+  margin: 0;
+  word-break: break-all;
+}
+
+/* Diff view for Edit tool */
+.diff-view {
+  font-family: monospace;
+  font-size: 0.9em;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.diff-remove {
+  background: rgba(239, 68, 68, 0.15);
+  color: rgb(248, 113, 113);
+  padding: 1px 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.diff-add {
+  background: rgba(34, 197, 94, 0.15);
+  color: rgb(74, 222, 128);
+  padding: 1px 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.diff-prefix {
+  user-select: none;
+  opacity: 0.7;
+  margin-right: 4px;
+  font-weight: bold;
 }
 </style>
