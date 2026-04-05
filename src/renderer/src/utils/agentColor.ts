@@ -1,9 +1,9 @@
 /**
  * Agent color utilities for KanbAgent.
  *
- * Maps agent names to deterministic colors from a 15-family Material Design 2 palette
+ * Maps agent names to deterministic colors from a 13-family Material Design 2 palette
  * (imported from `vuetify/util/colors`). Each agent always resolves to the same family
- * (index 0–14) via a string hash, ensuring a consistent visual identity across all
+ * (index 0–12) via a string hash, ensuring a consistent visual identity across all
  * UI surfaces: badges, borders, sidebar dots, tab accents.
  *
  * Four public color functions cover all use cases:
@@ -22,7 +22,11 @@
 import { ref } from 'vue'
 import colors from 'vuetify/util/colors'
 
-/** Material Design 2 palette — 15 color families, deterministically indexed. */
+/**
+ * Material Design 2 palette — 13 color families, deterministically indexed.
+ * Green families (teal, green, lightGreen, lime) are excluded to avoid unreadable
+ * low-contrast greens in dark mode and dominant greens in light mode.
+ */
 const MD_PALETTE = [
   colors.red,        // 0
   colors.pink,       // 1
@@ -32,13 +36,11 @@ const MD_PALETTE = [
   colors.blue,       // 5
   colors.lightBlue,  // 6
   colors.cyan,       // 7
-  colors.teal,       // 8
-  colors.green,      // 9
-  colors.lightGreen, // 10
-  colors.lime,       // 11
-  colors.amber,      // 12
-  colors.orange,     // 13
-  colors.deepOrange, // 14
+  colors.brown,      // 8
+  colors.blueGrey,   // 9
+  colors.amber,      // 10
+  colors.orange,     // 11
+  colors.deepOrange, // 12
 ]
 
 type ColorFamily = (typeof MD_PALETTE)[number]
@@ -152,7 +154,7 @@ export function getOnColor(bgHex: string): string {
 }
 
 /**
- * Returns a deterministic palette index (0–14) for a given agent name.
+ * Returns a deterministic palette index (0–12) for a given agent name.
  * Results are cached for performance.
  * @param name - Agent name.
  * @returns Palette index (0 to MD_PALETTE.length - 1).

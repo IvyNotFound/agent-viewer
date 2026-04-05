@@ -22,7 +22,7 @@ describe('agentColor utilities (T353)', () => {
     const h2 = agentHue('dev-front')
     expect(h1).toBe(h2)
     expect(h1).toBeGreaterThanOrEqual(0)
-    expect(h1).toBeLessThan(15)
+    expect(h1).toBeLessThan(13)
   })
 
   it('agentHue returns different indices for different names', () => {
@@ -82,17 +82,17 @@ describe('agentColor utilities (T353)', () => {
 
 // ─── T1319 (updated for T1467 MD2 migration) ─────────────────────────────────
 
-describe('agentColor — hash function exact palette indices (T1319)', () => {
-  // 'hello': hash=99162322, 99162322%15=7 (cyan)
-  // 'test-agent': hash=621962762, 621962762%15=2 (purple)
+describe('agentColor — hash function exact palette indices (T1319, updated T1623)', () => {
+  // 'hello': hash=99162322, 99162322%13=12 (deepOrange)
+  // 'test-agent': hash=621962762, 621962762%13=5 (blue)
   // These exact values kill h*31 -> h+31 / h*32 / h-31 mutants
 
-  it('agentHue(hello) === 7 (hash=99162322, 99162322%15=7)', () => {
-    expect(agentHue('hello')).toBe(7)
+  it('agentHue(hello) === 12 (hash=99162322, 99162322%13=12)', () => {
+    expect(agentHue('hello')).toBe(12)
   })
 
-  it('agentHue(test-agent) === 2 (hash=621962762, 621962762%15=2)', () => {
-    expect(agentHue('test-agent')).toBe(2)
+  it('agentHue(test-agent) === 5 (hash=621962762, 621962762%13=5)', () => {
+    expect(agentHue('test-agent')).toBe(5)
   })
 
   it('agentHue of empty string is 0 (covers !name guard)', () => {
@@ -100,75 +100,73 @@ describe('agentColor — hash function exact palette indices (T1319)', () => {
   })
 
   it('agentHue differs between order-sensitive names (order matters in hash)', () => {
-    // 'hello' → idx=7, 'world' → idx=12 (both computed from hash%15)
-    expect(agentHue('hello')).toBe(7)
-    expect(agentHue('world')).toBe(12)
-    expect(agentHue('hello')).not.toBe(agentHue('world'))
+    // 'hello' → idx=12, 'olleh' → idx=7 (both computed from hash%13)
+    expect(agentHue('hello')).toBe(12)
+    expect(agentHue('olleh')).toBe(7)
+    expect(agentHue('hello')).not.toBe(agentHue('olleh'))
   })
 })
 
-describe('agentColor — MD2 shade exact values (T1319 + T1467)', () => {
-  // test-agent: idx=2 (purple family)
-  // agentFg dark=lighten3=#ce93d8, light=darken2=#7b1fa2
-  // agentBg dark=darken4=#4a148c, light=lighten5=#f3e5f5
-  // agentBorder dark=darken2=#7b1fa2, light=lighten2=#ba68c8
-  // perimeterFg dark=lighten4=#e1bee7, light=darken1=#8e24aa
-  // perimeterBg dark=darken4=#4a148c, light=lighten5=#f3e5f5
-  // perimeterBorder dark=darken3=#6a1b9a, light=lighten3=#ce93d8
+describe('agentColor — MD2 shade exact values (T1319 + T1467, updated T1623)', () => {
+  // test-agent: idx=5 (blue family), hash=621962762, 621962762%13=5
+  // agentBg dark=darken4=#0d47a1, light=lighten5=#e3f2fd
+  // agentBorder dark=darken2=#1976d2, light=lighten2=#64b5f6
+  // perimeterBg dark=darken4=#0d47a1, light=lighten5=#e3f2fd
+  // perimeterBorder dark=darken3=#1565c0, light=lighten3=#90caf9
 
   afterEach(() => setDarkMode(false))
 
-  it('agentBg dark mode (test-agent: purple darken4 #4a148c)', () => {
+  it('agentBg dark mode (test-agent: blue darken4 #0d47a1)', () => {
     setDarkMode(true)
-    expect(agentBg('test-agent')).toBe('#4a148c')
+    expect(agentBg('test-agent')).toBe('#0d47a1')
   })
 
-  it('agentBg light mode (test-agent: purple lighten5 #f3e5f5)', () => {
+  it('agentBg light mode (test-agent: blue lighten5 #e3f2fd)', () => {
     setDarkMode(false)
-    expect(agentBg('test-agent')).toBe('#f3e5f5')
+    expect(agentBg('test-agent')).toBe('#e3f2fd')
   })
 
-  it('agentBorder dark mode (test-agent: purple darken2 #7b1fa2)', () => {
+  it('agentBorder dark mode (test-agent: blue darken2 #1976d2)', () => {
     setDarkMode(true)
-    expect(agentBorder('test-agent')).toBe('#7b1fa2')
+    expect(agentBorder('test-agent')).toBe('#1976d2')
   })
 
-  it('agentBorder light mode (test-agent: purple lighten2 #ba68c8)', () => {
+  it('agentBorder light mode (test-agent: blue lighten2 #64b5f6)', () => {
     setDarkMode(false)
-    expect(agentBorder('test-agent')).toBe('#ba68c8')
+    expect(agentBorder('test-agent')).toBe('#64b5f6')
   })
 
-  it('perimeterFg dark mode — WCAG AA ratio >= 4.5:1 (test-agent: purple)', () => {
+  it('perimeterFg dark mode — WCAG AA ratio >= 4.5:1 (test-agent: blue)', () => {
     setDarkMode(true)
     expect(contrastRatio(perimeterFg('test-agent'), agentBg('test-agent'))).toBeGreaterThanOrEqual(4.5)
   })
 
-  it('perimeterFg light mode — WCAG AA ratio >= 4.5:1 (test-agent: purple)', () => {
+  it('perimeterFg light mode — WCAG AA ratio >= 4.5:1 (test-agent: blue)', () => {
     setDarkMode(false)
     expect(contrastRatio(perimeterFg('test-agent'), agentBg('test-agent'))).toBeGreaterThanOrEqual(4.5)
   })
 
-  it('perimeterBg dark mode (test-agent: purple darken4 #4a148c)', () => {
+  it('perimeterBg dark mode (test-agent: blue darken4 #0d47a1)', () => {
     setDarkMode(true)
-    expect(perimeterBg('test-agent')).toBe('#4a148c')
+    expect(perimeterBg('test-agent')).toBe('#0d47a1')
   })
 
-  it('perimeterBg light mode (test-agent: purple lighten5 #f3e5f5)', () => {
+  it('perimeterBg light mode (test-agent: blue lighten5 #e3f2fd)', () => {
     setDarkMode(false)
-    expect(perimeterBg('test-agent')).toBe('#f3e5f5')
+    expect(perimeterBg('test-agent')).toBe('#e3f2fd')
   })
 
-  it('perimeterBorder dark mode (test-agent: purple darken3 #6a1b9a)', () => {
+  it('perimeterBorder dark mode (test-agent: blue darken3 #1565c0)', () => {
     setDarkMode(true)
-    expect(perimeterBorder('test-agent')).toBe('#6a1b9a')
+    expect(perimeterBorder('test-agent')).toBe('#1565c0')
   })
 
-  it('perimeterBorder light mode (test-agent: purple lighten3 #ce93d8)', () => {
+  it('perimeterBorder light mode (test-agent: blue lighten3 #90caf9)', () => {
     setDarkMode(false)
-    expect(perimeterBorder('test-agent')).toBe('#ce93d8')
+    expect(perimeterBorder('test-agent')).toBe('#90caf9')
   })
 
-  it('hello dark agentFg — WCAG AA ratio >= 4.5:1 (cyan family)', () => {
+  it('hello dark agentFg — WCAG AA ratio >= 4.5:1 (deepOrange family)', () => {
     setDarkMode(true)
     expect(contrastRatio(agentFg('hello'), agentBg('hello'))).toBeGreaterThanOrEqual(4.5)
   })
@@ -305,13 +303,13 @@ describe('agentColor — cache FIFO boundary (T1319)', () => {
     const idx = agentHue('unique-cache-name-105')
     expect(idx).toBe(agentHue('unique-cache-name-105'))
     expect(idx).toBeGreaterThanOrEqual(0)
-    expect(idx).toBeLessThan(15)
+    expect(idx).toBeLessThan(13)
   })
 
   it('cache eviction: first entries are evicted and recomputed correctly', () => {
     const idx = agentHue('unique-cache-name-0')
     expect(idx).toBe(agentHue('unique-cache-name-0'))
     expect(idx).toBeGreaterThanOrEqual(0)
-    expect(idx).toBeLessThan(15)
+    expect(idx).toBeLessThan(13)
   })
 })
