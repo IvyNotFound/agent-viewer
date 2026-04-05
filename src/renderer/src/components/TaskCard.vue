@@ -192,7 +192,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
 <style scoped>
 .task-card {
   background-color: var(--surface-secondary) !important; /* override Vuetify theme surface */
-  border: 1px solid var(--edge-subtle) !important; /* MD3: subtle at-rest border */
+  border: 1px solid var(--edge-default) !important; /* MD3: default border — visible against surface-primary column bg */
   border-radius: var(--shape-md) !important; /* MD3 medium shape (was 8px) */
   cursor: pointer;
   min-height: 180px;
