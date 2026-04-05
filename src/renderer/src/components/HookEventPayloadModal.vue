@@ -73,7 +73,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
     <div data-testid="payload-modal-backdrop" @click.self="emit('close')">
       <v-card class="payload-card">
         <!-- Header -->
-        <v-card-title class="d-flex align-center gap-3 pa-4 pb-3">
+        <v-card-title class="d-flex align-center ga-3 pa-4 pb-3">
           <span class="text-subtitle-2 font-weight-medium modal-event-name">{{ event.event }}</span>
           <!-- Tool name colored for tool events — consistent with HookEventBar/HookEventsView -->
           <span
@@ -129,10 +129,15 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 <style scoped>
 .payload-card {
   max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .payload-body {
-  overflow: auto;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .modal-event-name { /* event type label — inherits Roboto from Vuetify */ }
