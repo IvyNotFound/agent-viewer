@@ -181,7 +181,7 @@ function onDefaultCliChange(v: string) {
                   :model-value="settingsStore.theme"
                   mandatory
                   color="primary"
-                  variant="flat"
+                  variant="outlined"
                   density="compact"
                   data-testid="theme-toggle"
                   @update:model-value="(v) => settingsStore.setTheme(v as Theme)"
