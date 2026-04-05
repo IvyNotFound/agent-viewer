@@ -26,7 +26,7 @@ const LINK_TYPE_STYLE: Record<string, { color: string; background: string; borde
 
 const STATUS_STYLE: Record<string, { color: string; background: string; border: string }> = {
   todo:        { color: 'rgb(var(--v-theme-warning))',   background: 'rgba(var(--v-theme-warning),0.12)',   border: 'rgba(var(--v-theme-warning),0.3)' },
-  in_progress: { color: 'rgb(var(--v-theme-secondary))', background: 'rgba(var(--v-theme-secondary),0.12)', border: 'rgba(var(--v-theme-secondary),0.3)' },
+  in_progress: { color: 'rgb(var(--v-theme-success))', background: 'rgba(var(--v-theme-success),0.12)', border: 'rgba(var(--v-theme-success),0.3)' },
   done:        { color: 'rgb(var(--v-theme-content-muted))', background: 'rgba(var(--v-theme-content-subtle),0.12)', border: 'rgba(var(--v-theme-content-subtle),0.3)' },
   archived:    { color: 'rgb(var(--v-theme-content-subtle))', background: 'rgba(var(--v-theme-content-faint),0.12)', border: 'rgba(var(--v-theme-content-faint),0.3)' },
 }
@@ -181,7 +181,7 @@ function typeBadgeLabel(link: TaskLink): string {
 .dep-graph {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
 }
 
 .no-links {
@@ -191,40 +191,40 @@ function typeBadgeLabel(link: TaskLink): string {
 }
 
 .dep-section {
-  margin-bottom: 4px;
+  margin-bottom: 8px;
   min-height: 48px;
 }
 
 .dep-section-label {
-  color: var(--content-faint);
-  margin: 0 0 4px;
+  color: var(--content-muted);
+  margin: 0 0 8px;
 }
 
 .dep-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .dep-row {
-  gap: 6px !important;
+  gap: 8px !important;
   text-align: left !important;
   justify-content: flex-start !important;
   height: auto !important;
-  min-height: 28px !important;
-  padding: 4px 8px !important;
+  min-height: 36px !important;
+  padding: 6px 10px !important;
 }
 
 .dep-badge {
-  font-size: 0.5625rem;
-  padding: 2px 8px;
+  font-size: 0.6875rem;
+  padding: 3px 10px;
   border-radius: var(--shape-full);
   border: 1px solid;
   font-weight: 500;
   flex-shrink: 0;
 }
 .dep-badge--mono {
-  border-radius: 3px;
+  border-radius: 4px;
   font-family: ui-monospace, monospace;
 }
 
