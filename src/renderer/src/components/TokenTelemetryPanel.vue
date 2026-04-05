@@ -51,20 +51,23 @@ function formatTokens(n: number): string {
       <span class="token-title text-body-2 font-weight-medium">
         {{ t('dashboard.telemetry') }}
       </span>
-      <div class="token-tabs ga-1">
+      <v-btn-toggle
+        v-model="activeTab"
+        mandatory
+        color="primary"
+        variant="outlined"
+        density="compact"
+        rounded="lg"
+      >
         <v-btn
           v-for="tab in TABS"
           :key="tab.key"
-          variant="text"
-          size="x-small"
-          density="compact"
-          class="token-tab text-label-medium"
-          :class="{ 'token-tab--active': activeTab === tab.key }"
-          @click="activeTab = tab.key"
+          :value="tab.key"
+          size="small"
         >
           {{ t(tab.i18nKey) }}
         </v-btn>
-      </div>
+      </v-btn-toggle>
     </div>
 
     <!-- 4 token metrics -->
@@ -127,21 +130,6 @@ function formatTokens(n: number): string {
 }
 .token-title {
   color: var(--content-secondary);
-}
-.token-tabs {
-  display: flex;
-}
-.token-tab {
-  padding: 2px 8px !important;
-  border-radius: var(--shape-xs) !important;
-  font-weight: 500 !important;
-  color: var(--content-tertiary) !important;
-  transition: color var(--md-duration-short3) var(--md-easing-standard), background-color var(--md-duration-short3) var(--md-easing-standard);
-}
-.token-tab:hover { color: var(--content-secondary) !important; }
-.token-tab--active {
-  background: var(--surface-tertiary) !important;
-  color: var(--content-primary) !important;
 }
 /* 4 token metrics */
 .token-metrics {
