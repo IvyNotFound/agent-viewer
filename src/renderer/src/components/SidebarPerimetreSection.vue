@@ -220,7 +220,6 @@ async function addPerimetre() {
   flex: 1;
   min-width: 0;
   font-size: 0.875rem; /* MD3 Label Large: 14sp */
-  font-family: monospace;
   font-weight: 500;
   letter-spacing: 0.00625em; /* MD3 Label Large: 0.1px/16px */
   overflow: hidden;
