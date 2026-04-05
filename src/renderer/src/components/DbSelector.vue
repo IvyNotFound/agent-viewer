@@ -112,9 +112,9 @@ async function create() {
   <div v-if="step === 'home'" class="screen-center">
     <div class="home-content ga-6 px-6">
       <!-- Logo -->
-      <div class="logo-wrap">
-        <v-icon class="logo-icon" size="32">mdi-shield-check</v-icon>
-      </div>
+      <v-avatar size="56" color="primary-container" class="logo-avatar">
+        <v-icon size="28" color="on-primary-container">mdi-shield-check</v-icon>
+      </v-avatar>
       <div class="home-titles ga-1">
         <h2 class="app-name text-h6">KanbAgent</h2>
         <p class="app-tagline text-body-2">{{ t('dbSelector.tagline') }}</p>
@@ -123,26 +123,30 @@ async function create() {
       <!-- 2 options -->
       <div class="action-grid ga-3">
         <!-- Ouvrir existant -->
-        <v-btn variant="text" class="action-card ga-2 py-4 px-5" @click="store.selectProject()">
-          <div class="action-icon-wrap">
-            <v-icon class="action-icon" size="20">mdi-folder-outline</v-icon>
+        <v-card variant="outlined" class="action-card pa-4" @click="store.selectProject()">
+          <div class="action-card-inner ga-2">
+            <div class="action-icon-wrap">
+              <v-icon class="action-icon" size="20">mdi-folder-outline</v-icon>
+            </div>
+            <div>
+              <p class="action-label text-body-2">{{ t('dbSelector.open') }}</p>
+              <p class="action-sublabel text-caption">{{ t('dbSelector.existingProject') }}</p>
+            </div>
           </div>
-          <div>
-            <p class="action-label text-body-2">{{ t('dbSelector.open') }}</p>
-            <p class="action-sublabel text-caption">{{ t('dbSelector.existingProject') }}</p>
-          </div>
-        </v-btn>
+        </v-card>
 
         <!-- Créer nouveau -->
-        <v-btn variant="text" class="action-card action-card--primary ga-2 py-4 px-5" @click="step = 'create'">
-          <div class="action-icon-wrap action-icon-wrap--primary">
-            <v-icon class="action-icon action-icon--primary" size="20">mdi-plus</v-icon>
+        <v-card variant="outlined" class="action-card action-card--primary pa-4" @click="step = 'create'">
+          <div class="action-card-inner ga-2">
+            <div class="action-icon-wrap action-icon-wrap--primary">
+              <v-icon class="action-icon action-icon--primary" size="20">mdi-plus</v-icon>
+            </div>
+            <div>
+              <p class="action-label action-label--primary text-body-2">{{ t('dbSelector.createNew') }}</p>
+              <p class="action-sublabel text-caption">{{ t('setup.newProject') }}</p>
+            </div>
           </div>
-          <div>
-            <p class="action-label action-label--primary text-body-2">{{ t('dbSelector.createNew') }}</p>
-            <p class="action-sublabel text-caption">{{ t('setup.newProject') }}</p>
-          </div>
-        </v-btn>
+        </v-card>
       </div>
 
       <p v-if="store.error" class="error-msg py-2 px-3 text-caption">{{ store.error }}</p>
@@ -170,38 +174,32 @@ async function create() {
     <div class="create-content ga-5 px-6">
       <!-- Header -->
       <div class="create-header ga-3">
-        <v-btn variant="text" size="small" class="back-btn text-caption" @click="step = 'home'">
-          <v-icon class="back-icon" size="16">mdi-arrow-left</v-icon>
+        <v-btn variant="text" size="small" prepend-icon="mdi-arrow-left" class="back-btn text-caption" @click="step = 'home'">
           {{ t('dbSelector.back') }}
         </v-btn>
         <h2 class="create-title text-body-1">{{ t('setup.newProject') }}</h2>
       </div>
 
       <!-- Explication -->
-      <div class="create-info pa-3 ga-1 text-caption">
+      <v-alert variant="tonal" color="surface-variant" density="compact" class="text-caption create-info">
         <p>Le <code class="code-inline">CLAUDE.md</code> sera initialisé dans le dossier choisi.</p>
         <p>Un terminal <span class="code-agent">setup</span> sera lancé automatiquement pour initialiser le projet.</p>
-      </div>
+      </v-alert>
 
       <!-- Instance selector (hidden when ≤ 1 instance — auto-selected) -->
       <div v-if="availableInstances.length > 1">
         <p class="instance-label mb-2 text-caption">{{ t('dbSelector.instance') }}</p>
         <div v-if="loadingInstances" class="loading-text text-body-2">{{ t('common.loading') }}</div>
-        <div v-else class="instance-list">
-          <label
+        <v-radio-group v-else v-model="selectedInstance" hide-details>
+          <v-radio
             v-for="inst in availableInstances"
             :key="inst.distro"
-            :class="['instance-option', 'ga-3', 'py-2', 'px-3', selectedInstance?.distro === inst.distro ? 'instance-option--selected' : '']"
-          >
-            <input
-              v-model="selectedInstance"
-              type="radio"
-              :value="inst"
-              class="instance-radio"
-            />
-            <span class="instance-name">{{ getSystemLabel(inst.type, inst.distro) }}</span>
-          </label>
-        </div>
+            :value="inst"
+            :label="getSystemLabel(inst.type, inst.distro)"
+            color="primary"
+            density="compact"
+          />
+        </v-radio-group>
       </div>
 
       <!-- Bouton lancer -->
@@ -235,21 +233,8 @@ async function create() {
   flex-direction: column;
   max-width: 320px;
 }
-.logo-wrap {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--shape-lg);
-  background: rgba(var(--v-theme-primary), 0.2);
-  border: 1px solid rgba(var(--v-theme-primary), 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.logo-avatar {
   margin: 0 auto;
-}
-.logo-icon {
-  width: 28px;
-  height: 28px;
-  color: rgb(var(--v-theme-primary));
 }
 .home-titles { display: flex; flex-direction: column; }
 .app-name {
@@ -268,9 +253,12 @@ async function create() {
   border-radius: var(--shape-md) !important;
   border: 1px solid var(--edge-default) !important;
   background: rgba(var(--v-theme-on-surface), 0.02) !important;
+  cursor: pointer;
 }
-.action-card :deep(.v-btn__content) {
+.action-card-inner {
+  display: flex;
   flex-direction: column;
+  align-items: center;
 }
 .action-card:hover {
   border-color: var(--content-subtle) !important;
@@ -335,19 +323,12 @@ async function create() {
   gap: 6px;
   color: var(--content-subtle) !important;
 }
-.back-icon { width: 14px; height: 14px; }
 .create-title {
   font-weight: 600;
   color: var(--content-primary);
 }
 .create-info {
-  border-radius: var(--shape-sm);
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  color: var(--content-muted);
   line-height: 1.6;
-  display: flex;
-  flex-direction: column;
 }
 .code-inline {
   font-family: monospace;
@@ -374,31 +355,6 @@ async function create() {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
-}
-.instance-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.instance-option {
-  display: flex;
-  align-items: center;
-  border-radius: var(--shape-sm);
-  border: 1px solid var(--edge-default);
-  cursor: pointer;
-  transition: all var(--md-duration-short3) var(--md-easing-standard);
-  background: rgba(var(--v-theme-on-surface), 0.02);
-}
-.instance-option:hover { border-color: var(--content-faint); background: var(--surface-secondary); }
-.instance-option--selected {
-  border-color: rgba(var(--v-theme-primary), 0.6);
-  background: rgba(var(--v-theme-primary), 0.08);
-}
-.instance-radio { accent-color: rgb(var(--v-theme-primary)); }
-.instance-name {
-  font-size: 0.875rem;
-  font-family: monospace;
-  color: var(--content-secondary);
 }
 .btn-spinner {
   width: 16px;

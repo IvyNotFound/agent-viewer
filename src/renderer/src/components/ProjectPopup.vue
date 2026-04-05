@@ -85,7 +85,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
             <div class="popup-icon">
               <v-icon class="icon-sm" size="16">mdi-folder-outline</v-icon>
             </div>
-            <h2 class="popup-title text-body-2">{{ t('project.activeTitle') }}</h2>
+            <h2 class="popup-title text-subtitle-2">{{ t('project.activeTitle') }}</h2>
           </div>
           <v-btn
             icon="mdi-close"
@@ -129,6 +129,7 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
           <v-spacer />
           <v-btn
             variant="text"
+            color="primary"
             class="btn-change"
             @click="handleChangeProject"
           >
@@ -175,12 +176,12 @@ onUnmounted(() => document.removeEventListener('keyup', onKey))
   width: 2rem;
   height: 2rem;
   border-radius: var(--shape-sm);
-  background-color: var(--surface-secondary);
+  background-color: rgb(var(--v-theme-surface-variant));
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: var(--content-muted);
+  color: rgb(var(--v-theme-on-surface-variant));
 }
 
 .popup-title {
