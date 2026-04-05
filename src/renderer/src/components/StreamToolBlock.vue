@@ -453,10 +453,12 @@ function resultPreview(html: string | undefined): string {
 }
 
 /* Per-tool structured display (T1514, T1520) */
+/* T1639: primary elements override --content-muted inherited from .tool-body */
 .tool-filepath {
   margin-bottom: 6px;
   font-size: 0.85em;
   font-family: monospace;
+  color: var(--content-secondary);
 }
 
 .tool-key {
@@ -470,6 +472,7 @@ function resultPreview(html: string | undefined): string {
   font-family: monospace;
   font-weight: 600;
   margin-bottom: 4px;
+  color: var(--content-secondary);
 }
 
 .tool-meta {
@@ -488,6 +491,7 @@ function resultPreview(html: string | undefined): string {
   white-space: pre-wrap;
   margin: 0;
   word-break: break-all;
+  color: var(--content-primary);
 }
 
 /* Diff view for Edit tool */
