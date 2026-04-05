@@ -226,7 +226,8 @@
   border: 1px solid var(--edge-default); padding: 0.4em 0.75em; text-align: left;
 }
 .stream-markdown th { background: var(--surface-secondary); font-weight: 600; color: var(--content-secondary); }
-.stream-markdown tr:nth-child(even) td { background: var(--surface-secondary); }
+.stream-markdown tr:nth-child(odd) td { background: transparent; }
+.stream-markdown tr:nth-child(even) td { background: rgba(var(--v-theme-on-surface), 0.04); }
 
 /* MD3 dialog depth — backdrop blur + elevated surface tint (v-dialog only, not menus/tooltips) */
 .v-dialog .v-overlay__scrim {
