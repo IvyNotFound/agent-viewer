@@ -194,12 +194,12 @@ function onAgentClick(row: TopologyRow): void {
 .tp-column { display: flex; flex-direction: column; flex: 1; min-width: 180px; max-width: 320px; }
 .tp-col-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 
-.tp-scope-chip { font-family: ui-monospace, monospace; font-size: 12px !important; }
+.tp-scope-chip { font-size: 12px !important; }
 .tp-scope-chip--global {
   color: var(--content-subtle) !important;
   border-color: var(--edge-default) !important;
 }
-.tp-col-count { font-size: 10px; color: var(--content-faint); font-family: ui-monospace, monospace; }
+.tp-col-count { font-size: 0.6875rem; color: var(--content-faint); }
 
 .tp-cards { display: flex; flex-direction: column; gap: 8px; }
 .tp-card {
@@ -212,19 +212,18 @@ function onAgentClick(row: TopologyRow): void {
 }
 .tp-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; min-width: 0; }
 .tp-agent-name {
-  font-size: 12px;
-  font-family: ui-monospace, monospace;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.tp-status-chip { font-family: ui-monospace, monospace; flex-shrink: 0; }
+.tp-status-chip { flex-shrink: 0; }
 .tp-status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .tp-dot--active  { background: rgb(var(--v-theme-primary)); }
 .tp-dot--blocked { background: rgb(var(--v-theme-warning)); }
 .tp-dot--idle    { background: var(--content-faint); }
-.tp-agent-type { font-size: 10px; color: var(--content-faint); font-family: ui-monospace, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0; }
-.tp-task { font-size: 10px; color: var(--content-subtle); font-family: ui-monospace, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; display: block; margin: 2px 0 0; }
-.tp-tokens { font-size: 10px; color: var(--content-faint); font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; margin: 2px 0 0; }
+.tp-agent-type { font-size: 0.6875rem; color: var(--content-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0; }
+.tp-task { font-size: 0.6875rem; color: var(--content-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; display: block; margin: 2px 0 0; }
+.tp-tokens { font-size: 0.6875rem; color: var(--content-faint); font-variant-numeric: tabular-nums; margin: 2px 0 0; }
 </style>
