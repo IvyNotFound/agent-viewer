@@ -97,6 +97,23 @@ const staleTooltip = computed(() => {
 
 const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
 const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 'error' }
+
+const plainDescription = computed(() => {
+  if (!props.task.description) return ''
+  return props.task.description
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/(\*{1,3}|_{1,3})(.*?)\1/g, '$2')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+    .replace(/^>\s+/gm, '')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    .replace(/^[-*_]{3,}\s*$/gm, '')
+    .replace(/\n+/g, ' ')
+    .trim()
+})
 </script>
 
 <template>
@@ -158,7 +175,7 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
       </div>
 
       <!-- Description excerpt: up to 2 lines, fills body to balance footer -->
-      <p v-if="task.description" class="card-description text-body-2 mt-3">{{ task.description }}</p>
+      <p v-if="task.description" class="card-description text-body-2 mt-3">{{ plainDescription }}</p>
     </v-card-text>
 
     <!-- Footer: dates left, #id right -->
