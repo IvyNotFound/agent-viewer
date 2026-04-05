@@ -10,7 +10,7 @@ import { useTabsStore } from '@renderer/stores/tabs'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useSettingsStore } from '@renderer/stores/settings'
 import { useAgentsStore } from '@renderer/stores/agents'
-import { agentFg, agentBg, agentBorder, colorVersion } from '@renderer/utils/agentColor'
+import { agentFg, agentBg, agentBorder, colorVersion, getOnColor } from '@renderer/utils/agentColor'
 import { useStreamEvents } from '@renderer/composables/useStreamEvents'
 import HookEventBar from './HookEventBar.vue'
 import StreamToolBlock from './StreamToolBlock.vue'
@@ -80,6 +80,8 @@ const agentName = computed(() => tabsStore.tabs.find(t => t.id === props.termina
 const accentFg = computed(() => { void colorVersion.value; return agentName.value ? agentFg(agentName.value) : 'hsl(270, 60%, 68%)' })
 const accentBg = computed(() => { void colorVersion.value; return agentName.value ? agentBg(agentName.value) : 'hsl(270, 30%, 18%)' })
 const accentBorder = computed(() => { void colorVersion.value; return agentName.value ? agentBorder(agentName.value) : 'hsl(270, 30%, 32%)' })
+// MD3 on-color: dark text on light agent backgrounds, white on dark — ensures 4.5:1 contrast (T1500).
+const userBubbleTextColor = computed(() => getOnColor(accentFg.value))
 
 // Suppresses empty user bubbles from autonomous Claude reasoning (T679).
 const displayEvents = computed(() =>
@@ -316,7 +318,7 @@ onUnmounted(() => {
         >
           <div
             class="user-bubble py-3 px-4 text-body-2"
-            :style="{ background: accentFg }"
+            :style="{ background: accentFg, color: userBubbleTextColor }"
           >
             <template v-for="(block, bIdx) in event.message.content" :key="bIdx">
               <span v-if="block.type === 'text'">{{ parsePromptContext(block.text ?? '').base }}</span>
@@ -525,7 +527,6 @@ onUnmounted(() => {
   max-width: 70%;
   white-space: pre-wrap;
   overflow-wrap: break-word;
-  color: #fff;
   font-size: 0.875rem;
   line-height: 1.625;
   user-select: text;

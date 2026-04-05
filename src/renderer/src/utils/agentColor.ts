@@ -93,6 +93,56 @@ export function isDark(): boolean {
 }
 
 /**
+ * Parses a CSS hex color string to its RGB components.
+ * Supports 3-digit (#RGB) and 6-digit (#RRGGBB) formats.
+ * @param hex - Hex color string (with or without leading #).
+ * @returns Object with r, g, b in [0, 255], or null if unparseable.
+ */
+export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const clean = hex.replace(/^#/, '')
+  if (clean.length === 3) {
+    const r = parseInt(clean[0] + clean[0], 16)
+    const g = parseInt(clean[1] + clean[1], 16)
+    const b = parseInt(clean[2] + clean[2], 16)
+    return { r, g, b }
+  }
+  if (clean.length === 6) {
+    const r = parseInt(clean.slice(0, 2), 16)
+    const g = parseInt(clean.slice(2, 4), 16)
+    const b = parseInt(clean.slice(4, 6), 16)
+    return { r, g, b }
+  }
+  return null
+}
+
+/**
+ * Computes the WCAG relative luminance of a hex color.
+ * @param hex - Hex color string.
+ * @returns Luminance in [0, 1], or 0 if the color is unparseable.
+ */
+function getRelativeLuminance(hex: string): number {
+  const rgb = hexToRgb(hex)
+  if (!rgb) return 0
+  const linearize = (c: number): number => {
+    const s = c / 255
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+  }
+  return 0.2126 * linearize(rgb.r) + 0.7152 * linearize(rgb.g) + 0.0722 * linearize(rgb.b)
+}
+
+/**
+ * Returns the MD3 "on-color" for a given background hex color.
+ * Uses WCAG relative luminance to pick between dark (#1C1B1F) and white (#FFFFFF)
+ * so that text always meets the 4.5:1 contrast ratio requirement.
+ * Threshold 0.18 ≈ the perceptual midpoint between pure black and pure white.
+ * @param bgHex - Background hex color.
+ * @returns '#1C1B1F' for light backgrounds, '#FFFFFF' for dark backgrounds.
+ */
+export function getOnColor(bgHex: string): string {
+  return getRelativeLuminance(bgHex) > 0.18 ? '#1C1B1F' : '#FFFFFF'
+}
+
+/**
  * Returns a deterministic palette index (0–14) for a given agent name.
  * Results are cached for performance.
  * @param name - Agent name.
