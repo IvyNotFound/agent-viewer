@@ -55,6 +55,7 @@ function toggleSection(section: Section) {
           :title="t('sidebar.backlog')"
           icon
           variant="text"
+          class="rail-btn"
           @click="tabsStore.setActive('backlog')"
         >
           <v-icon size="18">mdi-view-list</v-icon>
@@ -68,6 +69,7 @@ function toggleSection(section: Section) {
             :title="t('sidebar.agents')"
             icon
             variant="text"
+            class="rail-btn"
             :class="{ 'rail-btn-active': activeSection === 'agents' }"
             @click="toggleSection('agents')"
           >
@@ -81,6 +83,7 @@ function toggleSection(section: Section) {
             :title="t('sidebar.perimeters')"
             icon
             variant="text"
+            class="rail-btn"
             :class="{ 'rail-btn-active': activeSection === 'perimetres' }"
             @click="toggleSection('perimetres')"
           >
@@ -94,6 +97,7 @@ function toggleSection(section: Section) {
             :title="t('sidebar.tree')"
             icon
             variant="text"
+            class="rail-btn"
             :class="{ 'rail-btn-active': activeSection === 'tree' }"
             @click="toggleSection('tree')"
           >
@@ -109,6 +113,7 @@ function toggleSection(section: Section) {
             :title="t('sidebar.project')"
             icon
             variant="text"
+            class="rail-btn"
             :class="{ 'rail-btn-active': isProjectPopupOpen }"
             @click="isProjectPopupOpen = true"
           >
@@ -122,6 +127,7 @@ function toggleSection(section: Section) {
             :title="t('sidebar.settings')"
             icon
             variant="text"
+            class="rail-btn"
             :class="{ 'rail-btn-active': isSettingsOpen }"
             @click="isSettingsOpen = true"
           >
@@ -212,13 +218,17 @@ function toggleSection(section: Section) {
 .rail-item--bottom {
   margin-bottom: 4px;
 }
-/* MD3 Navigation Rail — active indicator pill (secondaryContainer, 40×32px) */
-.rail-btn-active {
-  border-radius: 16px !important;
-  background: rgb(var(--v-theme-secondary-container)) !important;
-  color: rgb(var(--v-theme-on-secondary-container)) !important;
+/* Fixed 40×32px pill on ALL rail buttons — prevents size jump on active toggle */
+.rail-btn {
   width: 40px !important;
+  min-width: 40px !important;
   height: 32px !important;
+  border-radius: 16px !important;
+}
+/* Active indicator: primaryContainer (purple-tonal) — harmonizes with primary seed #8b5cf6 */
+.rail-btn-active {
+  background: rgb(var(--v-theme-primary-container)) !important;
+  color: rgb(var(--v-theme-on-primary-container)) !important;
 }
 .rail-divider {
   flex: none;
