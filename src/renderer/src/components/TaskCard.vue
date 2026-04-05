@@ -130,11 +130,10 @@ const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 
         <v-chip
           v-if="task.scope"
           size="x-small"
-          variant="outlined"
+          variant="tonal"
           rounded="sm"
           :style="{
             color: perimeterFg(task.scope),
-            borderColor: perimeterBorder(task.scope),
             backgroundColor: perimeterBg(task.scope),
           }"
         >

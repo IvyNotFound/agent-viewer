@@ -69,14 +69,28 @@ function onDrop(e: DragEvent): void {
   flex-direction: column;
   flex: 1;
   min-width: 0;
-  background-color: color-mix(in srgb, var(--surface-primary) 50%, transparent);
+  background-color: var(--surface-secondary);
   border-radius: var(--shape-md);
   border: 1px solid var(--edge-subtle);
-  transition: border-color var(--md-duration-short3) var(--md-easing-standard), background-color var(--md-duration-short3) var(--md-easing-standard);
+  position: relative;
+  transition: border-color var(--md-duration-short3) var(--md-easing-standard);
+}
+/* MD3 state layer — drag-over overlay via pseudo-element */
+.column-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: rgba(var(--v-theme-secondary), 0);
+  transition: background-color var(--md-duration-short3) var(--md-easing-standard);
+  pointer-events: none;
+  z-index: 0;
+}
+.column-wrap.drag-over::before {
+  background-color: rgba(var(--v-theme-secondary), var(--md-state-hover));
 }
 .column-wrap.drag-over {
   border-color: rgba(var(--v-theme-secondary), 0.6);
-  background-color: rgba(var(--v-theme-secondary), 0.05);
 }
 .column-header {
   display: flex;
@@ -85,6 +99,8 @@ function onDrop(e: DragEvent): void {
   padding: 10px 12px;
   border-bottom: 1px solid var(--edge-subtle);
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 .column-title-row {
   display: flex;
@@ -109,6 +125,8 @@ function onDrop(e: DragEvent): void {
   border-radius: var(--shape-xs);
 }
 .column-body {
+  position: relative;
+  z-index: 1;
   flex: 1;
   overflow-y: auto;
   display: flex;

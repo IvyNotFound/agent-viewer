@@ -67,6 +67,7 @@ function formatDate(iso: string): string {
 }
 
 const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
+const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 'error' }
 
 async function onTaskDropped(taskId: number, targetStatut: string): Promise<void> {
   const task = store.tasks.find(t => t.id === taskId)
@@ -148,18 +149,22 @@ const archivedGroupsSorted = computed(() => {
 
       <!-- Active filters -->
       <div class="board-filters ga-2">
-        <span v-if="activeAgentName" class="filter-badge-agent">
-          {{ activeAgentName }}
-          <v-btn icon="mdi-close" variant="text" size="x-small" density="compact" class="filter-badge-close" @click="store.selectedAgentId = null" />
-        </span>
-        <span
+        <v-chip
+          v-if="activeAgentName"
+          size="small"
+          variant="tonal"
+          color="primary"
+          closable
+          @click:close="store.selectedAgentId = null"
+        >{{ activeAgentName }}</v-chip>
+        <v-chip
           v-if="store.selectedPerimetre"
-          class="filter-badge-perimeter"
-          :style="{ color: agentFg(store.selectedPerimetre), backgroundColor: agentBg(store.selectedPerimetre), borderColor: agentBorder(store.selectedPerimetre) }"
-        >
-          {{ store.selectedPerimetre }}
-          <v-btn icon="mdi-close" variant="text" size="x-small" density="compact" class="filter-badge-close" @click="store.selectedPerimetre = null" />
-        </span>
+          size="small"
+          variant="tonal"
+          closable
+          :style="{ color: agentFg(store.selectedPerimetre), backgroundColor: agentBg(store.selectedPerimetre) }"
+          @click:close="store.selectedPerimetre = null"
+        >{{ store.selectedPerimetre }}</v-chip>
         <div v-if="store.error" class="board-error">{{ store.error }}</div>
       </div>
     </div>
@@ -241,18 +246,19 @@ const archivedGroupsSorted = computed(() => {
                   </div>
                   <!-- Row 2: meta chips (scope, id, effort, date) -->
                   <div class="arc-meta">
-                    <span
+                    <v-chip
                       v-if="task.scope"
-                      class="arc-scope"
+                      size="x-small"
+                      variant="tonal"
+                      rounded="sm"
                       :style="{
                         color: perimeterFg(task.scope),
                         backgroundColor: perimeterBg(task.scope),
-                        borderColor: perimeterBorder(task.scope)
                       }"
-                    >{{ task.scope }}</span>
-                    <span class="arc-id">#{{ task.id }}</span>
-                    <span v-if="task.effort" class="arc-effort" :class="`arc-effort-${task.effort}`">{{ EFFORT_LABEL[task.effort] }}</span>
-                    <span class="arc-date">{{ formatDate(task.updated_at) }}</span>
+                    >{{ task.scope }}</v-chip>
+                    <v-chip size="x-small" variant="outlined" class="arc-id-chip">#{{ task.id }}</v-chip>
+                    <v-chip v-if="task.effort" size="x-small" variant="tonal" :color="EFFORT_COLOR[task.effort]">{{ EFFORT_LABEL[task.effort] }}</v-chip>
+                    <v-chip size="x-small" variant="outlined" class="arc-date-chip">{{ formatDate(task.updated_at) }}</v-chip>
                   </div>
                 </div>
               </div>
@@ -325,35 +331,6 @@ const archivedGroupsSorted = computed(() => {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-}
-.filter-badge-agent {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 8px;
-  border-radius: var(--shape-full);
-  font-size: 0.75rem;
-  background-color: rgba(var(--v-theme-primary), 0.2);
-  color: rgb(var(--v-theme-primary));
-  border: 1px solid rgba(var(--v-theme-primary), 0.3);
-  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-}
-.filter-badge-perimeter {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 8px;
-  border-radius: var(--shape-full);
-  font-size: 0.75rem;
-  border: 1px solid transparent;
-  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-}
-.filter-badge-close {
-  opacity: 0.7;
-  color: inherit !important;
-}
-.filter-badge-close:hover {
-  opacity: 1;
 }
 .board-error {
   font-size: 0.75rem;
@@ -463,27 +440,42 @@ const archivedGroupsSorted = computed(() => {
   flex-direction: column;
   gap: 8px;
 }
-/* Archive card */
+/* Archive card — MD3 state layer via ::after pseudo-element */
 .archive-card {
   padding: 12px 16px;
   background-color: var(--surface-primary);
   border: 1px solid var(--edge-subtle);
   border-radius: var(--shape-sm);
   cursor: pointer;
-  transition: background-color var(--md-duration-short3) var(--md-easing-standard), border-color var(--md-duration-short3) var(--md-easing-standard);
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--md-duration-short3) var(--md-easing-standard);
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
+.archive-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: rgba(var(--v-theme-on-surface), 0);
+  transition: background-color var(--md-duration-short3) var(--md-easing-standard);
+  pointer-events: none;
+}
 .archive-card:hover {
-  background-color: var(--surface-secondary);
   border-color: var(--edge-default);
+}
+.archive-card:hover::after {
+  background-color: rgba(var(--v-theme-on-surface), var(--md-state-hover));
 }
 .arc-row1 {
   display: flex;
   align-items: flex-start;
   gap: 12px;
   justify-content: space-between;
+  position: relative;
+  z-index: 1;
 }
 .arc-title {
   flex: 1;
@@ -495,9 +487,6 @@ const archivedGroupsSorted = computed(() => {
   text-overflow: ellipsis;
   line-height: 1.4;
   transition: color var(--md-duration-short3) var(--md-easing-standard);
-}
-.archive-card:hover .arc-title {
-  color: var(--content-primary);
 }
 .arc-agent {
   flex-shrink: 0;
@@ -513,50 +502,15 @@ const archivedGroupsSorted = computed(() => {
 .arc-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
-.arc-scope {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 6px;
-  border-radius: var(--shape-xs);
-  font-size: 0.6875rem;
-  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-  border: 1px solid transparent;
-}
-.arc-id {
-  font-size: 11px;
-  color: var(--content-faint);
-  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+.arc-id-chip, .arc-date-chip {
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace !important;
   font-variant-numeric: tabular-nums;
-}
-.arc-effort {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 5px;
-  border-radius: var(--shape-xs);
-  font-size: 10px;
-  font-weight: 600;
-  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-}
-.arc-effort-1 {
-  color: rgb(var(--v-theme-secondary));
-  background-color: rgba(var(--v-theme-secondary), 0.15);
-}
-.arc-effort-2 {
-  color: rgb(var(--v-theme-warning));
-  background-color: rgba(var(--v-theme-warning), 0.15);
-}
-.arc-effort-3 {
-  color: rgb(var(--v-theme-error));
-  background-color: rgba(var(--v-theme-error), 0.15);
-}
-.arc-date {
-  font-size: 11px;
-  color: var(--content-faint);
-  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-  font-variant-numeric: tabular-nums;
+  color: var(--content-faint) !important;
 }
 .pagination {
   flex-shrink: 0;
