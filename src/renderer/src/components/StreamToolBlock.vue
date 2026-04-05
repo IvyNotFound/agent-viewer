@@ -38,9 +38,10 @@ function toolInputPreview(input: Record<string, unknown> | undefined): string {
 
 interface DiffLine {
   idx: number
-  type: 'remove' | 'add'
+  type: 'remove' | 'add' | 'separator'
   prefix: string
   text: string
+  label?: string
 }
 
 function diffLines(input: Record<string, unknown> | undefined): DiffLine[] {
@@ -49,11 +50,17 @@ function diffLines(input: Record<string, unknown> | undefined): DiffLine[] {
   const newStr = String(input.new_string ?? '')
   const result: DiffLine[] = []
   let idx = 0
-  for (const line of oldStr.split('\n')) {
-    result.push({ idx: idx++, type: 'remove', prefix: '-', text: line })
+  if (oldStr) {
+    result.push({ idx: idx++, type: 'separator', prefix: '', text: '', label: 'old' })
+    for (const line of oldStr.split('\n')) {
+      result.push({ idx: idx++, type: 'remove', prefix: '-', text: line })
+    }
   }
-  for (const line of newStr.split('\n')) {
-    result.push({ idx: idx++, type: 'add', prefix: '+', text: line })
+  if (newStr) {
+    result.push({ idx: idx++, type: 'separator', prefix: '', text: '', label: 'new' })
+    for (const line of newStr.split('\n')) {
+      result.push({ idx: idx++, type: 'add', prefix: '+', text: line })
+    }
   }
   return result
 }
@@ -99,13 +106,23 @@ function writePreview(input: Record<string, unknown> | undefined): string {
           {{ block.input.file_path }}
         </div>
         <div class="diff-view">
-          <div
+          <template
             v-for="line in diffLines(block.input)"
             :key="line.idx"
-            :class="line.type === 'remove' ? 'diff-remove' : 'diff-add'"
           >
-            <span class="diff-prefix">{{ line.prefix }}</span>{{ line.text }}
-          </div>
+            <div
+              v-if="line.type === 'separator'"
+              :class="line.label === 'old' ? 'diff-section-label diff-section-label--remove' : 'diff-section-label diff-section-label--add'"
+            >
+              {{ line.label }}
+            </div>
+            <div
+              v-else
+              :class="line.type === 'remove' ? 'diff-remove' : 'diff-add'"
+            >
+              <span class="diff-prefix">{{ line.prefix }}</span>{{ line.text }}
+            </div>
+          </template>
         </div>
       </template>
 
@@ -126,11 +143,11 @@ function writePreview(input: Record<string, unknown> | undefined): string {
           v-if="block.input?.offset != null || block.input?.limit != null"
           class="tool-meta"
         >
-          <span v-if="block.input?.offset != null">offset: {{ block.input.offset }}</span>
+          <span v-if="block.input?.offset != null"><span class="tool-key">offset:</span> {{ block.input.offset }}</span>
           <span
             v-if="block.input?.limit != null"
             class="tool-meta-sep"
-          >limit: {{ block.input.limit }}</span>
+          ><span class="tool-key">limit:</span> {{ block.input.limit }}</span>
         </div>
       </template>
 
@@ -160,7 +177,7 @@ function writePreview(input: Record<string, unknown> | undefined): string {
           v-if="block.input?.path"
           class="tool-filepath"
         >
-          {{ block.input.path }}
+          <span class="tool-key">path:</span> {{ block.input.path }}
         </div>
       </template>
 
@@ -176,7 +193,7 @@ function writePreview(input: Record<string, unknown> | undefined): string {
           v-if="block.input?.path"
           class="tool-filepath"
         >
-          {{ block.input.path }}
+          <span class="tool-key">path:</span> {{ block.input.path }}
         </div>
       </template>
 
@@ -184,7 +201,7 @@ function writePreview(input: Record<string, unknown> | undefined): string {
       <template v-else-if="block.name === 'Agent'">
         <div
           v-if="block.input?.subagent_type"
-          class="tool-filepath"
+          class="tool-pattern"
         >
           {{ block.input.subagent_type }}
         </div>
@@ -310,12 +327,19 @@ function writePreview(input: Record<string, unknown> | undefined): string {
   margin: 0;
 }
 
-/* Per-tool structured display (T1514) */
+/* Per-tool structured display (T1514, T1520) */
 .tool-filepath {
-  opacity: 0.7;
   margin-bottom: 6px;
   font-size: 0.85em;
   font-family: monospace;
+  color: var(--content-default);
+}
+
+.tool-key {
+  opacity: 0.5;
+  font-size: 0.85em;
+  user-select: none;
+  margin-right: 2px;
 }
 
 .tool-pattern {
@@ -335,12 +359,13 @@ function writePreview(input: Record<string, unknown> | undefined): string {
 }
 
 .tool-command {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(var(--v-theme-on-surface), 0.06);
   padding: 8px 12px;
   border-radius: 6px;
   white-space: pre-wrap;
   margin: 0;
   word-break: break-all;
+  color: var(--content-default);
 }
 
 /* Diff view for Edit tool */
@@ -373,4 +398,16 @@ function writePreview(input: Record<string, unknown> | undefined): string {
   margin-right: 4px;
   font-weight: bold;
 }
+
+.diff-section-label {
+  font-size: 0.75em;
+  font-weight: 600;
+  text-transform: uppercase;
+  opacity: 0.5;
+  padding: 2px 4px;
+  margin-top: 4px;
+  user-select: none;
+}
+.diff-section-label--remove { color: rgb(248, 113, 113); }
+.diff-section-label--add    { color: rgb(74, 222, 128); }
 </style>
