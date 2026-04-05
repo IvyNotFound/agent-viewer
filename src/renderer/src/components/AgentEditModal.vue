@@ -210,8 +210,10 @@ async function save() {
             :hint="t('agent.autoLaunchDesc')"
             persistent-hint
             :color="agentAccent(agent.name)"
+            :style="{ '--switch-accent': agentAccent(agent.name) }"
             density="compact"
             inset
+            class="agent-switch"
           />
 
           <!-- Max sessions parallèles -->
@@ -361,5 +363,10 @@ async function save() {
 .field-label {
   font-size: 12px;
   color: var(--content-muted);
+}
+
+/* Switch track color — force agent hex in teleported dialog (Vuetify hex color doesn't cascade correctly) */
+.agent-switch :deep(.v-selection-control--dirty .v-switch__track) {
+  background-color: var(--switch-accent) !important;
 }
 </style>

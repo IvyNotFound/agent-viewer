@@ -280,6 +280,7 @@ async function launch() {
                 density="compact"
                 hide-details
                 :color="agentAccent(agent.name)"
+                :style="{ '--switch-accent': agentAccent(agent.name) }"
                 :label="t('launch.resume', { resume: '--resume' })"
                 class="launch-switch"
               />
@@ -350,6 +351,7 @@ async function launch() {
               density="compact"
               hide-details
               :color="agentAccent(agent.name)"
+              :style="{ '--switch-accent': agentAccent(agent.name) }"
               :label="t('launch.multiInstance')"
               class="launch-switch"
             />
@@ -518,6 +520,11 @@ async function launch() {
 .launch-switch :deep(.v-label) {
   font-size: 14px;
   color: var(--content-secondary);
+}
+
+/* Switch track color — force agent hex in teleported dialog (Vuetify hex color doesn't cascade correctly) */
+.launch-switch :deep(.v-selection-control--dirty .v-switch__track) {
+  background-color: var(--switch-accent) !important;
 }
 
 /* Textarea font override for monospace feel */
