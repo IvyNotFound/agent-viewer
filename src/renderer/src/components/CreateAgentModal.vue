@@ -104,7 +104,7 @@ onMounted(async () => {
         systemPromptSuffix.value = result.systemPromptSuffix ?? ''
         thinkingMode.value = result.thinkingMode === 'disabled' ? 'disabled' : 'auto'
         preferredModel.value = result.preferredModel ?? preferredModel.value
-        if (systemPrompt.value || systemPromptSuffix.value) showPrompt.value = true
+        // showPrompt stays false — always collapsed on open, even if content exists
       }
     }
   }
@@ -322,17 +322,33 @@ function handleKeydown(e: KeyboardEvent) {
           </div>
 
           <!-- System prompt (optionnel, collapsible) -->
-          <div>
-            <v-btn
-              variant="text"
-              size="small"
-              class="prompt-toggle"
+          <div class="prompt-section">
+            <div
+              class="prompt-header"
+              role="button"
+              tabindex="0"
               @click="showPrompt = !showPrompt"
+              @keydown.enter="showPrompt = !showPrompt"
+              @keydown.space.prevent="showPrompt = !showPrompt"
             >
-              <v-icon :class="['prompt-arrow', showPrompt ? 'prompt-arrow--open' : '']" size="14">mdi-chevron-right</v-icon>
-              System prompt {{ isEditMode ? '' : t('agent.systemPromptOptional') }}
-            </v-btn>
-            <div v-if="showPrompt" class="d-flex flex-column ga-2 mt-2">
+              <div class="d-flex align-center ga-2 flex-1 min-width-0">
+                <v-icon :class="['prompt-arrow', showPrompt ? 'prompt-arrow--open' : '']" size="15">mdi-chevron-right</v-icon>
+                <span class="prompt-title">System prompt</span>
+                <span v-if="!isEditMode" class="prompt-optional">{{ t('agent.systemPromptOptional') }}</span>
+              </div>
+              <v-chip
+                v-if="systemPrompt || systemPromptSuffix"
+                size="x-small"
+                variant="tonal"
+                class="ml-auto flex-shrink-0"
+              >
+                {{ systemPrompt.length + systemPromptSuffix.length }} chars
+              </v-chip>
+            </div>
+            <div v-if="!showPrompt && (systemPrompt || systemPromptSuffix)" class="prompt-preview-line">
+              {{ (systemPrompt || systemPromptSuffix).slice(0, 100).trim() }}{{ (systemPrompt || systemPromptSuffix).length > 100 ? '…' : '' }}
+            </div>
+            <div v-if="showPrompt" class="prompt-expanded-body">
               <v-textarea
                 v-model="systemPrompt"
                 rows="14"
@@ -438,17 +454,57 @@ function handleKeydown(e: KeyboardEvent) {
   margin-left: 4px;
 }
 
-/* System prompt toggle */
-.prompt-toggle {
+/* System prompt section */
+.prompt-section {
+  border: 1px solid var(--edge-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.prompt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(var(--v-theme-surface-variant), 0.25);
   gap: 8px;
-  font-size: 12px !important;
-  color: var(--content-subtle) !important;
-  justify-content: flex-start !important;
+  transition: background var(--md-duration-short3) var(--md-easing-standard);
+}
+.prompt-header:hover {
+  background: rgba(var(--v-theme-surface-variant), 0.45);
+}
+.prompt-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--content-secondary);
+}
+.prompt-optional {
+  font-size: 11px;
+  color: var(--content-muted);
+}
+.prompt-preview-line {
+  padding: 4px 14px 8px 36px;
+  font-size: 11px;
+  color: var(--content-muted);
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(var(--v-theme-surface-variant), 0.1);
 }
 .prompt-arrow {
+  color: var(--content-muted);
+  flex-shrink: 0;
   transition: transform var(--md-duration-short3) var(--md-easing-standard);
 }
 .prompt-arrow--open {
   transform: rotate(90deg);
+}
+.prompt-expanded-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 </style>
