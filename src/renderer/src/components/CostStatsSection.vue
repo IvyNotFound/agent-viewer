@@ -470,7 +470,7 @@ const hoveredBar = ref<number | null>(null)
 .cost-bar-fill {
   height: 100%;
   border-radius: var(--shape-xs);
-  background: linear-gradient(to right, rgba(var(--v-theme-primary), 0.6), rgba(var(--v-theme-secondary), 0.6));
+  background: linear-gradient(to right, rgba(var(--v-theme-primary),0.35), rgba(var(--v-theme-primary),0.75));
   transition: width var(--md-duration-medium2) var(--md-easing-standard);
 }
 .cost-bar-label {
