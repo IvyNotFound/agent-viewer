@@ -152,7 +152,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <v-dialog :model-value="!!task" max-width="1152" scrollable @update:model-value="store.closeTask()">
+  <v-dialog :model-value="!!task" max-width="1400" scrollable @update:model-value="store.closeTask()">
     <!-- v-if="task" ensures content not rendered when task is null (test compat for shallowMount) -->
     <div v-if="task" data-testid="task-detail-panel">
       <!-- Backdrop click handled by v-dialog; keep for test compat -->
@@ -319,7 +319,7 @@ onUnmounted(() => {
                   <div class="comment-bubble-header">
                     <div class="d-flex align-center ga-2" style="min-width: 0; flex: 1; overflow: hidden;">
                       <v-avatar
-                        size="20"
+                        size="32"
                         :style="{ color: agentFg(comment.agent_name ?? 'unknown'), backgroundColor: agentBg(comment.agent_name ?? 'unknown') }"
                         class="text-overline font-weight-bold flex-shrink-0"
                       >{{ (comment.agent_name ?? '?').slice(0, 2).toUpperCase() }}</v-avatar>
@@ -427,7 +427,7 @@ onUnmounted(() => {
 
 /* Right column */
 .task-right-col {
-  width: 288px;
+  width: 380px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
