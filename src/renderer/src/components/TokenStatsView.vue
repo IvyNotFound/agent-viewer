@@ -39,89 +39,110 @@ const {
       </v-btn-toggle>
     </div>
 
-    <!-- ── Summary cards ──────────────────────────────────────────────── -->
+    <!-- ── Summary metric cards ───────────────────────────────────────── -->
     <div class="ts-cards-row ga-2 py-2 px-4">
-      <div class="ts-card ga-1 pa-3">
-        <span class="ts-card-label text-label-medium">{{ t('tokenStats.total') }}</span>
-        <span class="ts-card-value text-body-1">{{ formatNumber(globalStats.total) }}</span>
-        <div class="ts-card-sub ts-mono text-label-medium">
-          <span class="ts-in">↓ {{ formatNumber(globalStats.tokens_in) }}</span>
-          <span class="ts-out">↑ {{ formatNumber(globalStats.tokens_out) }}</span>
-        </div>
-      </div>
-
-      <div class="ts-card ga-1 pa-3">
-        <span class="ts-card-label text-label-medium">{{ t('tokenStats.sessions') }}</span>
-        <span class="ts-card-value text-body-1">{{ globalStats.session_count }}</span>
-        <div class="ts-card-sub text-label-medium">
-          {{ t('tokenStats.avgPerSession') }} {{ formatNumber(avgPerSession) }}
-        </div>
-      </div>
-
-      <div class="ts-card ga-1 pa-3">
-        <span class="ts-card-label text-label-medium">{{ t('tokenStats.cache') }}</span>
-        <span class="ts-card-value text-body-1">{{ formatNumber(globalStats.tokens_cache_read + globalStats.tokens_cache_write) }}</span>
-        <div class="ts-card-sub ts-mono text-label-medium">
-          <span class="ts-amber">R {{ formatNumber(globalStats.tokens_cache_read) }}</span>
-          <span class="ts-violet">W {{ formatNumber(globalStats.tokens_cache_write) }}</span>
-        </div>
-      </div>
-
-      <div class="ts-card ga-1 pa-3">
-        <span class="ts-card-label text-label-medium">{{ t('tokenStats.cacheHit') }}</span>
-        <span class="ts-card-value ts-tabnum text-body-1" :style="{ color: cacheHitColor }">{{ cacheHitRate }}%</span>
-        <div class="ts-card-sub text-label-medium">{{ t('tokenStats.cacheHitLabel') }}</div>
-      </div>
-
-      <div class="ts-card ga-1 pa-3">
-        <span class="ts-card-label text-label-medium">{{ t('tokenStats.cost') }}</span>
-        <span class="ts-card-value text-body-1">{{ formatCost(estimatedCost) }}</span>
-        <div class="ts-card-sub ts-faint text-label-medium">{{ t('tokenStats.costNote') }}</div>
-      </div>
-
-      <div class="ts-card ga-1 pa-3">
-        <span class="ts-card-label text-label-medium">{{ t('tokenStats.ratio') }}</span>
-        <span class="ts-card-value text-body-1">
-          {{ globalStats.total > 0 ? Math.round((globalStats.tokens_out / Math.max(globalStats.total, 1)) * 100) : 0 }}%
-        </span>
-        <div class="ts-card-sub text-label-medium">
-          <span class="ts-out">{{ t('tokenStats.outputRatio') }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── Sparkline 30 days ─────────────────────────────────────────── -->
-    <div class="ts-spark-wrap py-2 px-4">
-      <div class="ts-spark-header ga-2 mb-1">
-        <span class="ts-mini-label text-label-medium">{{ t('tokenStats.evolution') }}</span>
-      </div>
-      <div class="ts-spark-bars ga-1">
-        <div
-          v-for="(bar, i) in sparkBars"
-          :key="bar.day"
-          class="ts-spark-col"
-          @mouseenter="hoveredSparkBar = i"
-          @mouseleave="hoveredSparkBar = null"
-        >
-          <div
-            class="ts-spark-bar"
-            :class="hoveredSparkBar === i ? 'ts-spark-bar--hovered' : ''"
-            :style="{ height: sparkBarHeight(bar.total) + 'px' }"
-          />
-          <div v-if="bar.total === 0" class="ts-spark-zero" />
-          <div v-if="hoveredSparkBar === i" class="ts-spark-tooltip elevation-2 text-label-medium">
-            {{ bar.label }} : {{ formatNumber(bar.total) }}
+      <v-card elevation="1" class="ts-metric-card">
+        <v-card-text class="pa-3 d-flex flex-column ga-1">
+          <span class="ts-card-label text-label-medium">{{ t('tokenStats.total') }}</span>
+          <span class="ts-card-value text-body-1">{{ formatNumber(globalStats.total) }}</span>
+          <div class="ts-card-sub ts-mono text-label-medium">
+            <span class="ts-in">↓ {{ formatNumber(globalStats.tokens_in) }}</span>
+            <span class="ts-out">↑ {{ formatNumber(globalStats.tokens_out) }}</span>
           </div>
-        </div>
-      </div>
+        </v-card-text>
+      </v-card>
+
+      <v-card elevation="1" class="ts-metric-card">
+        <v-card-text class="pa-3 d-flex flex-column ga-1">
+          <span class="ts-card-label text-label-medium">{{ t('tokenStats.sessions') }}</span>
+          <span class="ts-card-value text-body-1">{{ globalStats.session_count }}</span>
+          <div class="ts-card-sub text-label-medium">
+            {{ t('tokenStats.avgPerSession') }} {{ formatNumber(avgPerSession) }}
+          </div>
+        </v-card-text>
+      </v-card>
+
+      <v-card elevation="1" class="ts-metric-card">
+        <v-card-text class="pa-3 d-flex flex-column ga-1">
+          <span class="ts-card-label text-label-medium">{{ t('tokenStats.cache') }}</span>
+          <span class="ts-card-value text-body-1">{{ formatNumber(globalStats.tokens_cache_read + globalStats.tokens_cache_write) }}</span>
+          <div class="ts-card-sub ts-mono text-label-medium">
+            <span class="ts-amber">R {{ formatNumber(globalStats.tokens_cache_read) }}</span>
+            <span class="ts-violet">W {{ formatNumber(globalStats.tokens_cache_write) }}</span>
+          </div>
+        </v-card-text>
+      </v-card>
+
+      <v-card elevation="1" class="ts-metric-card">
+        <v-card-text class="pa-3 d-flex flex-column ga-1">
+          <span class="ts-card-label text-label-medium">{{ t('tokenStats.cacheHit') }}</span>
+          <span class="ts-card-value ts-tabnum text-body-1" :style="{ color: cacheHitColor }">{{ cacheHitRate }}%</span>
+          <div class="ts-card-sub text-label-medium">{{ t('tokenStats.cacheHitLabel') }}</div>
+        </v-card-text>
+      </v-card>
+
+      <v-card elevation="1" class="ts-metric-card">
+        <v-card-text class="pa-3 d-flex flex-column ga-1">
+          <span class="ts-card-label text-label-medium">{{ t('tokenStats.cost') }}</span>
+          <span class="ts-card-value text-body-1">{{ formatCost(estimatedCost) }}</span>
+          <div class="ts-card-sub ts-faint text-label-medium">{{ t('tokenStats.costNote') }}</div>
+        </v-card-text>
+      </v-card>
+
+      <v-card elevation="1" class="ts-metric-card">
+        <v-card-text class="pa-3 d-flex flex-column ga-1">
+          <span class="ts-card-label text-label-medium">{{ t('tokenStats.ratio') }}</span>
+          <span class="ts-card-value text-body-1">
+            {{ globalStats.total > 0 ? Math.round((globalStats.tokens_out / Math.max(globalStats.total, 1)) * 100) : 0 }}%
+          </span>
+          <div class="ts-card-sub text-label-medium">
+            <span class="ts-out">{{ t('tokenStats.outputRatio') }}</span>
+          </div>
+        </v-card-text>
+      </v-card>
     </div>
 
     <!-- ── Content (scrollable) ───────────────────────────────────────── -->
     <div class="ts-content py-3 px-4 ga-4">
-      <!-- Cost analytics section (T769) -->
-      <CostStatsSection :db-path="store.dbPath" :period="costPeriod" />
+      <!-- ── Sparkline 30 days ─────────────────────────────────────────── -->
+      <v-card elevation="0" class="ts-section-card">
+        <div class="ts-section-header">
+          <span class="text-body-2 font-weight-medium ts-section-title">{{ t('tokenStats.evolution') }}</span>
+        </div>
+        <div class="pa-3">
+          <div class="ts-spark-bars ga-1">
+            <div
+              v-for="(bar, i) in sparkBars"
+              :key="bar.day"
+              class="ts-spark-col"
+              @mouseenter="hoveredSparkBar = i"
+              @mouseleave="hoveredSparkBar = null"
+            >
+              <div
+                class="ts-spark-bar"
+                :class="hoveredSparkBar === i ? 'ts-spark-bar--hovered' : ''"
+                :style="{ height: sparkBarHeight(bar.total) + 'px' }"
+              />
+              <div v-if="bar.total === 0" class="ts-spark-zero" />
+              <div v-if="hoveredSparkBar === i" class="ts-spark-tooltip elevation-2 text-label-medium">
+                {{ bar.label }} : {{ formatNumber(bar.total) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </v-card>
 
-      <!-- Per-agent table with bars -->
+      <!-- ── Cost analytics section ─────────────────────────────────── -->
+      <v-card elevation="0" class="ts-section-card">
+        <div class="ts-section-header">
+          <span class="text-body-2 font-weight-medium ts-section-title">{{ t('costStats.title') }}</span>
+        </div>
+        <div class="pa-3">
+          <CostStatsSection :db-path="store.dbPath" :period="costPeriod" />
+        </div>
+      </v-card>
+
+      <!-- ── Per-agent table with bars ──────────────────────────────── -->
       <v-card elevation="0" class="ts-section-card">
         <div class="ts-section-header">
           <span class="text-body-2 font-weight-medium ts-section-title">{{ t('tokenStats.perAgent') }}</span>
@@ -158,7 +179,7 @@ const {
         </div>
       </v-card>
 
-      <!-- Per-session table -->
+      <!-- ── Per-session table ──────────────────────────────────────── -->
       <v-card elevation="0" class="ts-section-card">
         <div class="ts-section-header">
           <span class="text-body-2 font-weight-medium ts-section-title">{{ t('tokenStats.perSession') }}</span>
@@ -247,7 +268,7 @@ const {
 .ts-period-label { letter-spacing: 0.02em; color: var(--content-faint); }
 .ts-period-toggle { height: 28px; }
 
-/* summary cards */
+/* summary metric cards row */
 .ts-cards-row {
   flex-shrink: 0;
   display: grid;
@@ -255,12 +276,13 @@ const {
   border-bottom: 1px solid var(--edge-subtle);
   background: var(--surface-base);
 }
-.ts-card {
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--shape-sm);
-  background: var(--surface-secondary);
-  border: 1px solid var(--edge-default);
+.ts-metric-card {
+  border: 1px solid var(--edge-default) !important;
+  background: var(--surface-primary) !important;
+  transition: border-color var(--md-duration-short3) var(--md-easing-standard);
+}
+.ts-metric-card:hover {
+  border-color: var(--edge-subtle) !important;
 }
 .ts-card-label {
   letter-spacing: 0.02em;
@@ -295,15 +317,32 @@ const {
 .ts-mono { font-family: ui-monospace, monospace; }
 .ts-tabnum { font-variant-numeric: tabular-nums; }
 .ts-semibold { font-weight: 600; }
-.ts-mini-label { letter-spacing: 0.02em; color: var(--content-faint); }
 
-/* sparkline */
-.ts-spark-wrap {
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--edge-subtle);
-  background: var(--surface-base);
+/* scrollable content */
+.ts-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
-.ts-spark-header { display: flex; align-items: center; }
+
+/* widget section cards (sparkline, cost, agent, session) */
+.ts-section-card {
+  border: 1px solid var(--edge-default) !important;
+  background: var(--surface-primary) !important;
+  transition: border-color var(--md-duration-short3) var(--md-easing-standard);
+}
+.ts-section-header {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--edge-default);
+}
+.ts-section-title {
+  color: var(--content-secondary);
+}
+
+/* sparkline bars */
 .ts-spark-bars {
   display: flex;
   align-items: flex-end;
@@ -338,29 +377,6 @@ const {
   color: var(--content-primary);
   border: 1px solid var(--edge-default);
   pointer-events: none;
-}
-
-/* scrollable content */
-.ts-content {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-/* widget section cards */
-.ts-section-card {
-  border: 1px solid var(--edge-default) !important;
-  background: var(--surface-primary) !important;
-  transition: border-color var(--md-duration-short3) var(--md-easing-standard);
-}
-.ts-section-header {
-  flex-shrink: 0;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--edge-default);
-}
-.ts-section-title {
-  color: var(--content-secondary);
 }
 
 .ts-empty { color: var(--content-faint); text-align: center; }
