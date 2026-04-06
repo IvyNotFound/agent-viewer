@@ -439,6 +439,16 @@ body,
 .v-dialog .v-card {
   background-color: rgb(var(--v-theme-surface-dialog)) !important;
 }
+/* Vertical centering for v-card inside a v-dialog overlay content.
+   .v-overlay__content is a flex column. When the dialog has a fixed height prop
+   (e.g. SettingsModal height="700") and the v-card's max-height is smaller, extra
+   vertical space appears below the card. margin-block: auto distributes this space
+   equally above and below, keeping the card visually centered.
+   Only affects dialogs where the overlay content has a definite height > card height;
+   harmless (resolves to 0) for auto-sized overlay content. */
+.v-dialog > .v-overlay__content > .v-card {
+  margin-block: auto;
+}
 
 /* ── MD3 compliance — remove MD2 uppercase on all buttons ────────────────────
    Vuetify 3 still inherits the MD2 button text-transform: uppercase.
