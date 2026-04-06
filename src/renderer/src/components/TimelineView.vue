@@ -281,18 +281,12 @@ const legendItems = computed(() => [
 
 <template>
   <div class="tl-view" @mousemove="moveTooltip">
-    <!-- Fixed header outside card -->
+    <!-- Header: title + filters + refresh -->
     <div class="tl-header">
-      <h2 class="text-h6 font-weight-medium tl-title">{{ t('timeline.title') }}</h2>
-      <div class="ml-auto">
-        <v-btn icon="mdi-refresh" variant="text" size="small" :loading="loading" :title="t('common.refresh')" @click="fetchTasks" />
-      </div>
-    </div>
-
-    <!-- Filters bar outside card — period presets + agent filter chips -->
-    <div class="tl-filters py-2 px-4">
-        <!-- Period presets: clicking resets the viewport to that range -->
-        <v-chip-group v-model="selectedPeriod" mandatory class="flex-shrink-0">
+      <h2 class="text-h6 font-weight-medium tl-title flex-shrink-0">{{ t('timeline.title') }}</h2>
+      <div class="tl-filter-sep" />
+      <!-- Period presets: clicking resets the viewport to that range -->
+      <v-chip-group v-model="selectedPeriod" mandatory class="flex-shrink-0">
         <v-chip
           v-for="item in periodItems"
           :key="item.value"
@@ -305,8 +299,7 @@ const legendItems = computed(() => [
           {{ item.title }}
         </v-chip>
       </v-chip-group>
-
-      <!-- Separator + agent filter chips -->
+      <!-- Agent filter chips -->
       <template v-if="allAgents.length > 0">
         <div class="tl-filter-sep" />
         <span class="tl-filter-label text-caption flex-shrink-0">{{ t('timeline.filterAgents') }}</span>
@@ -327,9 +320,12 @@ const legendItems = computed(() => [
           {{ t('timeline.clearFilter') }}
         </v-btn>
       </template>
+      <div class="ml-auto flex-shrink-0">
+        <v-btn icon="mdi-refresh" variant="text" size="small" :loading="loading" :title="t('common.refresh')" @click="fetchTasks" />
+      </div>
     </div>
 
-    <!-- Card body wrapper -->
+    <!-- Body -->
     <div class="tl-body-wrapper">
     <v-card elevation="0" class="section-card">
     <!-- Timeline body — wheel zooms viewport continuously, mousedown pans -->
@@ -425,29 +421,28 @@ const legendItems = computed(() => [
   background: var(--surface-base);
   overflow: hidden;
 }
-
 .tl-header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  height: 44px;
+  min-height: 44px;
   padding: 0 16px;
   border-bottom: 1px solid var(--edge-subtle);
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }
-
 .tl-title {
   margin: 0;
   color: var(--content-primary);
 }
-
 .tl-body-wrapper {
   flex: 1;
   min-height: 0;
-  padding: 16px;
   display: flex;
   flex-direction: column;
+  padding: 16px;
 }
-
 .section-card {
   border: 1px solid var(--edge-default) !important;
   background: var(--surface-primary) !important;
@@ -456,16 +451,6 @@ const legendItems = computed(() => [
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
-}
-
-.tl-filters {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid var(--edge-subtle);
-  flex-wrap: nowrap;
-  overflow-x: auto;
 }
 .tl-filter-label { color: var(--content-muted); }
 .tl-filter-sep {
