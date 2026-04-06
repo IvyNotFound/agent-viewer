@@ -378,7 +378,7 @@ pre {
 
 .diff-remove {
   background: rgba(239, 68, 68, 0.18);
-  color: rgb(248, 113, 113);
+  color: var(--diff-remove-color, rgb(248, 113, 113));
   padding: 1px 4px;
   white-space: pre-wrap;
   word-break: break-all;
@@ -386,7 +386,7 @@ pre {
 
 .diff-add {
   background: rgba(34, 197, 94, 0.18);
-  color: rgb(74, 222, 128);
+  color: var(--diff-add-color, rgb(74, 222, 128));
   padding: 1px 4px;
   white-space: pre-wrap;
   word-break: break-all;
@@ -408,10 +408,6 @@ pre {
   color: var(--content-secondary);
 }
 
-/* T1570: adapt diff text colors for light theme */
-:global(.v-theme--light) .diff-remove { color: rgb(185, 28, 28); }
-:global(.v-theme--light) .diff-add    { color: rgb(21, 128, 61); }
-
 .diff-prefix {
   user-select: none;
   opacity: 0.7;
@@ -420,8 +416,6 @@ pre {
 }
 
 /* Intra-line char highlight for substitution pairs */
-.diff-remove .diff-char-hl { background: rgba(239, 68, 68, 0.45); border-radius: 2px; }
-.diff-add    .diff-char-hl { background: rgba(34, 197, 94, 0.45);  border-radius: 2px; }
-:global(.v-theme--light) .diff-remove .diff-char-hl { background: rgba(185, 28, 28, 0.25); }
-:global(.v-theme--light) .diff-add    .diff-char-hl { background: rgba(21, 128, 61, 0.25); }
+.diff-remove .diff-char-hl { background: var(--diff-remove-char-hl, rgba(239, 68, 68, 0.45)); border-radius: 2px; }
+.diff-add    .diff-char-hl { background: var(--diff-add-char-hl,    rgba(34, 197, 94, 0.45));  border-radius: 2px; }
 </style>
