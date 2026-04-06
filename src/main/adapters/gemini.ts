@@ -163,6 +163,8 @@ export const geminiAdapter: CliAdapter = {
           },
         } as StreamEvent
       }
+      // ask_user: N/A — Gemini CLI runs in single-shot mode (-p flag): one prompt → one response,
+      // then exits. Multi-turn pauses for user input cannot occur. No ask_user event emitted. (T1708)
       // Unknown type — ignore lifecycle metadata
       return null
     } catch {

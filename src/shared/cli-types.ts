@@ -141,7 +141,7 @@ export interface TokenCounts {
  */
 export interface StreamEvent {
   /** Event type — normalized across adapters. */
-  type: 'system' | 'user' | 'assistant' | 'result' | 'text' | 'error'
+  type: 'system' | 'user' | 'assistant' | 'result' | 'text' | 'error' | 'ask_user'
   subtype?: string
   /** Conversation ID (extracted by extractConvId). */
   session_id?: string

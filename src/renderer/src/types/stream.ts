@@ -17,7 +17,7 @@ export interface StreamContentBlock {
 }
 
 export interface StreamEvent {
-  type: 'system' | 'user' | 'assistant' | 'result' | 'text' | 'error' | 'error:spawn' | 'error:stderr' | 'error:exit'
+  type: 'system' | 'user' | 'assistant' | 'result' | 'text' | 'error' | 'error:spawn' | 'error:stderr' | 'error:exit' | 'ask_user'
   subtype?: string
   session_id?: string
   message?: {

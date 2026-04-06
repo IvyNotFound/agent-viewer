@@ -145,6 +145,10 @@ export const opencodeAdapter: CliAdapter = {
         // May carry usage data — return as system event so extractTokenUsage can access it
         return { type: 'system', subtype: 'step_finish', usage: (parsed.usage ?? null) } as unknown as StreamEvent
       }
+      // ask_user: N/A — OpenCode has no documented user-prompt mechanism in its JSONL protocol.
+      // singleShotStdin: the process terminates after the first response, so interactive pauses
+      // cannot occur. No ask_user event is emitted for this adapter. (T1708)
+
       if (evType === 'tool_use') {
         // Render tool calls as assistant content blocks (natively displayed by StreamToolBlock.vue)
         // Field aliases: toolCallId is the SST/OpenCode convention; id is a fallback

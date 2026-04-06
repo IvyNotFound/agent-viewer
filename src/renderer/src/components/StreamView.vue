@@ -85,6 +85,52 @@ const activeThinkingText = computed<string | null>(() => {
   return last?.type === 'thinking' && last.text ? last.text : null
 })
 
+/**
+ * Detect a pending AskUserQuestion in the current event stream.
+ *
+ * Source 1 (T1707): last assistant event contains a tool_use AskUserQuestion block
+ *   with no matching tool_result (correlates via tool_use_id, falls back to user-event check).
+ * Source 2 (T1708): a synthetic ask_user event was emitted by stream-handlers and
+ *   no user reply has arrived yet. Source 1 takes priority to avoid double-detection.
+ */
+const pendingQuestion = computed<string | null>(() => {
+  // Source 1 — tool_use AskUserQuestion without tool_result (Claude, T1707)
+  for (let i = events.value.length - 1; i >= 0; i--) {
+    const ev = events.value[i]
+    if (ev.type === 'user' || ev.type === 'result') break
+    if (ev.type === 'assistant' && ev.message) {
+      const askBlock = ev.message.content.find(
+        (b) => b.type === 'tool_use' && b.name === 'AskUserQuestion'
+      )
+      if (askBlock) {
+        const toolUseId = askBlock.tool_use_id
+        const answered = toolUseId
+          ? events.value.slice(i + 1).some(
+              (e) => e.type === 'assistant' &&
+                e.message?.content.some(
+                  (b) => b.type === 'tool_result' && b.tool_use_id === toolUseId
+                )
+            )
+          : events.value.slice(i + 1).some((e) => e.type === 'user')
+        if (!answered) {
+          const q = (askBlock.input as Record<string, unknown> | undefined)?.question
+          return typeof q === 'string' ? q : null
+        }
+        break
+      }
+    }
+  }
+
+  // Source 2 — synthetic ask_user event without user reply (T1708)
+  for (let i = events.value.length - 1; i >= 0; i--) {
+    const ev = events.value[i]
+    if (ev.type === 'user') break
+    if (ev.type === 'ask_user' && ev.text) return ev.text
+  }
+
+  return null
+})
+
 const agentName = computed(() => tabsStore.tabs.find(t => t.id === props.terminalId)?.agentName ?? '')
 
 const accentFg = computed(() => { void colorVersion.value; return agentName.value ? agentFg(agentName.value) : 'rgb(var(--v-theme-secondary))' })

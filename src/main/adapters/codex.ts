@@ -94,6 +94,7 @@ export const codexAdapter: CliAdapter = {
       // Plain text line — wrap as assistant text event
       return { type: 'text', text: line }
     }
+    // ask_user: N/A — --approval-mode full-auto suppresses all interactive prompts. (T1708)
   },
 
   /**
