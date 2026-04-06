@@ -74,13 +74,32 @@ async function fetchTasks(): Promise<void> {
 watch(() => store.dbPath, fetchTasks)
 watch(daysBack, fetchTasks)
 
+const ZOOM_STEPS = [1, 3, 7, 14, 30, 60, 90, 180]
+
 const periodItems = computed(() => [
+  { title: '1d', value: 1 },
+  { title: '3d', value: 3 },
   { title: '7d', value: 7 },
   { title: '14d', value: 14 },
   { title: '30d', value: 30 },
   { title: '60d', value: 60 },
   { title: '90d', value: 90 },
+  { title: '180d', value: 180 },
 ])
+
+function onCanvasWheel(event: WheelEvent): void {
+  const idx = ZOOM_STEPS.indexOf(daysBack.value)
+  if (event.deltaY < 0 && idx > 0) {
+    // Zoom in — scroll up
+    event.preventDefault()
+    daysBack.value = ZOOM_STEPS[idx - 1]
+  } else if (event.deltaY > 0 && idx < ZOOM_STEPS.length - 1) {
+    // Zoom out — scroll down
+    event.preventDefault()
+    daysBack.value = ZOOM_STEPS[idx + 1]
+  }
+  // At bounds: do NOT call preventDefault — let native vertical scroll pass through
+}
 
 const unassignedLabel = computed(() => t('timeline.unassigned'))
 
@@ -267,8 +286,8 @@ const legendItems = computed(() => [
       </template>
     </div>
 
-    <!-- Timeline body -->
-    <div class="tl-body">
+    <!-- Timeline body — @wheel without .prevent so native vertical scroll passes through at zoom bounds -->
+    <div class="tl-body" @wheel="onCanvasWheel">
       <div v-if="loading" class="tl-state-center">
         <v-progress-circular indeterminate :size="32" :width="3" />
       </div>
