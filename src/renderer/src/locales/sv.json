@@ -573,7 +573,8 @@
     "streaming": "Pågår…",
     "waitingMessages": "Väntar på meddelanden…",
     "turns": "{n} varv | {n} varv",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "Skicka ett meddelande…"
   },
   "task": {
     "running": "Uppgift pågår",

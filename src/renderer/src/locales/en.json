@@ -581,7 +581,8 @@
     "streaming": "In progress…",
     "waitingMessages": "Waiting for messages…",
     "turns": "{n} turn | {n} turns",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "Send a message…"
   },
   "task": {
     "running": "Task in progress",

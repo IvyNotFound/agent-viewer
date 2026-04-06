@@ -573,7 +573,8 @@
     "streaming": "Käynnissä…",
     "waitingMessages": "Odotetaan viestejä…",
     "turns": "{n} kierros | {n} kierrosta",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "Lähetä viesti…"
   },
   "task": {
     "running": "Tehtävä käynnissä",

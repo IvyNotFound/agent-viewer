@@ -573,7 +573,8 @@
     "streaming": "Devam ediyor…",
     "waitingMessages": "Mesajlar bekleniyor…",
     "turns": "{n} tur | {n} tur",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "Mesaj gönder…"
   },
   "task": {
     "running": "Görev devam ediyor",

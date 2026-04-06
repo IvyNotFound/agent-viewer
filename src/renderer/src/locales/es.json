@@ -573,7 +573,8 @@
     "streaming": "En curso…",
     "waitingMessages": "Esperando mensajes…",
     "turns": "{n} turno | {n} turnos",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "Enviar un mensaje…"
   },
   "task": {
     "running": "Tarea en progreso",

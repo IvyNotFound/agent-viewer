@@ -573,7 +573,8 @@
     "streaming": "In Bearbeitung…",
     "waitingMessages": "Warten auf Nachrichten…",
     "turns": "{n} Runde | {n} Runden",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "Nachricht senden…"
   },
   "task": {
     "running": "Aufgabe in Bearbeitung",

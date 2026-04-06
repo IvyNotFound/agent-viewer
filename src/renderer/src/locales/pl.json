@@ -573,7 +573,8 @@
     "streaming": "W toku…",
     "waitingMessages": "Oczekiwanie na wiadomości…",
     "turns": "{n} ruch | {n} ruchy",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "Wyślij wiadomość…"
   },
   "task": {
     "running": "Zadanie w toku",

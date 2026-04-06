@@ -573,7 +573,8 @@
     "streaming": "处理中…",
     "waitingMessages": "等待消息…",
     "turns": "{n} 轮 | {n} 轮",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "发送消息…"
   },
   "task": {
     "running": "任务进行中",

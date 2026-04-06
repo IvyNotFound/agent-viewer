@@ -573,7 +573,8 @@
     "streaming": "В процессе…",
     "waitingMessages": "Ожидание сообщений…",
     "turns": "{n} ход | {n} ходов",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "Отправить сообщение…"
   },
   "task": {
     "running": "Задача выполняется",

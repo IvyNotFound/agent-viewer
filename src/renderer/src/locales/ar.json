@@ -573,7 +573,8 @@
     "streaming": "قيد التشغيل…",
     "waitingMessages": "في انتظار الرسائل…",
     "turns": "{n} دور | {n} أدوار",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "إرسال رسالة…"
   },
   "task": {
     "running": "المهمة قيد التنفيذ",

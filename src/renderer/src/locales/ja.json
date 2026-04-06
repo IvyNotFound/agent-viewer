@@ -573,7 +573,8 @@
     "streaming": "処理中…",
     "waitingMessages": "メッセージを待っています…",
     "turns": "{n} ターン | {n} ターン",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "メッセージを送信…"
   },
   "task": {
     "running": "タスク進行中",

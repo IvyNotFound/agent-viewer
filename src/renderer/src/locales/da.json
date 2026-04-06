@@ -573,7 +573,8 @@
     "streaming": "I gang…",
     "waitingMessages": "Venter på beskeder…",
     "turns": "{n} tur | {n} ture",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "Send en besked…"
   },
   "task": {
     "running": "Opgave i gang",

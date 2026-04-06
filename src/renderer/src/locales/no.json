@@ -573,7 +573,8 @@
     "streaming": "Pågår…",
     "waitingMessages": "Venter på meldinger…",
     "turns": "{n} runde | {n} runder",
-    "ctx": "ctx"
+    "ctx": "ctx",
+    "inputPlaceholder": "Send en melding…"
   },
   "task": {
     "running": "Oppgave pågår",
