@@ -624,15 +624,6 @@ onUnmounted(() => {
   user-select: text;
   cursor: text;
 }
-/* Markdown overrides for colored bubble background */
-.user-bubble :deep(code:not(pre code)) {
-  background: rgba(0, 0, 0, 0.15);
-  color: inherit;
-}
-.user-bubble :deep(a) {
-  color: inherit;
-  opacity: 0.85;
-}
 
 /* assistant wrapper — left-aligned flex column */
 .block-assistant {
