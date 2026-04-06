@@ -43,7 +43,7 @@ function stopAgent(): void {
   <div class="input-bar d-flex align-end ga-2 px-5 py-4">
     <v-textarea
       v-model="inputText"
-      rows="2"
+      rows="3"
       auto-grow
       variant="outlined"
       rounded="lg"
@@ -55,28 +55,30 @@ function stopAgent(): void {
     <!-- Stop button (T683, T1536, T1569) — always visible, disabled when not actionable -->
     <v-btn
       icon
-      rounded
+      rounded="lg"
       variant="flat"
       color="error"
+      size="large"
       class="action-btn"
       :disabled="!isStreaming || !ptyId || agentStopped"
       data-testid="stop-button"
       @click="stopAgent"
     >
-      <v-icon icon="mdi-stop-circle" />
+      <v-icon icon="mdi-stop-circle" size="22" />
     </v-btn>
     <!-- Send button — couleur agent quand actif (T680) -->
     <v-btn
       icon
-      rounded
+      rounded="lg"
       variant="flat"
+      size="large"
       :disabled="!inputText.trim() || !sessionId"
       class="action-btn"
       data-testid="send-button"
       :style="inputText.trim() && sessionId ? { backgroundColor: accentFg } : {}"
       @click="sendMessage"
     >
-      <v-icon icon="mdi-send" />
+      <v-icon icon="mdi-send" size="22" />
     </v-btn>
   </div>
 </template>
