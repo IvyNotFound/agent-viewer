@@ -271,6 +271,7 @@ const plainDescription = computed(() => {
 .card-avatars :deep(.v-avatar + .v-avatar) {
   margin-left: -6px;
 }
+/* :deep() required — v-avatar border has no Vuetify prop; adds MD3 visual separation in overlapping stack */
 .card-avatars :deep(.v-avatar) {
   border: 1.5px solid var(--surface-secondary);
 }

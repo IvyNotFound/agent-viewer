@@ -173,6 +173,7 @@ function resultPreview(html: string | undefined): string {
   background-color: rgba(var(--v-theme-error), 0.08);
 }
 
+/* :deep() required — v-btn__content flex layout (gap, width, justify) has no Vuetify prop equivalent */
 .tool-header :deep(.v-btn__content) {
   gap: 8px;
   width: 100%;

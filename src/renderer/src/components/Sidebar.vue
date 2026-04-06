@@ -188,6 +188,7 @@ function toggleSection(section: Section) {
   border-radius: 0 var(--shape-lg) var(--shape-lg) 0 !important;
 }
 
+/* :deep() required — v-navigation-drawer__content overflow/flex layout not configurable via Vuetify props */
 .sidebar-drawer :deep(.v-navigation-drawer__content) {
   overflow: hidden;
   display: flex;

@@ -525,7 +525,7 @@ async function launch() {
   flex-shrink: 0;
 }
 
-/* Switch label font size override */
+/* :deep() required — v-switch label font-size/color not exposed as props; targets label text only */
 .launch-switch :deep(.v-label) {
   font-size: 14px;
   color: var(--content-secondary);
@@ -536,7 +536,7 @@ async function launch() {
   background-color: var(--switch-accent) !important;
 }
 
-/* Textarea font override for monospace feel */
+/* :deep() required — native <textarea> inside v-textarea; font props not exposed by Vuetify */
 .launch-textarea :deep(textarea) {
   font-size: 12px;
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;

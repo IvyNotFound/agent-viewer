@@ -138,7 +138,8 @@ function relativeTime(ts: number): string {
   color: var(--content-muted);
   margin-right: 4px;
 }
-.he-chip-item :deep(.v-chip__content) {
+/* font-size inherits from chip root — no :deep() needed; 0.6875rem (11px) below Vuetify "small" minimum */
+.he-chip-item {
   font-size: 0.6875rem;
 }
 .he-spacer { flex: 1; }

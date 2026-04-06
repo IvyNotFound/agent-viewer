@@ -360,6 +360,7 @@ function effortColor(effort: number): string {
   padding-top: 8px;
   padding-bottom: 8px;
 }
+/* :deep() required — min-height:0 overrides Vuetify density-compact floor; no prop equivalent */
 .palette-text-field :deep(.v-input__control) {
   min-height: 0;
 }
@@ -379,9 +380,10 @@ function effortColor(effort: number): string {
   color: var(--content-faint);
   flex-shrink: 0;
 }
-.filter-chip--mono :deep(.v-chip__content) {
+/* font-family and font-size inherit from chip root — no :deep() needed */
+.filter-chip--mono {
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
-  font-size: 0.75rem; /* text-caption equivalent — :deep Vuetify override */
+  font-size: 0.75rem; /* text-caption equivalent */
 }
 /* Soften chip borders on dark background — selected chips override via inline :style */
 .palette-filters :deep(.v-chip--variant-outlined) {
