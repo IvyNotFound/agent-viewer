@@ -95,7 +95,7 @@ watch(() => store.dbPath, fetchQuality)
         <!-- Column headers -->
         <div class="quality-cols quality-cols-head text-label-medium">
           <span>{{ t('quality.colAgent') }}</span>
-          <span class="quality-right">{{ t('quality.colRejections') }}</span>
+          <span class="quality-right quality-col-span">{{ t('quality.colRejections') }}</span>
           <span></span>
           <span class="quality-right">{{ t('quality.colRate') }}</span>
         </div>
@@ -111,7 +111,7 @@ watch(() => store.dbPath, fetchQuality)
             :style="{ color: agentAccent(row.agent_name) }"
             :title="row.agent_name"
           >{{ row.agent_name }}</span>
-          <span class="quality-count quality-right">{{ row.rejected_tasks }}/{{ row.total_tasks }}</span>
+          <span class="quality-count quality-right quality-col-span">{{ row.rejected_tasks }}/{{ row.total_tasks }}</span>
           <div class="quality-bar-bg">
             <div
               class="quality-bar-fill"
@@ -202,10 +202,12 @@ watch(() => store.dbPath, fetchQuality)
 .quality-table { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
 .quality-cols {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) 80px minmax(0, 2fr) 60px;
+  grid-template-columns: minmax(120px, 1fr) 60px 60px minmax(0, 2fr) minmax(0, 1fr);
   gap: 12px;
   align-items: center;
 }
+/* Rejection count spans the two numeric columns (2+3) to align bar at col4 with WorkloadView */
+.quality-col-span { grid-column: 2 / 4; }
 .quality-cols-head {
   font-weight: 600;
   letter-spacing: 0.02em;
