@@ -105,8 +105,8 @@ describe('TaskDependencyGraph', () => {
       props: { taskId: 1, links },
       global: { plugins: [createTestingPinia(), i18n] },
     })
-    // Click the first link button
-    const btn = wrapper.find('v-btn')
+    // Click the first link button (native button, not v-btn)
+    const btn = wrapper.find('button')
     expect(btn.exists()).toBe(true)
     await btn.trigger('click')
     expect(wrapper.emitted('navigate')).toBeTruthy()

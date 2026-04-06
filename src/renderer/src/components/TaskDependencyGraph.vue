@@ -68,7 +68,7 @@ function linkedTaskStatus(link: TaskLink): string {
 <template>
   <div class="dep-graph">
     <!-- No links -->
-    <p v-if="!hasLinks" class="no-links text-caption">
+    <p v-if="!hasLinks" class="no-links">
       {{ t('taskDetail.noDependencies') }}
     </p>
 
@@ -77,11 +77,10 @@ function linkedTaskStatus(link: TaskLink): string {
       <div v-if="outgoing.length > 0" class="dep-section">
         <p class="dep-section-label text-label-medium">{{ t('taskDetail.blocks') }}</p>
         <div class="dep-list">
-          <v-btn
+          <button
             v-for="link in outgoing"
             :key="link.id"
-            variant="text"
-            block
+            type="button"
             class="dep-row"
             @click="emit('navigate', linkedTaskId(link))"
           >
@@ -91,8 +90,8 @@ function linkedTaskStatus(link: TaskLink): string {
               :title="linkedTaskStatus(link)"
             ></span>
             <span class="dep-id">#{{ linkedTaskId(link) }}</span>
-            <span class="dep-title text-caption">{{ linkedTaskTitle(link) }}</span>
-          </v-btn>
+            <span class="dep-title">{{ linkedTaskTitle(link) }}</span>
+          </button>
         </div>
       </div>
 
@@ -100,11 +99,10 @@ function linkedTaskStatus(link: TaskLink): string {
       <div v-if="incoming.length > 0" class="dep-section">
         <p class="dep-section-label text-label-medium">{{ t('taskDetail.blockedBy') }}</p>
         <div class="dep-list">
-          <v-btn
+          <button
             v-for="link in incoming"
             :key="link.id"
-            variant="text"
-            block
+            type="button"
             class="dep-row"
             @click="emit('navigate', linkedTaskId(link))"
           >
@@ -114,8 +112,8 @@ function linkedTaskStatus(link: TaskLink): string {
               :title="linkedTaskStatus(link)"
             ></span>
             <span class="dep-id">#{{ linkedTaskId(link) }}</span>
-            <span class="dep-title text-caption">{{ linkedTaskTitle(link) }}</span>
-          </v-btn>
+            <span class="dep-title">{{ linkedTaskTitle(link) }}</span>
+          </button>
         </div>
       </div>
 
@@ -123,11 +121,10 @@ function linkedTaskStatus(link: TaskLink): string {
       <div v-if="related.length > 0" class="dep-section">
         <p class="dep-section-label text-label-medium">{{ t('taskDetail.relatedTo') }}</p>
         <div class="dep-list">
-          <v-btn
+          <button
             v-for="link in related"
             :key="link.id"
-            variant="text"
-            block
+            type="button"
             class="dep-row"
             @click="emit('navigate', linkedTaskId(link))"
           >
@@ -137,8 +134,8 @@ function linkedTaskStatus(link: TaskLink): string {
               :title="linkedTaskStatus(link)"
             ></span>
             <span class="dep-id">#{{ linkedTaskId(link) }}</span>
-            <span class="dep-title text-caption">{{ linkedTaskTitle(link) }}</span>
-          </v-btn>
+            <span class="dep-title">{{ linkedTaskTitle(link) }}</span>
+          </button>
         </div>
       </div>
     </template>
@@ -155,32 +152,53 @@ function linkedTaskStatus(link: TaskLink): string {
 .no-links {
   color: var(--content-faint);
   font-style: italic;
+  font-size: 0.8125rem;
   margin: 0;
 }
 
 .dep-section {
-  margin-bottom: 8px;
-  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .dep-section-label {
   color: var(--content-muted);
-  margin: 0 0 8px;
+  margin: 0 0 4px;
 }
 
 .dep-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
 }
 
+/* Native button replaces v-btn block — gives full control over text wrapping */
 .dep-row {
-  gap: 8px !important;
-  text-align: left !important;
-  justify-content: flex-start !important;
-  height: auto !important;
-  min-height: 36px !important;
-  padding: 6px 10px !important;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-align: left;
+  transition: background-color var(--md-duration-short3) var(--md-easing-standard);
+  color: inherit;
+}
+
+/* MD3 state layer on hover */
+.dep-row:hover {
+  background-color: rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.dep-row:focus-visible {
+  outline: 2px solid rgba(var(--v-theme-primary), 0.4);
+  outline-offset: 1px;
 }
 
 .dep-status-dot {
@@ -188,24 +206,35 @@ function linkedTaskStatus(link: TaskLink): string {
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+  /* align dot to center of first text line (0.8125rem * 1.5 line-height ≈ 18px → center at ~9px → top ~5px) */
+  margin-top: 5px;
 }
 
 .dep-id {
   font-family: ui-monospace, monospace;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--content-muted);
   flex-shrink: 0;
-  min-width: 36px;
+  min-width: 32px;
   text-align: right;
+  line-height: 1.5;
 }
 
 .dep-title {
+  font-size: 0.8125rem; /* body-small MD3 — was 0.6875rem (text-caption) */
   color: var(--content-secondary);
+  min-width: 0; /* critical: allows flex child to shrink below content width */
+  overflow-wrap: break-word;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.5;
+  text-align: left;
   transition: color var(--md-duration-short3) var(--md-easing-standard);
 }
+
 .dep-row:hover .dep-title {
   color: var(--content-primary);
 }
