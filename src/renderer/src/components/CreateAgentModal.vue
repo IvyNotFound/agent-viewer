@@ -223,7 +223,6 @@ function handleKeydown(e: KeyboardEvent) {
 
         <!-- Form -->
         <div class="modal-body">
-
           <!-- Nom -->
           <v-text-field
             :model-value="name"
@@ -352,7 +351,7 @@ function handleKeydown(e: KeyboardEvent) {
             <div v-if="showPrompt" class="prompt-expanded-body">
               <v-textarea
                 v-model="systemPrompt"
-                rows="14"
+                rows="8"
                 spellcheck="true"
                 :placeholder="t('agent.systemPromptPlaceholder')"
                 hide-details
@@ -367,7 +366,7 @@ function handleKeydown(e: KeyboardEvent) {
                 </div>
                 <v-textarea
                   v-model="systemPromptSuffix"
-                  rows="12"
+                  rows="6"
                   spellcheck="true"
                   :placeholder="t('agent.systemPromptSuffixPlaceholder')"
                   hide-details
@@ -392,7 +391,9 @@ function handleKeydown(e: KeyboardEvent) {
                 variant="outlined"
                 :disabled="deleting || loading"
                 @click="deleteAgent"
-              >{{ deleting ? t('agent.deleting') : t('agent.deleteAgent') }}</v-btn>
+              >
+                {{ deleting ? t('agent.deleting') : t('agent.deleteAgent') }}
+              </v-btn>
             </div>
             <!-- Right: primary actions + shortcut hint near the submit button -->
             <div class="d-flex align-center ga-3">
@@ -426,6 +427,7 @@ function handleKeydown(e: KeyboardEvent) {
 }
 .modal-body {
   flex: 1;
+  min-height: 0; /* allow flex item to shrink below content height so overflow-y: auto works */
   overflow-y: auto;
   padding: 16px 20px;
   display: flex;
