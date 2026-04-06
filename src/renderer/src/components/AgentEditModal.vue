@@ -363,6 +363,11 @@ async function save() {
   color: var(--content-muted);
 }
 
+/* Input text color — force on-surface to override Vuetify :color tint in dark mode (T1684) */
+.modal-body :deep(.v-field__input) {
+  color: rgb(var(--v-theme-on-surface)) !important;
+}
+
 /* Switch track color — force agent hex in teleported dialog (Vuetify hex color doesn't cascade correctly) */
 .agent-switch :deep(.v-selection-control--dirty .v-switch__track) {
   background-color: var(--switch-accent) !important;

@@ -455,6 +455,11 @@ function handleKeydown(e: KeyboardEvent) {
   margin-left: 4px;
 }
 
+/* Input text color — force on-surface to override Vuetify :color tint in dark mode (T1684) */
+.modal-body :deep(.v-field__input) {
+  color: rgb(var(--v-theme-on-surface)) !important;
+}
+
 /* System prompt section */
 .prompt-section {
   border: 1px solid var(--edge-subtle);
