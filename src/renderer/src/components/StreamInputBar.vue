@@ -66,7 +66,7 @@ function stopAgent(): void {
       variant="tonal"
       color="error"
       size="x-large"
-      class="action-btn"
+      class="action-btn flex-shrink-0"
       :disabled="!isStreaming || !ptyId || agentStopped"
       aria-label="Stop"
       data-testid="stop-button"
@@ -81,7 +81,7 @@ function stopAgent(): void {
       variant="flat"
       size="x-large"
       :disabled="!inputText.trim() || !sessionId"
-      class="action-btn send-btn"
+      class="action-btn send-btn flex-shrink-0"
       aria-label="Send"
       data-testid="send-button"
       @click="sendMessage"
@@ -110,8 +110,12 @@ function stopAgent(): void {
   pointer-events: none;
 }
 /* Smooth appearance transition for icon buttons (T1536) */
+/* flex-shrink:0 + min dimensions prevent buttons from being crushed by textarea flex-grow (T1704) */
 .action-btn {
   transition: all 150ms ease;
+  flex-shrink: 0;
+  min-width: 52px;
+  min-height: 52px;
 }
 /* Send button: accent color via CSS v-bind — preserves Vuetify state layers (T1687) */
 .send-btn {
