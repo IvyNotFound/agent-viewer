@@ -81,7 +81,7 @@
     "pinia": "^3.0.4",
     "playwright": "^1.58.2",
     "postcss": "^8.5.8",
-    "tailwindcss": "^4.2.1",
+    "tailwindcss": "^4.2.2",
     "typescript": "^5.3.3",
     "typescript-eslint": "^8.56.1",
     "vitest": "^4.0.18",
