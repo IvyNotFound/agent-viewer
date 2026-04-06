@@ -65,28 +65,28 @@ function stopAgent(): void {
       rounded="lg"
       variant="tonal"
       color="error"
-      size="large"
+      size="x-large"
       class="action-btn"
       :disabled="!isStreaming || !ptyId || agentStopped"
       aria-label="Stop"
       data-testid="stop-button"
       @click="stopAgent"
     >
-      <v-icon icon="mdi-stop-circle" size="22" />
+      <v-icon icon="mdi-stop-circle" size="28" />
     </v-btn>
     <!-- Send button — accent color via CSS v-bind (T1687: preserves MD3 state layers) -->
     <v-btn
       icon
       rounded="lg"
       variant="flat"
-      size="large"
+      size="x-large"
       :disabled="!inputText.trim() || !sessionId"
       class="action-btn send-btn"
       aria-label="Send"
       data-testid="send-button"
       @click="sendMessage"
     >
-      <v-icon icon="mdi-send" size="22" />
+      <v-icon icon="mdi-send" size="28" />
     </v-btn>
   </div>
 </template>
