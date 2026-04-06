@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
-import { agentAccent, agentBorder } from '@renderer/utils/agentColor'
+import { agentAccent } from '@renderer/utils/agentColor'
 
 const { t } = useI18n()
 const store = useTasksStore()
@@ -222,41 +222,49 @@ const legendItems = computed(() => [
 
 <template>
   <div class="tl-view" @mousemove="moveTooltip">
-    <!-- Header -->
+    <!-- Header — simplified, period selector moved to filters bar -->
     <div class="tl-header">
       <h2 class="tl-title text-h6 font-weight-medium">{{ t('timeline.title') }}</h2>
-      <div class="tl-header-controls">
-        <v-select
-          v-model="daysBack"
-          :items="periodItems"
-          density="compact"
-          variant="outlined"
-          :hide-details="true"
-          :label="t('timeline.period')"
-          style="max-width: 160px;"
-        />
-        <v-btn icon="mdi-refresh" variant="text" size="small" :loading="loading" :title="t('common.refresh')" @click="fetchTasks" />
-      </div>
+      <v-btn icon="mdi-refresh" variant="text" size="small" :loading="loading" :title="t('common.refresh')" @click="fetchTasks" />
     </div>
 
-    <!-- Agent filter chips -->
-    <div v-if="allAgents.length > 0" class="tl-filters py-2 px-4">
-      <span class="tl-filter-label text-caption">{{ t('timeline.filterAgents') }}</span>
-      <v-chip-group v-model="selectedAgents" multiple>
+    <!-- Filters bar — period chips always shown, agent chips when data is present -->
+    <div class="tl-filters py-2 px-4">
+      <!-- Period selector as MD3 filter chips -->
+      <v-chip-group v-model="daysBack" mandatory class="flex-shrink-0">
         <v-chip
-          v-for="name in allAgents"
-          :key="name"
-          :value="name"
+          v-for="item in periodItems"
+          :key="item.value"
+          :value="item.value"
           size="small"
-          variant="outlined"
-          :style="selectedAgents.includes(name) ? { color: agentAccent(name), borderColor: agentBorder(name) } : {}"
+          filter
+          variant="tonal"
         >
-          {{ name }}
+          {{ item.title }}
         </v-chip>
       </v-chip-group>
-      <v-btn v-if="selectedAgents.length > 0" variant="text" size="small" @click="selectedAgents = []">
-        {{ t('timeline.clearFilter') }}
-      </v-btn>
+
+      <!-- Separator + agent filter chips -->
+      <template v-if="allAgents.length > 0">
+        <div class="tl-filter-sep" />
+        <span class="tl-filter-label text-caption flex-shrink-0">{{ t('timeline.filterAgents') }}</span>
+        <v-chip-group v-model="selectedAgents" multiple>
+          <v-chip
+            v-for="name in allAgents"
+            :key="name"
+            :value="name"
+            size="small"
+            filter
+            variant="tonal"
+            :color="agentAccent(name)"
+          >
+            {{ name }}
+          </v-chip>
+        </v-chip-group>
+        <v-btn v-if="selectedAgents.length > 0" variant="text" size="small" class="flex-shrink-0" @click="selectedAgents = []">
+          {{ t('timeline.clearFilter') }}
+        </v-btn>
+      </template>
     </div>
 
     <!-- Timeline body -->
@@ -359,7 +367,6 @@ const legendItems = computed(() => [
   border-bottom: 1px solid var(--edge-subtle);
 }
 .tl-title { color: var(--content-primary); margin: 0; }
-.tl-header-controls { display: flex; align-items: center; gap: 12px; }
 
 .tl-filters {
   flex-shrink: 0;
@@ -367,9 +374,18 @@ const legendItems = computed(() => [
   align-items: center;
   gap: 8px;
   border-bottom: 1px solid var(--edge-subtle);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }
-.tl-filter-label { color: var(--content-muted); flex-shrink: 0; }
+.tl-filter-label { color: var(--content-muted); }
+.tl-filter-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--edge-subtle);
+  flex-shrink: 0;
+  align-self: center;
+  margin: 0 4px;
+}
 .tl-muted-xs { color: var(--content-muted); }
 .tl-muted-sm { color: var(--content-muted); }
 
