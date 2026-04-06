@@ -603,7 +603,8 @@
     "colSource": "源码",
     "colTests": "测试",
     "colFiles": "文件",
-    "scannedAt": "扫描于 {date}"
+    "scannedAt": "扫描于 {date}",
+    "languageDetail": "语言详情"
   },
   "update": {
     "available": "更新 {version} 可用",

@@ -603,7 +603,8 @@
     "colSource": "Fonte",
     "colTests": "Testes",
     "colFiles": "Ficheiros",
-    "scannedAt": "Digitalizado em {date}"
+    "scannedAt": "Digitalizado em {date}",
+    "languageDetail": "Detalhe de linguagens"
   },
   "update": {
     "available": "Atualização {version} disponível",

@@ -603,7 +603,8 @@
     "colSource": "Источник",
     "colTests": "Тесты",
     "colFiles": "Файлы",
-    "scannedAt": "Сканировано {date}"
+    "scannedAt": "Сканировано {date}",
+    "languageDetail": "Детали языков"
   },
   "update": {
     "available": "Доступно обновление {version}",

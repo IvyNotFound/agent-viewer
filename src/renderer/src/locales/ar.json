@@ -603,7 +603,8 @@
     "colSource": "مصدر",
     "colTests": "اختبارات",
     "colFiles": "ملفات",
-    "scannedAt": "تم الفحص في {date}"
+    "scannedAt": "تم الفحص في {date}",
+    "languageDetail": "تفاصيل اللغات"
   },
   "update": {
     "available": "التحديث {version} متاح",

@@ -603,7 +603,8 @@
     "colSource": "Source",
     "colTests": "Tests",
     "colFiles": "Fichiers",
-    "scannedAt": "Analysé le {date}"
+    "scannedAt": "Analysé le {date}",
+    "languageDetail": "Détail des langages"
   },
   "update": {
     "available": "Mise à jour {version} disponible",

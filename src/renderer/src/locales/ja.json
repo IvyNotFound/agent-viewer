@@ -603,7 +603,8 @@
     "colSource": "ソース",
     "colTests": "テスト",
     "colFiles": "ファイル",
-    "scannedAt": "{date} にスキャン"
+    "scannedAt": "{date} にスキャン",
+    "languageDetail": "言語の詳細"
   },
   "update": {
     "available": "アップデート {version} が利用可能",

@@ -603,7 +603,8 @@
     "colSource": "소스",
     "colTests": "테스트",
     "colFiles": "파일",
-    "scannedAt": "{date}에 스캔됨"
+    "scannedAt": "{date}에 스캔됨",
+    "languageDetail": "언어 세부 정보"
   },
   "update": {
     "available": "업데이트 {version} 사용 가능",

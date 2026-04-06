@@ -603,7 +603,8 @@
     "colSource": "Källkod",
     "colTests": "Tester",
     "colFiles": "Filer",
-    "scannedAt": "Skannat {date}"
+    "scannedAt": "Skannat {date}",
+    "languageDetail": "Språkdetaljer"
   },
   "update": {
     "available": "Uppdatering {version} tillgänglig",

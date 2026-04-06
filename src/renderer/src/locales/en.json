@@ -611,7 +611,8 @@
     "colSource": "Source",
     "colTests": "Tests",
     "colFiles": "Files",
-    "scannedAt": "Scanned at {date}"
+    "scannedAt": "Scanned at {date}",
+    "languageDetail": "Language detail"
   },
   "update": {
     "available": "Update {version} available",

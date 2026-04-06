@@ -603,7 +603,8 @@
     "colSource": "Kilde",
     "colTests": "Tests",
     "colFiles": "Filer",
-    "scannedAt": "Scannet den {date}"
+    "scannedAt": "Scannet den {date}",
+    "languageDetail": "Sprogdetaljer"
   },
   "update": {
     "available": "Opdatering {version} tilgængelig",

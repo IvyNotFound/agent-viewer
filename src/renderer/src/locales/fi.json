@@ -603,7 +603,8 @@
     "colSource": "Lähde",
     "colTests": "Testit",
     "colFiles": "Tiedostot",
-    "scannedAt": "Skannattu {date}"
+    "scannedAt": "Skannattu {date}",
+    "languageDetail": "Kielet yksityiskohtaisesti"
   },
   "update": {
     "available": "Päivitys {version} saatavilla",

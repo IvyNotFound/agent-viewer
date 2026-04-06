@@ -603,7 +603,8 @@
     "colSource": "Quellcode",
     "colTests": "Tests",
     "colFiles": "Dateien",
-    "scannedAt": "Gescannt am {date}"
+    "scannedAt": "Gescannt am {date}",
+    "languageDetail": "Sprachdetails"
   },
   "update": {
     "available": "Aktualisierung {version} verfügbar",
