@@ -113,7 +113,7 @@ onUnmounted(() => {
 }
 .titlebar-content {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   height: 48px;
   width: 100%;
