@@ -39,64 +39,98 @@ const {
       </v-btn-toggle>
     </div>
 
-    <!-- ── Summary metric cards ───────────────────────────────────────── -->
-    <div class="ts-cards-row ga-2 py-2 px-4">
+    <!-- ── Summary cards ──────────────────────────────────────────────── -->
+    <div class="ts-cards-row ga-3 py-3 px-4">
+      <!-- Total tokens -->
       <v-card elevation="1" class="ts-metric-card">
-        <v-card-text class="pa-3 d-flex flex-column ga-1">
-          <span class="ts-card-label text-label-medium">{{ t('tokenStats.total') }}</span>
-          <span class="ts-card-value text-body-1">{{ formatNumber(globalStats.total) }}</span>
-          <div class="ts-card-sub ts-mono text-label-medium">
-            <span class="ts-in">↓ {{ formatNumber(globalStats.tokens_in) }}</span>
-            <span class="ts-out">↑ {{ formatNumber(globalStats.tokens_out) }}</span>
+        <v-card-text class="d-flex align-center ga-3 pa-4">
+          <div class="ts-metric-icon ts-metric-icon--cyan">
+            <v-icon size="20" style="color: rgb(var(--v-theme-secondary))">mdi-counter</v-icon>
+          </div>
+          <div class="ts-metric-content">
+            <div class="text-h6 font-weight-bold tabular-nums lh-tight">{{ formatNumber(globalStats.total) }}</div>
+            <div class="text-caption text-medium-emphasis">{{ t('tokenStats.total') }}</div>
+            <div class="ts-card-sub ts-mono text-label-medium">
+              <span class="ts-in">↓ {{ formatNumber(globalStats.tokens_in) }}</span>
+              <span class="ts-out">↑ {{ formatNumber(globalStats.tokens_out) }}</span>
+            </div>
           </div>
         </v-card-text>
       </v-card>
 
+      <!-- Sessions -->
       <v-card elevation="1" class="ts-metric-card">
-        <v-card-text class="pa-3 d-flex flex-column ga-1">
-          <span class="ts-card-label text-label-medium">{{ t('tokenStats.sessions') }}</span>
-          <span class="ts-card-value text-body-1">{{ globalStats.session_count }}</span>
-          <div class="ts-card-sub text-label-medium">
-            {{ t('tokenStats.avgPerSession') }} {{ formatNumber(avgPerSession) }}
+        <v-card-text class="d-flex align-center ga-3 pa-4">
+          <div class="ts-metric-icon ts-metric-icon--emerald">
+            <v-icon size="20" style="color: rgb(var(--v-theme-info))">mdi-play-circle-outline</v-icon>
+          </div>
+          <div class="ts-metric-content">
+            <div class="text-h6 font-weight-bold tabular-nums lh-tight">{{ globalStats.session_count }}</div>
+            <div class="text-caption text-medium-emphasis">{{ t('tokenStats.sessions') }}</div>
+            <div class="ts-card-sub text-label-medium">{{ t('tokenStats.avgPerSession') }} {{ formatNumber(avgPerSession) }}</div>
           </div>
         </v-card-text>
       </v-card>
 
+      <!-- Cache -->
       <v-card elevation="1" class="ts-metric-card">
-        <v-card-text class="pa-3 d-flex flex-column ga-1">
-          <span class="ts-card-label text-label-medium">{{ t('tokenStats.cache') }}</span>
-          <span class="ts-card-value text-body-1">{{ formatNumber(globalStats.tokens_cache_read + globalStats.tokens_cache_write) }}</span>
-          <div class="ts-card-sub ts-mono text-label-medium">
-            <span class="ts-amber">R {{ formatNumber(globalStats.tokens_cache_read) }}</span>
-            <span class="ts-violet">W {{ formatNumber(globalStats.tokens_cache_write) }}</span>
+        <v-card-text class="d-flex align-center ga-3 pa-4">
+          <div class="ts-metric-icon ts-metric-icon--amber">
+            <v-icon size="20" style="color: rgb(var(--v-theme-warning))">mdi-cached</v-icon>
+          </div>
+          <div class="ts-metric-content">
+            <div class="text-h6 font-weight-bold tabular-nums lh-tight">{{ formatNumber(globalStats.tokens_cache_read + globalStats.tokens_cache_write) }}</div>
+            <div class="text-caption text-medium-emphasis">{{ t('tokenStats.cache') }}</div>
+            <div class="ts-card-sub ts-mono text-label-medium">
+              <span class="ts-amber">R {{ formatNumber(globalStats.tokens_cache_read) }}</span>
+              <span class="ts-violet">W {{ formatNumber(globalStats.tokens_cache_write) }}</span>
+            </div>
           </div>
         </v-card-text>
       </v-card>
 
+      <!-- Cache hit rate — dynamic color via cacheHitColor computed -->
       <v-card elevation="1" class="ts-metric-card">
-        <v-card-text class="pa-3 d-flex flex-column ga-1">
-          <span class="ts-card-label text-label-medium">{{ t('tokenStats.cacheHit') }}</span>
-          <span class="ts-card-value ts-tabnum text-body-1" :style="{ color: cacheHitColor }">{{ cacheHitRate }}%</span>
-          <div class="ts-card-sub text-label-medium">{{ t('tokenStats.cacheHitLabel') }}</div>
+        <v-card-text class="d-flex align-center ga-3 pa-4">
+          <div class="ts-metric-icon ts-metric-icon--surface">
+            <v-icon size="20" :style="{ color: cacheHitColor }">mdi-percent</v-icon>
+          </div>
+          <div class="ts-metric-content">
+            <div class="text-h6 font-weight-bold tabular-nums lh-tight" :style="{ color: cacheHitColor }">{{ cacheHitRate }}%</div>
+            <div class="text-caption text-medium-emphasis">{{ t('tokenStats.cacheHit') }}</div>
+            <div class="ts-card-sub text-label-medium">{{ t('tokenStats.cacheHitLabel') }}</div>
+          </div>
         </v-card-text>
       </v-card>
 
+      <!-- Estimated cost -->
       <v-card elevation="1" class="ts-metric-card">
-        <v-card-text class="pa-3 d-flex flex-column ga-1">
-          <span class="ts-card-label text-label-medium">{{ t('tokenStats.cost') }}</span>
-          <span class="ts-card-value text-body-1">{{ formatCost(estimatedCost) }}</span>
-          <div class="ts-card-sub ts-faint text-label-medium">{{ t('tokenStats.costNote') }}</div>
+        <v-card-text class="d-flex align-center ga-3 pa-4">
+          <div class="ts-metric-icon ts-metric-icon--violet">
+            <v-icon size="20" style="color: rgb(var(--v-theme-primary))">mdi-currency-usd</v-icon>
+          </div>
+          <div class="ts-metric-content">
+            <div class="text-h6 font-weight-bold tabular-nums lh-tight">{{ formatCost(estimatedCost) }}</div>
+            <div class="text-caption text-medium-emphasis">{{ t('tokenStats.cost') }}</div>
+            <div class="ts-card-sub ts-faint text-label-medium">{{ t('tokenStats.costNote') }}</div>
+          </div>
         </v-card-text>
       </v-card>
 
+      <!-- Output ratio -->
       <v-card elevation="1" class="ts-metric-card">
-        <v-card-text class="pa-3 d-flex flex-column ga-1">
-          <span class="ts-card-label text-label-medium">{{ t('tokenStats.ratio') }}</span>
-          <span class="ts-card-value text-body-1">
-            {{ globalStats.total > 0 ? Math.round((globalStats.tokens_out / Math.max(globalStats.total, 1)) * 100) : 0 }}%
-          </span>
-          <div class="ts-card-sub text-label-medium">
-            <span class="ts-out">{{ t('tokenStats.outputRatio') }}</span>
+        <v-card-text class="d-flex align-center ga-3 pa-4">
+          <div class="ts-metric-icon ts-metric-icon--violet">
+            <v-icon size="20" style="color: rgb(var(--v-theme-primary))">mdi-arrow-up-circle-outline</v-icon>
+          </div>
+          <div class="ts-metric-content">
+            <div class="text-h6 font-weight-bold tabular-nums lh-tight">
+              {{ globalStats.total > 0 ? Math.round((globalStats.tokens_out / Math.max(globalStats.total, 1)) * 100) : 0 }}%
+            </div>
+            <div class="text-caption text-medium-emphasis">{{ t('tokenStats.ratio') }}</div>
+            <div class="ts-card-sub text-label-medium">
+              <span class="ts-out">{{ t('tokenStats.outputRatio') }}</span>
+            </div>
           </div>
         </v-card-text>
       </v-card>
@@ -268,7 +302,7 @@ const {
 .ts-period-label { letter-spacing: 0.02em; color: var(--content-faint); }
 .ts-period-toggle { height: 28px; }
 
-/* summary metric cards row */
+/* summary cards grid */
 .ts-cards-row {
   flex-shrink: 0;
   display: grid;
@@ -276,6 +310,8 @@ const {
   border-bottom: 1px solid var(--edge-subtle);
   background: var(--surface-base);
 }
+
+/* MD3 metric cards */
 .ts-metric-card {
   border: 1px solid var(--edge-default) !important;
   background: var(--surface-primary) !important;
@@ -284,18 +320,26 @@ const {
 .ts-metric-card:hover {
   border-color: var(--edge-subtle) !important;
 }
-.ts-card-label {
-  letter-spacing: 0.02em;
-  color: var(--content-faint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+
+.ts-metric-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--shape-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
-.ts-card-value {
-  font-weight: 700;
-  color: var(--content-primary);
-  font-variant-numeric: tabular-nums;
-}
+.ts-metric-icon--cyan    { background-color: rgba(var(--v-theme-secondary), 0.15); }
+.ts-metric-icon--violet  { background-color: rgba(var(--v-theme-primary), 0.15); }
+.ts-metric-icon--emerald { background-color: rgba(var(--v-theme-info), 0.15); }
+.ts-metric-icon--amber   { background-color: rgba(var(--v-theme-warning), 0.15); }
+.ts-metric-icon--surface { background-color: rgba(var(--v-theme-on-surface), 0.08); }
+
+.lh-tight { line-height: 1.2; }
+.ts-metric-content { min-width: 0; flex: 1; }
+
+/* sub-line in metric cards */
 .ts-card-sub {
   color: var(--content-subtle);
   overflow: hidden;
