@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
-import { agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
+import { agentAccent, agentBorder } from '@renderer/utils/agentColor'
 
 const { t } = useI18n()
 const store = useTasksStore()
@@ -232,9 +232,10 @@ const legendItems = computed(() => [
           density="compact"
           variant="outlined"
           :hide-details="true"
+          :label="t('timeline.period')"
           style="max-width: 160px;"
         />
-        <v-btn variant="text" size="small" :loading="loading" prepend-icon="mdi-refresh" @click="fetchTasks">
+        <v-btn variant="text" size="small" color="primary" :loading="loading" prepend-icon="mdi-refresh" @click="fetchTasks">
           {{ t('common.refresh') }}
         </v-btn>
       </div>
@@ -250,8 +251,10 @@ const legendItems = computed(() => [
           :value="name"
           size="small"
           variant="outlined"
-          :style="selectedAgents.includes(name) ? { color: agentFg(name), background: agentBg(name), borderColor: agentBorder(name) } : {}"
-        >{{ name }}</v-chip>
+          :style="selectedAgents.includes(name) ? { color: agentAccent(name), borderColor: agentBorder(name) } : {}"
+        >
+          {{ name }}
+        </v-chip>
       </v-chip-group>
       <v-btn v-if="selectedAgents.length > 0" variant="text" size="small" @click="selectedAgents = []">
         {{ t('timeline.clearFilter') }}
@@ -286,7 +289,7 @@ const legendItems = computed(() => [
           class="tl-row"
         >
           <div class="tl-row-label py-2 px-3">
-            <span class="tl-agent-name text-caption" :style="{ color: agentFg(group.name) }">{{ group.name }}</span>
+            <span class="tl-agent-name text-caption" :style="{ color: agentAccent(group.name) }">{{ group.name }}</span>
           </div>
           <div class="tl-row-bars">
             <div
@@ -300,15 +303,15 @@ const legendItems = computed(() => [
             />
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Legend -->
-        <div class="tl-legend ga-4 py-3 px-5">
-          <span class="tl-muted-xs text-caption">{{ t('timeline.legend') }}</span>
-          <div v-for="item in legendItems" :key="item.status" class="tl-legend-item">
-            <div class="tl-legend-dot" :class="statusColorClass(item.status)" />
-            <span class="tl-muted-xs text-caption">{{ item.label }}</span>
-          </div>
-        </div>
+    <!-- Legend — outside scrollable canvas so it stays visible when body is scrolled -->
+    <div v-if="!loading && !error && groups.length > 0" class="tl-legend ga-4 py-3 px-5">
+      <span class="tl-muted-xs text-caption">{{ t('timeline.legend') }}</span>
+      <div v-for="item in legendItems" :key="item.status" class="tl-legend-item">
+        <div class="tl-legend-dot" :class="statusColorClass(item.status)" />
+        <span class="tl-muted-xs text-caption">{{ item.label }}</span>
       </div>
     </div>
 
@@ -390,6 +393,9 @@ const legendItems = computed(() => [
   top: 50%;
   white-space: nowrap;
 }
+/* Prevent first/last tick labels from being clipped at the canvas edges */
+.tl-tick:first-child { transform: translate(0%, -50%); }
+.tl-tick:last-child  { transform: translate(-100%, -50%); }
 
 .tl-row {
   display: flex;
@@ -424,13 +430,15 @@ const legendItems = computed(() => [
 .tl-bar--pulse { animation: tlPulse 2s ease-in-out infinite; }
 @keyframes tlPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-/* status colors */
+/* Status colors — todo/archived use on-surface alpha for visibility in both themes */
 .tl-bg-progress { background: rgb(var(--v-theme-primary)); }
 .tl-bg-done     { background: rgb(var(--v-theme-secondary)); }
-.tl-bg-archived { background: rgb(var(--v-theme-content-faint)); }
-.tl-bg-todo     { background: rgb(var(--v-theme-content-subtle)); }
+.tl-bg-todo     { background: rgba(var(--v-theme-on-surface), 0.35); }
+.tl-bg-archived { background: rgba(var(--v-theme-on-surface), 0.18); }
 
+/* Legend — flex-shrink:0 keeps it fixed at the bottom, outside the scrollable canvas */
 .tl-legend {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   border-top: 1px solid var(--edge-subtle);
