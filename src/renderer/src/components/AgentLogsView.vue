@@ -319,6 +319,7 @@ watch(() => props.initialAgentId, (v) => {
         </div>
       </div>
 
+    </div>
     </v-card>
   </div>
 </template>
