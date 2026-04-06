@@ -7,7 +7,7 @@ import { useCopyCode } from '@renderer/composables/useCopyCode'
 import AgentBadge from './AgentBadge.vue'
 import TaskDependencyGraph from './TaskDependencyGraph.vue'
 import GitCommitList from './GitCommitList.vue'
-import { agentFg, agentBg, agentBorder, perimeterFg, perimeterBg, perimeterBorder } from '@renderer/utils/agentColor'
+import { agentFg, agentBg, perimeterFg, perimeterBg, perimeterBorder } from '@renderer/utils/agentColor'
 import { parseUtcDate } from '@renderer/utils/parseDate'
 import type { TaskAssignee, TaskLink } from '@renderer/types'
 
@@ -315,19 +315,16 @@ onUnmounted(() => {
             <div class="comments-list pa-3 ga-3">
               <!-- Messages conversation -->
               <div v-for="comment in renderedComments" :key="comment.id">
-                <div
-                  class="md-bubble text-caption"
-                  :style="{
-                    color: agentFg(comment.agent_name ?? 'unknown'),
-                    backgroundColor: agentBg(comment.agent_name ?? 'unknown'),
-                    borderColor: agentBorder(comment.agent_name ?? 'unknown'),
-                  }"
-                >
-                  <div
-                    class="comment-bubble-header"
-                    :style="{ borderBottomColor: agentBorder(comment.agent_name ?? 'unknown') }"
-                  >
-                    <span class="comment-author">{{ comment.agent_name ?? '?' }}</span>
+                <div class="md-bubble text-caption">
+                  <div class="comment-bubble-header">
+                    <div class="d-flex align-center ga-2" style="min-width: 0; flex: 1; overflow: hidden;">
+                      <v-avatar
+                        size="20"
+                        :style="{ color: agentFg(comment.agent_name ?? 'unknown'), backgroundColor: agentBg(comment.agent_name ?? 'unknown') }"
+                        class="text-overline font-weight-bold flex-shrink-0"
+                      >{{ (comment.agent_name ?? '?').slice(0, 2).toUpperCase() }}</v-avatar>
+                      <span class="comment-author">{{ comment.agent_name ?? '?' }}</span>
+                    </div>
                     <span class="comment-time" :title="formatDateFull(comment.created_at)">
                       {{ relativeTime(comment.created_at) }}
                     </span>
@@ -517,7 +514,7 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 8px;
   padding: 6px 12px;
-  border-bottom: 1px solid;
+  border-bottom: 1px solid var(--edge-subtle);
 }
 .comment-bubble-body {
   padding: 8px 12px;
@@ -539,7 +536,9 @@ onUnmounted(() => {
   border-radius: var(--shape-sm);
   line-height: 1.5;
   word-break: break-words;
-  border: 1px solid;
+  border: 1px solid var(--edge-subtle);
+  background: var(--surface-card);
+  color: var(--content-primary);
 }
 
 /* Empty states */
