@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useTabsStore } from '@renderer/stores/tabs'
-import { agentFg, agentBorder } from '@renderer/utils/agentColor'
+import { agentAccent, agentBorder } from '@renderer/utils/agentColor'
 
 const { t } = useI18n()
 const store = useTasksStore()
@@ -109,7 +109,7 @@ function onAgentClick(row: TopologyRow): void {
               v-if="perimetre !== '__global__'"
               size="small"
               variant="outlined"
-              :style="{ color: agentFg(perimetre), borderColor: agentBorder(perimetre) }"
+              :style="{ color: agentAccent(perimetre), borderColor: agentBorder(perimetre) }"
               class="tp-scope-chip"
             >{{ perimetre }}</v-chip>
             <v-chip
@@ -133,7 +133,7 @@ function onAgentClick(row: TopologyRow): void {
             >
               <div class="tp-card-inner" :title="t('topology.filterByAgent', { name: agent.name })">
                 <div class="tp-card-top">
-                  <span class="tp-agent-name" :style="{ color: agentFg(agent.name) }">{{ agent.name }}</span>
+                  <span class="tp-agent-name" :style="{ color: agentAccent(agent.name) }">{{ agent.name }}</span>
                   <v-chip
                     :color="agentStatus(agent) === 'active' ? 'primary' : agentStatus(agent) === 'blocked' ? 'warning' : undefined"
                     size="x-small"
