@@ -92,7 +92,7 @@ function resultPreview(html: string | undefined): string {
       <span class="ask-question-label text-caption">{{ t('stream.askQuestion') }}</span>
     </div>
     <div class="ask-question-body px-4 py-3 text-body-2">
-      {{ block.input?.question }}
+      {{ block._question || block.input?.question }}
     </div>
   </div>
 
@@ -189,7 +189,8 @@ function resultPreview(html: string | undefined): string {
   letter-spacing: 0.05em;
 }
 .ask-question-body {
-  color: var(--content-primary);
+  /* T1764: use Vuetify MD3 token directly — var(--content-primary) can fail in scoped styles */
+  color: rgba(var(--v-theme-on-surface), 0.87);
   user-select: text;
   cursor: text;
   font-style: italic;

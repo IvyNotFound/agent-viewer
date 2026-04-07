@@ -18,6 +18,8 @@ export interface StreamContentBlock {
   _isLong?: boolean
   /** Line count of a tool_result block — computed once in flushEvents() (T843) */
   _lineCount?: number
+  /** Fallback question text for AskUserQuestion blocks when input.question is missing after IPC structured-clone (T1764) */
+  _question?: string
 }
 
 export interface StreamEvent {

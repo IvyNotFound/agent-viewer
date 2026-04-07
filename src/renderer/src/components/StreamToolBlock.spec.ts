@@ -71,4 +71,28 @@ describe('StreamToolBlock (T842)', () => {
     expect(wrapper.text()).toContain('/x.ts')
     wrapper.unmount()
   })
+
+  // T1764 — AskUserQuestion block rendering
+  it('renders AskUserQuestion block with question from input.question', () => {
+    const block: StreamContentBlock = { type: 'tool_use', name: 'AskUserQuestion', input: { question: 'What is your name?' } }
+    const wrapper = mount(StreamToolBlock, { props: { ...defaultProps, block }, global: { plugins: [i18n, pinia] } })
+    expect(wrapper.find('[data-testid="block-ask-question"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('What is your name?')
+    wrapper.unmount()
+  })
+
+  it('renders AskUserQuestion block with question from _question when input.question is missing (T1764 bridge)', () => {
+    const block: StreamContentBlock = { type: 'tool_use', name: 'AskUserQuestion', input: {}, _question: 'Bridged question text' }
+    const wrapper = mount(StreamToolBlock, { props: { ...defaultProps, block }, global: { plugins: [i18n, pinia] } })
+    expect(wrapper.find('[data-testid="block-ask-question"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Bridged question text')
+    wrapper.unmount()
+  })
+
+  it('prefers _question over input.question when both are present (T1764)', () => {
+    const block: StreamContentBlock = { type: 'tool_use', name: 'AskUserQuestion', input: { question: 'from input' }, _question: 'from bridge' }
+    const wrapper = mount(StreamToolBlock, { props: { ...defaultProps, block }, global: { plugins: [i18n, pinia] } })
+    expect(wrapper.text()).toContain('from bridge')
+    wrapper.unmount()
+  })
 })
