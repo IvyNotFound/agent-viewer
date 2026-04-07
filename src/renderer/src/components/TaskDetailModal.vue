@@ -29,13 +29,27 @@ const statusLabel = (key: string) => ({
 
 const STATUS_COLOR: Record<string, string | undefined> = {
   todo:        'warning',
-  in_progress: 'secondary',
-  done:        undefined,
+  in_progress: 'info',
+  done:        'success',
   archived:    undefined,
 }
 
 const EFFORT_LABEL: Record<number, string> = { 1: 'S', 2: 'M', 3: 'L' }
-const EFFORT_COLOR: Record<number, string> = { 1: 'secondary', 2: 'warning', 3: 'error' }
+const EFFORT_COLOR: Record<number, string> = { 1: 'info', 2: 'warning', 3: 'error' }
+
+const PRIORITY_COLOR: Record<string, string | undefined> = {
+  low:      undefined,
+  normal:   undefined,
+  high:     'warning',
+  critical: 'error',
+}
+
+const PRIORITY_LABEL: Record<string, string> = {
+  low:      'Low',
+  normal:   'Normal',
+  high:     'High',
+  critical: 'Critical',
+}
 
 function formatDateFull(iso: string): string {
   const dateLocale = locale.value === 'fr' ? 'fr-FR' : 'en-US'
@@ -168,6 +182,14 @@ onUnmounted(() => {
             <div class="d-flex flex-wrap ga-2">
               <v-chip size="small" variant="tonal" :color="STATUS_COLOR[task.status]">
                 {{ statusLabel(task.status) }}
+              </v-chip>
+              <v-chip
+                v-if="task.priority && PRIORITY_COLOR[task.priority]"
+                size="small"
+                variant="tonal"
+                :color="PRIORITY_COLOR[task.priority]"
+              >
+                {{ PRIORITY_LABEL[task.priority] }}
               </v-chip>
               <v-chip
                 v-if="task.scope"
