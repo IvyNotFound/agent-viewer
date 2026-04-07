@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Tab } from '@renderer/stores/tabs'
-import { agentFg, agentBg, colorVersion } from '@renderer/utils/agentColor'
+import { agentAccent } from '@renderer/utils/agentColor'
 import { useConfirmDialog } from '@renderer/composables/useConfirmDialog'
 import { useTabBarGroups } from '@renderer/composables/useTabBarGroups'
 import ContextMenu from './ContextMenu.vue'
@@ -27,40 +27,9 @@ function onFixedTabChange(val: string | null | undefined) {
 const {
   store, terminalTabs, fileTabs,
   groupedTerminalTabs,
-  toggleGroup, isGroupCollapsed, activateAgentGroup,
-  agentTabStyleMap, indicatorStyleMap, subTabLabel,
+  toggleGroup, isGroupCollapsed, isGroupActive, activateAgentGroup,
+  tabStyleMap, agentTabStyleMap, indicatorStyleMap, subTabLabel,
 } = useTabBarGroups(scrollContainer)
-
-// ── Sub-tab style map ────────────────────────────────────────────────────────
-// Inactive: agent text color at 60% opacity, no background — visually subordinate to pill header
-// Active: agent text color full opacity + agentBg at 35% opacity background
-function hexToRgba(hex: string, alpha: number): string {
-  if (!hex.startsWith('#') || hex.length < 7) return hex
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
-const subTabStyleMap = computed<Map<string, Record<string, string>>>(() => {
-  void colorVersion.value
-  const activeId = store.activeTabId
-  const map = new Map<string, Record<string, string>>()
-  for (const tab of terminalTabs.value) {
-    const isActive = activeId === tab.id
-    if (!tab.agentName) {
-      map.set(tab.id, isActive ? { backgroundColor: 'rgba(var(--v-theme-surface-variant), 0.5)' } : {})
-      continue
-    }
-    const fg = agentFg(tab.agentName)
-    if (isActive) {
-      map.set(tab.id, { color: fg, backgroundColor: hexToRgba(agentBg(tab.agentName), 0.35) })
-    } else {
-      map.set(tab.id, { color: hexToRgba(fg, 0.6) })
-    }
-  }
-  return map
-})
 
 // ── Scroll state ─────────────────────────────────────────────────────────────
 const canScrollLeft = ref(false)
@@ -232,6 +201,11 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
             v-if="isGroupCollapsed(group.agentName)"
             class="tab-group-count"
           >{{ group.tabs.length }}</span>
+          <span
+            v-if="isGroupActive(group)"
+            class="tab-agent-indicator"
+            :style="group.agentName ? { backgroundColor: agentAccent(group.agentName) } : { backgroundColor: 'rgb(var(--v-theme-primary))' }"
+          ></span>
         </button>
 
         <!-- Sous-onglets session (masqués si groupe collapsé) -->
@@ -240,7 +214,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
             <button
               v-ripple
               class="tab-sub text-body-2"
-              :style="subTabStyleMap.get(tab.id)"
+              :style="tabStyleMap.get(tab.id)"
               :title="subTabLabel(tab)"
               @click="store.setActive(tab.id)"
               @mousedown="onMiddleClick($event, tab)"
@@ -253,7 +227,6 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
                 @click.stop="handleCloseTab(tab)"
               >✕</span>
               <span
-                v-if="store.activeTabId === tab.id"
                 class="tab-sub-indicator"
                 :style="indicatorStyleMap.get(tab.id)"
               ></span>
@@ -386,49 +359,47 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   color: rgb(var(--v-theme-error));
   background: rgba(0,0,0,0.2);
 }
-/* Group container — subtle surface tint + top radius visually wraps pill header + sub-tabs.
-   align-items: center keeps pill and sub-tabs vertically centered within the 48px bar. */
 .tab-group {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 2px;
   flex-shrink: 0;
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  border-radius: var(--shape-sm) var(--shape-sm) 0 0;
-  padding: 0 4px;
-  margin: 0 2px;
 }
 .tab-group-sep {
   border-right: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  margin-right: 2px;
-  padding-right: 0;
+  margin-right: 4px;
+  padding-right: 4px;
 }
-/* tab-agent: pill/chip floating in the bar — MD3 filled pill for group header.
-   height: 36px + align-self: center keeps within 48px bar with 6px breathing room.
-   filter: brightness() for hover/active because background is set inline (agentTabStyleMap). */
 .tab-agent {
   position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 0 12px;
-  height: 36px;
-  align-self: center;
   font-weight: 500;
   transition: all var(--md-duration-short3) var(--md-easing-standard);
   user-select: none;
-  border-radius: 18px;
+  border-radius: var(--shape-xs) var(--shape-xs) 0 0;
   flex-shrink: 0;
   cursor: pointer;
   background: none;
   border: none;
 }
 .tab-agent:hover {
-  filter: brightness(1.1);
+  background: rgba(var(--v-theme-on-surface), 0.08);
 }
-/* Pressed — MD3 state layer */
+/* Pressed — MD3 state layer 12% */
 .tab-agent:active {
-  filter: brightness(0.9);
+  background: rgba(var(--v-theme-on-surface), 0.12);
+}
+/* Active indicator — positioning extracted from inline style */
+.tab-agent-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
 }
 .tab-agent-name {
   max-width: 80px;
@@ -448,21 +419,17 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   opacity: 0.7;
   flex-shrink: 0;
 }
-/* tab-sub: MD3 Secondary Tab shape — top-rounded flush-bottom, subordinate to the pill header.
-   height: 36px + align-self: center matches pill height while signaling sub-level via shape. */
 .tab-sub {
   position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 12px;
-  height: 36px;
-  align-self: center;
-  min-width: 80px;
+  padding: 0 16px;
+  min-width: 90px;
   font-weight: 500;
   transition: all var(--md-duration-short3) var(--md-easing-standard);
   user-select: none;
-  border-radius: var(--shape-sm) var(--shape-sm) 0 0;
+  border-radius: var(--shape-xs) var(--shape-xs) 0 0;
   flex-shrink: 0;
   cursor: pointer;
   background: none;
@@ -485,7 +452,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   border-radius: 3px 3px 0 0;
 }
 .tab-sub-label {
-  font-size: 11px;
+  font-size: 12px;
   flex-shrink: 0;
   overflow: hidden;
   text-overflow: ellipsis;
