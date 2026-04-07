@@ -184,20 +184,26 @@ export function useTabBarGroups(scrollContainer: Ref<HTMLDivElement | null>) {
     return map
   })
 
-  // Active sub-tab: rgba(agentBg, 0.40) background + agentFg text color.
-  // Inactive: {} (styling handled by CSS).
+  // Active sub-tab: rgba(agentBg, 0.60) background. Text color via CSS .tab-sub--active.
+  // Inactive agent tab: rgba(agentBg, 0.08) via --sub-tab-bg CSS custom prop (hover can override).
   const subTabBgMap = computed<Map<string, Record<string, string>>>(() => {
     void colorVersion.value
     const activeId = store.activeTabId
     const map = new Map<string, Record<string, string>>()
     for (const tab of store.tabs) {
-      if (activeId === tab.id && tab.agentName) {
-        const rgb = hexToRgb(agentBg(tab.agentName))
-        map.set(tab.id, rgb
-          ? { backgroundColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.40)`, color: agentFg(tab.agentName) }
-          : { color: agentFg(tab.agentName) })
-      } else {
+      if (!tab.agentName) {
         map.set(tab.id, {})
+        continue
+      }
+      const rgb = hexToRgb(agentBg(tab.agentName))
+      if (activeId === tab.id) {
+        map.set(tab.id, rgb
+          ? { backgroundColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.60)` }
+          : {})
+      } else {
+        map.set(tab.id, rgb
+          ? { '--sub-tab-bg': `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)` }
+          : {})
       }
     }
     return map

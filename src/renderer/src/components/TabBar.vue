@@ -358,9 +358,9 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
-  height: 36px;
+  height: 40px;
   align-self: center;
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 2px 3px;
 }
 /* Pill header — agent identity, always visible */
@@ -369,12 +369,12 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   align-items: center;
   gap: 5px;
   padding: 0 10px;
-  height: 28px;
+  height: 32px;
   font-size: 11px;
   font-weight: 600;
   transition: filter var(--md-duration-short3) var(--md-easing-standard);
   user-select: none;
-  border-radius: 14px;
+  border-radius: 16px;
   flex-shrink: 0;
   cursor: pointer;
   border: none;
@@ -404,14 +404,14 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   flex-shrink: 0;
 }
 /* Sub-chips — session tabs inside the group envelope.
-   Active state: tinted bg + agentFg text (from subTabBgMap :style).
-   Inactive: transparent + muted text (CSS). No bottom indicator. */
+   Active state: tinted bg (0.60) via subTabBgMap :style, on-surface text via .tab-sub--active.
+   Inactive: subtle agent tint (0.08) via --sub-tab-bg CSS custom prop (allows hover override). */
 .tab-sub {
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 0 10px;
-  height: 28px;
+  height: 32px;
   font-size: 11px;
   font-weight: 500;
   transition: background var(--md-duration-short3) var(--md-easing-standard),
@@ -420,9 +420,12 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   border-radius: 12px;
   flex-shrink: 0;
   cursor: pointer;
-  background: none;
+  background-color: var(--sub-tab-bg, transparent);
   border: none;
-  color: rgba(var(--v-theme-on-surface), 0.55);
+  color: rgba(var(--v-theme-on-surface), 0.70);
+}
+.tab-sub--active {
+  color: rgba(var(--v-theme-on-surface), 0.92);
 }
 .tab-sub:not(.tab-sub--active):hover {
   background: rgba(var(--v-theme-on-surface), 0.08);
