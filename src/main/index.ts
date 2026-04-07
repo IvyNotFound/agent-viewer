@@ -37,15 +37,17 @@ if (process.platform !== 'win32') {
 // <style> elements, which requires 'unsafe-inline' for style-src.
 // In production, Vite extracts all CSS into bundled .css files loaded via <link rel="stylesheet">,
 // so 'unsafe-inline' is not needed and is omitted to tighten the CSP.
-// style-src-attr 'none' blocks inline style= attributes in all modes.
-// Accepted residual risk (dev-only): XSS + style injection → CSS exfiltration; mitigated by
-// DOMPurify and script-src 'self' which already block the primary XSS vector.
+// style-src-attr 'unsafe-inline' is required for Vuetify 3 theme injection: Vuetify writes its
+// CSS custom properties (--v-theme-*) as inline style attributes on .v-application at runtime.
+// Blocking this with 'none' prevents all theme tokens from being applied → transparent surfaces.
+// Risk: CSS injection via inline styles; mitigated by script-src 'self' which blocks script
+// execution, making CSS exfiltration attacks non-exploitable in this Electron context.
 const isDev = !!process.env['ELECTRON_RENDERER_URL']
 const CSP = [
   "default-src 'self'",
   "script-src 'self'",
   isDev ? "style-src 'self' 'unsafe-inline'" : "style-src 'self'",
-  "style-src-attr 'none'",
+  "style-src-attr 'unsafe-inline'",
   "img-src 'self' data:",
   "connect-src 'self'",
   "font-src 'self'"
