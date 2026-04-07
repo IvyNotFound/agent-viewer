@@ -102,7 +102,7 @@ const sortedAssignees = computed(() =>
 )
 
 // ── Blocked status (T553) ─────────────────────────────────────────────────────
-// A task is blocked if it is 'todo' and has unresolved blockers (not done/archived)
+// A task is blocked if it is 'todo' and has unresolved blockers (not archived)
 const blockedByLinks = computed<TaskLink[]>(() => {
   if (!task.value) return []
   const id = task.value.id
@@ -116,7 +116,7 @@ const unresolvedBlockers = computed(() => {
   if (!task.value || task.value.status !== 'todo') return []
   return blockedByLinks.value.filter(link => {
     const blockerStatus = link.from_task === task.value!.id ? link.to_status : link.from_status
-    return blockerStatus !== 'done' && blockerStatus !== 'archived'
+    return blockerStatus !== 'archived'
   })
 })
 

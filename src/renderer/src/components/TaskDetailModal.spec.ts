@@ -332,12 +332,12 @@ describe('TaskDetailModal — multi-agents', () => {
     expect(wrapper.text()).toContain('Tâche bloquée')
   })
 
-  it('does not show blocked indicator when all blockers are done (T553)', async () => {
+  it('does not show blocked indicator when all blockers are archived (T553)', async () => {
     const task = makeTask({ id: 1, status: 'todo' })
     const resolvedLink = {
       id: 1, type: 'blocks',
       from_task: 99, to_task: 1,
-      from_title: 'Done task', from_status: 'done',
+      from_title: 'Archived task', from_status: 'archived',
       to_title: 'task 1', to_status: 'todo',
     }
     const pinia = createTestingPinia({
