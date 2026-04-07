@@ -6,6 +6,26 @@
  * MCP tools (tool_name contains ':') fall through to the JSON fallback.
  */
 
+import { computed } from 'vue'
+import { useSettingsStore } from '@renderer/stores/settings'
+
+const settings = useSettingsStore()
+
+// Inject diff colors as inline CSS vars on .diff-view to bypass cascade issues
+// (T1749: CSS vars on [data-v-theme] fail to cascade into scoped styles when
+// ToolInputView is rendered inside a teleported Vuetify dialog)
+const diffVars = computed(() => {
+  const isLight = settings.theme === 'light'
+  return {
+    '--diff-add-color':      isLight ? 'rgb(21, 128, 61)'         : 'rgb(74, 222, 128)',
+    '--diff-remove-color':   isLight ? 'rgb(185, 28, 28)'         : 'rgb(248, 113, 113)',
+    '--diff-add-bg':         isLight ? 'rgba(21, 128, 61, 0.12)'  : 'rgba(34, 197, 94, 0.18)',
+    '--diff-remove-bg':      isLight ? 'rgba(185, 28, 28, 0.10)'  : 'rgba(239, 68, 68, 0.18)',
+    '--diff-add-char-hl':    isLight ? 'rgba(21, 128, 61, 0.25)'  : 'rgba(34, 197, 94, 0.45)',
+    '--diff-remove-char-hl': isLight ? 'rgba(185, 28, 28, 0.25)'  : 'rgba(239, 68, 68, 0.45)',
+  }
+})
+
 interface DiffLine {
   idx: number
   type: 'remove' | 'add' | 'context' | 'hunk'
@@ -248,7 +268,7 @@ function writeLines(input: Record<string, unknown>): DiffLine[] {
   <!-- Edit: unified diff view (T1650) -->
   <template v-if="toolName === 'Edit'">
     <div v-if="toolInput.file_path" class="tool-filepath">{{ toolInput.file_path }}</div>
-    <div class="diff-view">
+    <div class="diff-view" :style="diffVars">
       <template v-for="line in diffLines(toolInput)" :key="line.idx">
         <div v-if="line.type === 'hunk'" class="diff-hunk">{{ line.text }}</div>
         <div v-else-if="line.type === 'context'" class="diff-context">
@@ -287,7 +307,7 @@ function writeLines(input: Record<string, unknown>): DiffLine[] {
   <!-- Write: file_path header + all-green diff (T1529) -->
   <template v-else-if="toolName === 'Write'">
     <div v-if="toolInput.file_path" class="tool-filepath">{{ toolInput.file_path }}</div>
-    <div class="diff-view">
+    <div class="diff-view" :style="diffVars">
       <div v-for="line in writeLines(toolInput)" :key="line.idx" class="diff-add">
         <span class="diff-prefix">{{ line.prefix }}</span>{{ line.text }}
       </div>

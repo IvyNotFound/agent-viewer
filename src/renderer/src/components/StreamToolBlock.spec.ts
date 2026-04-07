@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, shallowMount, flushPromises } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
 import StreamToolBlock from '@renderer/components/StreamToolBlock.vue'
 import type { StreamContentBlock } from '@renderer/types/stream'
 import i18n from '@renderer/plugins/i18n'
+
+const pinia = createTestingPinia({ initialState: { settings: { theme: 'dark' } } })
 
 describe('StreamToolBlock (T842)', () => {
   const defaultProps = {
@@ -20,7 +23,7 @@ describe('StreamToolBlock (T842)', () => {
     const block: StreamContentBlock = { type: 'tool_use', name: 'Read', input: { path: '/a.ts' } }
     const wrapper = mount(StreamToolBlock, {
       props: { ...defaultProps, block },
-      global: { plugins: [i18n] },
+      global: { plugins: [i18n, pinia] },
     })
     expect(wrapper.find('[data-testid="block-tool-use"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Read')
@@ -31,7 +34,7 @@ describe('StreamToolBlock (T842)', () => {
     const block: StreamContentBlock = { type: 'tool_result', content: 'result text', is_error: false }
     const wrapper = mount(StreamToolBlock, {
       props: { ...defaultProps, block },
-      global: { plugins: [i18n] },
+      global: { plugins: [i18n, pinia] },
     })
     expect(wrapper.find('[data-testid="block-tool-result"]').exists()).toBe(true)
     wrapper.unmount()
@@ -63,7 +66,7 @@ describe('StreamToolBlock (T842)', () => {
     const block: StreamContentBlock = { type: 'tool_use', name: 'Write', input: { file_path: '/x.ts' } }
     const wrapper = mount(StreamToolBlock, {
       props: { ...defaultProps, block, collapsed: { '1-0': false } },
-      global: { plugins: [i18n] },
+      global: { plugins: [i18n, pinia] },
     })
     expect(wrapper.text()).toContain('/x.ts')
     wrapper.unmount()
