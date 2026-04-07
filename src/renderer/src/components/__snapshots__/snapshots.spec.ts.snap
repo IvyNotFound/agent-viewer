@@ -261,7 +261,7 @@ exports[`TabBar — snapshots > matches snapshot: tab bar with one terminal tab 
         <v-icon data-v-3c3dc65a="" size="11" style="flex-shrink: 0;">mdi-console</v-icon><span data-v-3c3dc65a="" class="tab-agent-name">dev-front</span>
         <v-icon data-v-3c3dc65a="" class="tab-chevron" style="transform: rotate(-90deg);" size="10">mdi-chevron-down</v-icon>
         <!--v-if-->
-      </button><!-- Sub-chips session (masqués si groupe collapsé) --><button data-v-3c3dc65a="" class="tab-sub tab-sub--active" style="background-color: rgba(255, 224, 130, 0.6); color: rgb(0, 0, 0);" title="#1"><span data-v-3c3dc65a="" class="tab-sub-label">#1</span>
+      </button><!-- Sub-chips session (masqués si groupe collapsé) --><button data-v-3c3dc65a="" class="tab-sub tab-sub--active" style="background-color: rgb(255, 224, 130); color: rgb(0, 0, 0);" title="#1"><span data-v-3c3dc65a="" class="tab-sub-label">#1</span>
         <!--v-if--><span data-v-3c3dc65a="" class="tab-close text-label-medium" title="Fermer">✕</span>
       </button>
     </div>

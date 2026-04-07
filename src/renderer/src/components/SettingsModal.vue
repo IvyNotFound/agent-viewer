@@ -121,8 +121,11 @@ function onDefaultCliChange(v: string) {
     <v-card class="d-flex flex-column" height="100%" @keydown="handleKeydown">
 
       <!-- Header -->
-      <div class="d-flex align-center justify-space-between px-5 py-3" style="flex-shrink: 0;">
-        <span class="text-subtitle-1 font-weight-medium">{{ t('settings.title') }}</span>
+      <v-toolbar density="compact" flat color="surface">
+        <v-toolbar-title class="text-subtitle-1 font-weight-medium">
+          {{ t('settings.title') }}
+        </v-toolbar-title>
+        <v-spacer />
         <v-btn
           icon="mdi-close"
           variant="text"
@@ -131,19 +134,19 @@ function onDefaultCliChange(v: string) {
           data-testid="close-btn"
           @click="emit('close')"
         />
-      </div>
+      </v-toolbar>
       <v-divider />
 
       <!-- Body: nav rail + content panel -->
-      <div class="d-flex flex-grow-1" style="min-height: 0; overflow: hidden;">
+      <div class="settings-body d-flex flex-grow-1">
 
         <!-- Nav rail -->
         <v-list
           nav
           density="compact"
           bg-color="transparent"
-          style="width: 200px; flex-shrink: 0;"
-          class="pa-2"
+          :width="200"
+          class="flex-shrink-0 pa-2"
         >
           <v-list-item
             v-for="s in sections"
@@ -161,7 +164,7 @@ function onDefaultCliChange(v: string) {
         <v-divider vertical />
 
         <!-- Content panel -->
-        <div style="flex: 1; overflow-y: auto;" class="pa-4 d-flex flex-column ga-3">
+        <div class="settings-content pa-4 d-flex flex-column ga-3">
 
           <!-- Appearance: Language + Theme -->
           <template v-if="activeSection === 'appearance'">
@@ -421,3 +424,16 @@ function onDefaultCliChange(v: string) {
     </v-card>
   </v-dialog>
 </template>
+
+<style scoped>
+/* Layout constraints — no Vuetify utility equivalent for these flex overrides */
+.settings-body {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+}
+</style>
