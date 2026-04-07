@@ -483,7 +483,7 @@ async function launch() {
 }
 .instance-row--idle {
   border-color: var(--edge-default);
-  background: rgb(var(--v-theme-surface-secondary)); /* --surface-dialog alias unavailable in teleported overlay */
+  background: rgb(var(--v-theme-surface-tertiary)); /* --surface-tertiary alias unavailable in teleported overlay */
 }
 .instance-row--idle:hover {
   border-color: var(--content-faint);

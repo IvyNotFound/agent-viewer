@@ -119,7 +119,7 @@ function rowLabel(e: HookEvent): string {
 
 .hook-bar {
   border-top: 1px solid var(--edge-subtle);
-  background-color: var(--surface-primary);
+  background-color: var(--surface-secondary);
   backdrop-filter: blur(4px);
 }
 
@@ -131,7 +131,7 @@ function rowLabel(e: HookEvent): string {
   transition: background-color var(--md-duration-short3) var(--md-easing-standard);
 }
 .hook-header:hover {
-  background-color: var(--surface-secondary);
+  background-color: var(--surface-tertiary);
 }
 
 .active-tool {
@@ -180,7 +180,7 @@ function rowLabel(e: HookEvent): string {
   transition: background-color var(--md-duration-short3) var(--md-easing-standard);
 }
 .event-row:hover {
-  background-color: var(--surface-secondary);
+  background-color: var(--surface-tertiary);
 }
 
 .event-icon {

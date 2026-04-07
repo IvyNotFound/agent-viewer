@@ -106,7 +106,7 @@ function relativeTime(ts: number): string {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: var(--surface-base);
+  background: var(--surface-secondary);
 }
 
 .he-header {
@@ -133,7 +133,7 @@ function relativeTime(ts: number): string {
 
 .section-card {
   border: 1px solid var(--edge-default) !important;
-  background: var(--surface-primary) !important;
+  background: var(--surface-tertiary) !important;
   flex: 1;
   display: flex;
   flex-direction: column;

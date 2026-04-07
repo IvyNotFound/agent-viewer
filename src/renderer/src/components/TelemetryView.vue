@@ -363,7 +363,7 @@ onMounted(scan)
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: var(--surface-base);
+  background-color: var(--surface-secondary);
   color: var(--content-primary);
 }
 
@@ -401,7 +401,7 @@ onMounted(scan)
   border-radius: var(--shape-xs) !important;
   transition: background var(--md-duration-short3) var(--md-easing-standard);
 }
-.telem-rescan-btn:hover:not(:disabled) { background: var(--surface-secondary) !important; }
+.telem-rescan-btn:hover:not(:disabled) { background: var(--surface-tertiary) !important; }
 .telem-rescan-loading { display: flex; align-items: center; }
 
 .telem-spin { animation: telemSpin 1s linear infinite; }
@@ -429,7 +429,7 @@ onMounted(scan)
 
 .telem-metric-card {
   border: 1px solid var(--edge-default) !important;
-  background: var(--surface-primary) !important;
+  background: var(--surface-tertiary) !important;
   transition: border-color var(--md-duration-short3) var(--md-easing-standard);
 }
 .telem-metric-card:hover {

@@ -117,7 +117,7 @@ function formatTokens(n: number): string {
 <style scoped>
 .token-panel {
   border-radius: var(--shape-sm);
-  background: var(--surface-primary);
+  background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
   overflow: hidden;
 }

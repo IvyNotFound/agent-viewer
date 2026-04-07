@@ -209,7 +209,7 @@ async function handleSetup() {
   width: 100%;
   max-width: 448px;
   margin: 0 16px;
-  background: var(--surface-primary) !important;
+  background: var(--surface-secondary) !important;
   border: 1px solid var(--edge-default) !important;
 }
 
@@ -249,14 +249,14 @@ async function handleSetup() {
 .info-box {
   padding: 12px 16px;
   border-radius: var(--shape-sm);
-  background: var(--surface-secondary);
+  background: var(--surface-tertiary);
   border: 1px solid var(--edge-default);
 }
 
 .option-box {
   padding: 12px 16px;
   border-radius: var(--shape-sm);
-  background: var(--surface-secondary);
+  background: var(--surface-tertiary);
   border: 1px solid var(--edge-default);
 }
 

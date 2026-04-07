@@ -273,7 +273,7 @@ const {
 .ts-view {
   height: 100%;
   overflow-y: auto;
-  background-color: var(--surface-base);
+  background-color: var(--surface-secondary);
 }
 
 /* header — title only, matches telem-header height */
@@ -306,13 +306,13 @@ const {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   border-bottom: 1px solid var(--edge-subtle);
-  background: var(--surface-base);
+  background: var(--surface-secondary);
 }
 
 /* MD3 metric cards */
 .ts-metric-card {
   border: 1px solid var(--edge-default) !important;
-  background: var(--surface-primary) !important;
+  background: var(--surface-tertiary) !important;
   transition: border-color var(--md-duration-short3) var(--md-easing-standard);
 }
 .ts-metric-card:hover {
@@ -369,7 +369,7 @@ const {
 /* widget section cards (sparkline, cost, agent, session) */
 .ts-section-card {
   border: 1px solid var(--edge-default) !important;
-  background: var(--surface-primary) !important;
+  background: var(--surface-tertiary) !important;
   transition: border-color var(--md-duration-short3) var(--md-easing-standard);
 }
 .ts-section-header {
@@ -412,7 +412,7 @@ const {
   padding: 4px 8px;
   border-radius: var(--shape-xs);
   white-space: nowrap;
-  background: var(--surface-secondary);
+  background: var(--surface-tertiary);
   color: var(--content-primary);
   border: 1px solid var(--edge-default);
   pointer-events: none;
@@ -427,7 +427,7 @@ const {
 .ts-bar-wrap {
   flex: 1;
   height: 20px;
-  background: var(--surface-secondary);
+  background: var(--surface-tertiary);
   border-radius: var(--shape-xs);
   overflow: hidden;
   position: relative;
@@ -465,7 +465,7 @@ const {
 .ts-th { padding: 6px 8px; font-weight: 500; }
 .ts-th--right { text-align: right; }
 .ts-tbody-row {
-  border-bottom: 1px solid rgba(var(--v-theme-surface-secondary), 0.4);
+  border-bottom: 1px solid rgba(var(--v-theme-surface-tertiary), 0.4);
   transition: background var(--md-duration-short3) var(--md-easing-standard);
 }
 .ts-tbody-row:hover { background: rgba(var(--v-theme-on-surface), var(--md-state-hover)); }

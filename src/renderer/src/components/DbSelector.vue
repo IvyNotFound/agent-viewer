@@ -262,7 +262,7 @@ async function create() {
 }
 .action-card:hover {
   border-color: var(--content-subtle) !important;
-  background: var(--surface-secondary) !important;
+  background: var(--surface-tertiary) !important;
 }
 .action-card--primary {
   border-color: rgba(var(--v-theme-primary), 0.3);
@@ -333,7 +333,7 @@ async function create() {
 .code-inline {
   font-family: monospace;
   color: rgb(var(--v-theme-primary));
-  background: var(--surface-primary);
+  background: var(--surface-secondary);
   padding: 1px 4px;
   border-radius: 3px;
 }

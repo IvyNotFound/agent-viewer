@@ -355,7 +355,7 @@ const hoveredBar = ref<number | null>(null)
   gap: 4px;
   padding: 8px;
   border-radius: var(--shape-sm);
-  background: var(--surface-secondary);
+  background: var(--surface-tertiary);
   border: 1px solid var(--edge-default);
 }
 .cost-summary-label {
@@ -412,7 +412,7 @@ const hoveredBar = ref<number | null>(null)
   z-index: 10;
   border-radius: var(--shape-xs);
   white-space: nowrap;
-  background: var(--surface-secondary);
+  background: var(--surface-tertiary);
   color: var(--content-primary);
   border: 1px solid var(--edge-default);
   pointer-events: none;
@@ -431,7 +431,7 @@ const hoveredBar = ref<number | null>(null)
 .cost-bar-track {
   flex: 1;
   height: 20px;
-  background: var(--surface-secondary);
+  background: var(--surface-tertiary);
   border-radius: var(--shape-xs);
   overflow: hidden;
   position: relative;

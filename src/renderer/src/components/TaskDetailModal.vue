@@ -565,7 +565,7 @@ onUnmounted(() => {
   line-height: 1.5;
   word-break: break-words;
   border: 1px solid var(--edge-subtle);
-  background: var(--surface-secondary);
+  background: var(--surface-tertiary);
   color: var(--content-primary);
 }
 

@@ -415,7 +415,7 @@ function priorityColor(priority: string): string {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--surface-base);
+  background: var(--surface-secondary);
   color: var(--content-primary);
 }
 
@@ -453,7 +453,7 @@ function priorityColor(priority: string): string {
 /* ── Metric cards ── */
 .metric-card {
   border: 1px solid var(--edge-default) !important;
-  background: var(--surface-primary) !important;
+  background: var(--surface-tertiary) !important;
   transition: border-color var(--md-duration-short3) var(--md-easing-standard);
 }
 
@@ -547,7 +547,7 @@ function priorityColor(priority: string): string {
 /* ── Workload fallback ── */
 .workload-fallback {
   border: 1px solid var(--edge-default) !important;
-  background: var(--surface-primary) !important;
+  background: var(--surface-tertiary) !important;
 }
 
 /* ── Uniform 16px column gutter (matches TelemetryView) ── */

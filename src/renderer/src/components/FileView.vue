@@ -265,7 +265,7 @@ watch(() => props.filePath, async () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--surface-primary, var(--surface-base));
+  background: var(--surface-secondary);
 }
 .fv-header {
   display: flex;
@@ -308,7 +308,7 @@ watch(() => props.filePath, async () => {
   align-items: center;
   justify-content: center;
   z-index: 10;
-  background: rgba(var(--v-theme-surface-primary), 0.8);
+  background: rgba(var(--v-theme-surface-secondary), 0.8);
 }
 .fv-loading-text {
   color: var(--content-faint);
@@ -324,11 +324,11 @@ watch(() => props.filePath, async () => {
 /* Override One Dark background to match app palette */
 .cm-editor {
   height: 100%;
-  background-color: var(--surface-primary) !important;
+  background-color: var(--surface-secondary) !important;
 }
 .cm-editor .cm-gutters {
-  background-color: var(--surface-primary) !important;
-  border-right-color: var(--surface-secondary) !important;
+  background-color: var(--surface-secondary) !important;
+  border-right-color: var(--surface-tertiary) !important;
 }
 .cm-editor.cm-focused {
   outline: none !important;

@@ -422,7 +422,7 @@ const legendItems = computed(() => [
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--surface-base);
+  background: var(--surface-secondary);
   overflow: hidden;
 }
 .tl-header {
@@ -455,7 +455,7 @@ const legendItems = computed(() => [
 }
 .section-card {
   border: 1px solid var(--edge-default) !important;
-  background: var(--surface-primary) !important;
+  background: var(--surface-tertiary) !important;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -506,7 +506,7 @@ const legendItems = computed(() => [
 .tl-row {
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid rgba(var(--v-theme-surface-secondary),0.4);
+  border-bottom: 1px solid rgba(var(--v-theme-surface-tertiary),0.4);
   transition: background var(--md-duration-short3) var(--md-easing-standard);
 }
 .tl-row:hover { background: rgba(var(--v-theme-on-surface), var(--md-state-hover)); }
@@ -515,7 +515,7 @@ const legendItems = computed(() => [
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  border-right: 1px solid rgba(var(--v-theme-surface-secondary),0.4);
+  border-right: 1px solid rgba(var(--v-theme-surface-tertiary),0.4);
 }
 .tl-row-bars {
   flex: 1;
@@ -555,7 +555,7 @@ const legendItems = computed(() => [
 .tl-tooltip {
   position: fixed;
   z-index: 50;
-  background: var(--surface-base);
+  background: var(--surface-secondary);
   border: 1px solid var(--edge-default);
   border-radius: var(--shape-sm);
   pointer-events: none;

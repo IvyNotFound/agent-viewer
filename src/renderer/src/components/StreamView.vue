@@ -553,7 +553,7 @@ onUnmounted(() => {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background-color: var(--surface-base);
+  background-color: var(--surface-secondary);
   color: var(--content-primary);
 }
 
@@ -670,7 +670,7 @@ onUnmounted(() => {
 /* assistant text block — chat bubble, left side */
 .block-text {
   border-radius: 4px 20px 20px 20px;
-  background: var(--surface-secondary);
+  background: var(--surface-tertiary);
   border: none;
   max-width: 85%;
   font-size: 0.875rem;
