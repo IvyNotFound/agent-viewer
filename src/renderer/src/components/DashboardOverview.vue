@@ -200,7 +200,7 @@ function priorityColor(priority: string): string {
     <template v-else>
 
       <!-- ── 4 Metric Cards ─────────────────────────────────────────────── -->
-      <v-row dense>
+      <v-row class="row-16">
 
         <!-- Active agents -->
         <v-col cols="3">
@@ -276,7 +276,7 @@ function priorityColor(priority: string): string {
       />
 
       <!-- ── Recent tasks + activity ────────────────────────────────────── -->
-      <v-row>
+      <v-row class="row-16">
 
         <!-- Recent tasks -->
         <v-col cols="6">
@@ -367,7 +367,7 @@ function priorityColor(priority: string): string {
       </v-row>
 
       <!-- ── Code telemetry + Heatmap ───────────────────────────────────── -->
-      <v-row>
+      <v-row class="row-16">
         <v-col cols="6">
           <CodeTelemetryPanel :project-path="store.projectPath" />
         </v-col>
@@ -382,7 +382,7 @@ function priorityColor(priority: string): string {
       </v-row>
 
       <!-- ── Charts 14d ────────────────────────────────────────────────── -->
-      <v-row>
+      <v-row class="row-16">
         <v-col cols="6" style="min-height: 200px;">
           <SessionActivityChart />
         </v-col>
@@ -548,5 +548,15 @@ function priorityColor(priority: string): string {
 .workload-fallback {
   border: 1px solid var(--edge-default) !important;
   background: var(--surface-primary) !important;
+}
+
+/* ── Uniform 16px column gutter (matches TelemetryView) ── */
+.row-16 {
+  margin-left: -8px !important;
+  margin-right: -8px !important;
+}
+.row-16 :deep(.v-col) {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
 }
 </style>
