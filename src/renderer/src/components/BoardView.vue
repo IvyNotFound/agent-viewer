@@ -2,12 +2,13 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
-import { agentFg, agentBg, agentBorder, perimeterFg, perimeterBg, perimeterBorder } from '@renderer/utils/agentColor'
+import { agentFg, agentBg, perimeterFg, perimeterBg } from '@renderer/utils/agentColor'
 import { isStale } from '@renderer/utils/staleTask'
 import { parseUtcDate } from '@renderer/utils/parseDate'
 import { useLaunchSession, MAX_AGENT_SESSIONS } from '@renderer/composables/useLaunchSession'
 import { useToast } from '@renderer/composables/useToast'
 import { useArchivedPagination } from '@renderer/composables/useArchivedPagination'
+import AgentBadge from './AgentBadge.vue'
 import StatusColumn from './StatusColumn.vue'
 
 const { t, locale } = useI18n()
@@ -225,12 +226,8 @@ const archivedGroupsSorted = computed(() => {
             <div v-for="[agentName, agentTasks] in archivedGroupsSorted" :key="agentName" class="agent-group">
               <!-- Group header -->
               <div class="agent-group-header ga-2 mb-3">
-                <span
-                  :class="['agent-badge', { 'agent-badge-unassigned': agentName === UNASSIGNED_SENTINEL }]"
-                  :style="agentName !== UNASSIGNED_SENTINEL
-                    ? { color: agentFg(agentName), backgroundColor: agentBg(agentName), borderColor: agentBorder(agentName) }
-                    : {}"
-                >{{ agentName === UNASSIGNED_SENTINEL ? t('board.unassigned') : agentName }}</span>
+                <AgentBadge v-if="agentName !== UNASSIGNED_SENTINEL" :name="agentName" />
+                <span v-else class="agent-badge-unassigned">{{ t('board.unassigned') }}</span>
                 <span class="agent-count">{{ agentTasks.length }} {{ t('board.tickets', agentTasks.length) }}</span>
               </div>
               <!-- Tasks in group -->
@@ -244,13 +241,9 @@ const archivedGroupsSorted = computed(() => {
                   <!-- Row 1: title + agent badge -->
                   <div class="arc-row1">
                     <p class="arc-title">{{ task.title }}</p>
-                    <span
-                      v-if="task.agent_name"
-                      class="arc-agent"
-                      :style="{ color: agentFg(task.agent_name), backgroundColor: agentBg(task.agent_name), borderColor: agentBorder(task.agent_name) }"
-                    >{{ task.agent_name }}</span>
+                    <AgentBadge v-if="task.agent_name" :name="task.agent_name" />
                   </div>
-                  <!-- Row 2: meta chips (scope, id, effort, date) -->
+                  <!-- Row 2: meta chips (scope, priority, id, effort, date) -->
                   <div class="arc-meta">
                     <v-chip
                       v-if="task.scope"
@@ -262,9 +255,11 @@ const archivedGroupsSorted = computed(() => {
                         backgroundColor: perimeterBg(task.scope),
                       }"
                     >{{ task.scope }}</v-chip>
-                    <v-chip size="x-small" variant="outlined" class="arc-id-chip">#{{ task.id }}</v-chip>
+                    <v-chip v-if="task.priority === 'critical'" size="x-small" variant="tonal" color="error">!!</v-chip>
+                    <v-chip v-if="task.priority === 'high'" size="x-small" variant="tonal" color="warning">!</v-chip>
+                    <v-chip size="x-small" variant="tonal" class="arc-id-chip">#{{ task.id }}</v-chip>
                     <v-chip v-if="task.effort" size="x-small" variant="tonal" :color="EFFORT_COLOR[task.effort]">{{ EFFORT_LABEL[task.effort] }}</v-chip>
-                    <v-chip size="x-small" variant="outlined" class="arc-date-chip">{{ formatDate(task.updated_at) }}</v-chip>
+                    <v-chip size="x-small" variant="tonal" class="arc-date-chip">{{ formatDate(task.updated_at) }}</v-chip>
                   </div>
                 </div>
               </div>
@@ -414,20 +409,10 @@ const archivedGroupsSorted = computed(() => {
   display: flex;
   align-items: center;
 }
-.agent-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 8px;
-  border-radius: var(--shape-full);
+.agent-badge-unassigned {
   font-size: 0.75rem;
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-  border: 1px solid transparent;
-}
-.agent-badge-unassigned {
   color: var(--content-subtle);
-  background-color: var(--surface-secondary);
-  border-color: var(--edge-default);
 }
 .agent-count {
   font-size: 10px;
@@ -487,17 +472,6 @@ const archivedGroupsSorted = computed(() => {
   line-height: 1.4;
   transition: color var(--md-duration-short3) var(--md-easing-standard);
 }
-.arc-agent {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 7px;
-  border-radius: var(--shape-full);
-  font-size: 0.6875rem;
-  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-  border: 1px solid transparent;
-  white-space: nowrap;
-}
 .arc-meta {
   display: flex;
   align-items: center;
@@ -507,9 +481,8 @@ const archivedGroupsSorted = computed(() => {
   z-index: 1;
 }
 .arc-id-chip, .arc-date-chip {
-  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace !important;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
   font-variant-numeric: tabular-nums;
-  color: var(--content-faint) !important;
 }
 .pagination {
   flex-shrink: 0;
