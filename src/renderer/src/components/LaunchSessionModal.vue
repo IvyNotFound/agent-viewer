@@ -547,7 +547,7 @@ async function launch() {
   text-align: right;
 }
 
-/* Expand/collapse animation for conditional sections (replaces Tailwind Transition classes — T1389) */
+/* Expand/collapse animation for conditional sections using MD3 duration/easing tokens */
 .expand-enter-active {
   transition: all var(--md-duration-short4) var(--md-easing-standard);
   overflow: hidden;
