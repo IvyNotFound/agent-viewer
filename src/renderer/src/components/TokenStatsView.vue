@@ -21,7 +21,7 @@ const {
       <h2 class="ts-title text-h6 font-weight-medium">{{ t('tokenStats.title') }}</h2>
     </div>
 
-    <!-- ── Filter bar: period selector ──────────────────────────────── -->
+    <!-- ── Filter bar: period selector + refresh ────────────────────── -->
     <div class="ts-filter-bar">
       <span class="ts-filter-label text-label-medium">{{ t('tokenStats.period.label') }}</span>
       <v-btn-toggle
@@ -41,6 +41,15 @@ const {
           {{ t(period.labelKey) }}
         </v-btn>
       </v-btn-toggle>
+      <v-btn
+        icon="mdi-refresh"
+        variant="text"
+        size="small"
+        style="margin-left: auto"
+        :loading="loading"
+        :title="t('common.refresh')"
+        @click="refresh"
+      />
     </div>
 
     <!-- ── Summary cards ──────────────────────────────────────────────── -->
@@ -267,27 +276,14 @@ const {
       </v-card>
     </div>
 
-    <!-- Refresh button -->
-    <div class="ts-footer py-2 px-4">
-      <v-btn
-        icon="mdi-refresh"
-        variant="text"
-        size="small"
-        :loading="loading"
-        :title="t('common.refresh')"
-        @click="refresh"
-      />
-    </div>
   </div>
 </template>
 
 <style scoped>
 .ts-view {
-  display: flex;
-  flex-direction: column;
   height: 100%;
+  overflow-y: auto;
   background-color: var(--surface-base);
-  min-height: 0;
 }
 
 /* header — title only, matches telem-header height */
@@ -374,11 +370,8 @@ const {
 .ts-tabnum { font-variant-numeric: tabular-nums; }
 .ts-semibold { font-weight: 600; }
 
-/* scrollable content */
+/* content sections */
 .ts-content {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -501,13 +494,4 @@ const {
 .ts-td--right { text-align: right; }
 .ts-agent-badge { padding: 2px 6px; border-radius: var(--shape-xs); font-size: 0.6875rem; font-weight: 500; }
 
-/* footer */
-.ts-footer {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  border-top: 1px solid var(--edge-subtle);
-  background: var(--surface-base);
-}
 </style>
