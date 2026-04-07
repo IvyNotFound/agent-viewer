@@ -333,7 +333,7 @@ onUnmounted(() => {
     <div v-if="agentName" class="stream-accent-bar" :style="{ background: accentFg }" />
 
     <!-- Messages scroll area -->
-    <div ref="scrollContainer" class="stream-scroll pa-4 ga-3" :style="{ '--stream-accent-fg': accentFg }">
+    <div ref="scrollContainer" class="stream-scroll pa-4 ga-3" :style="{ '--stream-accent-fg': accentText }">
       <div
         v-if="displayEvents.length === 0 && !isStreaming"
         class="stream-empty text-caption"
