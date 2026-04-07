@@ -56,7 +56,7 @@ watch(() => store.dbPath, fetchQuality)
     <!-- Header -->
     <div class="quality-header py-3 px-4">
       <h2 class="quality-title text-body-2 font-weight-medium">{{ t('quality.title') }}</h2>
-      <v-btn variant="text" size="small" class="quality-refresh-btn" @click="fetchQuality">{{ t('quality.refresh') }}</v-btn>
+      <v-btn icon="mdi-refresh" variant="text" size="small" color="primary" :title="t('quality.refresh')" @click="fetchQuality" />
     </div>
 
     <!-- Loading -->
@@ -151,11 +151,6 @@ watch(() => store.dbPath, fetchQuality)
   color: var(--content-secondary);
   margin: 0;
 }
-.quality-refresh-btn {
-  color: var(--content-subtle) !important;
-  transition: color var(--md-duration-short3) var(--md-easing-standard);
-}
-.quality-refresh-btn:hover { color: var(--content-secondary) !important; }
 .quality-state {
   display: flex;
   align-items: center;
