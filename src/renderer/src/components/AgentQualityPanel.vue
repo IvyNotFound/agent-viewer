@@ -42,9 +42,9 @@ async function fetchQuality(): Promise<void> {
 }
 
 function rateColor(rate: number): string {
-  if (rate === 0) return '#fda4af'   // secondary dark (#fda4af rose-300)
-  if (rate < 20) return '#f59e0b'   // warning (#f59e0b amber)
-  return '#ef4444'                   // error (#ef4444 red)
+  if (rate === 0) return 'rgb(var(--v-theme-secondary))'
+  if (rate < 20) return 'rgb(var(--v-theme-warning))'
+  return 'rgb(var(--v-theme-error))'
 }
 
 onMounted(fetchQuality)
@@ -59,23 +59,18 @@ watch(() => store.dbPath, fetchQuality)
       <v-btn variant="text" size="small" class="quality-refresh-btn" @click="fetchQuality">{{ t('quality.refresh') }}</v-btn>
     </div>
 
-    <!-- Loading skeleton -->
-    <div v-if="loading" class="quality-skeleton">
-      <div v-for="i in 3" :key="i" class="quality-skeleton-row animate-pulse">
-        <div class="quality-skeleton-cell quality-skeleton-name" :style="{ width: i === 1 ? '70%' : i === 2 ? '55%' : '40%' }" />
-        <div class="quality-skeleton-cell quality-skeleton-count" />
-        <div class="quality-skeleton-cell quality-skeleton-bar" />
-        <div class="quality-skeleton-cell quality-skeleton-rate" />
-      </div>
+    <!-- Loading -->
+    <div v-if="loading" class="quality-state pa-8">
+      <p class="quality-state-text quality-state-text--pulse text-caption">{{ t('quality.loading') }}</p>
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="quality-state pa-4">
+    <div v-else-if="error" class="quality-state pa-8">
       <p class="quality-state-text quality-state-text--error text-caption">{{ t('quality.error', { msg: error }) }}</p>
     </div>
 
     <!-- Empty -->
-    <div v-else-if="rows.length === 0" class="quality-state pa-4">
+    <div v-else-if="rows.length === 0" class="quality-state pa-8">
       <p class="quality-state-text text-caption">{{ t('quality.empty') }}</p>
     </div>
 
@@ -97,10 +92,10 @@ watch(() => store.dbPath, fetchQuality)
 
       <!-- Per-agent table -->
       <div class="quality-table">
-        <!-- Column headers — 4 cols: agent | rejections | bar | rate -->
+        <!-- Column headers -->
         <div class="quality-cols quality-cols-head text-label-medium">
           <span>{{ t('quality.colAgent') }}</span>
-          <span class="quality-right">{{ t('quality.colRejections') }}</span>
+          <span class="quality-right quality-col-span">{{ t('quality.colRejections') }}</span>
           <span></span>
           <span class="quality-right">{{ t('quality.colRate') }}</span>
         </div>
@@ -116,7 +111,7 @@ watch(() => store.dbPath, fetchQuality)
             :style="{ color: agentAccent(row.agent_name) }"
             :title="row.agent_name"
           >{{ row.agent_name }}</span>
-          <span class="quality-count quality-right">{{ row.rejected_tasks }}/{{ row.total_tasks }}</span>
+          <span class="quality-count quality-right quality-col-span">{{ row.rejected_tasks }}/{{ row.total_tasks }}</span>
           <div class="quality-bar-bg">
             <div
               class="quality-bar-fill"
@@ -171,23 +166,12 @@ watch(() => store.dbPath, fetchQuality)
   font-style: italic;
   margin: 0;
 }
-.quality-state-text--error { color: #ef4444; }
-/* Skeleton loading state — mimics 4-col grid rows */
-.quality-skeleton { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
-.quality-skeleton-row {
-  display: grid;
-  grid-template-columns: minmax(120px, 1fr) auto minmax(0, 2fr) minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
-  opacity: 0.6;
+.quality-state-text--pulse { animation: quality-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.quality-state-text--error { color: rgb(var(--v-theme-error)); }
+@keyframes quality-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
-.quality-skeleton-cell {
-  height: 10px;
-  border-radius: var(--shape-full);
-  background: var(--surface-tertiary);
-}
-.quality-skeleton-count { width: 40px; }
-.quality-skeleton-rate  { width: 32px; }
 .quality-global {
   flex-shrink: 0;
   border-bottom: 1px solid var(--edge-subtle);
@@ -205,7 +189,7 @@ watch(() => store.dbPath, fetchQuality)
   font-weight: 700;
 }
 .quality-no-rejections {
-  color: #fda4af; /* secondary dark: rose-300 */
+  color: rgb(var(--v-theme-secondary));
   font-style: italic;
 }
 .quality-heuristic-note {
@@ -214,14 +198,16 @@ watch(() => store.dbPath, fetchQuality)
   font-style: italic;
 }
 
-/* Per-agent table — 4 cols: agent | count | bar | rate */
-.quality-table { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+/* Per-agent table — mirrors .wl-table pattern from WorkloadView */
+.quality-table { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
 .quality-cols {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) auto minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(120px, 1fr) 60px 60px minmax(0, 2fr) minmax(0, 1fr);
   gap: 12px;
   align-items: center;
 }
+/* Rejection count spans the two numeric columns (2+3) to align bar at col4 with WorkloadView */
+.quality-col-span { grid-column: 2 / 4; }
 .quality-cols-head {
   font-weight: 600;
   letter-spacing: 0.02em;
