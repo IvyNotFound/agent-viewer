@@ -198,7 +198,7 @@ export function useTabBarGroups(scrollContainer: Ref<HTMLDivElement | null>) {
       const rgb = hexToRgb(agentBg(tab.agentName))
       if (activeId === tab.id) {
         map.set(tab.id, rgb
-          ? { backgroundColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.60)` }
+          ? { backgroundColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.60)`, color: agentFg(tab.agentName) }
           : {})
       } else {
         map.set(tab.id, rgb

@@ -404,7 +404,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   flex-shrink: 0;
 }
 /* Sub-chips — session tabs inside the group envelope.
-   Active state: tinted bg (0.60) via subTabBgMap :style, on-surface text via .tab-sub--active.
+   Active state: tinted bg (0.60) + agentFg text via subTabBgMap :style.
    Inactive: subtle agent tint (0.08) via --sub-tab-bg CSS custom prop (allows hover override). */
 .tab-sub {
   display: flex;
@@ -423,9 +423,6 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   background-color: var(--sub-tab-bg, transparent);
   border: none;
   color: rgba(var(--v-theme-on-surface), 0.70);
-}
-.tab-sub--active {
-  color: rgba(var(--v-theme-on-surface), 0.92);
 }
 .tab-sub:not(.tab-sub--active):hover {
   background: rgba(var(--v-theme-on-surface), 0.08);
