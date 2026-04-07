@@ -377,7 +377,7 @@ pre {
 }
 
 .diff-remove {
-  background: rgba(239, 68, 68, 0.18);
+  background: var(--diff-remove-bg, rgba(239, 68, 68, 0.18));
   color: var(--diff-remove-color, rgb(248, 113, 113));
   padding: 1px 4px;
   white-space: pre-wrap;
@@ -385,7 +385,7 @@ pre {
 }
 
 .diff-add {
-  background: rgba(34, 197, 94, 0.18);
+  background: var(--diff-add-bg, rgba(34, 197, 94, 0.18));
   color: var(--diff-add-color, rgb(74, 222, 128));
   padding: 1px 4px;
   white-space: pre-wrap;
