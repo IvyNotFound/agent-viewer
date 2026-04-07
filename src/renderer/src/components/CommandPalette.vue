@@ -145,7 +145,7 @@ function effortColor(effort: number): string {
       <div class="palette-panel elevation-8">
 
         <!-- Search input -->
-        <div class="palette-search">
+        <section class="palette-search">
           <v-text-field
             ref="inputRef"
             v-model="searchQuery"
@@ -167,10 +167,10 @@ function effortColor(effort: number): string {
             >{{ t('commandPalette.resetFilters') }}</v-btn>
             <kbd class="palette-kbd">ESC</kbd>
           </div>
-        </div>
+        </section>
 
         <!-- Filters -->
-        <div class="palette-filters">
+        <section class="palette-filters">
           <!-- Statut chips -->
           <div class="d-flex align-center ga-2 flex-wrap">
             <span class="filter-label text-label-medium">{{ t('commandPalette.status') }}</span>
@@ -239,7 +239,7 @@ function effortColor(effort: number): string {
               </v-chip-group>
             </div>
           </div>
-        </div>
+        </section>
 
         <!-- Results -->
         <v-list class="palette-results" bg-color="transparent" :padding="false">
@@ -301,11 +301,11 @@ function effortColor(effort: number): string {
         </v-list>
 
         <!-- Footer -->
-        <div class="palette-footer">
+        <footer class="palette-footer">
           <span class="palette-hint text-label-medium"><kbd class="palette-kbd">↑↓</kbd> {{ t('commandPalette.navigate') }}</span>
           <span class="palette-hint text-label-medium"><kbd class="palette-kbd">↵</kbd> {{ t('commandPalette.open') }}</span>
           <span class="palette-hint text-label-medium" style="margin-left: auto;"><kbd class="palette-kbd">Ctrl+K</kbd> toggle</span>
-        </div>
+        </footer>
 
       </div>
     </div>
@@ -316,9 +316,8 @@ function effortColor(effort: number): string {
 <style scoped>
 .palette-backdrop {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding-top: 12vh;
 }
 .palette-panel {
   width: 100%;
@@ -330,8 +329,7 @@ function effortColor(effort: number): string {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 72vh;
-  max-height: 72vh;
+  height: min(72vh, 640px);
   transition: transform var(--md-duration-medium2) var(--md-easing-emphasized-decelerate),
               opacity  var(--md-duration-short4)   var(--md-easing-standard);
 }
