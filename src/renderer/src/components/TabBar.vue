@@ -167,10 +167,6 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
           :title="t('tabBar.closeTab')"
           @click.stop="handleCloseTab(tab)"
         >✕</span>
-        <span
-          v-if="store.activeTabId === tab.id"
-          class="tab-indicator"
-        ></span>
       </button>
 
       <!-- Groupe agent — envelope pill wrapping pill-header + sub-chips -->
@@ -301,23 +297,25 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   padding: 0 12px;
   height: 36px;
   align-self: center;
+  font-size: 11px;
   font-weight: 500;
-  transition: all var(--md-duration-short3) var(--md-easing-standard);
-  user-select: none;
-  border-radius: var(--shape-xs) var(--shape-xs) 0 0;
+  border-radius: 18px;
   flex-shrink: 0;
   cursor: pointer;
   background: none;
   border: none;
-  color: rgba(var(--v-theme-on-surface), 0.4);
+  color: rgba(var(--v-theme-on-surface), 0.60);
+  transition: background var(--md-duration-short3) var(--md-easing-standard),
+              color var(--md-duration-short3) var(--md-easing-standard);
+  user-select: none;
 }
 .tab-file:hover {
-  color: rgba(var(--v-theme-on-surface), 0.7);
-  background: rgba(var(--v-theme-on-surface), 0.06);
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  color: rgba(var(--v-theme-on-surface), 0.80);
 }
 .tab-file--active {
-  color: rgba(var(--v-theme-on-surface), 0.9);
-  background: rgba(var(--v-theme-on-surface), 0.08);
+  background: rgba(var(--v-theme-primary), 0.15);
+  color: rgb(var(--v-theme-primary));
 }
 .tab-title-mono {
   max-width: 120px;
@@ -437,14 +435,5 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.tab-indicator {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: rgb(var(--v-theme-primary));
-  border-radius: 3px 3px 0 0;
 }
 </style>
