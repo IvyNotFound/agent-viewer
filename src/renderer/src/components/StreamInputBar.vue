@@ -10,6 +10,8 @@ const props = defineProps<{
   agentStopped: boolean
   sessionId: string | null
   accentFg: string
+  /** T1739: on-color for the send button icon (black on light accent, white on dark accent) */
+  accentOnFg: string
   /** T1707: pending AskUserQuestion text — changes placeholder and shows banner */
   pendingQuestion?: string
 }>()
@@ -234,8 +236,13 @@ function stopAgent(): void {
 /* Send button: accent color via CSS v-bind — preserves Vuetify state layers (T1687) */
 .send-btn {
   --send-accent: v-bind(accentFg);
+  --send-on-accent: v-bind(accentOnFg);
 }
 .send-btn:not(:disabled) {
   background-color: var(--send-accent) !important;
+}
+/* T1739: apply on-color to icon for legibility on light agent accents */
+.send-btn:not(:disabled) :deep(.v-icon) {
+  color: var(--send-on-accent) !important;
 }
 </style>

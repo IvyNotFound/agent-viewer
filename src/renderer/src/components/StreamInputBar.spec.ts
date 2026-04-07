@@ -20,6 +20,7 @@ describe('StreamInputBar (T842)', () => {
     agentStopped: false,
     sessionId: 'sess-1',
     accentFg: '#00ff00',
+    accentOnFg: '#000000',
   }
   const mountOptions = { global: { plugins: [i18n] } }
 
