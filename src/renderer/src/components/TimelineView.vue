@@ -281,10 +281,19 @@ const legendItems = computed(() => [
 
 <template>
   <div class="tl-view" @mousemove="moveTooltip">
-    <!-- Header: title + filters + refresh -->
+    <!-- Header: title + refresh only -->
     <div class="tl-header">
       <h2 class="text-h6 font-weight-medium tl-title flex-shrink-0">{{ t('timeline.title') }}</h2>
-      <div class="tl-filter-sep" />
+      <div class="ml-auto flex-shrink-0">
+        <v-btn icon="mdi-refresh" variant="text" size="small" :loading="loading" :title="t('common.refresh')" @click="fetchTasks" />
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="tl-body-wrapper">
+    <v-card elevation="0" class="section-card">
+    <!-- Filter bar: period presets + agent chips -->
+    <div class="tl-filter-bar">
       <!-- Period presets: clicking resets the viewport to that range -->
       <v-btn-toggle v-model="selectedPeriod" mandatory density="compact" variant="outlined" class="tl-period-toggle flex-shrink-0">
         <v-btn
@@ -320,14 +329,7 @@ const legendItems = computed(() => [
           {{ t('timeline.clearFilter') }}
         </v-btn>
       </template>
-      <div class="ml-auto flex-shrink-0">
-        <v-btn icon="mdi-refresh" variant="text" size="small" :loading="loading" :title="t('common.refresh')" @click="fetchTasks" />
-      </div>
     </div>
-
-    <!-- Body -->
-    <div class="tl-body-wrapper">
-    <v-card elevation="0" class="section-card">
     <!-- Timeline body — wheel zooms viewport continuously, mousedown pans -->
     <div ref="bodyRef" class="tl-body" @wheel.prevent="onCanvasWheel" @mousedown="onMouseDown">
       <div v-if="loading" class="tl-state-center">
@@ -428,9 +430,15 @@ const legendItems = computed(() => [
   min-height: 44px;
   padding: 0 16px;
   border-bottom: 1px solid var(--edge-subtle);
+}
+.tl-filter-bar {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--edge-subtle);
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 .tl-title {
   margin: 0;
