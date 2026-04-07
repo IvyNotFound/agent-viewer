@@ -437,12 +437,10 @@ body,
 .agent-name--active { color: var(--content-primary); }
 .agent-actions {
   flex-shrink: 0;
-  display: flex;
+  display: none;
   align-items: center;
-  opacity: 0;
-  transition: opacity var(--md-duration-short3) var(--md-easing-standard);
 }
-.agent-item:hover .agent-actions { opacity: 1; }
+.agent-item:hover .agent-actions { display: flex; }
 .drag-handle {
   width: 20px;
   height: 20px;

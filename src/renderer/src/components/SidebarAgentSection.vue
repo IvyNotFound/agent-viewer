@@ -298,6 +298,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
       :opened="openedGroups"
       open-strategy="multiple"
       density="compact"
+      :indent="16"
       bg-color="transparent"
       class="pa-0 tree-section"
       @update:opened="handleOpenedUpdate"
@@ -396,6 +397,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
             :title="undefined"
             density="compact"
             rounded="lg"
+            class="px-1"
             :active="isAgentSelected(asAgent(item).agent.id)"
             active-color="secondary-container"
             @click="store.toggleAgentFilter(asAgent(item).agent.id)"
@@ -446,6 +448,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
           <v-list-item
             density="compact"
             rounded="lg"
+            class="px-1"
             :active="isAgentSelected(agent.id)"
             active-color="secondary-container"
             @click="store.toggleAgentFilter(agent.id)"
