@@ -133,7 +133,7 @@ function stopAgent(): void {
       rounded="lg"
       :placeholder="inputPlaceholder"
       hide-details
-      color="primary"
+      :color="accentFg"
       base-color="outline"
       class="flex-1-1 text-body-2"
       @keydown="handleKeydown"
