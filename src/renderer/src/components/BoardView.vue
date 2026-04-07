@@ -51,9 +51,9 @@ watch(activeTab, (tab) => {
 })
 
 const columns = computed(() => [
-  { key: 'todo'        as const, title: t('columns.todo'),        accentColor: 'rgb(var(--v-theme-warning))' },
-  { key: 'in_progress' as const, title: t('columns.in_progress'), accentColor: 'rgb(var(--v-theme-secondary))' },
-  { key: 'done'        as const, title: t('columns.done'),        accentColor: 'var(--content-faint)' },
+  { key: 'todo'        as const, title: t('columns.todo'),        accentColor: 'rgb(var(--v-theme-chip-todo))' },
+  { key: 'in_progress' as const, title: t('columns.in_progress'), accentColor: 'rgb(var(--v-theme-chip-in-progress))' },
+  { key: 'done'        as const, title: t('columns.done'),        accentColor: 'rgb(var(--v-theme-chip-done))' },
 ])
 
 const activeAgentName = computed(() =>
