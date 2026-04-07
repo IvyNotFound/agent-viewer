@@ -83,7 +83,6 @@ defineExpose({ loadSidebarTree, loadChildren, sidebarTree })
       v-else
       :items="sidebarTree"
       item-value="path"
-      item-title="name"
       item-children="children"
       :load-children="loadChildren"
       open-strategy="multiple"
