@@ -63,6 +63,17 @@ const {
 } = useStreamEvents(props.terminalId)
 useCopyCode(scrollContainer)
 
+// Scroll to bottom when this tab is activated (T1797)
+watch(
+  () => tabsStore.activeTabId,
+  async (newId) => {
+    if (newId === props.terminalId) {
+      await nextTick()
+      scrollToBottom(true)
+    }
+  }
+)
+
 import { ref } from 'vue'
 const sessionId = ref<string | null>(null)
 const ptyId = ref<string | null>(null)
