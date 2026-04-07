@@ -169,11 +169,14 @@ const accentText = computed(() => {
 })
 
 // Suppresses empty user bubbles from autonomous Claude reasoning (T679).
+// Also shows user events that contain image_ref blocks (T1718).
 const displayEvents = computed(() =>
   events.value.filter(event => {
     if (event.type !== 'user') return true
     if (!event.message) return false
-    return event.message.content.filter(b => b.type === 'text').map(b => b.text ?? '').join('').trim().length > 0
+    const hasText = event.message.content.filter(b => b.type === 'text').map(b => b.text ?? '').join('').trim().length > 0
+    const hasImages = event.message.content.some(b => b.type === 'image_ref')
+    return hasText || hasImages
   })
 )
 
@@ -417,6 +420,7 @@ onUnmounted(() => {
                 v-else-if="block.type === 'image_ref' && block.objectUrl"
                 :src="block.objectUrl"
                 class="user-bubble-img"
+                data-testid="user-thumbnail"
                 alt=""
               />
             </template>
