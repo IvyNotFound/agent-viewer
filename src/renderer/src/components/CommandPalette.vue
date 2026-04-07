@@ -322,6 +322,7 @@ function effortColor(effort: number): string {
 }
 .palette-panel {
   width: 100%;
+  max-width: 672px;
   margin: 0 16px;
   background: var(--surface-dialog);
   border-radius: var(--shape-xl); /* MD3 Dialog spec — 28px */
