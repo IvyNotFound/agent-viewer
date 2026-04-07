@@ -152,8 +152,40 @@ export function useTabBarGroups(scrollContainer: Ref<HTMLDivElement | null>) {
     return map
   })
 
-  // Background for active sub-tabs only: rgba(agentBg, 0.35) active, {} inactive.
-  // Text color is handled in CSS (on-surface) — agentFg is reserved for the indicator.
+  // Group envelope styles: tinted border + subtle background from agentBg.
+  // Active group gets stronger border/bg to reinforce hierarchy.
+  const groupEnvelopeStyleMap = computed<Map<string | null, Record<string, string>>>(() => {
+    void colorVersion.value
+    const activeId = store.activeTabId
+    const map = new Map<string | null, Record<string, string>>()
+    for (const group of groupedTerminalTabs.value) {
+      const name = group.agentName
+      if (!name) {
+        map.set(name, {
+          border: '1.5px solid rgba(var(--v-theme-outline-variant), 1)',
+          background: 'rgba(var(--v-theme-surface-variant), 0.5)',
+        })
+        continue
+      }
+      const isActive = group.tabs.some(t => t.id === activeId)
+      const rgb = hexToRgb(agentBg(name))
+      if (rgb) {
+        map.set(name, {
+          border: `1.5px solid rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${isActive ? 0.45 : 0.25})`,
+          background: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${isActive ? 0.12 : 0.06})`,
+        })
+      } else {
+        map.set(name, {
+          border: '1.5px solid rgba(var(--v-theme-outline-variant), 1)',
+          background: 'rgba(var(--v-theme-surface-variant), 0.5)',
+        })
+      }
+    }
+    return map
+  })
+
+  // Active sub-tab: rgba(agentBg, 0.40) background + agentFg text color.
+  // Inactive: {} (styling handled by CSS).
   const subTabBgMap = computed<Map<string, Record<string, string>>>(() => {
     void colorVersion.value
     const activeId = store.activeTabId
@@ -162,8 +194,8 @@ export function useTabBarGroups(scrollContainer: Ref<HTMLDivElement | null>) {
       if (activeId === tab.id && tab.agentName) {
         const rgb = hexToRgb(agentBg(tab.agentName))
         map.set(tab.id, rgb
-          ? { backgroundColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.35)` }
-          : {})
+          ? { backgroundColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.40)`, color: agentFg(tab.agentName) }
+          : { color: agentFg(tab.agentName) })
       } else {
         map.set(tab.id, {})
       }
@@ -191,6 +223,6 @@ export function useTabBarGroups(scrollContainer: Ref<HTMLDivElement | null>) {
     terminalTabs, fileTabs,
     collapsedAgents, groupedTerminalTabs,
     toggleGroup, isGroupCollapsed, isGroupActive, activateAgentGroup,
-    tabStyleMap, agentTabStyleMap, subTabBgMap, indicatorStyleMap, subTabLabel,
+    tabStyleMap, agentTabStyleMap, groupEnvelopeStyleMap, subTabBgMap, indicatorStyleMap, subTabLabel,
   }
 }

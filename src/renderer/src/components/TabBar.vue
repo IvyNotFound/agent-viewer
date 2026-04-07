@@ -27,7 +27,7 @@ const {
   store, terminalTabs, fileTabs,
   groupedTerminalTabs,
   toggleGroup, isGroupCollapsed, activateAgentGroup,
-  agentTabStyleMap, subTabBgMap, indicatorStyleMap, subTabLabel,
+  agentTabStyleMap, groupEnvelopeStyleMap, subTabBgMap, subTabLabel,
 } = useTabBarGroups(scrollContainer)
 
 // ── Scroll state ─────────────────────────────────────────────────────────────
@@ -173,22 +173,22 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
         ></span>
       </button>
 
-      <!-- Groupe agent -->
+      <!-- Groupe agent — envelope pill wrapping pill-header + sub-chips -->
       <div
-        v-for="(group, groupIdx) in groupedTerminalTabs"
+        v-for="group in groupedTerminalTabs"
         :key="group.agentName ?? '__misc__'"
         class="tab-group"
-        :class="groupIdx < groupedTerminalTabs.length - 1 ? 'tab-group-sep' : ''"
+        :style="groupEnvelopeStyleMap.get(group.agentName)"
       >
-        <!-- Onglet-agent (bouton principal du groupe) -->
+        <!-- Pill header (identité de l'agent) -->
         <button
           v-ripple
-          class="tab-agent text-body-2"
+          class="tab-agent"
           :style="agentTabStyleMap.get(group.agentName)"
           @click="activateAgentGroup(group)"
           @contextmenu.prevent="openGroupMenu($event, group)"
         >
-          <v-icon size="12" style="flex-shrink: 0;">mdi-console</v-icon>
+          <v-icon size="11" style="flex-shrink: 0;">mdi-console</v-icon>
           <span class="tab-agent-name">{{ group.agentName ?? '?' }}</span>
           <v-icon
             class="tab-chevron"
@@ -202,32 +202,27 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
           >{{ group.tabs.length }}</span>
         </button>
 
-        <!-- Sous-onglets session (masqués si groupe collapsé) -->
+        <!-- Sub-chips session (masqués si groupe collapsé) -->
         <template v-if="!isGroupCollapsed(group.agentName)">
-          <template v-for="tab in group.tabs" :key="tab.id">
-            <button
-              v-ripple
-              class="tab-sub text-body-2"
-              :class="{ 'tab-sub--active': store.activeTabId === tab.id }"
-              :style="subTabBgMap.get(tab.id)"
-              :title="subTabLabel(tab)"
-              @click="store.setActive(tab.id)"
-              @mousedown="onMiddleClick($event, tab)"
-            >
-              <span class="tab-sub-label">{{ subTabLabel(tab) }}</span>
-              <span v-if="tab.dirty" class="tab-dirty" :title="t('tabBar.unsaved')" />
-              <span
-                class="tab-close text-label-medium"
-                :title="t('tabBar.closeTab')"
-                @click.stop="handleCloseTab(tab)"
-              >✕</span>
-              <span
-                v-if="store.activeTabId === tab.id"
-                class="tab-sub-indicator"
-                :style="indicatorStyleMap.get(tab.id)"
-              ></span>
-            </button>
-          </template>
+          <button
+            v-for="tab in group.tabs"
+            :key="tab.id"
+            v-ripple
+            class="tab-sub"
+            :class="{ 'tab-sub--active': store.activeTabId === tab.id }"
+            :style="subTabBgMap.get(tab.id)"
+            :title="subTabLabel(tab)"
+            @click="store.setActive(tab.id)"
+            @mousedown="onMiddleClick($event, tab)"
+          >
+            <span class="tab-sub-label">{{ subTabLabel(tab) }}</span>
+            <span v-if="tab.dirty" class="tab-dirty" :title="t('tabBar.unsaved')" />
+            <span
+              class="tab-close text-label-medium"
+              :title="t('tabBar.closeTab')"
+              @click.stop="handleCloseTab(tab)"
+            >✕</span>
+          </button>
         </template>
       </div>
     </div>
@@ -286,8 +281,8 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
 }
 .scroll-container {
   display: flex;
-  align-items: stretch;
-  gap: 2px;
+  align-items: center;
+  gap: 4px;
   padding: 0 6px;
   flex: 1;
   min-width: 0;
@@ -304,6 +299,8 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   align-items: center;
   gap: 6px;
   padding: 0 12px;
+  height: 36px;
+  align-self: center;
   font-weight: 500;
   transition: all var(--md-duration-short3) var(--md-easing-standard);
   user-select: none;
@@ -313,7 +310,6 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   background: none;
   border: none;
   color: rgba(var(--v-theme-on-surface), 0.4);
-  margin-right: 2px;
 }
 .tab-file:hover {
   color: rgba(var(--v-theme-on-surface), 0.7);
@@ -355,39 +351,36 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   color: rgb(var(--v-theme-error));
   background: rgba(0,0,0,0.2);
 }
+/* Group envelope — pill container tinted with agent color.
+   border and background come from :style (groupEnvelopeStyleMap). */
 .tab-group {
   display: flex;
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  border-radius: var(--shape-sm) var(--shape-sm) 0 0;
-  padding: 0 4px;
-  margin: 0 2px;
-}
-.tab-group-sep {
-  border-right: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  margin-right: 2px;
-}
-/* Pill header — MD3 group header floating centered in the 48px bar */
-.tab-agent {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 12px;
   height: 36px;
   align-self: center;
-  font-weight: 500;
+  border-radius: 18px;
+  padding: 2px 3px;
+}
+/* Pill header — agent identity, always visible */
+.tab-agent {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  height: 28px;
+  font-size: 11px;
+  font-weight: 600;
   transition: filter var(--md-duration-short3) var(--md-easing-standard);
   user-select: none;
-  border-radius: 18px;
+  border-radius: 14px;
   flex-shrink: 0;
   cursor: pointer;
   border: none;
 }
 .tab-agent:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.12);
 }
 .tab-agent:active {
   filter: brightness(0.9);
@@ -410,79 +403,40 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
   opacity: 0.7;
   flex-shrink: 0;
 }
-/* Secondary tab — flush-bottom (align-self: stretch overrides parent align-items: center) */
+/* Sub-chips — session tabs inside the group envelope.
+   Active state: tinted bg + agentFg text (from subTabBgMap :style).
+   Inactive: transparent + muted text (CSS). No bottom indicator. */
 .tab-sub {
-  position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 14px;
-  min-width: 80px;
+  gap: 5px;
+  padding: 0 10px;
+  height: 28px;
   font-size: 11px;
   font-weight: 500;
-  transition: background var(--md-duration-short3) var(--md-easing-standard);
+  transition: background var(--md-duration-short3) var(--md-easing-standard),
+              color var(--md-duration-short3) var(--md-easing-standard);
   user-select: none;
-  border-radius: var(--shape-sm) var(--shape-sm) 0 0;
+  border-radius: 12px;
   flex-shrink: 0;
   cursor: pointer;
   background: none;
   border: none;
-  align-self: stretch;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-}
-.tab-sub--active {
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgba(var(--v-theme-on-surface), 0.55);
 }
 .tab-sub:not(.tab-sub--active):hover {
   background: rgba(var(--v-theme-on-surface), 0.08);
+  color: rgba(var(--v-theme-on-surface), 0.80);
 }
 .tab-sub:not(.tab-sub--active):active {
   background: rgba(var(--v-theme-on-surface), 0.12);
 }
-/* Active indicator — positioning extracted from inline style */
-.tab-sub-indicator {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-}
 .tab-sub-label {
-  font-size: 12px;
+  font-size: 11px;
   flex-shrink: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.tab-sub-dot {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 24px;
-  align-self: center;
-  transition: all var(--md-duration-short3) var(--md-easing-standard);
-  user-select: none;
-  border-radius: 3px;
-  flex-shrink: 0;
-  cursor: pointer;
-  background: none;
-  border: none;
-}
-.tab-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  opacity: 0.7;
-  transition: opacity var(--md-duration-short3) var(--md-easing-standard);
-}
-.tab-dot:hover {
-  opacity: 1;
-}
-.tab-dot--dirty {
-  background: rgb(var(--v-theme-warning));
 }
 .tab-indicator {
   position: absolute;
