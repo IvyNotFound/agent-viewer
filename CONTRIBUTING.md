@@ -82,8 +82,17 @@ VALUES (42, 1, 'App.vue:L1-50 · Added new component · Next: add tests');
 | TypeScript | Strict, `no-explicit-any` set to `error` (renderer + main) |
 | ESLint | v9 config (flat config) — `eslint.config.mjs` |
 | Vue | Composition API only |
-| CSS | Tailwind CSS v4 (utility classes) |
+| CSS | Vuetify 3 (Material Design 3) |
 | Tests | Vitest (configured — `vitest.config.ts`) |
+
+### Vuetify 3 / Material Design 3 Conventions
+
+- **Components**: always use `v-*` components (v-btn, v-card, v-chip, v-dialog…) — never Tailwind classes
+- **Theme**: read the theme via `useTheme()` — never use CSS `dark:` variants
+- **Colors**: use `:color="primary"` Vuetify prop OR `var(--v-theme-primary)` CSS — never inline classes
+- **MD3 tokens**: defined in `src/renderer/src/plugins/vuetify.ts` (150+ tokens) and `src/renderer/src/assets/main.css`
+- **Density**: respect Vuetify defaults in `vuetify.ts` (VBtn: flat/default, VTextField: compact…)
+- **Spacing**: use native Vuetify MD3 spacings (`pa-*`, `ma-*`) or CSS `gap`/`margin`
 
 ### Conventional Commits
 
