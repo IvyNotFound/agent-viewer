@@ -362,7 +362,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
             <!-- Group name (dblclick → inline rename) -->
             <span
               v-show="renamingGroupId !== node.group.id"
-              class="group-header__name text-label-medium"
+              class="group-header__name"
               @dblclick="startRename(node.group)"
             >{{ node.group.name }}</span>
 
@@ -445,7 +445,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
       @dragleave="onGroupDragLeave"
       @drop="onGroupDrop($event, null)"
     >
-      <v-list-subheader class="section-label text-label-medium px-1">
+      <v-list-subheader class="section-label px-1">
         {{ t('sidebar.ungrouped') }}
       </v-list-subheader>
 
@@ -497,7 +497,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
     </div>
 
     <!-- Bottom actions -->
-    <v-btn v-if="!creatingGroup" variant="text" block size="small" height="36" class="add-btn text-caption" prepend-icon="mdi-plus" @click="startCreateGroup">
+    <v-btn v-if="!creatingGroup" variant="text" block size="small" height="36" class="add-btn text-body-2" prepend-icon="mdi-plus" @click="startCreateGroup">
       {{ t('sidebar.newGroup') }}
     </v-btn>
     <v-btn variant="text" block size="small" height="36" class="add-btn mt-1 text-caption" prepend-icon="mdi-plus" @click="showCreateAgent = true">
@@ -606,6 +606,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
 
 .group-header__name {
   flex: 1;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.00625em;
   user-select: none;
@@ -688,7 +689,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 14px;
   color: rgba(var(--v-theme-on-surface), 0.87);
   transition: color var(--md-duration-short3, 100ms) var(--md-easing-standard, ease);
 }
@@ -744,6 +745,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
 
 .section-label {
   min-height: 32px !important;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.00625em;
   color: var(--content-subtle) !important;
