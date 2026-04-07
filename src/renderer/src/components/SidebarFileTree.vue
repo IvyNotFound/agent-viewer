@@ -72,10 +72,10 @@ defineExpose({ loadSidebarTree, loadChildren, sidebarTree })
 <template>
   <div class="file-tree-content">
     <v-progress-linear v-if="loadingSidebarTree" indeterminate color="primary" />
-    <div v-else-if="!projectPath" class="empty-state text-caption">
+    <div v-else-if="!projectPath" class="empty-state text-body-2">
       {{ t('common.noProject') }}
     </div>
-    <div v-else-if="sidebarTree.length === 0" class="empty-state text-caption">
+    <div v-else-if="sidebarTree.length === 0" class="empty-state text-body-2">
       {{ t('sidebar.emptyFolder') }}
     </div>
     <!-- v-treeview MD3 — remplace flattenTree() + v-list + paddingLeft manuel (T1710) -->
@@ -95,6 +95,7 @@ defineExpose({ loadSidebarTree, loadChildren, sidebarTree })
         <v-list-item
           :title="undefined"
           density="compact"
+          rounded="lg"
           class="dir-item"
           @click="callToggle(itemProps.onToggleExpand, $event)"
         >
@@ -105,8 +106,8 @@ defineExpose({ loadSidebarTree, loadChildren, sidebarTree })
             >
               {{ itemProps.ariaExpanded ? 'mdi-folder-open' : 'mdi-folder' }}
             </v-icon>
-            <span class="tree-name tree-name--dir text-label-medium">{{ asFile(item).name }}</span>
-            <v-progress-circular v-if="loading" indeterminate :size="10" :width="1" class="loading-spinner" />
+            <span class="tree-name tree-name--dir text-body-2">{{ asFile(item).name }}</span>
+            <v-progress-circular v-if="loading" indeterminate :size="10" :width="1" color="primary" />
           </div>
         </v-list-item>
       </template>
@@ -115,20 +116,21 @@ defineExpose({ loadSidebarTree, loadChildren, sidebarTree })
       <template #item="{ item }">
         <v-list-item
           density="compact"
+          rounded="lg"
           class="file-item"
           @click="tabsStore.openFile(asFile(item).path, asFile(item).name)"
         >
           <div class="tree-row">
             <v-icon class="tree-icon tree-icon--file" size="14">mdi-file-outline</v-icon>
-            <span class="tree-name tree-name--file text-label-medium">{{ asFile(item).name }}</span>
+            <span class="tree-name tree-name--file text-body-2">{{ asFile(item).name }}</span>
           </div>
         </v-list-item>
       </template>
     </v-treeview>
   </div>
   <v-divider />
-  <div class="tree-footer">
-    <v-btn variant="text" size="small" class="refresh-btn text-caption" prepend-icon="mdi-refresh" @click="loadSidebarTree">{{ t('common.refresh') }}</v-btn>
+  <div class="d-flex align-center px-4 py-2">
+    <v-btn variant="text" size="small" color="primary" prepend-icon="mdi-refresh" @click="loadSidebarTree">{{ t('common.refresh') }}</v-btn>
   </div>
 </template>
 
@@ -142,7 +144,7 @@ defineExpose({ loadSidebarTree, loadChildren, sidebarTree })
 }
 .empty-state {
   padding: 12px 16px;
-  color: var(--content-faint);
+  color: rgba(var(--v-theme-on-surface), 0.38);
 }
 .tree-row {
   display: flex;
@@ -159,8 +161,8 @@ defineExpose({ loadSidebarTree, loadChildren, sidebarTree })
   transition: color var(--md-duration-short3) var(--md-easing-standard);
 }
 .tree-icon--open { color: rgb(var(--v-theme-primary)); }
-.tree-icon--closed { color: rgba(var(--v-theme-primary), 0.7); }
-.tree-icon--file { color: var(--content-subtle); }
+.tree-icon--closed { color: rgba(var(--v-theme-primary), 0.70); }
+.tree-icon--file { color: rgba(var(--v-theme-on-surface), 0.60); }
 .tree-name {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -168,24 +170,8 @@ defineExpose({ loadSidebarTree, loadChildren, sidebarTree })
   transition: color var(--md-duration-short3) var(--md-easing-standard);
 }
 .tree-name--dir {
-  color: var(--content-secondary);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   font-weight: 500;
 }
-.dir-item:hover .tree-name--dir { color: var(--content-primary); }
-.tree-name--file { color: var(--content-muted); }
-.file-item:hover .tree-name--file { color: var(--content-secondary); }
-.loading-spinner {
-  color: var(--content-subtle);
-  flex-shrink: 0;
-}
-.tree-footer {
-  padding: 8px 16px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.refresh-btn {
-  color: var(--content-subtle) !important;
-}
+.tree-name--file { color: rgba(var(--v-theme-on-surface), 0.70); }
 </style>
