@@ -131,6 +131,28 @@ defineExpose({
     <TaskDetailModal />
     <ToastContainer />
     <ConfirmDialog />
+    <!-- DB corruption dialog — shown when query returns { success: false, error: 'DB_CORRUPT' } -->
+    <v-dialog :model-value="store.error === 'DB_CORRUPT'" max-width="420" persistent>
+      <v-card elevation="3" role="alertdialog" aria-modal="true" aria-label="Corrupted database">
+        <v-card-text class="pa-5 pb-3">
+          <div class="d-flex align-start ga-3">
+            <div class="db-corrupt-icon d-flex align-center justify-center">
+              <v-icon size="20" class="db-corrupt-icon__svg">mdi-alert-circle-outline</v-icon>
+            </div>
+            <div class="flex-grow-1">
+              <h3 class="text-subtitle-2 font-weight-medium">Corrupted database</h3>
+              <p class="text-body-2 text-medium-emphasis mt-2">
+                The <code>project.db</code> file is damaged. Delete it or restore a backup, then reload the project.
+              </p>
+            </div>
+          </div>
+        </v-card-text>
+        <v-card-actions class="px-5 py-4 db-corrupt-actions">
+          <v-spacer />
+          <v-btn color="error" variant="flat" @click="store.closeProject()">Close project</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <CommandPalette v-model="isCommandPaletteOpen" @select-task="openTaskFromPalette" />
     <SetupWizard
       v-if="store.setupWizardTarget"
@@ -186,5 +208,16 @@ defineExpose({
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+.db-corrupt-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--shape-sm);
+  flex-shrink: 0;
+  background-color: rgba(var(--v-theme-error), 0.15);
+}
+.db-corrupt-icon__svg { color: rgb(var(--v-theme-error)); }
+.db-corrupt-actions {
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 </style>
