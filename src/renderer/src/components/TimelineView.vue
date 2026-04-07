@@ -289,9 +289,6 @@ const legendItems = computed(() => [
       </div>
     </div>
 
-    <!-- Body -->
-    <div class="tl-body-wrapper">
-    <v-card elevation="0" class="section-card">
     <!-- Filter bar: period presets + agent chips -->
     <div class="tl-filter-bar">
       <!-- Period presets: clicking resets the viewport to that range -->
@@ -330,6 +327,10 @@ const legendItems = computed(() => [
         </v-btn>
       </template>
     </div>
+
+    <!-- Body -->
+    <div class="tl-body-wrapper">
+    <v-card elevation="0" class="section-card">
     <!-- Timeline body — wheel zooms viewport continuously, mousedown pans -->
     <div ref="bodyRef" class="tl-body" @wheel.prevent="onCanvasWheel" @mousedown="onMouseDown">
       <div v-if="loading" class="tl-state-center">
