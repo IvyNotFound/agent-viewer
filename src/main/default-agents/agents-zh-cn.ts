@@ -1,6 +1,7 @@
 import type { DefaultAgent } from './types'
 
 // Chinese Simplified suffix — DB schema reminder + heredoc SQL warning + agent protocol
+// "IDENTIFIANTS" in the suffix below is a fixed technical label from dbstart.js — do not translate
 const SHARED_SUFFIX_ZH_CN = `## 数据库架构提醒
 tasks 表的列名为**英文**：priority, status, effort, scope, created_at, updated_at, started_at, completed_at, validated_at, parent_task_id, agent_creator_id, agent_assigned_id, agent_validator_id, session_id。
 SQL 查询时必须使用英文列名。
@@ -95,6 +96,15 @@ export const GENERIC_AGENTS_ZH_CN: DefaultAgent[] = [
 - 写入：node scripts/dbw.js "<SQL>"
 - 启动时：上下文（agent_id, session_id, 任务, 锁）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。立即识别任务并开始工作。
 
+## 工作树验证
+对于任何 \`session_id\` 非 NULL 的工单（工作树工单）：
+- **验证通过** → 归档前将 Agent 分支合并到 main：
+  \`\`\`bash
+  git checkout main && git cherry-pick <commit-hash> && git push origin main
+  # 如果 cherry-pick 失败：git merge --squash agent/<name>/s<sid> && git commit && git push origin main
+  \`\`\`
+- **验证未通过** → 仅拒绝 — 不合并。
+
 ## 发布规则
 有未被阻塞的 todo/in_progress 工单时禁止发布。
 创建发布工单时包含 devops 操作：
@@ -143,7 +153,7 @@ export const GENERIC_AGENTS_ZH_CN: DefaultAgent[] = [
 - 不要修改 CLAUDE.md（由 arch 或 setup Agent 负责）
 
 ## 规范
-- 用户文档语言：英文
+- 用户文档语言：中文
 - 代码/内联注释语言：英文
 - 代码片段：始终带语言围栏
 

@@ -1,6 +1,7 @@
 import type { DefaultAgent } from './types'
 
 // Korean suffix — DB schema reminder + heredoc SQL warning + agent protocol
+// "IDENTIFIANTS" in the suffix below is a fixed technical label from dbstart.js — do not translate
 const SHARED_SUFFIX_KO = `## DB 스키마 리마인더
 tasks 테이블의 컬럼 이름은 **영어**입니다: priority, status, effort, scope, created_at, updated_at, started_at, completed_at, validated_at, parent_task_id, agent_creator_id, agent_assigned_id, agent_validator_id, session_id.
 SQL 쿼리에서는 반드시 영어 컬럼 이름을 사용하세요.
@@ -95,6 +96,15 @@ export const GENERIC_AGENTS_KO: DefaultAgent[] = [
 - 쓰기: node scripts/dbw.js "<SQL>"
 - 시작 시: 컨텍스트 (agent_id, session_id, 작업, 락)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요. 작업을 파악하고 즉시 시작하세요.
 
+## 워크트리 검증
+\`session_id\`가 NULL이 아닌 티켓(워크트리 티켓)의 경우:
+- **검증 OK** → 보관 전에 에이전트 브랜치를 main에 병합:
+  \`\`\`bash
+  git checkout main && git cherry-pick <commit-hash> && git push origin main
+  # cherry-pick 실패 시: git merge --squash agent/<name>/s<sid> && git commit && git push origin main
+  \`\`\`
+- **검증 KO** → 반려만 — 병합하지 않음.
+
 ## 릴리스 규칙
 차단되지 않은 todo/in_progress 티켓이 남아 있는 동안은 릴리스 금지.
 릴리스 티켓 생성 시 devops 액션 포함:
@@ -143,7 +153,7 @@ export const GENERIC_AGENTS_KO: DefaultAgent[] = [
 - CLAUDE.md를 수정하지 않음 (arch 또는 setup 에이전트 담당)
 
 ## 규약
-- 사용자 문서 언어: 영어
+- 사용자 문서 언어: 한국어
 - 코드 / 인라인 주석 언어: 영어
 - 코드 스니펫: 항상 언어 펜스 포함
 

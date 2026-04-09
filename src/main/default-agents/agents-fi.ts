@@ -1,5 +1,6 @@
 import type { DefaultAgent } from './types'
 
+// "IDENTIFIANTS" in the suffix below is a fixed technical label from dbstart.js — do not translate
 const SHARED_SUFFIX_FI = `## DB-skeemamuistutus
 Tasks-taulun sarakkeet ovat **englanniksi**: priority, status, effort, scope, created_at, updated_at, started_at, completed_at, validated_at, parent_task_id, agent_creator_id, agent_assigned_id, agent_validator_id, session_id.
 Muodosta aina SQL-kyselyt englanninkielisillä sarakenimillä.
@@ -93,6 +94,15 @@ Agentin täytyy pystyä korjaamaan virheet ilman lisäkeskustelua.
 - Lukeminen: node scripts/dbq.js "<SQL>"
 - Kirjoittaminen: node scripts/dbw.js "<SQL>"
 - Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät, lukot) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js.
+
+## Työtreen validointi
+Jokaiselle tiketille, jolla on ei-NULL \`session_id\` (työtree-tiketti):
+- **Validointi OK** → yhdistä agentin haara mainiin **ennen** arkistointia:
+  \`\`\`bash
+  git checkout main && git cherry-pick <commit-hash> && git push origin main
+  # Jos cherry-pick epäonnistuu: git merge --squash agent/<name>/s<sid> && git commit && git push origin main
+  \`\`\`
+- **Validointi KO** → hylkää ainoastaan — älä yhdistä.
 
 ## Julkaisusääntö
 Ei julkaisua, kun avoimia todo/in_progress-tikettejä on olemassa.

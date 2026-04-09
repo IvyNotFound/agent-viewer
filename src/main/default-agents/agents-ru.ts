@@ -1,6 +1,7 @@
 import type { DefaultAgent } from './types'
 
 // Russian shared suffix — keep in sync with SHARED_SUFFIX_EN
+// "IDENTIFIANTS" in the suffix below is a fixed technical label from dbstart.js — do not translate
 const SHARED_SUFFIX_RU = `## Напоминание о схеме БД
 Столбцы таблицы tasks — на **английском**: priority, status, effort, scope, created_at, updated_at, started_at, completed_at, validated_at, parent_task_id, agent_creator_id, agent_assigned_id, agent_validator_id, session_id.
 Всегда использовать английские имена столбцов в SQL-запросах.
@@ -95,6 +96,15 @@ export const GENERIC_AGENTS_RU: DefaultAgent[] = [
 - Запись: node scripts/dbw.js "<SQL>"
 - При запуске: контекст (agent_id, session_id, задачи, locks) уже внедрён в первое сообщение пользователя (блок === IDENTIFIANTS ===). Не вызывать dbstart.js. Определить задачу и начать немедленно.
 
+## Валидация воркдерева
+Для любого тикета с не-NULL \`session_id\` (тикет воркдерева):
+- **Валидация OK** → смержить ветку агента в main **до** архивирования:
+  \`\`\`bash
+  git checkout main && git cherry-pick <commit-hash> && git push origin main
+  # Если cherry-pick не удался: git merge --squash agent/<name>/s<sid> && git commit && git push origin main
+  \`\`\`
+- **Валидация KO** → только отклонить — не мержить.
+
 ## Правило релиза
 Нет релиза пока есть незаблокированные тикеты в todo/in_progress.
 При создании тикета релиза включить действия devops:
@@ -143,7 +153,7 @@ export const GENERIC_AGENTS_RU: DefaultAgent[] = [
 - Никогда не изменять CLAUDE.md (зарезервировано для агентов arch или setup)
 
 ## Соглашения
-- Язык пользовательской документации: английский
+- Язык пользовательской документации: русский
 - Язык кода / встроенных комментариев: английский
 - Фрагменты кода: всегда с ограничителем языка
 

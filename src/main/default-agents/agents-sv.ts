@@ -1,5 +1,6 @@
 import type { DefaultAgent } from './types'
 
+// "IDENTIFIANTS" in the suffix below is a fixed technical label from dbstart.js — do not translate
 const SHARED_SUFFIX_SV = `## DB-schemapåminnelse
 Kolumnerna i tasks-tabellen är på **engelska**: priority, status, effort, scope, created_at, updated_at, started_at, completed_at, validated_at, parent_task_id, agent_creator_id, agent_assigned_id, agent_validator_id, session_id.
 Formulera alltid SQL-frågor med engelska kolumnnamn.
@@ -93,6 +94,15 @@ En agent måste kunna rätta felen utan ytterligare utbyte.
 - Läsa: node scripts/dbq.js "<SQL>"
 - Skriva: node scripts/dbw.js "<SQL>"
 - Vid start: Din kontext (agent_id, session_id, uppgifter, lås) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js.
+
+## Worktree-validering
+För varje ticket med en icke-NULL \`session_id\` (worktree-ticket):
+- **Validering OK** → merga agentbranchen till main **innan** arkivering:
+  \`\`\`bash
+  git checkout main && git cherry-pick <commit-hash> && git push origin main
+  # Om cherry-pick misslyckas: git merge --squash agent/<name>/s<sid> && git commit && git push origin main
+  \`\`\`
+- **Validering KO** → avvisa enbart — merga inte.
 
 ## Releaasregel
 Ingen release medan det finns öppna todo/in_progress-tickets.

@@ -1,6 +1,7 @@
 import type { DefaultAgent } from './types'
 
 // Japanese suffix — DB schema reminder + heredoc SQL warning + agent protocol
+// "IDENTIFIANTS" in the suffix below is a fixed technical label from dbstart.js — do not translate
 const SHARED_SUFFIX_JA = `## DBスキーマリマインダー
 tasksテーブルのカラム名は**英語**です: priority, status, effort, scope, created_at, updated_at, started_at, completed_at, validated_at, parent_task_id, agent_creator_id, agent_assigned_id, agent_validator_id, session_id。
 SQLクエリでは必ず英語のカラム名を使用してください。
@@ -95,6 +96,15 @@ export const GENERIC_AGENTS_JA: DefaultAgent[] = [
 - 書き込み: node scripts/dbw.js "<SQL>"
 - 起動時: コンテキスト (agent_id, session_id, タスク, ロック) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。タスクを特定して即座に開始してください。
 
+## ワークツリー検証
+\`session_id\` が NULL でないチケット（ワークツリーチケット）の場合：
+- **検証 OK** → アーカイブ前にエージェントブランチを main にマージ：
+  \`\`\`bash
+  git checkout main && git cherry-pick <commit-hash> && git push origin main
+  # cherry-pick が失敗した場合: git merge --squash agent/<name>/s<sid> && git commit && git push origin main
+  \`\`\`
+- **検証 KO** → 差し戻しのみ — マージしない。
+
 ## リリースルール
 未ブロックの todo/in_progress チケットが残っている間はリリース禁止。
 リリースチケット作成時は devops アクションを含める:
@@ -143,7 +153,7 @@ export const GENERIC_AGENTS_JA: DefaultAgent[] = [
 - CLAUDE.md を変更しない (arch または setup エージェントが担当)
 
 ## 規約
-- ユーザー向けドキュメントの言語: 英語
+- ユーザー向けドキュメントの言語: 日本語
 - コード / インラインコメントの言語: 英語
 - コードスニペット: 常に言語フェンス付き
 

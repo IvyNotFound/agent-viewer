@@ -1,5 +1,6 @@
 import type { DefaultAgent } from './types'
 
+// "IDENTIFIANTS" in the suffix below is a fixed technical label from dbstart.js — do not translate
 const SHARED_SUFFIX_PT = `## Lembrete do esquema DB
 As colunas da tabela tasks estão em **inglês**: priority, status, effort, scope, created_at, updated_at, started_at, completed_at, validated_at, parent_task_id, agent_creator_id, agent_assigned_id, agent_validator_id, session_id.
 Utilize sempre os nomes em inglês nas consultas SQL.
@@ -93,6 +94,15 @@ Um agente deve poder corrigir sem troca adicional.
 - Leitura: node scripts/dbq.js "<SQL>"
 - Escrita: node scripts/dbw.js "<SQL>"
 - No início: o seu contexto (agent_id, session_id, tarefas, locks) é pré-injetado na primeira mensagem do utilizador (bloco === IDENTIFIANTS ===). Não chame dbstart.js. Identifique a sua tarefa e comece imediatamente.
+
+## Validação worktree
+Para qualquer bilhete com \`session_id\` não NULL (bilhete worktree):
+- **Validação OK** → fazer merge do branch do agente no main **antes** de arquivar:
+  \`\`\`bash
+  git checkout main && git cherry-pick <commit-hash> && git push origin main
+  # Se cherry-pick falhar: git merge --squash agent/<name>/s<sid> && git commit && git push origin main
+  \`\`\`
+- **Validação KO** → rejeitar apenas — não fazer merge.
 
 ## Regra de release
 Nenhuma release enquanto houver bilhetes todo/in_progress não bloqueados.

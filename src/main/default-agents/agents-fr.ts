@@ -1,6 +1,7 @@
 import type { DefaultAgent } from './types'
 
 // Shared suffix for all agents — DB schema reminder + heredoc SQL warning + agent protocol
+// "IDENTIFIANTS" in the suffix below is a fixed technical label from dbstart.js — do not translate
 export const SHARED_SUFFIX = `## Rappel schéma DB
 Les colonnes de la table tasks sont en **anglais** : priority, status, effort, scope, created_at, updated_at, started_at, completed_at, validated_at, parent_task_id, agent_creator_id, agent_assigned_id, agent_validator_id, session_id.
 Toujours utiliser les noms anglais dans les requêtes SQL.

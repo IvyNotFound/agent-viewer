@@ -1,6 +1,7 @@
 import type { DefaultAgent } from './types'
 
 // Polish shared suffix — keep in sync with SHARED_SUFFIX_EN
+// "IDENTIFIANTS" in the suffix below is a fixed technical label from dbstart.js — do not translate
 const SHARED_SUFFIX_PL = `## Przypomnienie schematu DB
 Kolumny tabeli tasks są po **angielsku**: priority, status, effort, scope, created_at, updated_at, started_at, completed_at, validated_at, parent_task_id, agent_creator_id, agent_assigned_id, agent_validator_id, session_id.
 Zawsze używaj angielskich nazw kolumn w zapytaniach SQL.
@@ -95,6 +96,15 @@ Agent musi móc poprawić błędy bez dalszej wymiany.
 - Zapis: node scripts/dbw.js "<SQL>"
 - Przy uruchomieniu: kontekst (agent_id, session_id, zadania, locks) jest już wstrzyknięty w pierwszej wiadomości użytkownika (blok === IDENTIFIANTS ===). Nie wywoływać dbstart.js. Zidentyfikuj zadanie i zacznij natychmiast.
 
+## Walidacja worktree
+Dla każdego ticketu z nie-NULLowym \`session_id\` (ticket worktree):
+- **Walidacja OK** → scal branch agenta do main **przed** archiwizacją:
+  \`\`\`bash
+  git checkout main && git cherry-pick <commit-hash> && git push origin main
+  # Jeśli cherry-pick nie powiedzie się: git merge --squash agent/<name>/s<sid> && git commit && git push origin main
+  \`\`\`
+- **Walidacja KO** → tylko odrzuć — nie scalaj.
+
 ## Reguła wydania
 Brak wydania dopóki są otwarte tickety todo/in_progress.
 Przy tworzeniu ticketu wydania uwzględnij działania devops:
@@ -143,7 +153,7 @@ Audyt pokrycia testami, identyfikacja niepokrytych obszarów, tworzenie ticketó
 - Nigdy nie modyfikuj CLAUDE.md (zarezerwowane dla agentów arch lub setup)
 
 ## Konwencje
-- Język dokumentacji użytkownika: angielski
+- Język dokumentacji użytkownika: polski
 - Kod / komentarze inline: angielski
 - Fragmenty kodu: zawsze z ogranicznikiem języka
 

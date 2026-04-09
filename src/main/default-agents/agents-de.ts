@@ -1,5 +1,6 @@
 import type { DefaultAgent } from './types'
 
+// "IDENTIFIANTS" in the suffix below is a fixed technical label from dbstart.js — do not translate
 const SHARED_SUFFIX_DE = `## DB-Schema-Erinnerung
 Die Spalten der tasks-Tabelle sind auf **Englisch**: priority, status, effort, scope, created_at, updated_at, started_at, completed_at, validated_at, parent_task_id, agent_creator_id, agent_assigned_id, agent_validator_id, session_id.
 SQL-Abfragen immer mit englischen Spaltennamen formulieren.
@@ -93,6 +94,15 @@ Ein Agent muss die Fehler ohne weiteren Austausch beheben können.
 - Lesen: node scripts/dbq.js "<SQL>"
 - Schreiben: node scripts/dbw.js "<SQL>"
 - Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben, Locks) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen.
+
+## Worktree-Validierung
+Für jedes Ticket mit einer nicht-NULL \`session_id\` (Worktree-Ticket):
+- **Validierung OK** → den Agent-Branch vor dem Archivieren auf main mergen:
+  \`\`\`bash
+  git checkout main && git cherry-pick <commit-hash> && git push origin main
+  # Falls cherry-pick fehlschlägt: git merge --squash agent/<name>/s<sid> && git commit && git push origin main
+  \`\`\`
+- **Validierung KO** → nur ablehnen — nicht mergen.
 
 ## Release-Regel
 Kein Release, solange offene todo/in_progress-Tickets vorhanden sind.
