@@ -18,14 +18,14 @@ describe('CLI_CAPABILITIES — exhaustive boolean assertions', () => {
     })
   })
 
-  it('codex: profileSelection, thinkingMode, convResume, modelSelection disabled', () => {
+  it('codex: profileSelection, thinkingMode, convResume disabled', () => {
     expect(CLI_CAPABILITIES.codex).toEqual({
       worktree: true,
       profileSelection: false,
       systemPrompt: true,
       thinkingMode: false,
       convResume: false,
-      modelSelection: false,
+      modelSelection: true,
     })
   })
 
@@ -62,14 +62,14 @@ describe('CLI_CAPABILITIES — exhaustive boolean assertions', () => {
     })
   })
 
-  it('goose: worktree and systemPrompt enabled, others disabled', () => {
+  it('goose: worktree, systemPrompt, and modelSelection enabled', () => {
     expect(CLI_CAPABILITIES.goose).toEqual({
       worktree: true,
       profileSelection: false,
       systemPrompt: true,
       thinkingMode: false,
       convResume: false,
-      modelSelection: false,
+      modelSelection: true,
     })
   })
 
@@ -99,7 +99,7 @@ describe('CLI_CAPABILITIES — exhaustive boolean assertions', () => {
     const withModel = Object.entries(CLI_CAPABILITIES)
       .filter(([, v]) => v.modelSelection)
       .map(([k]) => k)
-    expect(withModel).toEqual(['claude', 'gemini', 'opencode', 'aider'])
+    expect(withModel).toEqual(['claude', 'codex', 'gemini', 'opencode', 'aider', 'goose'])
   })
 
   it('claude, codex, aider, goose have systemPrompt=true', () => {

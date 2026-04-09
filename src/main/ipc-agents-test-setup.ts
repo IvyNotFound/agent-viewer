@@ -25,6 +25,7 @@ export async function buildSchema(): Promise<void> {
       worktree_enabled INTEGER NOT NULL DEFAULT 0,
       max_sessions INTEGER NOT NULL DEFAULT 3,
       preferred_model TEXT,
+      preferred_cli TEXT,
       created_at TEXT DEFAULT (datetime('now'))
     )`)
 
