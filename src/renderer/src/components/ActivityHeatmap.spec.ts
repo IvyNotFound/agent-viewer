@@ -26,13 +26,13 @@ describe('ActivityHeatmap (T784)', () => {
     wrapper.unmount()
   })
 
-  it('renders "Tous" agent filter button by default', async () => {
+  it('renders "All" agent filter button by default', async () => {
     const wrapper = mount(ActivityHeatmap, {
       props: { dbPath: '/tmp/test.db' },
       global: { plugins: [i18n] },
     })
     await flushPromises()
-    expect(wrapper.text()).toContain('Tous')
+    expect(wrapper.text()).toContain('All')
     wrapper.unmount()
   })
 
