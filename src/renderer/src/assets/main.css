@@ -119,6 +119,20 @@ body,
   --inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
+/* Shell + modal elevation — dark mode depth reinforcement (T1812) */
+[data-v-theme="dark"] .v-app-bar {
+  box-shadow: var(--elevation-1), var(--inner-glow) !important;
+}
+[data-v-theme="dark"] .v-navigation-drawer {
+  box-shadow: var(--elevation-1), var(--inner-glow) !important;
+}
+[data-v-theme="dark"] .tabbar {
+  box-shadow: var(--elevation-1) !important;
+}
+[data-v-theme="dark"] .v-dialog .task-panel {
+  box-shadow: var(--elevation-3), var(--inner-glow) !important;
+}
+
 /* ── Dev mode — slightly purple surface tint to distinguish dev from prod ──── */
 [data-v-theme="dark"][data-dev-mode] {
   --v-theme-surface-base:      9,6,17;    /* T6 + purple tint (unchanged) */
