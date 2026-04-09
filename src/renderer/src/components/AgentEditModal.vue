@@ -4,10 +4,10 @@ import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useSettingsStore } from '@renderer/stores/settings'
 import { useConfirmDialog } from '@renderer/composables/useConfirmDialog'
-import { agentBg, agentFg, agentAccent } from '@renderer/utils/agentColor'
-import { CLI_CAPABILITIES, CLI_LABELS } from '@renderer/utils/cliCapabilities'
+import { agentBg, agentFg, agentAccent, agentBorder } from '@renderer/utils/agentColor'
+import { CLI_CAPABILITIES, CLI_LABELS, CLI_BADGE, systemLabel as getSystemLabel } from '@renderer/utils/cliCapabilities'
 import type { Agent } from '@renderer/types'
-import type { CliType } from '@shared/cli-types'
+import type { CliType, CliInstance } from '@shared/cli-types'
 import type { CliModelDef } from '@shared/cli-models'
 
 const { t } = useI18n()
@@ -43,14 +43,16 @@ const newPerimetreName = ref('')
 const addingPerimetre = ref(false)
 const perimètreError = ref<string | null>(null)
 const loading = ref(true)
+const selectedInstance = ref<CliInstance | null>(null)
 
-// Available CLIs: unique CLI types from enabled instances
-const availableClis = computed(() => {
-  return settingsStore.enabledClis.map(cli => ({
-    title: CLI_LABELS[cli] ?? cli,
-    value: cli,
-  }))
-})
+// All instances across every enabled CLI — unified list shown as radio buttons
+const allAvailableInstances = computed(() =>
+  settingsStore.allCliInstances.filter(i => settingsStore.enabledClis.includes(i.cli as CliType))
+)
+
+function systemLabel(inst: CliInstance): string {
+  return getSystemLabel(inst.type, inst.distro)
+}
 
 // Effective CLI for model filtering: agent preference or first enabled
 const effectiveCli = computed<CliType>(() =>
@@ -71,6 +73,11 @@ watch(preferredCli, () => {
   if (!loading.value) preferredModel.value = null
 })
 
+// Sync radio selection → preferredCli
+watch(selectedInstance, (inst) => {
+  if (!loading.value) preferredCli.value = inst?.cli ?? null
+})
+
 // Worktree toggle bridge: v-btn-toggle needs primitive string values
 const worktreeToggleValue = computed({
   get: () => worktreeEnabled.value === null ? 'inherit' : worktreeEnabled.value === 1 ? 'on' : 'off',
@@ -80,6 +87,11 @@ const worktreeToggleValue = computed({
 })
 
 onMounted(async () => {
+  // Ensure CLI instances are detected (for radio buttons)
+  if (settingsStore.allCliInstances.length === 0) {
+    await settingsStore.refreshCliDetection()
+  }
+
   // Ensure CLI models are loaded for dropdown
   if (Object.keys(settingsStore.cliModels).length === 0) {
     await settingsStore.loadCliModels()
@@ -93,6 +105,13 @@ onMounted(async () => {
       preferredModel.value = result.preferredModel ?? preferredModel.value
       preferredCli.value = result.preferredCli ?? preferredCli.value
     }
+  }
+
+  // Pre-select instance matching preferredCli
+  const instances = allAvailableInstances.value
+  if (preferredCli.value && instances.length > 0) {
+    const cliInstances = instances.filter(i => i.cli === preferredCli.value)
+    selectedInstance.value = cliInstances.find(i => i.isDefault) ?? cliInstances[0] ?? null
   }
 
   loading.value = false
@@ -222,39 +241,85 @@ async function save() {
             <p class="text-caption text-disabled mt-1">{{ t('launch.thinkingNote') }}</p>
           </div>
 
-          <!-- CLI preference -->
+          <!-- CLI preference (radio buttons — aligned with LaunchSessionModal) -->
           <div>
-            <div class="field-label text-label-medium mb-2">{{ t('agent.preferredCli') }}</div>
-            <v-select
-              v-model="preferredCli"
-              :items="availableClis"
-              clearable
-              :placeholder="t('agent.globalDefault')"
-              variant="outlined"
-              density="compact"
-              hide-details
-              :color="agentAccent(agent.name)"
-              :base-color="agentAccent(agent.name)"
-            />
-            <p class="text-caption text-disabled mt-1">{{ t('agent.preferredCliNote') }}</p>
+            <p class="section-title mb-2 text-body-2">{{ t('agent.preferredCli') }}</p>
+
+            <div class="d-flex flex-column ga-2">
+              <!-- Global default option (no CLI preference) -->
+              <label
+                class="instance-row"
+                :class="selectedInstance === null ? '' : 'instance-row--idle'"
+                :style="selectedInstance === null
+                  ? { borderColor: agentBorder(agent.name), backgroundColor: agentAccent(agent.name) + '15' }
+                  : {}"
+              >
+                <input
+                  v-model="selectedInstance"
+                  type="radio"
+                  :value="null"
+                  :style="{ accentColor: agentAccent(agent.name) }"
+                />
+                <span class="instance-label" style="font-style: italic;">{{ t('agent.globalDefault') }}</span>
+              </label>
+
+              <label
+                v-for="inst in allAvailableInstances"
+                :key="`${inst.cli}-${inst.distro}`"
+                class="instance-row"
+                :class="selectedInstance?.cli === inst.cli && selectedInstance?.distro === inst.distro ? '' : 'instance-row--idle'"
+                :style="selectedInstance?.cli === inst.cli && selectedInstance?.distro === inst.distro
+                  ? { borderColor: agentBorder(agent.name), backgroundColor: agentAccent(agent.name) + '15' }
+                  : {}"
+              >
+                <input
+                  v-model="selectedInstance"
+                  type="radio"
+                  :value="inst"
+                  :style="{ accentColor: agentAccent(agent.name) }"
+                />
+                <span class="cli-badge">{{ CLI_BADGE[inst.cli] }}</span>
+                <span class="instance-label">
+                  <span style="color: var(--content-muted)">{{ systemLabel(inst) }}</span>
+                  <span style="color: var(--content-faint); margin: 0 4px;">—</span>
+                  <span>{{ CLI_LABELS[inst.cli] }}</span>
+                </span>
+                <span class="version-badge">v{{ inst.version }}</span>
+                <span
+                  v-if="inst.isDefault && inst.type === 'wsl'"
+                  class="default-badge"
+                >{{ t('launch.defaultBadge') }}</span>
+              </label>
+            </div>
+
+            <p class="field-hint mt-1 text-caption">{{ t('agent.preferredCliNote') }}</p>
           </div>
 
           <!-- Preferred model (filtered by CLI) -->
-          <div v-if="cliSupportsModel">
-            <div class="field-label text-label-medium mb-2">{{ t('agent.preferredModel') }}</div>
-            <v-select
-              v-model="preferredModel"
-              :items="availableModels"
-              clearable
-              :placeholder="t('agent.settingsDefault')"
-              variant="outlined"
-              density="compact"
-              hide-details
-              :color="agentAccent(agent.name)"
-              :base-color="agentAccent(agent.name)"
-            />
-            <p class="text-caption text-disabled mt-1">{{ t('agent.preferredModelNote') }}</p>
-          </div>
+          <Transition
+            enter-active-class="expand-enter-active"
+            enter-from-class="expand-enter-from"
+            enter-to-class="expand-enter-to"
+            leave-active-class="expand-leave-active"
+            leave-from-class="expand-leave-from"
+            leave-to-class="expand-leave-to"
+          >
+            <div v-if="cliSupportsModel && availableModels.length > 0">
+              <p class="section-title mb-2 text-body-2">{{ t('agent.preferredModel') }}</p>
+              <v-select
+                v-model="preferredModel"
+                :items="availableModels"
+                clearable
+                :placeholder="t('agent.settingsDefault')"
+                variant="outlined"
+                density="compact"
+                hide-details
+                :color="agentAccent(agent.name)"
+                :base-color="agentAccent(agent.name)"
+              />
+              <p class="field-hint mt-1 text-caption">{{ t('agent.preferredModelNote') }}</p>
+            </div>
+          </Transition>
 
           <!-- Tâches autorisées (--allowedTools) -->
           <v-textarea
@@ -443,5 +508,99 @@ async function save() {
 .agent-toggle :deep(.v-btn--active) {
   color: var(--toggle-accent) !important;
   border-color: var(--toggle-accent) !important;
+}
+
+/* Section title — aligned with LaunchSessionModal (T1825) */
+.section-title {
+  font-weight: 500;
+  color: var(--content-secondary);
+}
+.field-hint {
+  color: var(--content-muted);
+  margin-top: 4px;
+}
+.field-hint--error {
+  color: rgb(var(--v-theme-error));
+}
+
+/* Instance rows (radio) — aligned with LaunchSessionModal (T1825) */
+.instance-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--shape-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--md-duration-short3) var(--md-easing-standard);
+}
+.instance-row--idle {
+  border-color: var(--edge-default);
+  background: var(--surface-secondary);
+}
+.instance-row--idle:hover {
+  border-color: var(--content-faint);
+}
+.cli-badge {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  background: var(--surface-tertiary);
+  color: var(--content-muted);
+  flex-shrink: 0;
+}
+.instance-label {
+  flex: 1;
+  font-size: 14px;
+  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  color: var(--content-secondary);
+}
+.version-badge {
+  font-size: 10px;
+  color: var(--content-subtle);
+  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  flex-shrink: 0;
+}
+.default-badge {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--surface-tertiary);
+  color: var(--content-muted);
+  flex-shrink: 0;
+}
+
+/* Expand/collapse animation for conditional sections — aligned with LaunchSessionModal (T1825) */
+.expand-enter-active {
+  transition: all var(--md-duration-short4) var(--md-easing-standard);
+  overflow: hidden;
+}
+.expand-enter-from {
+  opacity: 0;
+  max-height: 0;
+}
+.expand-enter-to {
+  opacity: 1;
+  max-height: 8rem;
+}
+.expand-leave-active {
+  transition: all var(--md-duration-short3) var(--md-easing-standard);
+  overflow: hidden;
+}
+.expand-leave-from {
+  opacity: 1;
+  max-height: 8rem;
+}
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
 }
 </style>
