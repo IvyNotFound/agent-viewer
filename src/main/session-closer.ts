@@ -118,14 +118,36 @@ export async function closeZombieSessions(dbPath: string): Promise<number[]> {
   await writeDb(dbPath, (db) => {
     const result = db.exec(`SELECT id, agent_id FROM sessions ${ELIGIBILITY_WHERE}`)
     const rows = result[0]?.values ?? []
-    if (rows.length === 0) return false
-    const sessionIds = rows.map((r) => r[0] as number)
-    closedAgentIds = [...new Set(rows.map((r) => r[1] as number))]
-    const placeholders = sessionIds.map(() => '?').join(',')
-    db.run(
-      `UPDATE sessions SET status = 'completed', ended_at = datetime('now') WHERE id IN (${placeholders})`,
-      sessionIds
+    if (rows.length > 0) {
+      const sessionIds = rows.map((r) => r[0] as number)
+      closedAgentIds = [...new Set(rows.map((r) => r[1] as number))]
+      const placeholders = sessionIds.map(() => '?').join(',')
+      db.run(
+        `UPDATE sessions SET status = 'completed', ended_at = datetime('now') WHERE id IN (${placeholders})`,
+        sessionIds
+      )
+    }
+
+    // T1884: close stale sessions started > 2 hours ago (regardless of task status)
+    const staleResult = db.exec(
+      `SELECT id, agent_id FROM sessions
+       WHERE status = 'started'
+         AND agent_id IS NOT NULL
+         AND started_at < datetime('now', '-2 hours')`
     )
+    const staleRows = staleResult[0]?.values ?? []
+    if (staleRows.length > 0) {
+      const staleSessionIds = staleRows.map((r) => r[0] as number)
+      const staleAgentIds = [...new Set(staleRows.map((r) => r[1] as number))]
+      const ph = staleSessionIds.map(() => '?').join(',')
+      db.run(
+        `UPDATE sessions SET status = 'completed', ended_at = datetime('now') WHERE id IN (${ph})`,
+        staleSessionIds
+      )
+      closedAgentIds.push(...staleAgentIds)
+    }
+
+    closedAgentIds = [...new Set(closedAgentIds)]
     // T1110: return false when 0 rows modified → writeDb skips export+write
     return db.getRowsModified() > 0
   })
@@ -151,17 +173,7 @@ export async function detectManuallyClosed(dbPath: string, since: string): Promi
     `SELECT DISTINCT agent_id FROM sessions
      WHERE status = 'completed'
        AND ended_at > ?
-       AND agent_id IS NOT NULL
-       AND NOT EXISTS (
-         SELECT 1 FROM sessions s2
-         WHERE s2.agent_id = sessions.agent_id
-           AND s2.status = 'started'
-       )
-       AND NOT EXISTS (
-         SELECT 1 FROM tasks t
-         WHERE t.agent_assigned_id = sessions.agent_id
-           AND t.status IN ('todo', 'in_progress')
-       )`,
+       AND agent_id IS NOT NULL`,
     [since]
   )
   return rows.map((r) => (r as { agent_id: number }).agent_id)

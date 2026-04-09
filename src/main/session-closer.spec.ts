@@ -84,7 +84,9 @@ describe('session-closer', () => {
 
     it('should invoke onSessionsClosed callback with agent_ids when zombie sessions are closed', async () => {
       const mockDb = {
-        exec: vi.fn().mockReturnValue([{ columns: ['id', 'agent_id'], values: [[10, 5], [11, 7]] }]),
+        exec: vi.fn()
+          .mockReturnValueOnce([{ columns: ['id', 'agent_id'], values: [[10, 5], [11, 7]] }])
+          .mockReturnValueOnce([]), // no stale sessions
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(2),
       }
@@ -124,9 +126,11 @@ describe('session-closer', () => {
     it('should deduplicate agent_ids appearing in both zombie-close and manually-closed', async () => {
       // pre-check: started sessions exist
       vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }])
-      // zombie-close returns [5, 7]
+      // zombie-close returns [5, 7], no stale sessions
       const mockDb = {
-        exec: vi.fn().mockReturnValue([{ columns: ['id', 'agent_id'], values: [[10, 5], [11, 7]] }]),
+        exec: vi.fn()
+          .mockReturnValueOnce([{ columns: ['id', 'agent_id'], values: [[10, 5], [11, 7]] }])
+          .mockReturnValueOnce([]), // no stale sessions
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(2),
       }
@@ -192,7 +196,9 @@ describe('session-closer', () => {
 
     it('should pass a callback that runs UPDATE with WHERE id IN (...) from SELECT results', async () => {
       const mockDb = {
-        exec: vi.fn().mockReturnValue([{ columns: ['id', 'agent_id'], values: [[100, 1]] }]),
+        exec: vi.fn()
+          .mockReturnValueOnce([{ columns: ['id', 'agent_id'], values: [[100, 1]] }])
+          .mockReturnValueOnce([]), // no stale sessions
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(1),
       }
@@ -217,7 +223,7 @@ describe('session-closer', () => {
 
     it('callback returns false when no eligible sessions (T1110 skip-write signal)', async () => {
       const mockDb = {
-        exec: vi.fn().mockReturnValue([]),
+        exec: vi.fn().mockReturnValue([]), // both zombie and stale return empty
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(0),
       }
@@ -232,7 +238,9 @@ describe('session-closer', () => {
 
     it('callback returns false when getRowsModified() === 0 (T1110 skip-write signal)', async () => {
       const mockDb = {
-        exec: vi.fn().mockReturnValue([{ columns: ['id', 'agent_id'], values: [[100, 1]] }]),
+        exec: vi.fn()
+          .mockReturnValueOnce([{ columns: ['id', 'agent_id'], values: [[100, 1]] }])
+          .mockReturnValueOnce([]), // no stale sessions
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(0),
       }
@@ -247,7 +255,9 @@ describe('session-closer', () => {
 
     it('callback returns true when getRowsModified() > 0 (T1110 write proceeds)', async () => {
       const mockDb = {
-        exec: vi.fn().mockReturnValue([{ columns: ['id', 'agent_id'], values: [[100, 1]] }]),
+        exec: vi.fn()
+          .mockReturnValueOnce([{ columns: ['id', 'agent_id'], values: [[100, 1]] }])
+          .mockReturnValueOnce([]), // no stale sessions
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(2),
       }
@@ -262,7 +272,9 @@ describe('session-closer', () => {
 
     it('returns the closed agent_ids (deduplicated)', async () => {
       const mockDb = {
-        exec: vi.fn().mockReturnValue([{ columns: ['id', 'agent_id'], values: [[10, 3], [11, 9], [12, 3]] }]),
+        exec: vi.fn()
+          .mockReturnValueOnce([{ columns: ['id', 'agent_id'], values: [[10, 3], [11, 9], [12, 3]] }])
+          .mockReturnValueOnce([]), // no stale sessions
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(3),
       }
@@ -273,13 +285,59 @@ describe('session-closer', () => {
 
     it('returns empty array when no sessions are eligible', async () => {
       const mockDb = {
-        exec: vi.fn().mockReturnValue([]),
+        exec: vi.fn().mockReturnValue([]), // both zombie and stale return empty
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(0),
       }
       vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => { fn(mockDb); return undefined })
       const result = await closeZombieSessions('/fake/project.db')
       expect(result).toEqual([])
+    })
+
+    it('closes stale sessions started > 2 hours ago regardless of task status (T1884)', async () => {
+      const mockDb = {
+        exec: vi.fn()
+          .mockReturnValueOnce([]) // no zombie-eligible sessions
+          .mockReturnValueOnce([{ columns: ['id', 'agent_id'], values: [[50, 4], [51, 6]] }]), // stale sessions
+        run: vi.fn(),
+        getRowsModified: vi.fn().mockReturnValue(2),
+      }
+      vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => { fn(mockDb); return undefined })
+      const result = await closeZombieSessions('/fake/project.db')
+      expect(result).toEqual([4, 6])
+      expect(mockDb.run).toHaveBeenCalledWith(
+        expect.stringContaining('WHERE id IN (?,?)'),
+        [50, 51]
+      )
+    })
+
+    it('deduplicates agent_ids between zombie-close and stale-close (T1884)', async () => {
+      const mockDb = {
+        exec: vi.fn()
+          .mockReturnValueOnce([{ columns: ['id', 'agent_id'], values: [[10, 5]] }]) // zombie
+          .mockReturnValueOnce([{ columns: ['id', 'agent_id'], values: [[50, 5], [51, 8]] }]), // stale (agent 5 in both)
+        run: vi.fn(),
+        getRowsModified: vi.fn().mockReturnValue(3),
+      }
+      vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => { fn(mockDb); return undefined })
+      const result = await closeZombieSessions('/fake/project.db')
+      expect(result).toEqual(expect.arrayContaining([5, 8]))
+      expect(result).toHaveLength(2)
+    })
+
+    it('stale query uses correct SQL with 2-hour threshold (T1884)', async () => {
+      const mockDb = {
+        exec: vi.fn().mockReturnValue([]),
+        run: vi.fn(),
+        getRowsModified: vi.fn().mockReturnValue(0),
+      }
+      vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => { fn(mockDb); return undefined })
+      await closeZombieSessions('/fake/project.db')
+      // Second exec call is the stale query
+      const staleSql = mockDb.exec.mock.calls[1][0] as string
+      expect(staleSql).toContain("status = 'started'")
+      expect(staleSql).toContain("datetime('now', '-2 hours')")
+      expect(staleSql).toContain('agent_id IS NOT NULL')
     })
   })
 
@@ -314,22 +372,19 @@ describe('session-closer', () => {
         expect.stringContaining('agent_id IS NOT NULL'),
         [since]
       )
-      // Guard: must exclude agents that have an active 'started' session (prevents zombie-close
-      // sessions created by dbstart.js from triggering tab closure on the newly opened session)
-      expect(queryLive).toHaveBeenCalledWith(
-        '/fake/project.db',
-        expect.stringContaining("s2.status = 'started'"),
-        [since]
-      )
     })
 
-    it('should NOT return agent_ids when agent has an active started session (anti-zombie-false-positive)', async () => {
-      // Simulate: queryLive returns nothing because the NOT EXISTS clause filters out
-      // agents that have a 'started' session (i.e. a new session was just opened after
-      // the zombie-close done by dbstart.js).
-      vi.mocked(queryLive).mockResolvedValueOnce([])
+    it('should NOT have NOT EXISTS clauses (T1884 — removed zombie/task guards)', async () => {
+      await detectManuallyClosed('/fake/project.db', '2026-01-01 00:00:00')
+      const sql = vi.mocked(queryLive).mock.calls[0][1]
+      expect(sql).not.toContain('NOT EXISTS')
+    })
+
+    it('should return agent_ids from completed sessions even with active started sessions (T1884)', async () => {
+      // T1884: NOT EXISTS removed — agents with started sessions are no longer filtered out
+      vi.mocked(queryLive).mockResolvedValueOnce([{ agent_id: 5 }])
       const result = await detectManuallyClosed('/fake/project.db', '2026-01-01 00:00:00')
-      expect(result).toEqual([])
+      expect(result).toEqual([5])
     })
 
     it('should return agent_ids from completed sessions', async () => {
@@ -347,28 +402,14 @@ describe('session-closer', () => {
       expect(result).toEqual([])
     })
 
-    it('should exclude agents with an in_progress task (T1297 guard)', async () => {
-      // SQL guard must be present — queryLive would return nothing for such agents
-      vi.mocked(queryLive).mockResolvedValueOnce([])
-      const result = await detectManuallyClosed('/fake/project.db', '2026-01-01 00:00:00')
-      // Verify the SQL includes the task guard
-      expect(queryLive).toHaveBeenCalledWith(
-        '/fake/project.db',
-        expect.stringContaining("t.status IN ('todo', 'in_progress')"),
-        expect.any(Array)
-      )
-      expect(result).toEqual([])
-    })
-
-    it('should include agents whose tasks are all done (T1297 — existing behavior preserved)', async () => {
-      // Agent with task 'done' — SQL guard does not filter it out → queryLive returns the agent
+    it('should return agents even when they have in_progress tasks (T1884)', async () => {
+      // T1884: task guard removed — agents with active tasks are returned
       vi.mocked(queryLive).mockResolvedValueOnce([{ agent_id: 3 }])
       const result = await detectManuallyClosed('/fake/project.db', '2026-01-01 00:00:00')
       expect(result).toEqual([3])
     })
 
-    it('should include agents with no tasks (review, doc — T1297 — existing behavior preserved)', async () => {
-      // Agent with no task — NOT EXISTS on empty set is true → queryLive returns the agent
+    it('should include agents with no tasks (review, doc)', async () => {
       vi.mocked(queryLive).mockResolvedValueOnce([{ agent_id: 42 }])
       const result = await detectManuallyClosed('/fake/project.db', '2026-01-01 00:00:00')
       expect(result).toEqual([42])
