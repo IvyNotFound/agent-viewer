@@ -50,6 +50,14 @@ const allAvailableInstances = computed(() =>
   settingsStore.allCliInstances.filter(i => settingsStore.enabledClis.includes(i.cli as CliType))
 )
 
+/** Platform-aware "no CLI detected" message — aligned with LaunchSessionModal */
+const noInstanceText = computed(() => {
+  const p = window.electronAPI.platform
+  if (p === 'darwin') return t('launch.noInstanceMac')
+  if (p === 'linux')  return t('launch.noInstanceLinux')
+  return t('launch.noInstanceWin')
+})
+
 function systemLabel(inst: CliInstance): string {
   return getSystemLabel(inst.type, inst.distro)
 }
@@ -225,6 +233,9 @@ async function save() {
           />
         </div>
 
+        <!-- Loading bar -->
+        <v-progress-linear v-if="loading" indeterminate :color="agentAccent(agent.name)" height="2" />
+
         <!-- Body -->
         <div class="modal-body">
 
@@ -253,7 +264,13 @@ async function save() {
           <div>
             <p class="section-title mb-2 text-body-2">{{ t('agent.preferredCli') }}</p>
 
-            <div class="d-flex flex-column ga-2">
+            <div v-if="loading" class="text-body-2 text-medium-emphasis">{{ t('common.loading') }}</div>
+
+            <div v-else-if="allAvailableInstances.length === 0" class="text-body-2" style="color: var(--content-muted); font-style: italic;">
+              {{ noInstanceText }}
+            </div>
+
+            <div v-else class="d-flex flex-column ga-2">
               <!-- Global default option (no CLI preference) -->
               <label
                 class="instance-row"
@@ -299,6 +316,16 @@ async function save() {
                 >{{ t('launch.defaultBadge') }}</span>
               </label>
             </div>
+
+            <v-btn
+              variant="text"
+              size="small"
+              :loading="settingsStore.detectingClis"
+              :color="agentAccent(agent.name)"
+              prepend-icon="mdi-refresh"
+              class="mt-1"
+              @click="settingsStore.refreshCliDetection(true)"
+            >{{ t('launch.refreshDetection') }}</v-btn>
 
             <p class="field-hint mt-1 text-caption">{{ t('agent.preferredCliNote') }}</p>
           </div>
