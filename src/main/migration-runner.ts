@@ -346,6 +346,13 @@ const migrations: Migration[] = [
 
   // v33: add agents.preferred_cli for CLI tool preference per agent (T1802)
   { version: 33, up: (db) => { runAddPreferredCliToAgentsMigration(db) } },
+
+  // v34: add missing indexes on frequently-queried columns (T1852)
+  { version: 34, up: (db) => {
+    db.run('CREATE INDEX IF NOT EXISTS idx_sessions_conv_id ON sessions(claude_conv_id)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_tasks_agent_status ON tasks(agent_assigned_id, status)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status)')
+  } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */

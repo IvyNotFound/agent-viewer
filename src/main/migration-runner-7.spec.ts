@@ -481,7 +481,7 @@ describe('migrateDb — bootstrap requires BOTH permission_mode AND max_sessions
       colMap: { agents: ['id', 'name'] },
     })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(33)
+    expect(result).toBe(34)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s === 'ADD COLUMN permission_mode' || s.includes('ADD COLUMN permission_mode'))).toBe(true)
   })
@@ -766,7 +766,7 @@ describe('migrateDb — strict > (not >=) in pending filter', () => {
   })
 
   it('returns CURRENT_SCHEMA_VERSION - N migrations when starting at version N', () => {
-    for (const [start, expected] of [[27, 6], [28, 5], [24, 9]]) {
+    for (const [start, expected] of [[27, 7], [28, 6], [24, 10]]) {
       const db = makeMockDb({ userVersion: start, colMap: { agents: ['id', 'name'], sessions: ['id', 'status'] } })
       const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
       expect(result).toBe(expected)
@@ -938,21 +938,21 @@ describe('migrateDb — ArithmeticOperator: return value is pending.length', () 
   beforeEach(() => vi.clearAllMocks())
 
   it('return value matches exactly the number of SAVEPOINT calls made', () => {
-    // At version 27: v28, v29, v30, v31, v32, v33 run → 6 SAVEPOINTs → return 6
+    // At version 27: v28, v29, v30, v31, v32, v33, v34 run → 7 SAVEPOINTs → return 7
     const db = makeMockDb({ userVersion: 27, colMap: { agents: ['id', 'name'], sessions: ['id', 'status'] } })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const savepointCount = calls.filter((s: string) => /^SAVEPOINT m\d+$/.test(s)).length
     // Return value must equal the number of savepoints (one per migration)
     expect(result).toBe(savepointCount)
-    expect(result).toBe(6)
+    expect(result).toBe(7)
     expect(result).not.toBe(0)
-    expect(result).not.toBe(5)
-    expect(result).not.toBe(7)
+    expect(result).not.toBe(6)
+    expect(result).not.toBe(8)
   })
 
-  it('return value is 1 (not 0 or 2) when exactly one migration runs (v33 only)', () => {
-    const db = makeMockDb({ userVersion: 32, colMap: { sessions: ['id', 'status', 'cost_usd', 'duration_ms', 'num_turns', 'cli_type'], agents: ['id', 'name'] } })
+  it('return value is 1 (not 0 or 2) when exactly one migration runs (v34 only)', () => {
+    const db = makeMockDb({ userVersion: 33 })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     expect(result).toBe(1)
     expect(result).not.toBe(0)

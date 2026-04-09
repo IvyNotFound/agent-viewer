@@ -177,19 +177,19 @@ describe('migrateDb — bootstrap config empty values edge case', () => {
 describe('migrateDb — exact return value', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('returns 1 when exactly one migration is pending (v33 only)', () => {
+  it('returns 2 when two migrations are pending (v33, v34)', () => {
     const db = makeMockDb({
       userVersion: 32,
       colMap: { sessions: ['id', 'status', 'cost_usd', 'duration_ms', 'num_turns', 'cli_type'], agents: ['id', 'name'] },
     })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(1)
+    expect(result).toBe(2)
   })
 
-  it('returns 6 when six migrations are pending (v28, v29, v30, v31, v32, v33)', () => {
+  it('returns 7 when seven migrations are pending (v28–v34)', () => {
     const db = makeMockDb({ userVersion: 27, colMap: { agents: ['id', 'name'], sessions: ['id', 'status'] } })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(6) // v28, v29, v30, v31, v32, v33
+    expect(result).toBe(7) // v28, v29, v30, v31, v32, v33, v34
   })
 
   it('returns 0 exactly (not falsy) when already at CURRENT_SCHEMA_VERSION', () => {
@@ -208,7 +208,7 @@ describe('migrateDb — exact return value', () => {
     expect(result).not.toBe(CURRENT_SCHEMA_VERSION - 1)
   })
 
-  it('returns 10 for genuine legacy bootstrap (v0 + config + permission_mode + max_sessions = runs v24..v33)', () => {
+  it('returns 11 for genuine legacy bootstrap (v0 + config + permission_mode + max_sessions = runs v24..v34)', () => {
     const db = makeMockDb({
       userVersion: 0,
       hasConfigTable: true,
@@ -225,9 +225,9 @@ describe('migrateDb — exact return value', () => {
       tableMap: { config: true },
     })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(10) // v24, v25, v26, v27, v28, v29, v30, v31, v32, v33
-    expect(result).not.toBe(9)
-    expect(result).not.toBe(11)
+    expect(result).toBe(11) // v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34
+    expect(result).not.toBe(10)
+    expect(result).not.toBe(12)
   })
 
   it('returns CURRENT_SCHEMA_VERSION for external DB (v0 + config, no permission_mode/max_sessions)', () => {
