@@ -100,7 +100,8 @@ describe('useHookEventDisplay — TOOL_COLOR hardcoded values (T1074)', () => {
     ['Agent',     '#f472b6'],
     ['WebFetch',  '#60a5fa'],
     ['WebSearch', '#60a5fa'],
-    ['TodoWrite', '#fb923c'],
+    ['TodoWrite',   '#fb923c'],
+    ['ToolSearch',  '#c084fc'],
   ] as [string, string][])('TOOL_COLOR[%s] === "%s" (not empty)', (key, expected) => {
     expect(TOOL_COLOR[key]).toBe(expected)
     expect(TOOL_COLOR[key]).not.toBe('')

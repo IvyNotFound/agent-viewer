@@ -31,7 +31,8 @@ export const TOOL_COLOR: Record<string, string> = {
   Agent:     '#f472b6',
   WebFetch:  '#60a5fa',
   WebSearch: '#60a5fa',
-  TodoWrite: '#fb923c',
+  TodoWrite:   '#fb923c',
+  ToolSearch:  '#c084fc',
 }
 
 /** Hex color per built-in tool name (light mode). */
@@ -45,7 +46,8 @@ const TOOL_COLOR_LIGHT: Record<string, string> = {
   Agent:     '#db2777',
   WebFetch:  '#2563eb',
   WebSearch: '#2563eb',
-  TodoWrite: '#ea580c',
+  TodoWrite:   '#ea580c',
+  ToolSearch:  '#9333ea',
 }
 
 /** Hex color for specific event types — dark mode. */

@@ -381,6 +381,17 @@ function writeLines(input: Record<string, unknown>): DiffLine[] {
     </div>
   </template>
 
+  <!-- ToolSearch: query + max_results (T1883) -->
+  <template v-else-if="toolName === 'ToolSearch'">
+    <div class="tool-pattern">
+      <v-icon size="14" class="toolsearch-icon">mdi-magnify</v-icon>
+      {{ toolInput.query }}
+    </div>
+    <div v-if="toolInput.max_results" class="tool-meta">
+      <span class="tool-key">max_results:</span> {{ toolInput.max_results }}
+    </div>
+  </template>
+
   <!-- Fallback: raw JSON for unknown/MCP tools -->
   <template v-else>
     <pre>{{ toolInputPreview(toolInput) }}</pre>
@@ -509,6 +520,13 @@ pre {
 .todo-done {
   text-decoration: line-through;
   opacity: 0.55;
+}
+
+/* ToolSearch icon (T1883) */
+.toolsearch-icon {
+  opacity: 0.6;
+  color: var(--content-secondary);
+  margin-right: 4px;
 }
 
 /* Intra-line char highlight for substitution pairs */
