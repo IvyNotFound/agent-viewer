@@ -249,8 +249,13 @@ export const aliases: Record<string, string> = {
 export const mdiSvgSet: IconSet = {
   component: (props: IconProps) => {
     const icon = props.icon as string
+    // Strip 'mdi-' prefix: Vuetify passes 'mdi-xxx' but iconPaths keys are 'xxx'
+    const name = icon.startsWith('mdi-') ? icon.slice(4) : icon
     // Resolve name → SVG path, or use raw path if already an SVG path string
-    const svgPath = iconPaths[icon] ?? icon
+    const svgPath = iconPaths[name] ?? icon
+    if (import.meta.env.DEV && !iconPaths[name] && icon.startsWith('mdi-')) {
+      console.warn(`[mdiSvgSet] Missing icon: "${icon}" — add it to iconPaths in mdiSvgSet.ts`)
+    }
     return h(props.tag, [
       h(
         'svg',
