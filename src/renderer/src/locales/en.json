@@ -611,7 +611,6 @@
     "askQuestion": "Agent question",
     "replyPlaceholder": "Reply to agent…",
     "permissionRequired": "Permission Required",
-    "permissionTool": "Tool: {tool}",
     "permissionAllow": "Allow",
     "permissionDeny": "Deny",
     "permissionAllowed": "✓ Allowed: {tool}",

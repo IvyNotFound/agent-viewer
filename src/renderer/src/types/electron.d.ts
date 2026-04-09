@@ -83,6 +83,10 @@ declare global {
       worktreeCreate(projectPath: string, sessionId: string, agentName: string): Promise<{ success: boolean; workDir?: string; error?: string }>
       /** Remove a git worktree by path — called on tab close for orphan cleanup (T1205). */
       worktreeRemove(projectPath: string, workDir: string): Promise<{ success: boolean; error?: string }>
+      /** Respond to a CLI permission request (allow/deny). */
+      permissionRespond(permissionId: string, behavior: 'allow' | 'deny'): Promise<boolean>
+      /** Subscribe to CLI permission request events. Returns unsubscribe fn. */
+      onPermissionRequest(cb: (data: { permission_id: string; tool_name: string; tool_input: Record<string, unknown>; session_id: string }) => void): () => void
       /** Subscribe to Claude Code hook events (SessionStart, SubagentStart/Stop, PreToolUse, PostToolUse). Returns unsubscribe fn. */
       onHookEvent(callback: (event: { event: string; payload: unknown; ts: number }) => void): () => void
       /** Quality stats per agent: total tasks, rejections, rejection rate (T770). Heuristic-based. */

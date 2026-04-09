@@ -603,7 +603,6 @@
     "askQuestion": "Question de l'agent",
     "replyPlaceholder": "Répondre à l'agent…",
     "permissionRequired": "Autorisation requise",
-    "permissionTool": "Outil : {tool}",
     "permissionAllow": "Autoriser",
     "permissionDeny": "Refuser",
     "permissionAllowed": "✓ Autorisé : {tool}",
