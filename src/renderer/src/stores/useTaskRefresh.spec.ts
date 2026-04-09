@@ -185,12 +185,12 @@ describe('useTaskRefresh — refresh: empty tasks → no notifications (L92)', (
     const mockNotificationCtor = vi.fn()
     ;(global as Record<string, unknown>).Notification = Object.assign(mockNotificationCtor, { permission: 'granted' })
 
-    const { useTaskRefresh } = await import('@renderer/stores/useTaskRefresh')
-
-    // Mock settingsStore to have notifications enabled
-    vi.mock('@renderer/stores/settings', () => ({
+    // Override settings mock BEFORE importing so notifications are enabled
+    vi.doMock('@renderer/stores/settings', () => ({
       useSettingsStore: () => ({ notificationsEnabled: true }),
     }))
+
+    const { useTaskRefresh } = await import('@renderer/stores/useTaskRefresh')
 
     const deps = makeDeps({
       tasks: ref([]),

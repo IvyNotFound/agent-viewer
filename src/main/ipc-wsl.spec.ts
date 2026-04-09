@@ -49,24 +49,7 @@ import { getWslExe, enrichWindowsPath, getWslDistros, registerWslHandlers } from
 /** Reset the module-level `pathEnriched` guard by re-importing a fresh module */
 async function getResetModule() {
   vi.resetModules()
-  // Re-apply mocks after reset
-  vi.mock('child_process', () => ({
-    default: { execFile: execFileMock, spawn: spawnMock },
-    execFile: execFileMock,
-    spawn: spawnMock,
-  }))
-  vi.mock('util', () => ({
-    default: { promisify: () => execFileMock },
-    promisify: () => execFileMock,
-  }))
-  vi.mock('electron', () => ({
-    ipcMain: {
-      handle: vi.fn((channel: string, handler: (...args: unknown[]) => unknown) => {
-        handlers[channel] = handler
-      }),
-    },
-    shell: { openExternal: openExternalMock },
-  }))
+  // Top-level vi.mock factories persist across resetModules — no need to re-declare
   const mod = await import('./ipc-wsl')
   return mod
 }
