@@ -1,12 +1,17 @@
 import 'vuetify/styles'
-import '@mdi/font/css/materialdesignicons.css'
 import { watch } from 'vue'
 import { createVuetify } from 'vuetify'
 import { md3 } from 'vuetify/blueprints'
 import { vuetifyThemeName } from './vuetifyTheme'
+import { aliases, mdiSvgSet } from './mdiSvgSet'
 
 const vuetifyPlugin = createVuetify({
   blueprint: md3,
+  icons: {
+    defaultSet: 'mdi',
+    aliases,
+    sets: { mdi: mdiSvgSet },
+  },
   defaults: {
     // rounded: xl same as md3 blueprint → removed; variant + density differ → kept
     VBtn: { variant: 'flat', density: 'default' },
