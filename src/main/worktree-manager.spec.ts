@@ -282,7 +282,7 @@ describe('worktree-manager', () => {
         { path: REPO, branch: 'main' },
         { path: '/fake/agent-worktrees/10', branch: 'agent/10' },
       ])
-      mockQueryLive.mockResolvedValueOnce([{ ended_at: '2024-01-01 12:00:00', status: 'completed' }])
+      mockQueryLive.mockResolvedValueOnce([{ id: 10, ended_at: '2024-01-01 12:00:00', status: 'completed' }])
       let callCount = 0
       mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: ExecFileCbWithStdout) => {
         callCount++
@@ -305,7 +305,7 @@ describe('worktree-manager', () => {
       const output = porcelainOutput([
         { path: '/fake/agent-worktrees/20', branch: 'agent/20' },
       ])
-      mockQueryLive.mockResolvedValueOnce([{ ended_at: '2024-01-01 10:00:00', status: 'started' }])
+      mockQueryLive.mockResolvedValueOnce([{ id: 20, ended_at: '2024-01-01 10:00:00', status: 'started' }])
       let callCount = 0
       mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: ExecFileCbWithStdout) => {
         callCount++
@@ -342,7 +342,7 @@ describe('worktree-manager', () => {
       const output = porcelainOutput([
         { path: '/fake/agent-worktrees/5', branch: 'agent/5' },
       ])
-      mockQueryLive.mockResolvedValueOnce([{ ended_at: null, status: 'started' }])
+      mockQueryLive.mockResolvedValueOnce([{ id: 5, ended_at: null, status: 'started' }])
       let callCount = 0
       mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: ExecFileCbWithStdout) => {
         callCount++
@@ -384,14 +384,12 @@ describe('worktree-manager', () => {
       expect(mockQueryLive).not.toHaveBeenCalled()
     })
 
-    it('continues processing other worktrees when DB query fails for one', async () => {
+    it('skips all old-format worktrees when batch DB query fails', async () => {
       const output = porcelainOutput([
         { path: '/fake/agent-worktrees/7', branch: 'agent/7' },
         { path: '/fake/agent-worktrees/8', branch: 'agent/8' },
       ])
-      mockQueryLive
-        .mockRejectedValueOnce(new Error('DB locked')) // session 7 fails
-        .mockResolvedValueOnce([])                     // session 8: orphan → remove
+      mockQueryLive.mockRejectedValueOnce(new Error('DB locked'))
 
       let callCount = 0
       mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: ExecFileCbWithStdout) => {
@@ -402,8 +400,8 @@ describe('worktree-manager', () => {
 
       await pruneOrphanedWorktrees(REPO, DB_PATH)
 
-      // Only session 8 removed: list + worktree remove + branch -D + prune
-      expect(mockExecFile).toHaveBeenCalledTimes(4)
+      // Batch query failed → all old-format skipped (safe default): list + prune only
+      expect(mockExecFile).toHaveBeenCalledTimes(2)
     })
 
     it('calls git worktree prune at the end', async () => {

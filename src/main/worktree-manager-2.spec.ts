@@ -381,7 +381,7 @@ describe('pruneOrphanedWorktrees — regex anchors and conditions', () => {
 
   it('old-format regex matches "refs/heads/agent/42" exactly (whole string)', async () => {
     const output = buildPorcelain([{ path: '/fake/wt/42', branch: 'agent/42' }])
-    mockQueryLive.mockResolvedValueOnce([{ ended_at: '2024-01-01', status: 'completed' }])
+    mockQueryLive.mockResolvedValueOnce([{ id: 42, ended_at: '2024-01-01', status: 'completed' }])
     let n = 0
     mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: Cb) => {
       n++
@@ -516,7 +516,7 @@ describe('pruneOrphanedWorktrees — regex anchors and conditions', () => {
 
   it('DB query uses SELECT with "sessions" table name (StringLiteral)', async () => {
     const output = buildPorcelain([{ path: '/fake/wt/55', branch: 'agent/55' }])
-    mockQueryLive.mockResolvedValueOnce([{ ended_at: null, status: 'started' }])
+    mockQueryLive.mockResolvedValueOnce([{ id: 55, ended_at: null, status: 'started' }])
     let n = 0
     mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: Cb) => {
       n++
@@ -533,7 +533,7 @@ describe('pruneOrphanedWorktrees — regex anchors and conditions', () => {
 
   it('shouldRemove is false when session.ended_at is null and status is not completed', async () => {
     const output = buildPorcelain([{ path: '/fake/wt/77', branch: 'agent/77' }])
-    mockQueryLive.mockResolvedValueOnce([{ ended_at: null, status: 'in_progress' }])
+    mockQueryLive.mockResolvedValueOnce([{ id: 77, ended_at: null, status: 'in_progress' }])
     let n = 0
     mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: Cb) => {
       n++
@@ -547,7 +547,7 @@ describe('pruneOrphanedWorktrees — regex anchors and conditions', () => {
 
   it('shouldRemove is true when session has ended_at non-null even with non-completed status', async () => {
     const output = buildPorcelain([{ path: '/fake/wt/88', branch: 'agent/88' }])
-    mockQueryLive.mockResolvedValueOnce([{ ended_at: '2024-06-01 10:00:00', status: 'in_progress' }])
+    mockQueryLive.mockResolvedValueOnce([{ id: 88, ended_at: '2024-06-01 10:00:00', status: 'in_progress' }])
     let n = 0
     mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: Cb) => {
       n++
@@ -563,7 +563,7 @@ describe('pruneOrphanedWorktrees — regex anchors and conditions', () => {
     // The ConditionalExpression: `!session || session.ended_at !== null || session.status === 'completed'`
     // When status === 'completed' and ended_at is null → shouldRemove = true
     const output = buildPorcelain([{ path: '/fake/wt/33', branch: 'agent/33' }])
-    mockQueryLive.mockResolvedValueOnce([{ ended_at: null, status: 'completed' }])
+    mockQueryLive.mockResolvedValueOnce([{ id: 33, ended_at: null, status: 'completed' }])
     let n = 0
     mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: Cb) => {
       n++

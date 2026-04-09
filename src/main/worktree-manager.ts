@@ -178,62 +178,104 @@ export async function pruneOrphanedWorktrees(repoRoot: string, dbPath: string): 
 
   const FOUR_HOURS_MS = 4 * 60 * 60 * 1000
 
+  // ── First pass: categorize worktrees by branch format ─────────────────────
+
+  interface OldEntry { sessionId: number; wt: (typeof worktrees)[number] }
+  interface NewEntry { agentName: string; timestamp: number; fullBranch: string; wt: (typeof worktrees)[number] }
+
+  const oldEntries: OldEntry[] = []
+  const newEntries: NewEntry[] = []
+
   for (const wt of worktrees) {
     if (!wt.branch) continue
 
-    // Old format: agent/<sessionId> — correlate with DB
     const oldMatch = /^refs\/heads\/agent\/(\d+)$/.exec(wt.branch)
     if (oldMatch) {
-      const sessionId = parseInt(oldMatch[1], 10)
-
-      let shouldRemove: boolean
-      try {
-        const rows = await queryLive(dbPath, 'SELECT ended_at, status FROM sessions WHERE id = ?', [sessionId])
-        const session = rows[0] as { ended_at: string | null; status: string } | undefined
-        shouldRemove = !session || session.ended_at !== null || session.status === 'completed'
-      } catch (err) {
-        console.warn(`[pruneOrphanedWorktrees] DB query failed for session ${sessionId}:`, err)
-        continue
-      }
-
-      if (!shouldRemove) continue
-
-      console.log(`[pruneOrphanedWorktrees] removing orphaned worktree for session ${sessionId}`)
-      await removeWorktree(repoRoot, sessionId)
+      oldEntries.push({ sessionId: parseInt(oldMatch[1], 10), wt })
       continue
     }
 
-    // New format: agent/<name>/s<timestamp> — DB check first, 4h heuristic as fallback
     const newMatch = /^refs\/heads\/agent\/([^/]+)\/s(\d+)$/.exec(wt.branch)
-    if (!newMatch) continue
+    if (newMatch) {
+      newEntries.push({
+        agentName: newMatch[1],
+        timestamp: parseInt(newMatch[2], 10),
+        fullBranch: `agent/${newMatch[1]}/s${newMatch[2]}`,
+        wt,
+      })
+    }
+  }
 
-    const agentName = newMatch[1]
-    const timestamp = parseInt(newMatch[2], 10)
-    const fullBranch = `agent/${agentName}/s${newMatch[2]}`
+  // ── Batch query: old-format sessions (single round-trip) ──────────────────
 
-    // Try to find the closest session for this agent within ±5 minutes of the timestamp.
-    // If found and active (started) → keep; if completed → remove.
-    // If not found → fall back to temporal heuristic.
-    let shouldRemoveNewFormat: boolean | null = null
+  const oldSessionMap = new Map<number, { ended_at: string | null; status: string }>()
+  if (oldEntries.length > 0) {
+    const ids = oldEntries.map(e => e.sessionId)
+    const placeholders = ids.map(() => '?').join(', ')
     try {
       const rows = await queryLive(
         dbPath,
-        `SELECT s.status
-         FROM sessions s
-         JOIN agents a ON s.agent_id = a.id
-         WHERE a.name = ?
-         AND ABS(CAST(strftime('%s', s.started_at) AS INTEGER) * 1000 - ?) < 300000
-         ORDER BY ABS(CAST(strftime('%s', s.started_at) AS INTEGER) * 1000 - ?) ASC
-         LIMIT 1`,
-        [agentName, timestamp, timestamp]
+        `SELECT id, ended_at, status FROM sessions WHERE id IN (${placeholders})`,
+        ids
       )
-      const session = rows[0] as { status: string } | undefined
-      if (session) {
-        // Active session → keep; completed session → remove
-        shouldRemoveNewFormat = session.status !== 'started'
+      for (const row of rows as Array<{ id: number; ended_at: string | null; status: string }>) {
+        oldSessionMap.set(row.id, { ended_at: row.ended_at, status: row.status })
       }
     } catch (err) {
-      console.warn(`[pruneOrphanedWorktrees] DB query failed for new-format worktree ${fullBranch}:`, err)
+      console.warn('[pruneOrphanedWorktrees] batch DB query failed for old-format sessions:', err)
+      // Safe default: skip all old-format processing (keep worktrees)
+      oldEntries.length = 0
+    }
+  }
+
+  // ── Batch query: new-format sessions (single round-trip) ──────────────────
+
+  let newSessionRows: Array<{ status: string; name: string; started_ms: number }> = []
+  if (newEntries.length > 0) {
+    const uniqueNames = [...new Set(newEntries.map(e => e.agentName))]
+    const placeholders = uniqueNames.map(() => '?').join(', ')
+    try {
+      const rows = await queryLive(
+        dbPath,
+        `SELECT s.status, a.name, CAST(strftime('%s', s.started_at) AS INTEGER) * 1000 as started_ms
+         FROM sessions s
+         JOIN agents a ON s.agent_id = a.id
+         WHERE a.name IN (${placeholders})`,
+        uniqueNames
+      )
+      newSessionRows = rows as Array<{ status: string; name: string; started_ms: number }>
+    } catch (err) {
+      console.warn('[pruneOrphanedWorktrees] batch DB query failed for new-format sessions:', err)
+      // Safe default: skip all new-format processing (keep worktrees)
+      newEntries.length = 0
+    }
+  }
+
+  // ── Process old-format worktrees ──────────────────────────────────────────
+
+  for (const { sessionId } of oldEntries) {
+    const session = oldSessionMap.get(sessionId)
+    const shouldRemove = !session || session.ended_at !== null || session.status === 'completed'
+    if (!shouldRemove) continue
+
+    console.log(`[pruneOrphanedWorktrees] removing orphaned worktree for session ${sessionId}`)
+    await removeWorktree(repoRoot, sessionId)
+  }
+
+  // ── Process new-format worktrees ──────────────────────────────────────────
+
+  for (const { agentName, timestamp, fullBranch, wt } of newEntries) {
+    // Find closest session for this agent within ±5 minutes of the timestamp.
+    // If found and active (started) → keep; if completed → remove.
+    // If not found → fall back to temporal heuristic.
+    let shouldRemoveNewFormat: boolean | null = null
+
+    const candidates = newSessionRows
+      .filter(r => r.name === agentName && Math.abs(r.started_ms - timestamp) < 300000)
+      .sort((a, b) => Math.abs(a.started_ms - timestamp) - Math.abs(b.started_ms - timestamp))
+
+    if (candidates.length > 0) {
+      shouldRemoveNewFormat = candidates[0].status !== 'started'
     }
 
     // Fall back to temporal heuristic when no matching session was found in DB

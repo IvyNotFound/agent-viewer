@@ -173,7 +173,7 @@ describe('pruneOrphanedWorktrees — BlockStatement (console.log/warn side effec
   it('logs removal of orphaned old-format worktree (BlockStatement console.log)', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
     const output = `worktree /fake/wt/99\nHEAD abc\nbranch refs/heads/agent/99\n\n`
-    mockQueryLive.mockResolvedValueOnce([{ ended_at: '2024-01-01', status: 'completed' }])
+    mockQueryLive.mockResolvedValueOnce([{ id: 99, ended_at: '2024-01-01', status: 'completed' }])
     let n = 0
     mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: Cb) => {
       n++

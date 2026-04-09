@@ -242,7 +242,7 @@ describe('pruneOrphanedWorktrees — removeWorktree with and without session', (
       '',
     ].join('\n')
     // Session present + ended
-    mockQueryLive.mockResolvedValueOnce([{ ended_at: '2025-01-01 10:00:00', status: 'completed' }])
+    mockQueryLive.mockResolvedValueOnce([{ id: 300, ended_at: '2025-01-01 10:00:00', status: 'completed' }])
     let n = 0
     mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: Cb) => {
       n++
@@ -287,7 +287,7 @@ describe('pruneOrphanedWorktrees — removeWorktree with and without session', (
       '',
     ].join('\n')
     // Active session
-    mockQueryLive.mockResolvedValueOnce([{ ended_at: null, status: 'started' }])
+    mockQueryLive.mockResolvedValueOnce([{ id: 500, ended_at: null, status: 'started' }])
     let n = 0
     mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: Cb) => {
       n++
