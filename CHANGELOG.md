@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.39.0] - 2026-04-09
+
+### Features
+- feat(front-vuejs): add all-tools toggle + permission-mode/tools UX clarification (T1846) (ba8a104)
+- feat(front-vuejs): add instance + model selectors to CreateAgentModal (T1845) (6706220)
+- feat(front-vuejs): add allowed-tools, auto-close, permission-mode to CreateAgentModal (T1842) (74417fa)
+
+### Bug Fixes
+- fix(front-vuejs): escape raw HTML in renderMarkdown for StreamView and TaskDetailModal (T1841) (2715ef9)
+- fix(front-vuejs): align CreateAgentModal model label with LaunchSessionModal (T1839) (a1a5f43)
+- fix(front-vuejs): align AgentEditModal section labels with LaunchSessionModal (T1839) (3d16840)
+- fix(front-vuejs): align AgentEditModal loading/empty/refresh states with LaunchSessionModal (T1838) (5c90835)
+
+### Chores
+- chore(front-vuejs): remove orphaned agent.preferredModel i18n key from all locales (T1844) (dc29fb9)
+- chore(front-vuejs): remove orphaned AgentEditModal.vue and spec (T1843) (c73f2d4)
+
 ## [0.38.1] - 2026-04-09
 
 ### Bug Fixes
