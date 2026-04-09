@@ -4,6 +4,51 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.38.0] - 2026-04-09
+
+### Features
+- feat(front-vuejs): display effective default model name in placeholder when none selected (T1826) (633c34c)
+- feat(front-vuejs): add permission request banner in StreamView (T1817) (7f9b59d)
+- feat(front-vuejs): align AgentEditModal CLI + model sections with LaunchSessionModal (T1825) (ba353e1)
+- feat(front-vuejs): add dedicated Models section in SettingsModal (T1824) (ff1a61c)
+- feat(front-vuejs): add Regenerate Rules Files button in project settings (T1818) (71df6d8)
+- feat(global): add planner agent type for task-creator (T1827) (86af097)
+- feat(back-electron): enable model selection for Codex and Goose CLIs (T1822) (2807363)
+- feat(front-vuejs): add visual TodoWrite renderer in StreamView (T1823) (eabd045)
+- feat(back-electron): parse and emit CLI permission request events (T1816) (5b8f911)
+- feat(front-vuejs): per-agent CLI and model selection in AgentEditModal + LaunchSessionModal (T1804) (aed0e17)
+- feat(front-vuejs): add archive sort toggle — by agent or by date (T1819) (bc92bad)
+- feat(front-vuejs): model selector in LaunchSessionModal (T1805) (b633618)
+- feat(front-vuejs): per-CLI default model selectors in Settings (T1803) (ca13ef1)
+- feat(back-electron): dynamic model detection from CLI tools (T1806) (f7e16fc)
+- feat(front-vuejs): add Review button in BoardView header (T1807) (74d843e)
+- feat(back-electron): CLI model registry + --model flag for all adapters (T1802) (e80c211)
+
+### Bug Fixes
+- fix(front-vuejs): replace v-banner with flex-compatible update bar (T1831) (f23ed57)
+- fix(front-vuejs): remove dead stream.permissionTool key from 16 locales (a12f4e9)
+- fix(front-vuejs): add loading spinner on Regenerate Rules Files button (T1830) (95b2ee6)
+- fix(front-vuejs): add missing electron.d.ts declarations for permission IPC (T1829) (4040930)
+- fix(front-vuejs): align TaskDependencyGraph status dots with kanban chip colors (T1821) (63e9a4f)
+- fix(front-vuejs): auto-close subtabs when agent process exits (T1820) (695448d)
+- fix(back-electron): align SHARED_SUFFIX with WORKFLOW.md — add updated_at, tokens, locks (T1813) (8d1b02d)
+- fix(back-electron): translation inconsistencies in generic agent prompts (T1811) (756252c)
+- fix(back-electron): IPC language routing uses all supported locales (T1809) (446256f)
+- fix(front-vuejs): deduplicate hook events by removing double mutation in push() (T1814) (55cfbc7)
+
+### Refactoring
+- refactor(back-electron): generalize project templates — remove KanbAgent references (T1810) (d1dd1ac)
+
+### Documentation
+- docs(global): update README stats, ERD v7, IPC reference v0.37.0, and add ADR-012 (4ce6391)
+
+### Chores
+- chore(front-vuejs): complete i18n across all 18 locales (T1828) (b22d51b)
+
+### Other
+- ux(front-vuejs): apply dark elevation shadows to app shell + TaskDetailModal (T1812) (e03ab16)
+- ux(front-vuejs): widen dark surface tonal gaps + add elevation shadows (T1808) (d44d0f6)
+
 ## [0.37.0] - 2026-04-09
 
 ### Features
