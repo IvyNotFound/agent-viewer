@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.37.0] - 2026-04-09
+
+### Features
+- feat(front-vuejs): scroll to bottom on tab activation (T1797) (07a9d27)
+
+### Bug Fixes
+- fix(front-vuejs): restore TaskDetailModal opaque background — T1799 (420c02f)
+- fix(front-vuejs): restore surface contrast — dark sidebar and light hierarchy (38c1710)
+- fix(front-vuejs): replace undefined --surface-card with --surface-secondary in .md-bubble (f3b718d)
+
+### Chores
+- chore(front-vuejs): revert palliative CSS fixes — root cause fixed on Electron side (db0e12e)
+
+### Other
+- ux(front-vuejs): correct surface token hierarchy — shift all component backgrounds up 1-2 levels (T1798) (dfd5cb5)
+- doc(front-vuejs): fix JSDoc comment — replace Tailwind Transition reference with MD3 tokens (58a345b)
+- doc(global): update CONTRIBUTING.md — replace Tailwind with Vuetify 3 / MD3 (d19920b)
+
 ## [0.36.3] - 2026-04-07
 
 ### Bug Fixes
