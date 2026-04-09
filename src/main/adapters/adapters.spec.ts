@@ -177,6 +177,21 @@ describe('buildWindowsPS1Script', () => {
     const ps1 = buildWindowsPS1Script({ convId: 'aaaa-bbbb' })
     expect(ps1).toContain("$a.Add('--resume')")
   })
+
+  it('escapes single quotes in modelId to prevent PowerShell injection (T1872)', () => {
+    const ps1 = buildWindowsPS1Script({ modelId: "'; Remove-Item C:\\; '" })
+    expect(ps1).toContain("$a.Add('--model')")
+    // Single quotes must be doubled so PowerShell treats them as literal chars inside the string:
+    // Input: '; Remove-Item C:\; '  →  Escaped: ''; Remove-Item C:\; ''
+    // Full line: $a.Add('''; Remove-Item C:\; ''')
+    expect(ps1).toContain("$a.Add('''")
+  })
+
+  it('includes --model for modelId', () => {
+    const ps1 = buildWindowsPS1Script({ modelId: 'sonnet' })
+    expect(ps1).toContain("$a.Add('--model')")
+    expect(ps1).toContain("$a.Add('sonnet')")
+  })
 })
 
 // ── Codex adapter ─────────────────────────────────────────────────────────────

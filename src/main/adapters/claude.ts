@@ -172,8 +172,9 @@ export function buildWindowsPS1Script(opts: {
 
   // Optional: select model (e.g. sonnet, opus, haiku — T1802):
   if (opts.modelId) {
+    const safeModelId = opts.modelId.replace(/'/g, "''")
     lines.push('$a.Add(\'--model\')')
-    lines.push(`$a.Add('${opts.modelId}')`)
+    lines.push(`$a.Add('${safeModelId}')`)
   }
 
   // Optional: resume an existing conversation (appended before prompt flags to keep order stable):
