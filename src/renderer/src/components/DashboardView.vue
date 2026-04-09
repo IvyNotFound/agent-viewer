@@ -20,7 +20,7 @@ const { t } = useI18n()
 const store = useTasksStore()
 
 const STORAGE_KEY = 'dashboard.activeSubTab'
-const VALID_TABS: SubTab[] = ['overview', 'tokenStats', 'git', 'hooks', 'tools', 'topology', 'orgchart', 'logs', 'telemetry', 'timeline']
+const VALID_TABS: SubTab[] = ['overview', 'telemetry', 'tokenStats', 'logs', 'hooks', 'tools', 'timeline', 'git', 'topology', 'orgchart']
 const savedTab = localStorage.getItem(STORAGE_KEY) as SubTab | null
 const activeSubTab = ref<SubTab>(savedTab && VALID_TABS.includes(savedTab) ? savedTab : 'overview')
 
@@ -61,15 +61,15 @@ if (activeSubTab.value === 'git') fetchGitCommits()
 // ── Sub-tab definitions ──────────────────────────────────────────────────────
 const subTabs = computed<{ id: SubTab; label: string }[]>(() => [
   { id: 'overview',   label: t('dashboard.overview') },
+  { id: 'telemetry',  label: t('dashboard.telemetryTab') },
   { id: 'tokenStats', label: t('tokenStats.title') },
-  { id: 'git',        label: 'Git' },
+  { id: 'logs',       label: t('tokenStats.logsTab') },
   { id: 'hooks',      label: t('sidebar.hooks') },
   { id: 'tools',      label: t('toolStats.title') },
+  { id: 'timeline',   label: t('timeline.title') },
+  { id: 'git',        label: 'Git' },
   { id: 'topology',   label: t('sidebar.topology') },
   { id: 'orgchart',   label: t('orgchart.tabLabel') },
-  { id: 'logs',       label: t('tokenStats.logsTab') },
-  { id: 'telemetry', label: t('dashboard.telemetryTab') },
-  { id: 'timeline',  label: t('timeline.title') },
 ])
 </script>
 
