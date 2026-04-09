@@ -64,7 +64,7 @@ describe('CreateAgentModal', () => {
     expect(submitBtn.attributes('disabled')).toBeDefined()
   })
 
-  it('renders thinking mode buttons (auto/disabled)', () => {
+  it('renders permission mode buttons (Standard/Automatic)', () => {
     const wrapper = shallowMount(CreateAgentModal, {
       global: {
         plugins: [createTestingPinia({
@@ -73,10 +73,9 @@ describe('CreateAgentModal', () => {
         stubs: teleportStub,
       },
     })
-    // v-btn elements are custom elements in test context (isCustomElement: tag => tag.startsWith('v-'))
     const vBtns = wrapper.findAll('v-btn')
-    const autoBtn = vBtns.find(b => b.text().trim() === 'Auto' || b.text().trim() === 'auto')
-    expect(autoBtn?.exists()).toBe(true)
+    const standardBtn = vBtns.find(b => b.text().trim() === 'Standard')
+    expect(standardBtn?.exists()).toBe(true)
   })
 
   it('emits close when backdrop is clicked', async () => {

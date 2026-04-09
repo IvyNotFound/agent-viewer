@@ -30,10 +30,14 @@ const ALL_TYPES = ['dev', 'test', 'ux', 'review', 'review-master', 'arch', 'devo
 const name = ref('')
 const type = ref('dev')
 const perimetre = ref('')
-const thinkingMode = ref<'auto' | 'disabled'>('auto')
 const systemPrompt = ref('')
 const systemPromptSuffix = ref('')
 const description = ref('')
+const permissionMode = ref<'default' | 'auto'>('default')
+const allowedToolsList = ref<string[]>([])
+const autoLaunch = ref(true)
+
+const COMMON_TOOLS = ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'TodoWrite', 'WebFetch', 'WebSearch', 'NotebookEdit']
 const worktreeEnabled = ref<number | null>(props.agent?.worktree_enabled ?? null)
 // String to allow empty value (empty → -1 = unlimited in DB)
 const maxSessions = ref(props.agent?.max_sessions === -1 ? '' : String(props.agent?.max_sessions ?? 3))
@@ -92,18 +96,20 @@ onMounted(async () => {
     name.value = a.name
     type.value = ALL_TYPES.includes(a.type) ? a.type : 'dev'
     perimetre.value = a.scope ?? ''
-    thinkingMode.value = a.thinking_mode === 'disabled' ? 'disabled' : 'auto'
     maxSessions.value = a.max_sessions === -1 ? '' : String(a.max_sessions ?? 3)
     worktreeEnabled.value = a.worktree_enabled ?? null
     preferredModel.value = a.preferred_model ?? ''
+    autoLaunch.value = a.auto_launch !== 0
+    allowedToolsList.value = a.allowed_tools ? a.allowed_tools.split(',').map(s => s.trim()).filter(Boolean) : []
+    permissionMode.value = a.permission_mode === 'auto' ? 'auto' : 'default'
     // Load system_prompt and system_prompt_suffix from DB (may be more up-to-date than agent prop)
     if (store.dbPath) {
       const result = await window.electronAPI.getAgentSystemPrompt(store.dbPath, a.id)
       if (result.success) {
         systemPrompt.value = result.systemPrompt ?? ''
         systemPromptSuffix.value = result.systemPromptSuffix ?? ''
-        thinkingMode.value = result.thinkingMode === 'disabled' ? 'disabled' : 'auto'
         preferredModel.value = result.preferredModel ?? preferredModel.value
+        permissionMode.value = result.permissionMode === 'auto' ? 'auto' : 'default'
         // showPrompt stays false — always collapsed on open, even if content exists
       }
     }
@@ -126,12 +132,15 @@ async function submit() {
         name: trimmed,
         type: type.value,
         scope: isScoped.value && perimetre.value.trim() ? perimetre.value.trim() : null,
-        thinkingMode: thinkingMode.value,
+        thinkingMode: 'auto',
         systemPrompt: systemPrompt.value.trim() || null,
         systemPromptSuffix: systemPromptSuffix.value.trim() || null,
         maxSessions: maxSessionsDbValue.value,
         worktreeEnabled: worktreeEnabled.value === null ? null : worktreeEnabled.value === 1,
         preferredModel: preferredModel.value.trim() || null,
+        allowedTools: allowedToolsList.value.length > 0 ? allowedToolsList.value.join(',') : null,
+        autoLaunch: autoLaunch.value,
+        permissionMode: permissionMode.value,
       })
       if (!result.success) {
         emit('toast', result.error ?? t('agent.saveError'), 'error')
@@ -149,7 +158,7 @@ async function submit() {
       name: trimmed,
       type: type.value,
       scope: isScoped.value && perimetre.value.trim() ? perimetre.value.trim() : null,
-      thinkingMode: thinkingMode.value,
+      thinkingMode: 'auto',
       systemPrompt: systemPrompt.value.trim() || null,
       description: description.value.trim() || defaultDescription(type.value),
       preferredModel: preferredModel.value.trim() || null,
@@ -159,6 +168,16 @@ async function submit() {
       if (result.error?.includes('existe déjà')) nameError.value = result.error
       else emit('toast', result.error ?? t('agent.createError'), 'error')
       return
+    }
+
+    // Apply extra fields not supported by createAgent IPC (allowedTools, autoLaunch, permissionMode)
+    const hasExtras = allowedToolsList.value.length > 0 || !autoLaunch.value || permissionMode.value !== 'default'
+    if (hasExtras && result.agentId) {
+      await window.electronAPI.updateAgent(store.dbPath, result.agentId, {
+        allowedTools: allowedToolsList.value.length > 0 ? allowedToolsList.value.join(',') : null,
+        autoLaunch: autoLaunch.value,
+        permissionMode: permissionMode.value,
+      })
     }
 
     const msg = result.claudeMdUpdated
@@ -281,15 +300,6 @@ function handleKeydown(e: KeyboardEvent) {
             variant="outlined"
           />
 
-          <!-- Thinking mode -->
-          <div>
-            <div class="field-label text-label-medium mb-2">{{ t('launch.thinkingMode') }}</div>
-            <v-btn-toggle v-model="thinkingMode" mandatory :color="isEditMode && agent ? agentAccent(agent.name) : 'primary'" variant="outlined" density="compact">
-              <v-btn value="auto">{{ t('launch.auto') }}</v-btn>
-              <v-btn value="disabled">{{ t('launch.disabled') }}</v-btn>
-            </v-btn-toggle>
-          </div>
-
           <!-- Modèle préféré -->
           <v-text-field
             v-model="preferredModel"
@@ -301,6 +311,45 @@ function handleKeydown(e: KeyboardEvent) {
             :color="isEditMode && agent ? agentAccent(agent.name) : undefined"
             :base-color="isEditMode && agent ? agentAccent(agent.name) : undefined"
           />
+
+          <!-- Outils autorisés (--allowedTools) -->
+          <v-combobox
+            v-model="allowedToolsList"
+            :items="COMMON_TOOLS"
+            :label="t('agent.allowedTools')"
+            multiple
+            chips
+            closable-chips
+            :hint="t('agent.allowedToolsNote')"
+            persistent-hint
+            variant="outlined"
+            density="compact"
+            :color="isEditMode && agent ? agentAccent(agent.name) : 'primary'"
+            :base-color="isEditMode && agent ? agentAccent(agent.name) : undefined"
+          />
+
+          <!-- Fermeture auto (auto_launch) -->
+          <v-switch
+            v-model="autoLaunch"
+            :label="t('agent.autoLaunch')"
+            :hint="t('agent.autoLaunchDesc')"
+            persistent-hint
+            :color="isEditMode && agent ? agentAccent(agent.name) : 'primary'"
+            density="compact"
+            inset
+          />
+
+          <!-- Mode permissions -->
+          <div>
+            <div class="field-label text-label-medium mb-2">{{ t('agent.permissionMode') }}</div>
+            <v-btn-toggle v-model="permissionMode" mandatory :color="isEditMode && agent ? agentAccent(agent.name) : 'primary'" variant="outlined" density="compact">
+              <v-btn value="default">{{ t('agent.permissionModeDefault') }}</v-btn>
+              <v-btn value="auto">{{ t('agent.permissionModeAuto') }}</v-btn>
+            </v-btn-toggle>
+            <p v-if="permissionMode === 'auto'" class="text-caption text-error mt-1">
+              <v-icon size="small" color="error">mdi-alert</v-icon> {{ t('agent.permissionModeWarning') }}
+            </p>
+          </div>
 
           <!-- Sessions parallèles max (edit mode uniquement) -->
           <v-text-field
