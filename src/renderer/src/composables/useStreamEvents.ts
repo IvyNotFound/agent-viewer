@@ -36,6 +36,8 @@ export function useStreamEvents(terminalId: string) {
 
   function flushEvents(): void {
     if (pendingEvents.length === 0) { flushPending = false; return }
+    // T1855: skip expensive renderMarkdown for hidden tabs — deferred to activation watcher
+    const active = tabsStore.activeTabId === terminalId
     for (const e of pendingEvents) {
       assignEventId(e)
       // Incremental pendingQuestion tracking (T1864): clear on user/result events
@@ -47,13 +49,14 @@ export function useStreamEvents(terminalId: string) {
         if (e.type === 'user') {
           for (const block of e.message.content) {
             if (block.type === 'text' && block.text != null) {
-              block._html = renderMarkdown(parsePromptContext(block.text).base)
+              // T1855: skip expensive renderMarkdown for hidden tabs
+              if (active) block._html = renderMarkdown(parsePromptContext(block.text).base)
             }
           }
         } else {
           for (const block of e.message.content) {
             if (block.type === 'text' && block.text != null) {
-              block._html = renderMarkdown(block.text)
+              if (active) block._html = renderMarkdown(block.text)
             } else if (block.type === 'tool_use' && block.name === 'AskUserQuestion') {
               // Incremental pendingQuestion tracking (T1864): set on AskUserQuestion
               const q = (block.input as Record<string, unknown> | undefined)?.question
@@ -76,7 +79,7 @@ export function useStreamEvents(terminalId: string) {
               const stripped = raw.replace(/\x1B\[[0-9;]*[mGKHF]/g, '')
               block._lineCount = stripped.split('\n').length
               block._isLong = block._lineCount > 15
-              block._html = renderMarkdown(stripped)
+              if (active) block._html = renderMarkdown(stripped)
             }
           }
         }
@@ -87,7 +90,7 @@ export function useStreamEvents(terminalId: string) {
       }
       // Pre-render markdown for top-level text events (non-Claude CLIs) — T1197
       if (e.type === 'text' && e.text != null) {
-        e._html = renderMarkdown(e.text)
+        if (active) e._html = renderMarkdown(e.text)
       }
       events.value.push(e)
     }
@@ -95,14 +98,17 @@ export function useStreamEvents(terminalId: string) {
     flushPending = false
 
     // Sliding window eviction — purge collapsed keys by stable _id (T823).
-    if (events.value.length > MAX_EVENTS) {
-      const evicted = events.value.splice(0, events.value.length - MAX_EVENTS)
+    // T1855: hidden tabs use stricter limit to reduce memory footprint.
+    const limit = active ? MAX_EVENTS : MAX_EVENTS_HIDDEN
+    if (events.value.length > limit) {
+      const evicted = events.value.splice(0, events.value.length - limit)
       const evictedIds = new Set(evicted.map(e => e._id))
       for (const key of Object.keys(collapsed.value)) {
         if (evictedIds.has(parseInt(key.split('-')[0], 10))) delete collapsed.value[key]
       }
     }
-    scrollToBottom()
+    // T1855: skip scrollToBottom for hidden tabs — no visible container
+    if (active) scrollToBottom()
   }
 
   function enqueueEvent(raw: Record<string, unknown>): void {
@@ -123,17 +129,18 @@ export function useStreamEvents(terminalId: string) {
     nextTick(() => { if (scrollContainer.value) scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight })
   }
 
-  // ── Hidden-tab eviction (T962) + _html clearing (T1135) ─────────────────────
+  // ── Hidden-tab eviction (T962) + deferred rendering (T1135/T1855) ────────────
   watch(() => tabsStore.activeTabId === terminalId, (isActive) => {
     if (!isActive) {
-      // Clear rendered _html on remaining events — will be re-rendered on activate (T1135)
+      // T1135: clear rendered _html to free memory — events arriving while hidden
+      // won't have _html (skipped in flushEvents, T1855), so only prior events need clearing.
       for (const ev of events.value) {
         if (ev.message?.content) {
           for (const block of ev.message.content) {
-            block._html = undefined
+            if (block._html) block._html = undefined
           }
         }
-        if (ev.type === 'text') ev._html = undefined
+        if (ev.type === 'text' && ev._html) ev._html = undefined
       }
       if (events.value.length > MAX_EVENTS_HIDDEN) {
         const evicted = events.value.splice(0, events.value.length - MAX_EVENTS_HIDDEN)
@@ -143,7 +150,7 @@ export function useStreamEvents(terminalId: string) {
         }
       }
     } else {
-      // Re-render _html when tab becomes active again (T1135)
+      // T1135/T1855: render _html for events that were deferred while hidden or cleared on deactivation
       for (const ev of events.value) {
         if (ev.message?.content) {
           // User text blocks use parsePromptContext before rendering (T1864)

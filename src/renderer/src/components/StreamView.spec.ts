@@ -22,11 +22,13 @@ describe('StreamView', () => {
     vi.mocked(mockElectronAPI.onAgentExit).mockReturnValue(() => {})
     vi.mocked(mockElectronAPI.agentSend).mockResolvedValue(undefined)
 
-    // Provide pinia with a tab matching terminalId so StreamView can find it
+    // Provide pinia with a tab matching terminalId so StreamView can find it.
+    // T1855: activeTabId must match terminalId so flushEvents renders _html (deferred rendering).
     const pinia = createTestingPinia({
       stubActions: false,
       initialState: {
         tabs: {
+          activeTabId: 'test-terminal-1',
           tabs: [{
             id: 'test-terminal-1',
             type: 'terminal',
