@@ -18,6 +18,12 @@ export interface CliModelDef {
   label: string
   /** Value passed to the CLI --model flag: 'sonnet', 'opus'. */
   modelId: string
+  /** Provider name: 'anthropic', 'openai', 'google'. */
+  provider?: string
+  /** Context window size in tokens. */
+  contextLength?: number
+  /** True if detected at runtime (vs static registry). */
+  dynamic?: boolean
 }
 
 /**

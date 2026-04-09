@@ -13,6 +13,7 @@ import { app, BrowserWindow, session, Menu, MenuItem, globalShortcut } from 'ele
 import { join } from 'path'
 import type { Server } from 'http'
 import { registerIpcHandlers } from './ipc'
+import { warmupModelDetection } from './cli-model-detect'
 import { restoreTrustedPaths } from './ipc-project'
 import { registerAgentStreamHandlers } from './agent-stream'
 import { startHookServer, setHookWindow, injectHookSecret, injectHookUrls, detectWslGatewayIp, injectIntoWslDistros, injectGeminiHooks, injectCodexHooks, getHookSecret } from './hookServer'
@@ -175,6 +176,7 @@ let hookServer: Server | null = null
 app.whenReady().then(async () => {
   setupCSP()
   registerIpcHandlers()
+  warmupModelDetection()
   registerUpdaterIpc()
   await restoreTrustedPaths()
   void cleanupOrphanWorktreesAtStartup().catch((err) =>

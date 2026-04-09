@@ -183,9 +183,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getCliInstances: (clis?: string[], forceRefresh?: boolean): Promise<unknown[]> =>
     ipcRenderer.invoke('wsl:get-cli-instances', { clis, forceRefresh }),
 
-  /** Get available models for a CLI type (or all CLIs if omitted). T1802. */
-  getCliModels: (cli?: string): Promise<unknown> =>
-    ipcRenderer.invoke('cli:get-models', cli),
+  /** Get available models for a CLI type (or all CLIs if omitted). T1802/T1806. */
+  getCliModels: (cli?: string, forceRefresh?: boolean): Promise<unknown> =>
+    ipcRenderer.invoke('cli:get-models', { cli, forceRefresh }),
 
   // Platform identifier for UI labels (e.g. 'win32', 'darwin', 'linux')
   platform: process.platform as string,
