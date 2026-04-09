@@ -36,13 +36,30 @@ describe('session-closer', () => {
       expect(writeDb).not.toHaveBeenCalled()
     })
 
-    it('should call closeZombieSessions after 30s', async () => {
+    it('should call closeZombieSessions after 30s when started sessions exist', async () => {
+      // pre-check returns a started session
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }])
       startSessionCloser('/fake/project.db')
       await vi.advanceTimersByTimeAsync(30_000)
       expect(writeDb).toHaveBeenCalledWith('/fake/project.db', expect.any(Function))
     })
 
+    it('should skip poll when no started sessions exist', async () => {
+      // pre-check returns empty → no started sessions
+      vi.mocked(queryLive).mockResolvedValueOnce([])
+      startSessionCloser('/fake/project.db')
+      await vi.advanceTimersByTimeAsync(30_000)
+      expect(writeDb).not.toHaveBeenCalled()
+    })
+
     it('should call closeZombieSessions repeatedly every 30s', async () => {
+      // 3 cycles, each needs a pre-check returning a started session
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }]) // cycle 1 pre-check
+      vi.mocked(queryLive).mockResolvedValueOnce([])            // cycle 1 detectManuallyClosed
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }]) // cycle 2 pre-check
+      vi.mocked(queryLive).mockResolvedValueOnce([])            // cycle 2 detectManuallyClosed
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }]) // cycle 3 pre-check
+      vi.mocked(queryLive).mockResolvedValueOnce([])            // cycle 3 detectManuallyClosed
       startSessionCloser('/fake/project.db')
       await vi.advanceTimersByTimeAsync(90_000)
       expect(writeDb).toHaveBeenCalledTimes(3)
@@ -56,6 +73,8 @@ describe('session-closer', () => {
     })
 
     it('should replace previous poller on second startSessionCloser call', async () => {
+      // pre-check for the second poller returns a started session
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }])
       startSessionCloser('/fake/project.db')
       startSessionCloser('/fake/project2.db')
       await vi.advanceTimersByTimeAsync(30_000)
@@ -65,11 +84,13 @@ describe('session-closer', () => {
 
     it('should invoke onSessionsClosed callback with agent_ids when zombie sessions are closed', async () => {
       const mockDb = {
-        exec: vi.fn().mockReturnValue([{ columns: ['agent_id'], values: [[5], [7]] }]),
+        exec: vi.fn().mockReturnValue([{ columns: ['id', 'agent_id'], values: [[10, 5], [11, 7]] }]),
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(2),
       }
       vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => { fn(mockDb); return undefined })
+      // pre-check: started sessions exist
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }])
       const onSessionsClosed = vi.fn()
       startSessionCloser('/fake/project.db', onSessionsClosed)
       await vi.advanceTimersByTimeAsync(30_000)
@@ -77,7 +98,10 @@ describe('session-closer', () => {
     })
 
     it('should NOT invoke onSessionsClosed when no sessions are closed', async () => {
-      // default mocks resolve to empty → closedAgentIds stays []
+      // pre-check: started sessions exist (but zombie-close finds nothing eligible)
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }])
+      // detectManuallyClosed returns nothing
+      vi.mocked(queryLive).mockResolvedValueOnce([])
       const onSessionsClosed = vi.fn()
       startSessionCloser('/fake/project.db', onSessionsClosed)
       await vi.advanceTimersByTimeAsync(30_000)
@@ -85,6 +109,8 @@ describe('session-closer', () => {
     })
 
     it('should invoke onSessionsClosed with manually-closed agent_ids (no assigned tasks)', async () => {
+      // pre-check: started sessions exist
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }])
       // zombie-close returns nothing
       vi.mocked(writeDb).mockResolvedValue(undefined)
       // manually-closed returns review agent
@@ -96,9 +122,11 @@ describe('session-closer', () => {
     })
 
     it('should deduplicate agent_ids appearing in both zombie-close and manually-closed', async () => {
+      // pre-check: started sessions exist
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }])
       // zombie-close returns [5, 7]
       const mockDb = {
-        exec: vi.fn().mockReturnValue([{ columns: ['agent_id'], values: [[5], [7]] }]),
+        exec: vi.fn().mockReturnValue([{ columns: ['id', 'agent_id'], values: [[10, 5], [11, 7]] }]),
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(2),
       }
@@ -114,16 +142,26 @@ describe('session-closer', () => {
     })
 
     it('should call detectManuallyClosed on every cycle', async () => {
+      // 3 cycles: each needs pre-check + detectManuallyClosed
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }]) // cycle 1 pre-check
+      vi.mocked(queryLive).mockResolvedValueOnce([])            // cycle 1 detectManuallyClosed
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }]) // cycle 2 pre-check
+      vi.mocked(queryLive).mockResolvedValueOnce([])            // cycle 2 detectManuallyClosed
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }]) // cycle 3 pre-check
+      vi.mocked(queryLive).mockResolvedValueOnce([])            // cycle 3 detectManuallyClosed
       startSessionCloser('/fake/project.db')
       await vi.advanceTimersByTimeAsync(90_000)
-      expect(queryLive).toHaveBeenCalledTimes(3)
+      // 3 pre-checks + 3 detectManuallyClosed = 6 queryLive calls
+      expect(queryLive).toHaveBeenCalledTimes(6)
     })
 
     it('should update lastCheckedAt between cycles (no re-emission of prev cycle sessions)', async () => {
-      // First cycle: manually-closed returns agent 10
-      vi.mocked(queryLive).mockResolvedValueOnce([{ agent_id: 10 }])
-      // Second cycle: manually-closed returns nothing (lastCheckedAt advanced past it)
-      vi.mocked(queryLive).mockResolvedValueOnce([])
+      // First cycle: pre-check + manually-closed returns agent 10
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }])    // cycle 1 pre-check
+      vi.mocked(queryLive).mockResolvedValueOnce([{ agent_id: 10 }]) // cycle 1 detectManuallyClosed
+      // Second cycle: pre-check + manually-closed returns nothing
+      vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }])    // cycle 2 pre-check
+      vi.mocked(queryLive).mockResolvedValueOnce([])               // cycle 2 detectManuallyClosed
       const onSessionsClosed = vi.fn()
       startSessionCloser('/fake/project.db', onSessionsClosed)
       await vi.advanceTimersByTimeAsync(30_000)
@@ -152,10 +190,9 @@ describe('session-closer', () => {
       await expect(closeZombieSessions('/evil/db')).rejects.toThrow('DB_PATH_NOT_ALLOWED')
     })
 
-    it('should pass a callback that runs the UPDATE query with agent_id logic', async () => {
-      // exec returns one agent_id so the UPDATE path is reached
+    it('should pass a callback that runs UPDATE with WHERE id IN (...) from SELECT results', async () => {
       const mockDb = {
-        exec: vi.fn().mockReturnValue([{ columns: ['agent_id'], values: [[1]] }]),
+        exec: vi.fn().mockReturnValue([{ columns: ['id', 'agent_id'], values: [[100, 1]] }]),
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(1),
       }
@@ -165,28 +202,16 @@ describe('session-closer', () => {
       })
       await closeZombieSessions('/fake/project.db')
       expect(mockDb.run).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE sessions')
+        expect.stringContaining('UPDATE sessions'),
+        [100]
       )
       expect(mockDb.run).toHaveBeenCalledWith(
-        expect.stringContaining("status = 'completed'")
+        expect.stringContaining("status = 'completed'"),
+        expect.any(Array)
       )
       expect(mockDb.run).toHaveBeenCalledWith(
-        expect.stringContaining('agent_id IS NOT NULL')
-      )
-      expect(mockDb.run).toHaveBeenCalledWith(
-        expect.stringContaining('NOT EXISTS')
-      )
-      expect(mockDb.run).toHaveBeenCalledWith(
-        expect.stringContaining("t.status IN ('todo', 'in_progress')")
-      )
-      expect(mockDb.run).toHaveBeenCalledWith(
-        expect.stringContaining('t.agent_assigned_id = sessions.agent_id')
-      )
-      expect(mockDb.run).toHaveBeenCalledWith(
-        expect.stringContaining("t.status = 'done'")
-      )
-      expect(mockDb.run).toHaveBeenCalledWith(
-        expect.stringContaining('sessions.started_at')
+        expect.stringContaining('WHERE id IN (?)'),
+        [100]
       )
     })
 
@@ -207,7 +232,7 @@ describe('session-closer', () => {
 
     it('callback returns false when getRowsModified() === 0 (T1110 skip-write signal)', async () => {
       const mockDb = {
-        exec: vi.fn().mockReturnValue([{ columns: ['agent_id'], values: [[1]] }]),
+        exec: vi.fn().mockReturnValue([{ columns: ['id', 'agent_id'], values: [[100, 1]] }]),
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(0),
       }
@@ -222,7 +247,7 @@ describe('session-closer', () => {
 
     it('callback returns true when getRowsModified() > 0 (T1110 write proceeds)', async () => {
       const mockDb = {
-        exec: vi.fn().mockReturnValue([{ columns: ['agent_id'], values: [[1]] }]),
+        exec: vi.fn().mockReturnValue([{ columns: ['id', 'agent_id'], values: [[100, 1]] }]),
         run: vi.fn(),
         getRowsModified: vi.fn().mockReturnValue(2),
       }
@@ -235,11 +260,11 @@ describe('session-closer', () => {
       expect(callbackResult).toBe(true)
     })
 
-    it('returns the closed agent_ids', async () => {
+    it('returns the closed agent_ids (deduplicated)', async () => {
       const mockDb = {
-        exec: vi.fn().mockReturnValue([{ columns: ['agent_id'], values: [[3], [9]] }]),
+        exec: vi.fn().mockReturnValue([{ columns: ['id', 'agent_id'], values: [[10, 3], [11, 9], [12, 3]] }]),
         run: vi.fn(),
-        getRowsModified: vi.fn().mockReturnValue(2),
+        getRowsModified: vi.fn().mockReturnValue(3),
       }
       vi.mocked(writeDb).mockImplementationOnce(async (_path, fn) => { fn(mockDb); return undefined })
       const result = await closeZombieSessions('/fake/project.db')

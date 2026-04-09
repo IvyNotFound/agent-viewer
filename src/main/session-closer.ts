@@ -21,6 +21,19 @@ import { writeDb, queryLive, assertDbPathAllowed } from './db'
 let pollerInterval: ReturnType<typeof setInterval> | null = null
 
 /**
+ * Quick pre-check: returns true if at least one session is in 'started' status.
+ * Used to skip expensive zombie/manual-close queries when nothing is active.
+ */
+async function hasStartedSessions(dbPath: string): Promise<boolean> {
+  const rows = await queryLive(
+    dbPath,
+    `SELECT 1 FROM sessions WHERE status = 'started' LIMIT 1`,
+    []
+  )
+  return rows.length > 0
+}
+
+/**
  * Timestamp of the last poll cycle end (SQLite format: 'YYYY-MM-DD HH:MM:SS').
  * Used by detectManuallyClosed to find sessions closed since the last cycle.
  * Initialized to now() on startSessionCloser to avoid re-emitting old sessions.
@@ -49,6 +62,10 @@ export function startSessionCloser(
   lastCheckedAt = currentSqliteTime()
   pollerInterval = setInterval(async () => {
     try {
+      if (!(await hasStartedSessions(dbPath))) {
+        lastCheckedAt = currentSqliteTime()
+        return
+      }
       const zombieIds = await closeZombieSessions(dbPath)
       const manualIds = await detectManuallyClosed(dbPath, lastCheckedAt)
       lastCheckedAt = currentSqliteTime()
@@ -99,10 +116,16 @@ export async function closeZombieSessions(dbPath: string): Promise<number[]> {
         )`
   let closedAgentIds: number[] = []
   await writeDb(dbPath, (db) => {
-    const result = db.exec(`SELECT DISTINCT agent_id FROM sessions ${ELIGIBILITY_WHERE}`)
-    closedAgentIds = result[0]?.values.map((r) => r[0] as number) ?? []
-    if (closedAgentIds.length === 0) return false
-    db.run(`UPDATE sessions SET status = 'completed', ended_at = datetime('now') ${ELIGIBILITY_WHERE}`)
+    const result = db.exec(`SELECT id, agent_id FROM sessions ${ELIGIBILITY_WHERE}`)
+    const rows = result[0]?.values ?? []
+    if (rows.length === 0) return false
+    const sessionIds = rows.map((r) => r[0] as number)
+    closedAgentIds = [...new Set(rows.map((r) => r[1] as number))]
+    const placeholders = sessionIds.map(() => '?').join(',')
+    db.run(
+      `UPDATE sessions SET status = 'completed', ended_at = datetime('now') WHERE id IN (${placeholders})`,
+      sessionIds
+    )
     // T1110: return false when 0 rows modified → writeDb skips export+write
     return db.getRowsModified() > 0
   })
