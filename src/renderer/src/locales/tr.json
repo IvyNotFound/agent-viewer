@@ -268,7 +268,11 @@
     "createProjectDb": "{projectDb} oluştur",
     "createProjectDbDesc": "Varsayılan scopeli tam şema",
     "generateClaudeMd": "{claudeMd} tabanı oluştur",
-    "generateClaudeMdDesc": "Minimum şablon — projenize göre tamamlayın"
+    "generateClaudeMdDesc": "Minimum şablon — projenize göre tamamlayın",
+    "defaultCli": "Varsayılan CLI",
+    "defaultCliNote": "Bu proje için varsayılan CLI örneği",
+    "defaultModel": "Varsayılan model",
+    "defaultModelNote": "Oturumlar başlatılırken kullanılan varsayılan model"
   },
   "explorer": {
     "files": "Dosyalar",

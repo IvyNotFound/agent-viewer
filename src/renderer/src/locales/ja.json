@@ -268,7 +268,11 @@
     "createProjectDb": "{projectDb} を作成",
     "createProjectDbDesc": "デフォルトスコープ付きフルスキーマ",
     "generateClaudeMd": "{claudeMd} のベースを生成",
-    "generateClaudeMdDesc": "最小テンプレート — プロジェクトに合わせて補完してください"
+    "generateClaudeMdDesc": "最小テンプレート — プロジェクトに合わせて補完してください",
+    "defaultCli": "デフォルト CLI",
+    "defaultCliNote": "このプロジェクトのデフォルト CLI インスタンス",
+    "defaultModel": "デフォルトモデル",
+    "defaultModelNote": "セッション起動時に使用されるデフォルトモデル"
   },
   "explorer": {
     "files": "ファイル",

@@ -268,7 +268,11 @@
     "createProjectDb": "{projectDb} erstellen",
     "createProjectDbDesc": "Vollständiges Schema mit Standard-Scopes",
     "generateClaudeMd": "Eine Basis-{claudeMd} generieren",
-    "generateClaudeMdDesc": "Minimale Vorlage — für Ihr Projekt zu vervollständigen"
+    "generateClaudeMdDesc": "Minimale Vorlage — für Ihr Projekt zu vervollständigen",
+    "defaultCli": "Standard-CLI",
+    "defaultCliNote": "Standard-CLI-Instanz für dieses Projekt",
+    "defaultModel": "Standardmodell",
+    "defaultModelNote": "Standardmäßig verwendetes Modell beim Starten von Sitzungen"
   },
   "explorer": {
     "files": "Dateien",

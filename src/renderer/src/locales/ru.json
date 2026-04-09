@@ -268,7 +268,11 @@
     "createProjectDb": "Создать {projectDb}",
     "createProjectDbDesc": "Полная схема с scopes по умолчанию",
     "generateClaudeMd": "Сгенерировать базовый {claudeMd}",
-    "generateClaudeMdDesc": "Минимальный шаблон — для дальнейшей настройки"
+    "generateClaudeMdDesc": "Минимальный шаблон — для дальнейшей настройки",
+    "defaultCli": "CLI по умолчанию",
+    "defaultCliNote": "Экземпляр CLI по умолчанию для этого проекта",
+    "defaultModel": "Модель по умолчанию",
+    "defaultModelNote": "Модель по умолчанию, используемая при запуске сессий"
   },
   "explorer": {
     "files": "Файлы",

@@ -268,7 +268,11 @@
     "createProjectDb": "Skapa {projectDb}",
     "createProjectDbDesc": "Fullständigt schema med standardscope",
     "generateClaudeMd": "Generera en bas {claudeMd}",
-    "generateClaudeMdDesc": "Minimalmall — att fyllas i för ditt projekt"
+    "generateClaudeMdDesc": "Minimalmall — att fyllas i för ditt projekt",
+    "defaultCli": "Standard-CLI",
+    "defaultCliNote": "Standard CLI-instans för detta projekt",
+    "defaultModel": "Standardmodell",
+    "defaultModelNote": "Standardmodell som används vid start av sessioner"
   },
   "explorer": {
     "files": "Filer",

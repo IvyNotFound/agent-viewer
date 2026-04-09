@@ -268,7 +268,11 @@
     "createProjectDb": "Criar {projectDb}",
     "createProjectDbDesc": "Esquema completo com scopes padrão",
     "generateClaudeMd": "Gerar um {claudeMd} base",
-    "generateClaudeMdDesc": "Modelo mínimo — a ser completado para seu projeto"
+    "generateClaudeMdDesc": "Modelo mínimo — a ser completado para seu projeto",
+    "defaultCli": "CLI padrão",
+    "defaultCliNote": "Instância CLI padrão para este projeto",
+    "defaultModel": "Modelo padrão",
+    "defaultModelNote": "Modelo padrão usado ao iniciar sessões"
   },
   "explorer": {
     "files": "Arquivos",

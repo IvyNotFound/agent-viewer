@@ -268,7 +268,11 @@
     "createProjectDb": "إنشاء {projectDb}",
     "createProjectDbDesc": "المخطط الكامل مع النطاقات الافتراضية",
     "generateClaudeMd": "إنشاء {claudeMd} أساسي",
-    "generateClaudeMdDesc": "قالب بسيط — يجب إكماله لمشروعك"
+    "generateClaudeMdDesc": "قالب بسيط — يجب إكماله لمشروعك",
+    "defaultCli": "CLI الافتراضي",
+    "defaultCliNote": "نسخة CLI الافتراضية لهذا المشروع",
+    "defaultModel": "النموذج الافتراضي",
+    "defaultModelNote": "النموذج الافتراضي المستخدم عند تشغيل الجلسات"
   },
   "explorer": {
     "files": "الملفات",

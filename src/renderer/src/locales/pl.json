@@ -268,7 +268,11 @@
     "createProjectDb": "Utwórz {projectDb}",
     "createProjectDbDesc": "Pełny schemat z domyślnymi obwodami",
     "generateClaudeMd": "Wygeneruj bazowy {claudeMd}",
-    "generateClaudeMdDesc": "Minimalny szablon — do uzupełnienia dla projektu"
+    "generateClaudeMdDesc": "Minimalny szablon — do uzupełnienia dla projektu",
+    "defaultCli": "Domyślne CLI",
+    "defaultCliNote": "Domyślna instancja CLI dla tego projektu",
+    "defaultModel": "Domyślny model",
+    "defaultModelNote": "Domyślny model używany przy uruchamianiu sesji"
   },
   "explorer": {
     "files": "Pliki",

@@ -268,7 +268,11 @@
     "createProjectDb": "Luo {projectDb}",
     "createProjectDbDesc": "Täydellinen skeema oletusscopes",
     "generateClaudeMd": "Luo pohja {claudeMd}:lle",
-    "generateClaudeMdDesc": "Minimipohja — täydennettävä omaa projektia varten"
+    "generateClaudeMdDesc": "Minimipohja — täydennettävä omaa projektia varten",
+    "defaultCli": "Oletus-CLI",
+    "defaultCliNote": "Oletusarvoinen CLI-instanssi tälle projektille",
+    "defaultModel": "Oletusmalli",
+    "defaultModelNote": "Oletusmalli, jota käytetään istuntojen käynnistyksessä"
   },
   "explorer": {
     "files": "Tiedostot",

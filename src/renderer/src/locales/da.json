@@ -268,7 +268,11 @@
     "createProjectDb": "Opret {projectDb}",
     "createProjectDbDesc": "Fuldt skema med standard-scope",
     "generateClaudeMd": "Generer en basis {claudeMd}",
-    "generateClaudeMdDesc": "Minimal skabelon — skal udfyldes til dit projekt"
+    "generateClaudeMdDesc": "Minimal skabelon — skal udfyldes til dit projekt",
+    "defaultCli": "Standard CLI",
+    "defaultCliNote": "Standard CLI-instans for dette projekt",
+    "defaultModel": "Standardmodel",
+    "defaultModelNote": "Standardmodel brugt ved start af sessioner"
   },
   "explorer": {
     "files": "Filer",

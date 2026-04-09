@@ -268,7 +268,11 @@
     "createProjectDb": "Opprett {projectDb}",
     "createProjectDbDesc": "Fullt skjema med standard scopes",
     "generateClaudeMd": "Generer en basis {claudeMd}",
-    "generateClaudeMdDesc": "Minimal mal — skal fylles ut for ditt prosjekt"
+    "generateClaudeMdDesc": "Minimal mal — skal fylles ut for ditt prosjekt",
+    "defaultCli": "Standard CLI",
+    "defaultCliNote": "Standard CLI-instans for dette prosjektet",
+    "defaultModel": "Standardmodell",
+    "defaultModelNote": "Standardmodell brukt ved oppstart av økter"
   },
   "explorer": {
     "files": "Filer",
