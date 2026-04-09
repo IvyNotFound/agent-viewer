@@ -50,7 +50,6 @@ describe('Sidebar — context menu & advanced flows', () => {
     SettingsModal: true,
     ContextMenu: true,
     CreateAgentModal: true,
-    AgentEditModal: true,
     Teleport: true,
   }
 
@@ -117,25 +116,6 @@ describe('Sidebar — context menu & advanced flows', () => {
   })
 
   // ── Agent rename flow ──────────────────────────────────────────────────────
-
-  it('AgentEditModal is not visible initially (editAgentTarget is null)', () => {
-    const agents = [makeSidebarAgent()]
-    const wrapper = shallowMount(Sidebar, {
-      global: {
-        plugins: [createTestingPinia({
-          initialState: {
-            tasks: { agents, projectPath: '/p', dbPath: '/p/.claude/db', perimetresData: [] },
-          },
-        }), i18n],
-        stubs: {
-          ...sidebarStubs,
-          AgentEditModal: { template: '<div class="agent-edit-stub" />' },
-        },
-      },
-    })
-    // Initially editAgentTarget is null → v-if hides AgentEditModal
-    expect(wrapper.find('.agent-edit-stub').exists()).toBe(false)
-  })
 
   it('system prompt editor textarea is hidden initially (systemPromptTarget is null)', () => {
     const agents = [makeSidebarAgent()]
