@@ -7,14 +7,14 @@ import { CLI_CAPABILITIES, CLI_LABELS, CLI_BADGE, systemLabel } from './cliCapab
 describe('CLI_CAPABILITIES — exhaustive boolean assertions', () => {
   // Kills all BooleanLiteral mutants: each true/false is explicitly checked.
 
-  it('claude: all capabilities enabled except modelSelection', () => {
+  it('claude: all capabilities enabled', () => {
     expect(CLI_CAPABILITIES.claude).toEqual({
       worktree: true,
       profileSelection: true,
       systemPrompt: true,
       thinkingMode: true,
       convResume: true,
-      modelSelection: false,
+      modelSelection: true,
     })
   })
 
@@ -29,14 +29,14 @@ describe('CLI_CAPABILITIES — exhaustive boolean assertions', () => {
     })
   })
 
-  it('gemini: only worktree enabled', () => {
+  it('gemini: worktree and modelSelection enabled', () => {
     expect(CLI_CAPABILITIES.gemini).toEqual({
       worktree: true,
       profileSelection: false,
       systemPrompt: false,
       thinkingMode: false,
       convResume: false,
-      modelSelection: false,
+      modelSelection: true,
     })
   })
 
@@ -51,14 +51,14 @@ describe('CLI_CAPABILITIES — exhaustive boolean assertions', () => {
     })
   })
 
-  it('aider: worktree and systemPrompt enabled, others disabled', () => {
+  it('aider: worktree, systemPrompt, and modelSelection enabled', () => {
     expect(CLI_CAPABILITIES.aider).toEqual({
       worktree: true,
       profileSelection: false,
       systemPrompt: true,
       thinkingMode: false,
       convResume: false,
-      modelSelection: false,
+      modelSelection: true,
     })
   })
 
@@ -95,11 +95,11 @@ describe('CLI_CAPABILITIES — exhaustive boolean assertions', () => {
     expect(withResume).toEqual(['claude'])
   })
 
-  it('only opencode has modelSelection=true', () => {
+  it('claude, gemini, opencode, aider have modelSelection=true', () => {
     const withModel = Object.entries(CLI_CAPABILITIES)
       .filter(([, v]) => v.modelSelection)
       .map(([k]) => k)
-    expect(withModel).toEqual(['opencode'])
+    expect(withModel).toEqual(['claude', 'gemini', 'opencode', 'aider'])
   })
 
   it('claude, codex, aider, goose have systemPrompt=true', () => {

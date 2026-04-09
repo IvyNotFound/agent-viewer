@@ -5,6 +5,9 @@ import { useSettingsStore, type Language, type Theme } from '@renderer/stores/se
 import { useTasksStore } from '@renderer/stores/tasks'
 import CliDetectionList from '@renderer/components/CliDetectionList.vue'
 import { useUpdater } from '@renderer/composables/useUpdater'
+import { CLI_CAPABILITIES, CLI_LABELS } from '@renderer/utils/cliCapabilities'
+import type { CliType } from '@shared/cli-types'
+import type { CliModelDef } from '@shared/cli-models'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -99,10 +102,25 @@ const availableDistroItems = computed(() =>
   }))
 )
 
+// Per-CLI model selectors (T1803)
+const modelCapableClis = computed<CliType[]>(() =>
+  settingsStore.enabledClis.filter(cli => CLI_CAPABILITIES[cli]?.modelSelection)
+)
+
+function modelItems(cli: CliType): Array<{ title: string; value: string }> {
+  return (settingsStore.cliModels[cli] as CliModelDef[] ?? []).map(m => ({
+    title: m.label,
+    value: m.modelId,
+  }))
+}
+
 onMounted(async () => {
   await settingsStore.refreshCliDetection()
   if (store.dbPath) {
-    await settingsStore.loadOpencodeDefaultModel(store.dbPath)
+    await Promise.all([
+      settingsStore.loadDefaultModels(store.dbPath),
+      settingsStore.loadCliModels(),
+    ])
   }
 })
 
@@ -322,16 +340,32 @@ function onDefaultCliChange(v: string) {
                 @update:model-value="(v) => onDefaultCliChange(v as string)"
               />
             </v-sheet>
-            <v-sheet rounded="lg" border class="pa-4">
-              <p class="text-body-2 font-weight-medium mb-1">{{ t('settings.opencodeDefaultModel') }}</p>
-              <p class="text-body-2 text-medium-emphasis mb-2">{{ t('settings.opencodeDefaultModelHint') }}</p>
-              <v-text-field
-                :model-value="settingsStore.opencodeDefaultModel"
-                placeholder="anthropic/claude-opus-4-5"
+            <v-sheet v-for="cli in modelCapableClis" :key="cli" rounded="lg" border class="pa-4">
+              <p class="text-body-2 font-weight-medium mb-1">
+                {{ CLI_LABELS[cli] }} — {{ t('settings.defaultModel') }}
+              </p>
+              <p class="text-body-2 text-medium-emphasis mb-2">
+                {{ t('settings.defaultModelHint', { cli: CLI_LABELS[cli] }) }}
+              </p>
+              <v-select
+                v-if="modelItems(cli).length > 0"
+                :model-value="settingsStore.getDefaultModel(cli) || null"
+                :items="modelItems(cli)"
+                clearable
+                :placeholder="t('settings.cliDefault')"
                 variant="outlined"
                 density="compact"
                 hide-details
-                @blur="(e: FocusEvent) => store.dbPath && settingsStore.setOpencodeDefaultModel(store.dbPath, (e.target as HTMLInputElement).value)"
+                @update:model-value="(v: string | null) => store.dbPath && settingsStore.setDefaultModel(store.dbPath, cli, v ?? '')"
+              />
+              <v-text-field
+                v-else
+                :model-value="settingsStore.getDefaultModel(cli)"
+                :placeholder="t('settings.cliDefault')"
+                variant="outlined"
+                density="compact"
+                hide-details
+                @blur="(e: FocusEvent) => store.dbPath && settingsStore.setDefaultModel(store.dbPath, cli, (e.target as HTMLInputElement).value)"
               />
             </v-sheet>
           </template>

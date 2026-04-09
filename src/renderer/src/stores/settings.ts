@@ -15,6 +15,8 @@ import i18n from '../plugins/i18n'
 import { setDarkMode } from '../utils/agentColor'
 import { vuetifyThemeName } from '../plugins/vuetifyTheme'
 import type { CliType, CliInstance } from '@shared/cli-types'
+import type { CliModelDef } from '@shared/cli-models'
+import { CLI_CAPABILITIES } from '../utils/cliCapabilities'
 
 export type Theme = 'dark' | 'light'
 
@@ -233,27 +235,55 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  // OpenCode default model (T1362)
-  const opencodeDefaultModel = ref<string>('')
+  // Per-CLI default models (T1803, replaces T1362 opencode-only)
+  const defaultModels = ref<Partial<Record<CliType, string>>>({})
+  const cliModels = ref<Partial<Record<CliType, CliModelDef[]>>>({})
 
-  async function loadOpencodeDefaultModel(dbPath: string): Promise<void> {
-    try {
-      const result = await window.electronAPI.getConfigValue(dbPath, 'opencode_default_model')
-      if (result.success && result.value !== null) {
-        opencodeDefaultModel.value = result.value
-      }
-    } catch { /* keep default '' */ }
+  /** Load default models for all model-capable CLIs from DB config. */
+  async function loadDefaultModels(dbPath: string): Promise<void> {
+    const modelClis = enabledClis.value.filter(c => CLI_CAPABILITIES[c]?.modelSelection)
+    await Promise.all(modelClis.map(async (cli) => {
+      try {
+        const result = await window.electronAPI.getConfigValue(dbPath, `default_model_${cli}`)
+        if (result.success && result.value) {
+          defaultModels.value = { ...defaultModels.value, [cli]: result.value }
+          return
+        }
+        // Backward compat: migrate opencode_default_model → default_model_opencode
+        if (cli === 'opencode') {
+          const legacy = await window.electronAPI.getConfigValue(dbPath, 'opencode_default_model')
+          if (legacy.success && legacy.value) {
+            defaultModels.value = { ...defaultModels.value, opencode: legacy.value }
+            await window.electronAPI.setConfigValue(dbPath, 'default_model_opencode', legacy.value)
+          }
+        }
+      } catch { /* keep empty */ }
+    }))
   }
 
-  async function setOpencodeDefaultModel(dbPath: string, value: string): Promise<void> {
+  function getDefaultModel(cli: CliType): string {
+    return defaultModels.value[cli] ?? ''
+  }
+
+  async function setDefaultModel(dbPath: string, cli: CliType, value: string): Promise<void> {
     const trimmed = value.trim()
-    const prev = opencodeDefaultModel.value
-    opencodeDefaultModel.value = trimmed
+    const prev = defaultModels.value[cli] ?? ''
+    defaultModels.value = { ...defaultModels.value, [cli]: trimmed }
     try {
-      await window.electronAPI.setConfigValue(dbPath, 'opencode_default_model', trimmed)
+      await window.electronAPI.setConfigValue(dbPath, `default_model_${cli}`, trimmed)
     } catch {
-      opencodeDefaultModel.value = prev
+      defaultModels.value = { ...defaultModels.value, [cli]: prev }
     }
+  }
+
+  /** Fetch available model lists from IPC for all model-capable CLIs. */
+  async function loadCliModels(): Promise<void> {
+    try {
+      const raw = await window.electronAPI.getCliModels() as Partial<Record<CliType, CliModelDef[]>>
+      if (raw && typeof raw === 'object') {
+        cliModels.value = raw
+      }
+    } catch { /* keep empty */ }
   }
 
   // Desktop notifications (T755)
@@ -308,9 +338,12 @@ export const useSettingsStore = defineStore('settings', () => {
     worktreeDefault,
     loadWorktreeDefault,
     setWorktreeDefault,
-    // OpenCode default model (T1362)
-    opencodeDefaultModel,
-    loadOpencodeDefaultModel,
-    setOpencodeDefaultModel,
+    // Per-CLI default models (T1803)
+    defaultModels,
+    cliModels,
+    loadDefaultModels,
+    getDefaultModel,
+    setDefaultModel,
+    loadCliModels,
   }
 })
