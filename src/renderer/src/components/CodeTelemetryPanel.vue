@@ -188,7 +188,7 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
 <style scoped>
 .telemetry-panel {
   border-radius: var(--shape-sm);
-  background: var(--surface-secondary);
+  background: var(--surface-primary);
   border: 1px solid var(--edge-default);
   overflow: hidden;
   display: flex;

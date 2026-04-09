@@ -69,7 +69,7 @@ function onDrop(e: DragEvent): void {
   flex-direction: column;
   flex: 1;
   min-width: 0;
-  background-color: var(--surface-secondary);
+  background-color: var(--surface-primary);
   border-radius: var(--shape-md);
   border: 1px solid var(--edge-subtle);
   position: relative;
@@ -120,7 +120,7 @@ function onDrop(e: DragEvent): void {
 }
 .column-count {
   color: var(--content-subtle);
-  background-color: var(--surface-tertiary);
+  background-color: var(--surface-secondary);
   padding: 2px 6px;
   border-radius: var(--shape-xs);
 }

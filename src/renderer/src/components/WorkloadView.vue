@@ -118,7 +118,7 @@ async function refresh(): Promise<void> {
   display: flex;
   flex-direction: column;
   border-radius: var(--shape-sm);
-  background: var(--surface-secondary);
+  background: var(--surface-primary);
   border: 1px solid var(--edge-default);
   overflow: hidden;
 }

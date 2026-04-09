@@ -180,7 +180,7 @@ const subTabs = computed<{ id: SubTab; label: string }[]>(() => [
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  background: var(--surface-secondary);
+  background: var(--surface-primary);
 }
 
 .dashboard-tabs {
@@ -211,7 +211,7 @@ const subTabs = computed<{ id: SubTab; label: string }[]>(() => [
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--surface-secondary);
+  background: var(--surface-base);
 }
 
 .git-header {
@@ -238,7 +238,7 @@ const subTabs = computed<{ id: SubTab; label: string }[]>(() => [
 
 .section-card {
   border: 1px solid var(--edge-default) !important;
-  background: var(--surface-tertiary) !important;
+  background: var(--surface-primary) !important;
   flex: 1;
   display: flex;
   flex-direction: column;

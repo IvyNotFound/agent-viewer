@@ -175,7 +175,7 @@ async function refresh(): Promise<void> {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--surface-secondary);
+  background: var(--surface-base);
   overflow: hidden;
 }
 
@@ -203,7 +203,7 @@ async function refresh(): Promise<void> {
 
 .section-card {
   border: 1px solid var(--edge-default) !important;
-  background: var(--surface-tertiary) !important;
+  background: var(--surface-primary) !important;
   flex: 1;
   display: flex;
   flex-direction: column;

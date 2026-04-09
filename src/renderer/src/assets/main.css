@@ -61,28 +61,6 @@ body,
   --md-duration-medium3: 350ms;
   --md-duration-medium4: 400ms;
 
-  /* MD3 Shape Scale */
-  --shape-none: 0px;
-  --shape-xs:   4px;
-  --shape-sm:   8px;
-  --shape-md:   12px;
-  --shape-lg:   16px;
-  --shape-xl:   28px;
-  --shape-full: 9999px;
-
-  /* MD3 State Layer opacities */
-  --md-state-hover:    0.08;
-  --md-state-focus:    0.12;
-  --md-state-pressed:  0.12;
-  --md-state-dragged:  0.16;
-}
-
-/* ── Theme-dependent tokens — resolved inside .v-application where --v-theme-* are defined ──
-   Vuetify 3 injects --v-theme-* as RGB triplets on [data-v-theme="dark|light"], not on :root.
-   CSS custom properties do NOT traverse upward — a :root rule cannot read vars set on a child.
-   Moving these mappings here ensures rgb(var(--v-theme-*)) resolves correctly in both themes.
-   ────────────────────────────────────────────────────────────────────────────────────────── */
-[data-v-theme] {
   /* Surfaces (backgrounds) */
   --surface-base:      rgb(var(--v-theme-surface-base));
   --surface-primary:   rgb(var(--v-theme-surface-primary));
@@ -104,6 +82,20 @@ body,
   --scrollbar-track:       rgb(var(--v-theme-scrollbar-track));
   --scrollbar-thumb:       rgb(var(--v-theme-scrollbar-thumb));
   --scrollbar-thumb-hover: rgb(var(--v-theme-scrollbar-thumb-hover));
+  /* MD3 Shape Scale */
+  --shape-none: 0px;
+  --shape-xs:   4px;
+  --shape-sm:   8px;
+  --shape-md:   12px;
+  --shape-lg:   16px;
+  --shape-xl:   28px;
+  --shape-full: 9999px;
+
+  /* MD3 State Layer opacities */
+  --md-state-hover:    0.08;
+  --md-state-focus:    0.12;
+  --md-state-pressed:  0.12;
+  --md-state-dragged:  0.16;
   /* Overlay utilities — prefer these over rgba(0,0,0,...) for hover/active/divider states */
   --bg-hover:      rgba(var(--v-theme-on-surface), 0.06);
   --bg-active:     rgba(var(--v-theme-on-surface), 0.12);
@@ -479,12 +471,6 @@ body,
 /* MD3 elevation tint: dialog cards float above the app base surface */
 .v-dialog .v-card {
   background-color: rgb(var(--v-theme-surface-dialog)) !important; /* override Vuetify internal surface — global selector, no scope hash */
-}
-/* TaskDetailModal uses .task-panel (not v-card) — same elevation tint; --surface-dialog alias
-   is defined on [data-v-theme] (inside .v-application) and does not cascade into the teleported
-   overlay. Use --v-theme-surface-dialog directly, as Vuetify injects it on the overlay container. */
-.v-dialog .task-panel {
-  background-color: rgb(var(--v-theme-surface-dialog)) !important;
 }
 /* Vertical centering for v-card inside a v-dialog overlay content.
    .v-overlay__content is a flex column. When the dialog has a fixed height prop

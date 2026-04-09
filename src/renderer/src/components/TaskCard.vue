@@ -123,7 +123,7 @@ const plainDescription = computed(() => {
     :ripple="false"
     :draggable="task.status === 'todo' || task.status === 'in_progress'"
     :style="{
-      backgroundColor: 'var(--surface-tertiary)',
+      backgroundColor: 'var(--surface-secondary)',
       border: '1px solid var(--edge-default)',
       borderRadius: 'var(--shape-md)',
     }"
@@ -276,7 +276,7 @@ const plainDescription = computed(() => {
 }
 /* :deep() required — v-avatar border has no Vuetify prop; adds MD3 visual separation in overlapping stack */
 .card-avatars :deep(.v-avatar) {
-  border: 1.5px solid var(--surface-tertiary);
+  border: 1.5px solid var(--surface-secondary);
 }
 /* Compact footer: reduces vertical padding vs Vuetify pa-3 default (12px → 6/8px) */
 .card-footer-section {

@@ -232,7 +232,7 @@ function resultPreview(html: string | undefined): string {
 .ask-question-block {
   border-left: 3px solid rgba(var(--v-theme-info), 0.6);
   border-radius: 0 4px 4px 0;
-  background: var(--surface-tertiary);
+  background: var(--surface-secondary);
   overflow: hidden;
 }
 .ask-question-header {
@@ -276,7 +276,7 @@ function resultPreview(html: string | undefined): string {
 }
 
 .tool-block--result {
-  background-color: var(--surface-secondary);
+  background-color: var(--surface-primary);
 }
 
 .tool-block--error {
@@ -356,6 +356,6 @@ function resultPreview(html: string | undefined): string {
 
 /* T1570: tool_use body uses a neutral theme-based background, not agent color */
 .tool-block--use .tool-body {
-  background: var(--surface-tertiary);
+  background: var(--surface-secondary);
 }
 </style>

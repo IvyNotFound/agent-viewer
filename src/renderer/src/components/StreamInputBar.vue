@@ -184,7 +184,7 @@ function stopAgent(): void {
 <style scoped>
 /* T1707: pending question indicator above the input field */
 .pending-question-banner {
-  background: var(--surface-tertiary);
+  background: var(--surface-secondary);
   max-width: 100%;
 }
 .pending-question-icon {
@@ -200,7 +200,7 @@ function stopAgent(): void {
 
 /* T1717: image attachment strip above the input field */
 .attachment-strip {
-  background: var(--surface-tertiary);
+  background: var(--surface-secondary);
   border-top: 1px solid var(--edge-subtle);
   padding: 8px 12px;
 }
@@ -216,7 +216,7 @@ function stopAgent(): void {
 }
 
 .input-bar {
-  background: var(--surface-tertiary);
+  background: var(--surface-secondary);
   /* Override user-select:none inherited from .main-wrap (App.vue).
      On Windows/Electron, user-select:none on a parent blocks focus and
      keyboard capture in child input elements (T1488). */

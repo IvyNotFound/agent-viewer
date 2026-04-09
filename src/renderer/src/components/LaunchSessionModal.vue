@@ -483,7 +483,7 @@ async function launch() {
 }
 .instance-row--idle {
   border-color: var(--edge-default);
-  background: rgb(var(--v-theme-surface-tertiary)); /* --surface-tertiary alias unavailable in teleported overlay */
+  background: var(--surface-secondary);
 }
 .instance-row--idle:hover {
   border-color: var(--content-faint);
@@ -497,7 +497,7 @@ async function launch() {
   border-radius: 3px;
   font-size: 9px;
   font-weight: 700;
-  background: rgb(var(--v-theme-surface-tertiary)); /* --surface-tertiary alias unavailable in teleported overlay */
+  background: var(--surface-tertiary);
   color: var(--content-muted);
   flex-shrink: 0;
 }
@@ -520,7 +520,7 @@ async function launch() {
   font-weight: 600;
   padding: 2px 6px;
   border-radius: 3px;
-  background: rgb(var(--v-theme-surface-tertiary)); /* --surface-tertiary alias unavailable in teleported overlay */
+  background: var(--surface-tertiary);
   color: var(--content-muted);
   flex-shrink: 0;
 }

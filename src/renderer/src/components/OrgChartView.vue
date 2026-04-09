@@ -238,7 +238,7 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             :width="group.w"
             :height="group.h"
             rx="8"
-            :style="{ fill: group.depth === 0 ? 'rgb(var(--v-theme-surface-secondary))' : 'rgb(var(--v-theme-surface-tertiary))' }"
+            :style="{ fill: group.depth === 0 ? 'rgb(var(--v-theme-surface-primary))' : 'rgb(var(--v-theme-surface-secondary))' }"
             :stroke="group.depth === 0 ? 'rgb(var(--v-theme-edge-default))' : 'rgb(var(--v-theme-content-faint))'"
             stroke-width="1"
           />
@@ -261,7 +261,7 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             :width="CARD_W"
             :height="CARD_H"
             rx="8"
-            :style="{ fill: 'rgb(var(--v-theme-surface-secondary))' }"
+            :style="{ fill: 'rgb(var(--v-theme-surface-base))' }"
             stroke="rgb(var(--v-theme-edge-default))"
             stroke-width="1"
           />
@@ -312,7 +312,7 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--surface-secondary);
+  background: var(--surface-base);
   overflow: hidden;
 }
 .oc-header {

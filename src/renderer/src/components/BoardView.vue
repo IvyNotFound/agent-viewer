@@ -427,7 +427,7 @@ const archivedGroupsSorted = computed(() => {
 /* Archive card — MD3 state layer via ::after pseudo-element */
 .archive-card {
   padding: 12px 16px;
-  background-color: var(--surface-secondary);
+  background-color: var(--surface-primary);
   border: 1px solid var(--edge-subtle);
   border-radius: var(--shape-sm);
   cursor: pointer;
@@ -490,7 +490,7 @@ const archivedGroupsSorted = computed(() => {
   align-items: center;
   justify-content: space-between;
   border-top: 1px solid var(--edge-subtle);
-  background-color: var(--surface-secondary);
+  background-color: var(--surface-primary);
 }
 .pag-btn {
   font-weight: 500 !important;

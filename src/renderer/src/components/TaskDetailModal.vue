@@ -399,9 +399,7 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   max-height: 90vh;
-  /* background handled by .v-dialog .task-panel in main.css — var(--surface-dialog) does not
-     resolve in the teleported overlay context (outside [data-v-theme]); global rule uses
-     rgb(var(--v-theme-surface-dialog)) directly, which Vuetify injects on the overlay. */
+  background: var(--surface-dialog);
   border: 1px solid var(--edge-default);
   border-radius: var(--shape-md);
   display: flex;
@@ -565,7 +563,7 @@ onUnmounted(() => {
   line-height: 1.5;
   word-break: break-words;
   border: 1px solid var(--edge-subtle);
-  background: var(--surface-tertiary);
+  background: var(--surface-card);
   color: var(--content-primary);
 }
 

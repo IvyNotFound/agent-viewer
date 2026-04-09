@@ -131,7 +131,7 @@ function isEnabled(cli: CliType): boolean {
   justify-content: space-between;
   padding: 8px 12px;
   border-radius: var(--shape-xs);
-  background: var(--surface-tertiary);
+  background: var(--surface-secondary);
   border: 1px solid var(--edge-subtle);
 }
 .cli-row-left {
