@@ -21,12 +21,14 @@ import { tmpdir } from 'node:os'
 const {
   mockWriteDbNative,
   mockAssertDbPathAllowed,
+  mockAssertTranscriptPathAllowed,
   mockInitHookSecret,
   mockGetHookSecret,
   mockDetectWslGatewayIp,
 } = vi.hoisted(() => ({
   mockWriteDbNative: vi.fn(),
   mockAssertDbPathAllowed: vi.fn(),
+  mockAssertTranscriptPathAllowed: vi.fn(),
   mockInitHookSecret: vi.fn(),
   mockGetHookSecret: vi.fn().mockReturnValue('secret-t1336c'),
   mockDetectWslGatewayIp: vi.fn().mockReturnValue(null),
@@ -35,6 +37,7 @@ const {
 vi.mock('./db', () => ({
   writeDbNative: mockWriteDbNative,
   assertDbPathAllowed: mockAssertDbPathAllowed,
+  assertTranscriptPathAllowed: mockAssertTranscriptPathAllowed,
 }))
 
 vi.mock('./hookServer-inject', async (importOriginal) => {

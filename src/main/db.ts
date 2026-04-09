@@ -10,7 +10,8 @@
  */
 
 import { copyFile, unlink } from 'fs/promises'
-import { resolve } from 'path'
+import { homedir } from 'os'
+import { resolve, sep } from 'path'
 import Database from 'better-sqlite3'
 import { migrateDb as applyMigrations, CURRENT_SCHEMA_VERSION } from './migration'
 import { acquireWriteLock, releaseWriteLock } from './db-lock'
@@ -63,6 +64,26 @@ export function isProjectPathAllowed(projectPath: string): boolean {
 export function assertProjectPathAllowed(projectPath: string): void {
   if (!projectPath || !allowedProjectPaths.has(resolve(projectPath))) {
     throw new Error('PROJECT_PATH_NOT_ALLOWED: ' + projectPath)
+  }
+}
+
+// ── T1871: Transcript path validation ────────────────────────────────────────
+
+/**
+ * Throws if transcriptPath is not within cwd or the user's ~/.claude/ directory.
+ * Prevents arbitrary file reads via crafted transcript_path in hook payloads.
+ * @throws {Error} TRANSCRIPT_PATH_NOT_ALLOWED
+ */
+export function assertTranscriptPathAllowed(transcriptPath: string, cwd: string): void {
+  const resolved = resolve(transcriptPath)
+  const resolvedCwd = resolve(cwd)
+  const claudeDir = resolve(homedir(), '.claude')
+
+  if (
+    !resolved.startsWith(resolvedCwd + sep) &&
+    !resolved.startsWith(claudeDir + sep)
+  ) {
+    throw new Error('TRANSCRIPT_PATH_NOT_ALLOWED: ' + transcriptPath)
   }
 }
 

@@ -9,10 +9,11 @@ import http from 'http'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockWriteDb, mockAssertDbPathAllowed, mockInitHookSecret, mockGetHookSecret, mockWebContentsSend, mockDetectWslGatewayIp } = vi.hoisted(
+const { mockWriteDb, mockAssertDbPathAllowed, mockAssertTranscriptPathAllowed, mockInitHookSecret, mockGetHookSecret, mockWebContentsSend, mockDetectWslGatewayIp } = vi.hoisted(
   () => ({
     mockWriteDb: vi.fn(),
     mockAssertDbPathAllowed: vi.fn(), // no-op by default — allows all paths
+    mockAssertTranscriptPathAllowed: vi.fn(), // no-op by default — T1871
     mockInitHookSecret: vi.fn(),
     mockGetHookSecret: vi.fn().mockReturnValue('test-secret-abc123'),
     mockWebContentsSend: vi.fn(),
@@ -23,6 +24,7 @@ const { mockWriteDb, mockAssertDbPathAllowed, mockInitHookSecret, mockGetHookSec
 vi.mock('./db', () => ({
   writeDbNative: mockWriteDb,
   assertDbPathAllowed: mockAssertDbPathAllowed,
+  assertTranscriptPathAllowed: mockAssertTranscriptPathAllowed,
 }))
 
 vi.mock('./hookServer-inject', async (importOriginal) => {
@@ -348,6 +350,19 @@ describe('handleStop via HTTP', () => {
     })
     await new Promise((r) => setTimeout(r, 100))
     expect(mockAssertDbPathAllowed).toHaveBeenCalled()
+    expect(mockWriteDb).not.toHaveBeenCalled()
+  })
+
+  it('skips writeDb when transcript_path is outside allowed directories (T1871)', async () => {
+    mockAssertTranscriptPathAllowed.mockImplementationOnce(() => {
+      throw new Error('TRANSCRIPT_PATH_NOT_ALLOWED: /etc/passwd')
+    })
+    await makeRequest(port, {
+      path: '/hooks/stop',
+      body: { session_id: 'c1', transcript_path: '/etc/passwd', cwd: '/cwd' },
+    })
+    await new Promise((r) => setTimeout(r, 100))
+    expect(mockAssertTranscriptPathAllowed).toHaveBeenCalled()
     expect(mockWriteDb).not.toHaveBeenCalled()
   })
 })

@@ -66,6 +66,7 @@ import {
   assertDbPathAllowed,
   registerProjectPath,
   assertProjectPathAllowed,
+  assertTranscriptPathAllowed,
   writeDb,
   queryLive,
   FORBIDDEN_WRITE_PATTERN,
@@ -132,6 +133,35 @@ describe('registerProjectPath / assertProjectPathAllowed (T283)', () => {
 
   it('should throw on empty string', () => {
     expect(() => assertProjectPathAllowed('')).toThrow('PROJECT_PATH_NOT_ALLOWED')
+  })
+})
+
+// ── assertTranscriptPathAllowed (T1871) ──────────────────────────────────────
+
+describe('assertTranscriptPathAllowed (T1871)', () => {
+  it('allows transcript within cwd', () => {
+    expect(() => assertTranscriptPathAllowed('/project/transcripts/session.jsonl', '/project')).not.toThrow()
+  })
+
+  it('allows transcript within ~/.claude/', () => {
+    const home = require('os').homedir()
+    const claudePath = require('path').join(home, '.claude', 'projects', 'abc', 'transcript.jsonl')
+    expect(() => assertTranscriptPathAllowed(claudePath, '/some/project')).not.toThrow()
+  })
+
+  it('rejects transcript outside cwd and ~/.claude/', () => {
+    expect(() => assertTranscriptPathAllowed('/etc/passwd', '/project'))
+      .toThrow('TRANSCRIPT_PATH_NOT_ALLOWED')
+  })
+
+  it('rejects path traversal via ..', () => {
+    expect(() => assertTranscriptPathAllowed('/project/../etc/passwd', '/project'))
+      .toThrow('TRANSCRIPT_PATH_NOT_ALLOWED')
+  })
+
+  it('rejects cwd prefix attack (cwd=/tmp matching /tmp-evil/file)', () => {
+    expect(() => assertTranscriptPathAllowed('/tmp-evil/file.jsonl', '/tmp'))
+      .toThrow('TRANSCRIPT_PATH_NOT_ALLOWED')
   })
 })
 

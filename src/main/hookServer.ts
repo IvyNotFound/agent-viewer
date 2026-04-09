@@ -20,7 +20,7 @@
 import http from 'http'
 import { join } from 'path'
 import type { BrowserWindow } from 'electron'
-import { writeDbNative, assertDbPathAllowed } from './db'
+import { writeDbNative, assertDbPathAllowed, assertTranscriptPathAllowed } from './db'
 import { HOOK_PORT, getHookSecret, initHookSecret, detectWslGatewayIp } from './hookServer-inject'
 import { parseTokensFromJSONLStream, type TokenCounts } from './hookServer-tokens'
 
@@ -110,6 +110,14 @@ async function handleStop(payload: StopPayload): Promise<void> {
     assertDbPathAllowed(dbPath)
   } catch {
     console.warn('[hookServer] handleStop: cwd not in allowlist, ignoring', cwd)
+    return
+  }
+
+  // T1871: Validate transcript_path is within cwd or ~/.claude/ before any file I/O
+  try {
+    assertTranscriptPathAllowed(transcriptPath, cwd)
+  } catch {
+    console.warn('[hookServer] handleStop: transcript_path outside allowed directories, ignoring', transcriptPath)
     return
   }
 

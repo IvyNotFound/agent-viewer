@@ -9,10 +9,11 @@ import http from 'http'
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
-const { mockWriteDb, mockAssertDbPathAllowed, mockInitHookSecret, mockGetHookSecret, mockWebContentsSend } = vi.hoisted(
+const { mockWriteDb, mockAssertDbPathAllowed, mockAssertTranscriptPathAllowed, mockInitHookSecret, mockGetHookSecret, mockWebContentsSend } = vi.hoisted(
   () => ({
     mockWriteDb: vi.fn(),
     mockAssertDbPathAllowed: vi.fn(), // no-op by default — allows all paths
+    mockAssertTranscriptPathAllowed: vi.fn(), // no-op by default — T1871
     mockInitHookSecret: vi.fn(),
     mockGetHookSecret: vi.fn().mockReturnValue('test-secret-abc123'),
     mockWebContentsSend: vi.fn(),
@@ -22,6 +23,7 @@ const { mockWriteDb, mockAssertDbPathAllowed, mockInitHookSecret, mockGetHookSec
 vi.mock('./db', () => ({
   writeDbNative: mockWriteDb,
   assertDbPathAllowed: mockAssertDbPathAllowed,
+  assertTranscriptPathAllowed: mockAssertTranscriptPathAllowed,
 }))
 
 vi.mock('./hookServer-inject', async (importOriginal) => {

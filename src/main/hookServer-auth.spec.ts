@@ -16,6 +16,7 @@ import http from 'http'
 const {
   mockWriteDbNative,
   mockAssertDbPathAllowed,
+  mockAssertTranscriptPathAllowed,
   mockInitHookSecret,
   mockGetHookSecret,
   mockWebContentsSend,
@@ -23,6 +24,7 @@ const {
 } = vi.hoisted(() => ({
   mockWriteDbNative: vi.fn(),
   mockAssertDbPathAllowed: vi.fn(),
+  mockAssertTranscriptPathAllowed: vi.fn(),
   mockInitHookSecret: vi.fn(),
   mockGetHookSecret: vi.fn().mockReturnValue('secret-t1316'),
   mockWebContentsSend: vi.fn(),
@@ -32,6 +34,7 @@ const {
 vi.mock('./db', () => ({
   writeDbNative: mockWriteDbNative,
   assertDbPathAllowed: mockAssertDbPathAllowed,
+  assertTranscriptPathAllowed: mockAssertTranscriptPathAllowed,
 }))
 
 vi.mock('./hookServer-inject', async (importOriginal) => {
