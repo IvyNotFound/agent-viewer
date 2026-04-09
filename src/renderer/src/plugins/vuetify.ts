@@ -59,11 +59,12 @@ const vuetifyPlugin = createVuetify({
           'error-container': '#4c1d1d',        // errorContainer dark (red tonal)
           'on-error-container': '#fca5a5',     // onErrorContainer dark (red-300)
           // Surface tokens (MD3 neutral palette — seed #8b5cf6)
+          // Gaps widened for clearer dark-mode elevation hierarchy (T1808)
           'surface-base': '#141316',       // neutral T6
-          'surface-primary': '#1c1b1e',    // neutral T10
-          'surface-secondary': '#2b292d',  // neutral T17
-          'surface-tertiary': '#363438',   // neutral T22
-          'surface-dialog': '#1c1b1e',     // neutral T10 — dialog elevation (darkened to restore contrast with internal sections T17/T22)
+          'surface-primary': '#201f22',    // neutral T12 (was T10 — +6 gap vs base)
+          'surface-secondary': '#323034',  // neutral T20 (was T17 — +8 gap vs primary)
+          'surface-tertiary': '#403d43',   // neutral T26 (was T22 — +6 gap vs secondary)
+          'surface-dialog': '#201f22',     // neutral T12 — dialog elevation (matches primary, preserves contrast with internal T20/T26)
           'surface-variant': '#49454E',        // MD3 surfaceVariant dark — NV tone 30
           'on-surface-variant': '#CAC4CF',     // MD3 onSurfaceVariant dark — NV tone 80
           // Content tokens (MD3 neutral palette)

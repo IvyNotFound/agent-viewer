@@ -111,11 +111,19 @@ body,
   --md-hr:          rgb(var(--v-theme-md-hr));
 }
 
+/* ── Dark mode elevation — stronger shadows + inner-glow for depth (T1808) ── */
+[data-v-theme="dark"] {
+  --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --elevation-2: 0 2px 6px rgba(0, 0, 0, 0.5);
+  --elevation-3: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
 /* ── Dev mode — slightly purple surface tint to distinguish dev from prod ──── */
 [data-v-theme="dark"][data-dev-mode] {
-  --v-theme-surface-base:      9,6,17;   /* zinc-950 + purple tint */
-  --v-theme-surface-primary:   13,10,20; /* zinc-900 + purple tint */
-  --v-theme-surface-secondary: 22,17,42; /* zinc-800 + purple tint */
+  --v-theme-surface-base:      9,6,17;    /* T6 + purple tint (unchanged) */
+  --v-theme-surface-primary:   17,14,24;  /* T12 + purple tint (was T10 — same offset as standard, T1808) */
+  --v-theme-surface-secondary: 29,24,49;  /* T20 + purple tint (was T17 — same offset as standard, T1808) */
 }
 
 
@@ -471,6 +479,13 @@ body,
 /* MD3 elevation tint: dialog cards float above the app base surface */
 .v-dialog .v-card {
   background-color: rgb(var(--v-theme-surface-dialog)) !important; /* override Vuetify internal surface — global selector, no scope hash */
+}
+/* Dark mode elevation shadows — reinforce depth perception on cards + dialogs (T1808) */
+[data-v-theme="dark"] .v-card--variant-elevated {
+  box-shadow: var(--elevation-2), var(--inner-glow) !important; /* override Vuetify flat shadow — global selector */
+}
+[data-v-theme="dark"] .v-dialog .v-card {
+  box-shadow: var(--elevation-3), var(--inner-glow) !important; /* override Vuetify flat shadow — global selector */
 }
 /* Vertical centering for v-card inside a v-dialog overlay content.
    .v-overlay__content is a flex column. When the dialog has a fixed height prop
