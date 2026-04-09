@@ -18,7 +18,7 @@ const colorMap: Record<ToastType, string> = {
       :timeout="-1"
       location="bottom end"
     >
-      {{ toast.message }}
+      <span style="white-space: pre-line">{{ toast.message }}</span>
       <v-btn
         icon
         variant="plain"

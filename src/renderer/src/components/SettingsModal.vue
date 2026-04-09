@@ -76,7 +76,8 @@ async function regenerateRulesFiles() {
       settingsStore.language,
     )
     if (result.success && result.filesCreated) {
-      emit('toast', t('settings.regenerateSuccess', { files: result.filesCreated.join(', ') }), 'success')
+      const fileList = result.filesCreated.map(f => `• ${f}`).join('\n')
+      emit('toast', t('settings.regenerateSuccess', { files: fileList }), 'success')
     } else {
       emit('toast', t('settings.regenerateError', { error: result.error ?? 'Unknown error' }), 'error')
     }
@@ -364,10 +365,11 @@ function onDefaultCliChange(v: string) {
               <v-btn
                 color="primary"
                 prepend-icon="mdi-file-refresh-outline"
+                :loading="regenerating"
                 :disabled="regenerating"
                 @click="regenerateRulesFiles"
               >
-                {{ regenerating ? t('settings.regenerating') : t('settings.regenerateRulesBtn') }}
+                {{ t('settings.regenerateRulesBtn') }}
               </v-btn>
             </v-sheet>
             <v-sheet rounded="lg" border class="pa-4">
