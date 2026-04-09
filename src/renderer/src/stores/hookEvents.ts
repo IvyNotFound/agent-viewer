@@ -46,10 +46,9 @@ export const useHookEventsStore = defineStore('hookEvents', () => {
     const toolUseId = p?.tool_use_id as string | undefined
     const e: HookEvent = { id: ++_seq, event: raw.event, payload: raw.payload, ts: raw.ts, sessionId, toolUseId }
 
-    events.value.push(e)
-    // TTL pruning — drop events older than 5 minutes relative to newest event, then cap (T1135)
+    // Single atomic reassign — avoids double reactive mutation that caused duplicate renders (T1814)
     const cutoff = e.ts - HOOK_EVENT_TTL_MS
-    const fresh = events.value.filter(ev => ev.ts > cutoff)
+    const fresh = [...events.value, e].filter(ev => ev.ts > cutoff)
     events.value = fresh.length > MAX_EVENTS ? fresh.slice(-MAX_EVENTS) : fresh
 
     const key = sessionId ?? '__global__'
