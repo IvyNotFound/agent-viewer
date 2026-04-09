@@ -235,11 +235,11 @@ describe('IPC project handlers — create-project-db & exportZip', () => {
       expect(result.success).toBe(true)
     })
 
-    it('T889: create-project-db with unknown lang falls back to fr', async () => {
+    it('T889: create-project-db with unknown lang falls back to en', async () => {
       const { mkdir, writeFile } = await import('fs/promises')
       vi.mocked(mkdir).mockResolvedValue(undefined)
       vi.mocked(writeFile).mockResolvedValue(undefined)
-      const result = await callHandler('create-project-db', '/fake/project', 'de') as {
+      const result = await callHandler('create-project-db', '/fake/project', 'xx') as {
         success: boolean; dbPath: string
       }
       expect(result.success).toBe(true)

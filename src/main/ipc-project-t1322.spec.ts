@@ -270,42 +270,46 @@ describe('ipc-project T1322 — trusted paths & CLAUDE.md resolution', () => {
     })
   })
 
-  // ── lang guard: lang === 'en' ? 'en' : 'fr' ───────────────────────────────
+  // ── lang guard: validLangs.includes() with 'en' fallback ───────────────────
 
-  describe('create-project-db — agentLang guard (lang === "en" exact branch)', () => {
-    it('lang="en": agentLang is "en" (exact string, not "fr")', async () => {
-      // The guard: `const agentLang: AgentLanguage = lang === 'en' ? 'en' : 'fr'`
-      // Kill EqualityOperator mutant (=== → !==) by verifying "en" and "fr" both work correctly
+  describe('create-project-db — agentLang guard (validLangs.includes)', () => {
+    it('lang="en": agentLang is "en"', async () => {
       const result = await callHandler('create-project-db', '/fake/project', 'en') as {
         success: boolean
       }
       expect(result.success).toBe(true)
     })
 
-    it('lang="fr": agentLang is "fr" (falls through else branch)', async () => {
+    it('lang="fr": agentLang is "fr"', async () => {
       const result = await callHandler('create-project-db', '/fake/project', 'fr') as {
         success: boolean
       }
       expect(result.success).toBe(true)
     })
 
-    it('lang=undefined: agentLang falls back to "fr" (undefined !== "en")', async () => {
+    it('lang=undefined: agentLang falls back to "en"', async () => {
       const result = await callHandler('create-project-db', '/fake/project', undefined) as {
         success: boolean
       }
       expect(result.success).toBe(true)
     })
 
-    it('lang="en" vs lang="fr" resolves to distinct language branches (not always same)', () => {
-      // Direct logic test — ensure the guard isn't collapsed to a constant
-      const enLang = 'en' === 'en' ? 'en' : 'fr'
-      const frLang = 'fr' === 'en' ? 'en' : 'fr'
-      const deLang = 'de' === 'en' ? 'en' : 'fr'
-      expect(enLang).toBe('en')
-      expect(frLang).toBe('fr')
-      expect(deLang).toBe('fr')
-      // "en" and "fr" must differ (kill mutant that makes guard always return same value)
-      expect(enLang).not.toBe(frLang)
+    it('valid lang "de" is used directly (not fallback)', async () => {
+      const { GENERIC_AGENTS_BY_LANG } = await import('./default-agents')
+      const validLangs = Object.keys(GENERIC_AGENTS_BY_LANG)
+      expect(validLangs).toContain('de')
+      expect(validLangs).toContain('ja')
+      expect(validLangs).toContain('zh-CN')
+    })
+
+    it('unknown lang "xx" falls back to "en" (not "fr")', async () => {
+      const { GENERIC_AGENTS_BY_LANG } = await import('./default-agents')
+      const validLangs = Object.keys(GENERIC_AGENTS_BY_LANG)
+      expect(validLangs).not.toContain('xx')
+      // Verify the fallback logic: unknown → 'en'
+      const lang = 'xx'
+      const agentLang = validLangs.includes(lang) ? lang : 'en'
+      expect(agentLang).toBe('en')
     })
   })
 

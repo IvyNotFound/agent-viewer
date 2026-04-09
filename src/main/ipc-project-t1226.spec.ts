@@ -395,13 +395,12 @@ describe('ipc-project T1226 — exact string & value assertions', () => {
       }
     })
 
-    it('unknown lang (not "en") → fallback to "fr" agents', async () => {
+    it('unknown lang → fallback to "en" agents', async () => {
       const { GENERIC_AGENTS_BY_LANG } = await import('./default-agents')
-      await callHandler('create-project-db', '/fake/project', 'zh')
-      const frNames = GENERIC_AGENTS_BY_LANG['fr'].map(a => a.name)
+      await callHandler('create-project-db', '/fake/project', 'xx')
+      const enNames = GENERIC_AGENTS_BY_LANG['en'].map(a => a.name)
       const runCalls = mockRun.mock.calls.map((c: unknown[]) => c[0])
-      // Should have fr agent names (not en-specific)
-      for (const name of frNames) {
+      for (const name of enNames) {
         expect(runCalls).toContain(name)
       }
     })
