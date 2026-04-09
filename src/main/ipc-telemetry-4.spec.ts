@@ -31,6 +31,24 @@ vi.mock('./db', () => ({
   assertProjectPathAllowed: vi.fn(),
 }))
 
+vi.mock('worker_threads', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('worker_threads')>()
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { EventEmitter } = require('events')
+  class MockWorker extends EventEmitter {
+    constructor(_p: string, opts: { workerData: { projectPath: string } }) {
+      super()
+      import('./telemetry-scanner').then(({ scanProject }) =>
+        scanProject(opts.workerData.projectPath).then(
+          (r) => { this.emit('message', { data: r }); this.emit('exit', 0) },
+          (e: unknown) => { this.emit('message', { error: (e as Error).message }); this.emit('exit', 1) },
+        ),
+      )
+    }
+  }
+  return { ...actual, Worker: MockWorker, default: { ...actual, Worker: MockWorker } }
+})
+
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, ...args: unknown[]) => unknown
 const registeredHandlers: Record<string, IpcHandler> = {}
 
