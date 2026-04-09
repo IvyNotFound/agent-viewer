@@ -397,7 +397,6 @@
       "doc": "README، CONTRIBUTING، JSDoc",
       "planner": "تخطيط المهام وإنشاء التذاكر"
     },
-    "preferredCli": "CLI المفضل",
     "preferredCliNote": "يتجاوز CLI الافتراضي العام لهذا الوكيل",
     "preferredModel": "النموذج المفضل",
     "preferredModelNote": "يتجاوز النموذج العام المحدد في الإعدادات",

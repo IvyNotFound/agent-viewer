@@ -376,7 +376,6 @@
     "deleting": "Suppression…",
     "newPerimetre": "Nouveau périmètre",
     "newPerimetrePlaceholder": "scope-name",
-    "preferredCli": "CLI préféré",
     "preferredCliNote": "Surcharge le CLI par défaut global pour cet agent",
     "preferredModel": "Modèle préféré",
     "preferredModelNote": "Surcharge le modèle global défini dans les paramètres",

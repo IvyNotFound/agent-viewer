@@ -397,7 +397,6 @@
       "doc": "README, CONTRIBUTING, JSDoc",
       "planner": "Oppgaveplanlegging & billetoppretting"
     },
-    "preferredCli": "Foretrukket CLI",
     "preferredCliNote": "Overstyrer den globale standard-CLI for denne agenten",
     "preferredModel": "Foretrukket modell",
     "preferredModelNote": "Overstyrer den globale modellen definert i innstillinger",

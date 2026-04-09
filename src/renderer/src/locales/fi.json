@@ -397,7 +397,6 @@
       "doc": "README, CONTRIBUTING, JSDoc",
       "planner": "Tehtävien suunnittelu & tikettien luonti"
     },
-    "preferredCli": "Ensisijainen CLI",
     "preferredCliNote": "Ohittaa globaalin oletus-CLI:n tälle agentille",
     "preferredModel": "Ensisijainen malli",
     "preferredModelNote": "Ohittaa asetuksissa määritetyn globaalin mallin",

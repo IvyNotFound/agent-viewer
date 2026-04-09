@@ -384,7 +384,6 @@
     "deleting": "Deleting…",
     "newPerimetre": "New scope",
     "newPerimetrePlaceholder": "scope-name",
-    "preferredCli": "Preferred CLI",
     "preferredCliNote": "Overrides the global default CLI for this agent",
     "preferredModel": "Preferred model",
     "preferredModelNote": "Overrides the global model defined in settings",

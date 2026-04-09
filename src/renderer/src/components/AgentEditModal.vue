@@ -262,7 +262,7 @@ async function save() {
 
           <!-- CLI preference (radio buttons — aligned with LaunchSessionModal) -->
           <div>
-            <p class="section-title mb-2 text-body-2">{{ t('agent.preferredCli') }}</p>
+            <p class="section-title mb-2 text-body-2">{{ t('launch.instance') }}</p>
 
             <div v-if="loading" class="text-body-2 text-medium-emphasis">{{ t('common.loading') }}</div>
 
@@ -340,7 +340,7 @@ async function save() {
             leave-to-class="expand-leave-to"
           >
             <div v-if="cliSupportsModel && availableModels.length > 0">
-              <p class="section-title mb-2 text-body-2">{{ t('agent.preferredModel') }}</p>
+              <p class="section-title mb-2 text-body-2">{{ t('launch.model') }}</p>
               <v-select
                 v-model="preferredModel"
                 :items="availableModels"

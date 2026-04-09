@@ -397,7 +397,6 @@
       "doc": "README, CONTRIBUTING, JSDoc",
       "planner": "Aufgabenplanung & Ticket-Erstellung"
     },
-    "preferredCli": "Bevorzugte CLI",
     "preferredCliNote": "Überschreibt die globale Standard-CLI für diesen Agenten",
     "preferredModel": "Bevorzugtes Modell",
     "preferredModelNote": "Überschreibt das globale Modell aus den Einstellungen",

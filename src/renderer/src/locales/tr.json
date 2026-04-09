@@ -397,7 +397,6 @@
       "doc": "README, CONTRIBUTING, JSDoc",
       "planner": "Görev planlama & bilet oluşturma"
     },
-    "preferredCli": "Tercih edilen CLI",
     "preferredCliNote": "Bu ajan için genel varsayılan CLI'yi geçersiz kılar",
     "preferredModel": "Tercih edilen model",
     "preferredModelNote": "Ayarlarda tanımlanan genel modeli geçersiz kılar",

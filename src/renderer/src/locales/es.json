@@ -397,7 +397,6 @@
       "doc": "README, CONTRIBUTING, JSDoc",
       "planner": "Planificación de tareas & creación de tickets"
     },
-    "preferredCli": "CLI preferido",
     "preferredCliNote": "Reemplaza el CLI predeterminado global para este agente",
     "preferredModel": "Modelo preferido",
     "preferredModelNote": "Reemplaza el modelo global definido en los ajustes",

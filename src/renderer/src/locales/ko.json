@@ -397,7 +397,6 @@
       "doc": "README, CONTRIBUTING, JSDoc",
       "planner": "작업 계획 & 티켓 생성"
     },
-    "preferredCli": "선호 CLI",
     "preferredCliNote": "이 에이전트의 글로벌 기본 CLI를 재정의합니다",
     "preferredModel": "선호 모델",
     "preferredModelNote": "설정에서 정의된 글로벌 모델을 재정의합니다",

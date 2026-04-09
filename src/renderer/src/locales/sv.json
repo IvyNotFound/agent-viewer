@@ -397,7 +397,6 @@
       "doc": "README, CONTRIBUTING, JSDoc",
       "planner": "Uppgiftsplanering & biljetthantering"
     },
-    "preferredCli": "Föredragen CLI",
     "preferredCliNote": "Åsidosätter den globala standard-CLI:n för denna agent",
     "preferredModel": "Föredragen modell",
     "preferredModelNote": "Åsidosätter den globala modellen definierad i inställningar",
