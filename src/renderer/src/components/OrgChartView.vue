@@ -45,6 +45,7 @@ async function fetchData(): Promise<void> {
            SELECT s2.id FROM sessions s2 WHERE s2.agent_id = a.id
            ORDER BY s2.started_at DESC LIMIT 1
          )
+         WHERE a.type != 'setup'
          ORDER BY a.name`,
         []
       ) as Promise<AgentRow[]>,
@@ -205,12 +206,18 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
       <div class="oc-header-right">
         <!-- Legend -->
         <div class="oc-legend">
-          <span v-for="(color, key) in dotColors" :key="key" class="oc-legend-item text-label-medium">
+          <v-chip
+            v-for="(color, key) in dotColors"
+            :key="key"
+            size="x-small"
+            variant="tonal"
+            label
+          >
             <span class="oc-legend-dot" :style="{ background: color }"></span>
-            <span>{{ key === 'cyan' ? t('orgchart.status.active') : key === 'green' ? t('orgchart.status.todo') : key === 'yellow' ? t('orgchart.status.idle') : key === 'red' ? t('orgchart.status.blocked') : t('orgchart.status.inactive') }}</span>
-          </span>
+            {{ key === 'cyan' ? t('orgchart.status.active') : key === 'green' ? t('orgchart.status.todo') : key === 'yellow' ? t('orgchart.status.idle') : key === 'red' ? t('orgchart.status.blocked') : t('orgchart.status.inactive') }}
+          </v-chip>
         </div>
-        <v-btn variant="tonal" size="small" class="oc-btn text-caption" @click="fitView">Fit</v-btn>
+        <v-btn variant="text" size="small" icon="mdi-fit-to-screen" :title="'Fit'" @click="fitView" />
         <v-btn icon="mdi-refresh" variant="text" size="small" :loading="loading" :title="t('common.refresh')" @click="fetchData" />
       </div>
     </div>
@@ -237,7 +244,7 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             :y="group.y"
             :width="group.w"
             :height="group.h"
-            rx="8"
+            :rx="group.depth === 0 ? 12 : 8"
             :style="{ fill: group.depth === 0 ? 'rgb(var(--v-theme-surface-primary))' : 'rgb(var(--v-theme-surface-secondary))' }"
             :stroke="group.depth === 0 ? 'rgb(var(--v-theme-edge-default))' : 'rgb(var(--v-theme-content-faint))'"
             stroke-width="1"
@@ -246,59 +253,74 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             :x="group.x + group.w / 2"
             :y="group.y + NESTING_PAD + GROUP_HEADER_H / 2 + 4"
             text-anchor="middle"
-            font-size="11"
-            font-family="ui-monospace, monospace"
-            font-weight="600"
-            :style="{ fill: 'rgb(var(--v-theme-content-muted))' }"
+            font-size="12"
+            font-family="ui-sans-serif, system-ui, sans-serif"
+            font-weight="500"
+            letter-spacing="0.031em"
+            :style="{ fill: 'rgb(var(--v-theme-content-secondary))' }"
           >{{ group.label }}</text>
         </g>
 
         <!-- Agent cards (rendered last = on top of all group rects) -->
         <g v-for="node in allAgentsFlat" :key="`card-${node.id}`">
+          <!-- Card background with elevation -->
           <rect
             :x="node.x"
             :y="node.y"
             :width="CARD_W"
             :height="CARD_H"
             rx="8"
-            :style="{ fill: 'rgb(var(--v-theme-surface-base))' }"
+            :style="{ fill: 'rgb(var(--v-theme-surface-base))', filter: 'drop-shadow(0px 1px 3px rgba(0,0,0,0.4))' }"
             stroke="rgb(var(--v-theme-edge-default))"
             stroke-width="1"
           />
+          <!-- Inner glow overlay (dark mode surface tint) -->
+          <rect
+            :x="node.x"
+            :y="node.y"
+            :width="CARD_W"
+            :height="CARD_H"
+            rx="8"
+            fill="rgba(255,255,255,0.03)"
+            pointer-events="none"
+          />
           <circle
-            :cx="node.x + CARD_W - 12"
-            :cy="node.y + 12"
-            r="5"
+            :cx="node.x + CARD_W - 14"
+            :cy="node.y + 14"
+            r="4"
             :fill="dotColors[node.status]"
           >
             <animate
               v-if="node.status === 'cyan'"
               attributeName="opacity"
-              values="1;0.4;1"
-              dur="2s"
+              values="1;0.5;1"
+              dur="1.8s"
               repeatCount="indefinite"
             />
           </circle>
           <text
             :x="node.x + 10"
             :y="node.y + 22"
-            font-size="12"
-            font-family="ui-monospace, monospace"
-            font-weight="700"
+            font-size="13"
+            font-family="ui-sans-serif, system-ui, sans-serif"
+            font-weight="500"
             :fill="agentFg(node.name)"
           >{{ node.name.length > 16 ? node.name.slice(0, 15) + '\u2026' : node.name }}</text>
           <text
             :x="node.x + 10"
             :y="node.y + 38"
-            font-size="10"
-            font-family="ui-monospace, monospace"
+            font-size="11"
+            font-family="ui-sans-serif, system-ui, sans-serif"
+            font-weight="400"
+            letter-spacing="0.02em"
             :style="{ fill: 'rgb(var(--v-theme-content-subtle))' }"
           >{{ node.type }}</text>
           <text
             :x="node.x + 10"
             :y="node.y + 56"
-            font-size="10"
+            font-size="11"
             font-family="ui-sans-serif, system-ui, sans-serif"
+            font-weight="500"
             :fill="dotColors[node.status]"
           >{{ node.status === 'cyan' ? t('orgchart.status.active') : node.status === 'green' ? t('orgchart.status.todoAssigned') : node.status === 'yellow' ? t('orgchart.status.idle') : node.status === 'red' ? t('orgchart.status.blocked') : t('orgchart.status.inactive') }}</text>
         </g>
@@ -329,13 +351,8 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
 .oc-loading {}
 @keyframes ocPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 .oc-header-right { display: flex; align-items: center; gap: 8px; }
-.oc-legend { display: flex; align-items: center; gap: 12px; margin-right: 12px; }
-.oc-legend-item { display: flex; align-items: center; gap: 4px; color: var(--content-faint); 
-}
-.oc-legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-.oc-btn {
-  color: var(--content-muted) !important;
-}
+.oc-legend { display: flex; align-items: center; gap: 8px; margin-right: 12px; }
+.oc-legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
 .oc-empty {
   display: flex;
   align-items: center;
