@@ -19,7 +19,7 @@
  * @module composables/useAutoLaunch
  */
 
-import { watch, type Ref } from 'vue'
+import { watch, onUnmounted, type Ref } from 'vue'
 import { useTabsStore } from '@renderer/stores/tabs'
 import type { Tab } from '@renderer/stores/tabs'
 import { useSettingsStore } from '@renderer/stores/settings'
@@ -98,6 +98,8 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
   let lastReviewLaunchedAt = 0
   /** Debounce timer for rapid batch task updates */
   let debounceId: ReturnType<typeof setTimeout> | null = null
+  /** Track fire-and-forget timeouts (doClose delay, immediate polls) for cleanup */
+  const looseTimeouts = new Set<ReturnType<typeof setTimeout>>()
 
   watch(tasks, (newTasks) => {
     if (!dbPath.value) return
@@ -179,6 +181,23 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     pendingCloses.clear()
   })
 
+  onUnmounted(() => {
+    if (debounceId !== null) {
+      clearTimeout(debounceId)
+      debounceId = null
+    }
+    for (const pending of pendingCloses.values()) {
+      clearInterval(pending.intervalId)
+      if (pending.fallbackId) clearTimeout(pending.fallbackId)
+    }
+    pendingCloses.clear()
+    for (const id of looseTimeouts) {
+      clearTimeout(id)
+    }
+    looseTimeouts.clear()
+    pendingImmediatePolls.clear()
+  })
+
   function checkReviewThreshold(currentTasks: Task[]): void {
     // Fast O(N) count without array allocation — filter only when threshold is met (T533)
     let doneCount = 0
@@ -206,7 +225,11 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     const tab = tabsStore.tabs.find(t => t.id === tabId)
     if (tab) {
       if (tab.streamId) window.electronAPI.agentKill(tab.streamId).catch(() => {})
-      setTimeout(() => tabsStore.closeTab(tab.id), pending.postCompleteDelayMs)
+      const closeId = setTimeout(() => {
+        looseTimeouts.delete(closeId)
+        tabsStore.closeTab(tab.id)
+      }, pending.postCompleteDelayMs)
+      looseTimeouts.add(closeId)
     }
   }
 
@@ -257,10 +280,12 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     // Immediate poll — guarded to prevent N parallel polls when watch fires rapidly
     if (!pendingImmediatePolls.has(key)) {
       pendingImmediatePolls.add(key)
-      setTimeout(() => {
+      const pollId = setTimeout(() => {
+        looseTimeouts.delete(pollId)
         pendingImmediatePolls.delete(key)
         pollSessionStatus(key, agentId, path, notBefore)
       }, 0)
+      looseTimeouts.add(pollId)
     }
 
     const intervalId = setInterval(
