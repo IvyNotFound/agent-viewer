@@ -136,8 +136,7 @@ async function handleSetup() {
   <!-- Overlay -->
   <div class="wizard-overlay">
     <v-card class="wizard-card" elevation="3" rounded="xl">
-
-      <!-- Header -->
+<!-- Header -->
       <div class="wizard-header d-flex align-center ga-3 px-6 pt-6 pb-4">
         <!-- Icon -->
         <div
@@ -162,8 +161,7 @@ async function handleSetup() {
       <!-- Body -->
       <v-card-text class="px-6 py-5">
         <div class="d-flex flex-column ga-4">
-
-          <!-- Case B: CLAUDE.md present, no DB -->
+<!-- Case B: CLAUDE.md present, no DB -->
           <template v-if="hasCLAUDEmd">
             <p class="text-body-2 text-medium-emphasis">
               {{ t('setup.hasCLAUDEmdDesc', {
@@ -297,9 +295,10 @@ async function handleSetup() {
             variant="tonal"
             density="compact"
             class="text-caption"
-          >{{ errorMsg }}</v-alert>
-
-        </div>
+          >
+{{ errorMsg }}
+</v-alert>
+</div>
       </v-card-text>
 
       <!-- Footer -->
@@ -310,7 +309,9 @@ async function handleSetup() {
           size="small"
           :disabled="creating"
           @click="emit('skip')"
-        >{{ t('setup.skip') }}</v-btn>
+        >
+{{ t('setup.skip') }}
+</v-btn>
         <v-spacer />
         <v-btn
           data-testid="btn-action"
@@ -323,8 +324,7 @@ async function handleSetup() {
           {{ creating ? t('setup.creating') : hasCLAUDEmd ? t('setup.createDb') : t('setup.initProject') }}
         </v-btn>
       </v-card-actions>
-
-    </v-card>
+</v-card>
   </div>
 </template>
 

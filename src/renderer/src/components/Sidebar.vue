@@ -49,8 +49,7 @@ function toggleSection(section: Section) {
     <div class="sidebar-inner">
       <!-- ── Activity Rail (always visible, 48px) ── -->
       <div class="rail">
-
-        <!-- Backlog — direct navigation to backlog tab -->
+<!-- Backlog — direct navigation to backlog tab -->
         <v-btn
           :title="t('sidebar.backlog')"
           icon
@@ -139,8 +138,7 @@ function toggleSection(section: Section) {
       <!-- ── Panel collapsible (0 → 272px) ── -->
       <div class="panel" :style="{ width: activeSection ? '272px' : '0px' }">
         <div class="panel-inner">
-
-          <!-- Header -->
+<!-- Header -->
           <div class="panel-header">
             <p class="panel-title text-label-medium">
               {{ activeSection ? sectionTitles[activeSection] : '' }}
@@ -169,8 +167,7 @@ function toggleSection(section: Section) {
           <template v-else-if="activeSection === 'tree'">
             <SidebarFileTree ref="fileTreeRef" :project-path="store.projectPath" />
           </template>
-
-        </div>
+</div>
       </div>
     </div>
   </v-navigation-drawer>

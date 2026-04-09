@@ -95,8 +95,7 @@ function tooltip(day: DayBars): string {
       </h3>
     </div>
     <div class="chart-body">
-
-      <!-- Loading -->
+<!-- Loading -->
       <div v-if="loading" class="d-flex align-center justify-center flex-1">
         <span class="text-caption text-disabled">{{ t('sessionActivityChart.loading') }}</span>
       </div>
@@ -117,9 +116,9 @@ function tooltip(day: DayBars): string {
             :title="tooltip(day)"
           >
             <div v-if="day.completed > 0" class="bar bar-completed" :style="{ height: segH(day.completed) }" />
-            <div v-if="day.started > 0"   class="bar bar-started"   :style="{ height: segH(day.started) }" />
-            <div v-if="day.blocked > 0"   class="bar bar-blocked"   :style="{ height: segH(day.blocked) }" />
-            <div v-if="day.total === 0"   class="bar bar-empty" style="height: 4px" />
+            <div v-if="day.started > 0" class="bar bar-started" :style="{ height: segH(day.started) }" />
+            <div v-if="day.blocked > 0" class="bar bar-blocked" :style="{ height: segH(day.blocked) }" />
+            <div v-if="day.total === 0" class="bar bar-empty" style="height: 4px" />
           </div>
         </div>
 
@@ -154,8 +153,7 @@ function tooltip(day: DayBars): string {
           </span>
         </div>
       </template>
-
-    </div>
+</div>
   </v-card>
 </template>
 

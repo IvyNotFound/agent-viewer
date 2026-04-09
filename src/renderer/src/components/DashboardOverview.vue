@@ -183,26 +183,22 @@ function priorityColor(priority: string): string {
 
 <template>
   <div class="overview-root">
-
-    <!-- Fixed header -->
+<!-- Fixed header -->
     <div class="overview-header">
       <h2 class="text-h6 font-weight-medium overview-title">{{ t('dashboard.overview') }}</h2>
     </div>
 
     <!-- Scrollable body -->
     <div class="overview-body">
-
-    <!-- No project state -->
+<!-- No project state -->
     <div v-if="!store.dbPath" class="d-flex align-center justify-center" style="height: 160px;">
       <p class="text-body-2 text-medium-emphasis font-italic">{{ t('common.noProject') }}</p>
     </div>
 
     <template v-else>
-
-      <!-- ── 4 Metric Cards ─────────────────────────────────────────────── -->
+<!-- ── 4 Metric Cards ─────────────────────────────────────────────── -->
       <v-row class="row-16">
-
-        <!-- Active agents -->
+<!-- Active agents -->
         <v-col cols="3">
           <v-card elevation="1" class="metric-card">
             <v-card-text class="d-flex align-center ga-3 pa-4">
@@ -265,8 +261,7 @@ function priorityColor(priority: string): string {
             </v-card-text>
           </v-card>
         </v-col>
-
-      </v-row>
+</v-row>
 
       <!-- ── Token telemetry (full width) ──────────────────────────────── -->
       <TokenTelemetryPanel
@@ -277,8 +272,7 @@ function priorityColor(priority: string): string {
 
       <!-- ── Recent tasks + activity ────────────────────────────────────── -->
       <v-row class="row-16">
-
-        <!-- Recent tasks -->
+<!-- Recent tasks -->
         <v-col cols="6">
           <v-card elevation="0" class="metric-card section-card">
             <div class="section-header">
@@ -304,7 +298,9 @@ function priorityColor(priority: string): string {
                     variant="tonal"
                     label
                     class="shrink-0"
-                  >{{ STATUT_LABEL[task.status] ?? task.status }}</v-chip>
+                  >
+{{ STATUT_LABEL[task.status] ?? task.status }}
+</v-chip>
                   <div class="task-meta-inner">
                     <p class="text-caption text-truncate">{{ task.title }}</p>
                     <div class="d-flex align-center ga-1 mt-1">
@@ -363,8 +359,7 @@ function priorityColor(priority: string): string {
             </div>
           </v-card>
         </v-col>
-
-      </v-row>
+</v-row>
 
       <!-- ── Code telemetry + Heatmap ───────────────────────────────────── -->
       <v-row class="row-16">
@@ -403,10 +398,8 @@ function priorityColor(priority: string): string {
           </v-card>
         </template>
       </Suspense>
-
-    </template>
-
-    </div><!-- end overview-body -->
+</template>
+</div><!-- end overview-body -->
   </div>
 </template>
 

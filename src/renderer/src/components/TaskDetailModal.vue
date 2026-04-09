@@ -175,8 +175,7 @@ onUnmounted(() => {
 
       <!-- Panel -->
       <div ref="taskPanelRef" class="task-panel elevation-3">
-
-        <!-- Header -->
+<!-- Header -->
         <div class="task-header ga-3 py-4 px-5">
           <div class="task-header-left">
             <p class="task-title mb-2 text-body-2">{{ task.title }}</p>
@@ -201,13 +200,17 @@ onUnmounted(() => {
                   borderColor: perimeterBorder(task.scope),
                   backgroundColor: perimeterBg(task.scope),
                 }"
-              >{{ task.scope }}</v-chip>
+              >
+{{ task.scope }}
+</v-chip>
               <v-chip
                 v-if="task.effort"
                 size="small"
                 variant="tonal"
                 :color="EFFORT_COLOR[task.effort]"
-              >{{ EFFORT_LABEL[task.effort] }}</v-chip>
+              >
+{{ EFFORT_LABEL[task.effort] }}
+</v-chip>
             </div>
           </div>
           <v-btn
@@ -222,12 +225,12 @@ onUnmounted(() => {
 
         <!-- Body : 2 colonnes -->
         <div class="task-body">
-
-          <!-- Colonne gauche : description + commentaire tâche -->
+<!-- Colonne gauche : description + commentaire tâche -->
           <div class="task-left-col py-4 px-5 ga-5">
             <!-- Description -->
             <div v-if="task.description">
               <p class="section-label mb-2 text-label-medium">{{ t('taskDetail.description') }}</p>
+              <!-- eslint-disable-next-line vue/no-v-html -- sanitized via DOMPurify -->
               <div class="md-content" v-html="renderedDescription"></div>
             </div>
 
@@ -238,8 +241,7 @@ onUnmounted(() => {
 
           <!-- Colonne droite : assignés + commentaires -->
           <div class="task-right-col">
-
-            <!-- T553: Blocked indicator -->
+<!-- T553: Blocked indicator -->
             <div v-if="isBlocked" class="blocked-banner py-2 px-4">
               <p class="section-label mb-1 text-label-medium" style="color: rgb(var(--v-theme-warning));">{{ t('taskDetail.blockedTitle') }}</p>
               <ul class="blocked-list">
@@ -300,7 +302,9 @@ onUnmounted(() => {
                   class="toggle-arrow"
                   :class="gitCommitsOpen ? 'toggle-arrow--open' : ''"
                   size="14"
-                >mdi-chevron-right</v-icon>
+                >
+mdi-chevron-right
+</v-icon>
               </v-btn>
               <div v-if="gitCommitsOpen" class="commits-content">
                 <GitCommitList
@@ -324,7 +328,9 @@ onUnmounted(() => {
                     :style="{ color: agentFg(a.agent_name), backgroundColor: agentBg(a.agent_name) }"
                     :title="a.agent_name"
                     class="text-overline font-weight-bold"
-                  >{{ a.agent_name.slice(0, 2).toUpperCase() }}</v-avatar>
+                  >
+{{ a.agent_name.slice(0, 2).toUpperCase() }}
+</v-avatar>
                   <span class="text-caption" style="color: var(--content-secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ a.agent_name }}</span>
                   <span class="text-caption" style="color: var(--content-faint); flex-shrink: 0;">{{ a.role ?? '—' }}</span>
                 </div>
@@ -352,13 +358,16 @@ onUnmounted(() => {
                         size="32"
                         :style="{ color: agentFg(comment.agent_name ?? 'unknown'), backgroundColor: agentBg(comment.agent_name ?? 'unknown') }"
                         class="text-overline font-weight-bold flex-shrink-0"
-                      >{{ (comment.agent_name ?? '?').slice(0, 2).toUpperCase() }}</v-avatar>
+                      >
+{{ (comment.agent_name ?? '?').slice(0, 2).toUpperCase() }}
+</v-avatar>
                       <span class="comment-author">{{ comment.agent_name ?? '?' }}</span>
                     </div>
                     <span class="comment-time" :title="formatDateFull(comment.created_at)">
                       {{ relativeTime(comment.created_at) }}
                     </span>
                   </div>
+                  <!-- eslint-disable-next-line vue/no-v-html -- sanitized via DOMPurify -->
                   <div class="comment-bubble-body" v-html="comment._html"></div>
                 </div>
               </div>

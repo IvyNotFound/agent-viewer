@@ -202,7 +202,9 @@ const archivedFlat = computed(() => pagination.archivedTasks.value)
           color="primary"
           closable
           @click:close="store.selectedAgentId = null"
-        >{{ activeAgentName }}</v-chip>
+        >
+{{ activeAgentName }}
+</v-chip>
         <v-chip
           v-if="store.selectedPerimetre"
           size="small"
@@ -210,7 +212,9 @@ const archivedFlat = computed(() => pagination.archivedTasks.value)
           closable
           :style="{ color: agentFg(store.selectedPerimetre), backgroundColor: agentBg(store.selectedPerimetre) }"
           @click:close="store.selectedPerimetre = null"
-        >{{ store.selectedPerimetre }}</v-chip>
+        >
+{{ store.selectedPerimetre }}
+</v-chip>
         <div v-if="store.error" class="board-error">{{ store.error }}</div>
       </div>
     </div>
@@ -311,7 +315,9 @@ const archivedFlat = computed(() => pagination.archivedTasks.value)
                         color: perimeterFg(task.scope),
                         backgroundColor: perimeterBg(task.scope),
                       }"
-                    >{{ task.scope }}</v-chip>
+                    >
+{{ task.scope }}
+</v-chip>
                     <v-chip v-if="task.priority === 'critical'" size="x-small" variant="tonal" color="chip-priority-critical">!!</v-chip>
                     <v-chip v-if="task.priority === 'high'" size="x-small" variant="tonal" color="chip-priority-high">!</v-chip>
                     <v-chip size="x-small" variant="tonal" class="arc-id-chip">#{{ task.id }}</v-chip>
@@ -345,7 +351,9 @@ const archivedFlat = computed(() => pagination.archivedTasks.value)
                     color: perimeterFg(task.scope),
                     backgroundColor: perimeterBg(task.scope),
                   }"
-                >{{ task.scope }}</v-chip>
+                >
+{{ task.scope }}
+</v-chip>
                 <v-chip v-if="task.priority === 'critical'" size="x-small" variant="tonal" color="chip-priority-critical">!!</v-chip>
                 <v-chip v-if="task.priority === 'high'" size="x-small" variant="tonal" color="chip-priority-high">!</v-chip>
                 <v-chip size="x-small" variant="tonal" class="arc-id-chip">#{{ task.id }}</v-chip>

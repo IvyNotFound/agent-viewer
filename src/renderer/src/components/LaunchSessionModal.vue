@@ -264,8 +264,7 @@ async function launch() {
 
         <!-- Body -->
         <div class="modal-body">
-
-          <!-- Unified instance list: all CLIs × all environments (Windows, WSL distros, local) -->
+<!-- Unified instance list: all CLIs × all environments (Windows, WSL distros, local) -->
           <div>
             <p class="section-title mb-2 text-body-2">{{ t('launch.instance') }}</p>
 

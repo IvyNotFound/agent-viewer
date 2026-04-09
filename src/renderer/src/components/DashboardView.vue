@@ -75,8 +75,7 @@ const subTabs = computed<{ id: SubTab; label: string }[]>(() => [
 
 <template>
   <div class="dashboard-view">
-
-    <!-- Sub-tab bar -->
+<!-- Sub-tab bar -->
     <v-tabs
       v-model="activeSubTab"
       density="compact"
@@ -88,7 +87,9 @@ const subTabs = computed<{ id: SubTab; label: string }[]>(() => [
         :key="tab.id"
         :value="tab.id"
         class="dash-tab"
-      >{{ tab.label }}</v-tab>
+      >
+{{ tab.label }}
+</v-tab>
     </v-tabs>
 
     <!-- Overview -->
@@ -170,8 +171,7 @@ const subTabs = computed<{ id: SubTab; label: string }[]>(() => [
 
     <!-- Timeline -->
     <TimelineView v-if="activeSubTab === 'timeline'" class="tab-content" />
-
-  </div>
+</div>
 </template>
 
 <style scoped>

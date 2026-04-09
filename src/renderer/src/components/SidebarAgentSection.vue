@@ -290,8 +290,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
 
 <template>
   <div class="agent-section py-3 px-4">
-
-    <!-- Reset agent filter -->
+<!-- Reset agent filter -->
     <div v-if="store.selectedAgentId !== null" class="reset-row mb-2">
       <v-btn variant="text" size="small" color="primary" class="reset-btn text-caption" @click="store.selectedAgentId = null">
         {{ t('sidebar.reset') }}
@@ -318,8 +317,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
     <!-- Grouped agents — flat list with depth-based indentation (replaces v-treeview) -->
     <div v-if="flatNodes.length > 0" class="tree mb-2">
       <template v-for="node in flatNodes" :key="node.id">
-
-        <!-- GROUP NODE -->
+<!-- GROUP NODE -->
         <div
           v-if="node.type === 'group'"
           class="group-zone"
@@ -431,8 +429,7 @@ async function duplicateAgent(agent: Agent): Promise<void> {
             </div>
           </v-list-item>
         </div>
-
-      </template>
+</template>
     </div>
 
     <!-- Ungrouped agents section -->

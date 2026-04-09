@@ -8,6 +8,8 @@ const props = withDefaults(defineProps<{
   cancelLabel?: string
   danger?: boolean
 }>(), {
+  confirmLabel: undefined,
+  cancelLabel: undefined,
   danger: false,
 })
 

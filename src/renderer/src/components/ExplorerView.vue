@@ -86,9 +86,9 @@ onMounted(loadTree)
       </div>
       <div v-else class="ex-tree-nodes">
         <FileTreeNode
-          v-for="node in tree"
-          :key="node.path"
-          :node="node"
+          v-for="treeNode in tree"
+          :key="treeNode.path"
+          :node="treeNode"
           :open-dirs="openDirs"
           :selected-path="selectedPath"
           :depth="0"
@@ -119,81 +119,6 @@ onMounted(loadTree)
     </div>
   </div>
 </template>
-
-<style scoped>
-.ex-view { flex: 1; display: flex; overflow: hidden; }
-
-.ex-tree {
-  width: 256px;
-  flex-shrink: 0;
-  border-right: 1px solid var(--edge-subtle);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-.ex-tree-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--edge-subtle);
-  flex-shrink: 0;
-}
-.ex-tree-label {
-  font-weight: 600;
-  color: var(--content-subtle);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.ex-tree-nodes { flex: 1; padding: 4px 0; user-select: none; }
-
-.ex-state-center { flex: 1; display: flex; align-items: center; justify-content: center; }
-.ex-padded { padding: 16px; }
-.ex-loading {}
-@keyframes exPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-.ex-faint {}
-.ex-subtle {}
-.ex-dim {}
-.ex-center { text-align: center; }
-.ex-italic { font-style: italic; }
-
-.ex-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.ex-content-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--edge-subtle);
-  flex-shrink: 0;
-  min-height: 41px;
-}
-.ex-content-filename {
-  font-size: 12px; /* monospace filename — code path exception */
-  font-family: ui-monospace, monospace;
-  color: var(--content-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.ex-line-count { margin-left: auto; color: var(--content-faint); flex-shrink: 0; 
-}
-.ex-content-body { flex: 1; overflow: auto; }
-.ex-pre {
-  font-size: 12px; /* monospace code preview — exception */
-  font-family: ui-monospace, monospace;
-  color: var(--content-tertiary);
-  line-height: 1.625;
-  padding: 16px;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  margin: 0;
-}
-</style>
 
 <script lang="ts">
 // Sub-component: recursive file tree node — VS Code-style rendering
@@ -311,3 +236,78 @@ const FileTreeNode = defineComponent({
 
 export { FileTreeNode }
 </script>
+
+<style scoped>
+.ex-view { flex: 1; display: flex; overflow: hidden; }
+
+.ex-tree {
+  width: 256px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--edge-subtle);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.ex-tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--edge-subtle);
+  flex-shrink: 0;
+}
+.ex-tree-label {
+  font-weight: 600;
+  color: var(--content-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ex-tree-nodes { flex: 1; padding: 4px 0; user-select: none; }
+
+.ex-state-center { flex: 1; display: flex; align-items: center; justify-content: center; }
+.ex-padded { padding: 16px; }
+.ex-loading {}
+@keyframes exPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+.ex-faint {}
+.ex-subtle {}
+.ex-dim {}
+.ex-center { text-align: center; }
+.ex-italic { font-style: italic; }
+
+.ex-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ex-content-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--edge-subtle);
+  flex-shrink: 0;
+  min-height: 41px;
+}
+.ex-content-filename {
+  font-size: 12px; /* monospace filename — code path exception */
+  font-family: ui-monospace, monospace;
+  color: var(--content-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ex-line-count { margin-left: auto; color: var(--content-faint); flex-shrink: 0; 
+}
+.ex-content-body { flex: 1; overflow: auto; }
+.ex-pre {
+  font-size: 12px; /* monospace code preview — exception */
+  font-family: ui-monospace, monospace;
+  color: var(--content-tertiary);
+  line-height: 1.625;
+  padding: 16px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  margin: 0;
+}
+</style>

@@ -122,8 +122,7 @@ onMounted(scan)
 
     <!-- Scrollable body -->
     <div class="telem-body">
-
-    <!-- No project guard -->
+<!-- No project guard -->
     <div v-if="!store.projectPath" class="telem-state-center telem-subtle ga-3 text-body-2">
       {{ t('telemetry.noProject') }}
     </div>
@@ -353,8 +352,7 @@ onMounted(scan)
         {{ t('telemetry.scannedAt', { date: formatDate(data.scannedAt) }) }}
       </p>
     </template>
-
-    </div><!-- end telem-body -->
+</div><!-- end telem-body -->
   </div>
 </template>
 

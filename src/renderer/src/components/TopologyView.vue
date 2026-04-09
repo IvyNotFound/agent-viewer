@@ -123,13 +123,17 @@ async function refresh(): Promise<void> {
                   variant="outlined"
                   :style="{ color: agentAccent(perimetre), borderColor: agentBorder(perimetre) }"
                   class="tp-scope-chip"
-                >{{ perimetre }}</v-chip>
+                >
+{{ perimetre }}
+</v-chip>
                 <v-chip
                   v-else
                   size="small"
                   variant="outlined"
                   class="tp-scope-chip tp-scope-chip--global"
-                >{{ t('topology.global') }}</v-chip>
+                >
+{{ t('topology.global') }}
+</v-chip>
                 <span class="tp-col-count">{{ perimAgents.length }}</span>
               </div>
 
@@ -151,7 +155,9 @@ async function refresh(): Promise<void> {
                         size="x-small"
                         variant="tonal"
                         class="tp-status-chip"
-                      ><span class="tp-status-dot mr-1" :class="`tp-dot--${agentStatus(agent)}`"></span>{{ t(`topology.status.${agentStatus(agent)}`) }}</v-chip>
+                      >
+<span class="tp-status-dot mr-1" :class="`tp-dot--${agentStatus(agent)}`"></span>{{ t(`topology.status.${agentStatus(agent)}`) }}
+</v-chip>
                     </div>
                     <p class="tp-agent-type">{{ agent.type }}</p>
                     <p v-if="agent.current_task" class="tp-task text-label-medium" :title="agent.current_task">{{ agent.current_task }}</p>

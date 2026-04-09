@@ -127,8 +127,7 @@ function tooltip(day: DayRate): string {
       </span>
     </div>
     <div class="chart-body">
-
-      <!-- Loading -->
+<!-- Loading -->
       <div v-if="loading" class="d-flex align-center justify-center flex-1">
         <span class="text-caption text-disabled">{{ t('successRateChart.loading') }}</span>
       </div>
@@ -187,8 +186,7 @@ function tooltip(day: DayRate): string {
           </div>
         </div>
       </template>
-
-    </div>
+</div>
   </v-card>
 </template>
 

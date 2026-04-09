@@ -194,8 +194,7 @@ watch(() => props.initialAgentId, (v) => {
     <!-- Body -->
     <div class="al-body">
     <v-card elevation="0" class="section-card">
-
-      <!-- ── Filter bar ──────────────────────────────────────────────────── -->
+<!-- ── Filter bar ──────────────────────────────────────────────────── -->
       <div class="al-filter-bar">
       <div class="al-level-btns">
         <v-btn
@@ -206,7 +205,9 @@ watch(() => props.initialAgentId, (v) => {
           :variant="filterLevel === lvl ? 'tonal' : 'text'"
           :color="filterLevel === lvl ? levelBtnColor[lvl] : undefined"
           @click="filterLevel = lvl"
-        >{{ lvl }}</v-btn>
+        >
+{{ lvl }}
+</v-btn>
       </div>
 
       <v-select
@@ -227,7 +228,9 @@ watch(() => props.initialAgentId, (v) => {
         class="al-reset-btn text-caption"
         :title="t('logs.resetFilters')"
         @click="resetFilters"
-      >{{ t('logs.reset') }}</v-btn>
+      >
+{{ t('logs.reset') }}
+</v-btn>
 
       <div class="al-spacer" />
 
@@ -264,8 +267,7 @@ watch(() => props.initialAgentId, (v) => {
 
     <!-- ── Log list ────────────────────────────────────────────────────── -->
     <div class="al-list">
-
-      <!-- Empty state -->
+<!-- Empty state -->
       <div v-if="paginatedLogs.length === 0 && !loading" class="al-empty">
         <v-icon class="al-empty-icon" size="24">mdi-file-document-outline</v-icon>
         <p class="al-empty-text text-body-2">{{ t('logs.noLogs') }}</p>
@@ -286,7 +288,9 @@ watch(() => props.initialAgentId, (v) => {
             size="x-small"
             variant="tonal"
             class="al-level-chip"
-          >{{ log.level }}</v-chip>
+          >
+{{ log.level }}
+</v-chip>
           <span class="al-time text-label-medium" :title="absoluteTime(log.created_at)">{{ formatTime(log.created_at) }}</span>
           <AgentBadge v-if="log.agent_name" :name="log.agent_name" />
           <span v-else class="al-agent-badge al-agent-badge--none text-label-medium">—</span>
@@ -296,7 +300,9 @@ watch(() => props.initialAgentId, (v) => {
             class="al-chevron"
             :class="isExpanded(log.id) ? 'al-chevron--open' : ''"
             size="12"
-          >mdi-chevron-right</v-icon>
+          >
+mdi-chevron-right
+</v-icon>
         </div>
 
         <!-- Expandable detail -->
@@ -311,8 +317,7 @@ watch(() => props.initialAgentId, (v) => {
           </div>
         </div>
       </div>
-
-    </div>
+</div>
     </v-card>
     </div>
   </div>

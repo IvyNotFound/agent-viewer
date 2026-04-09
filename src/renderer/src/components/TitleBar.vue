@@ -67,7 +67,7 @@ onUnmounted(() => {
           @click="api.windowMinimize()"
         >
           <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-            <rect x="0" y="4.5" width="10" height="1"/>
+            <rect x="0" y="4.5" width="10" height="1" />
           </svg>
         </button>
 
@@ -79,11 +79,11 @@ onUnmounted(() => {
           @click="api.windowMaximize()"
         >
           <svg v-if="isMaximized" width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1">
-            <rect x="3.5" y="0.5" width="7" height="7" rx="0.5"/>
-            <path d="M0.5 3.5v7h7v-3"/>
+            <rect x="3.5" y="0.5" width="7" height="7" rx="0.5" />
+            <path d="M0.5 3.5v7h7v-3" />
           </svg>
           <svg v-else width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1">
-            <rect x="0.5" y="0.5" width="9" height="9" rx="0.5"/>
+            <rect x="0.5" y="0.5" width="9" height="9" rx="0.5" />
           </svg>
         </button>
 
@@ -95,8 +95,8 @@ onUnmounted(() => {
           @click="api.windowClose()"
         >
           <svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
-            <line x1="0.5" y1="0.5" x2="9.5" y2="9.5"/>
-            <line x1="9.5" y1="0.5" x2="0.5" y2="9.5"/>
+            <line x1="0.5" y1="0.5" x2="9.5" y2="9.5" />
+            <line x1="9.5" y1="0.5" x2="0.5" y2="9.5" />
           </svg>
         </button>
       </div>

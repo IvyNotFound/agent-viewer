@@ -112,8 +112,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
 
 <template>
   <div class="tabbar">
-
-    <!-- Fixed tabs: Backlog + Dashboard — MD3 Secondary Tabs with Vuetify ripple -->
+<!-- Fixed tabs: Backlog + Dashboard — MD3 Secondary Tabs with Vuetify ripple -->
     <v-tabs
       :model-value="fixedActiveTab"
       density="compact"
@@ -191,7 +190,9 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
             :style="isGroupCollapsed(group.agentName) ? {} : { transform: 'rotate(-90deg)' }"
             size="10"
             @click.stop="toggleGroup(group.agentName)"
-          >mdi-chevron-down</v-icon>
+          >
+mdi-chevron-down
+</v-icon>
           <span
             v-if="isGroupCollapsed(group.agentName)"
             class="tab-group-count"
@@ -231,9 +232,7 @@ function openGroupMenu(event: MouseEvent, group: { agentName: string | null; tab
     >
       <v-icon size="12">mdi-chevron-right</v-icon>
     </button>
-
-
-  </div>
+</div>
 
   <!-- Menu contextuel groupe d'onglets -->
   <ContextMenu

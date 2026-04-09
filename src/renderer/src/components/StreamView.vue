@@ -362,13 +362,17 @@ onUnmounted(() => {
               density="compact"
               class="init-ctx-btn"
               @click="toggleCollapsed(`init-ctx-${event._id}`, true)"
-            >{{ (collapsed[`init-ctx-${event._id}`] ?? true) ? '▶ ' + t('stream.ctx') : '▼ ' + t('stream.ctx') }}</v-btn>
+            >
+{{ (collapsed[`init-ctx-${event._id}`] ?? true) ? '▶ ' + t('stream.ctx') : '▼ ' + t('stream.ctx') }}
+</v-btn>
           </div>
           <div
             v-if="sessionContextMap.get(event._id!)"
             v-show="!(collapsed[`init-ctx-${event._id}`] ?? true)"
             class="init-ctx-body mt-1 ml-4"
-          >{{ sessionContextMap.get(event._id!) }}</div>
+          >
+{{ sessionContextMap.get(event._id!) }}
+</div>
         </div>
 
         <!-- error:spawn / error:exit -->
@@ -396,6 +400,7 @@ onUnmounted(() => {
             :style="{ background: agentColors.fg, color: agentColors.bubbleTextColor }"
           >
             <template v-for="(block, bIdx) in event.message.content" :key="bIdx">
+              <!-- eslint-disable-next-line vue/no-v-html -- sanitized via DOMPurify -->
               <div v-if="block.type === 'text'" v-html="block._html ?? ''" />
               <img
                 v-else-if="block.type === 'image_ref' && block.objectUrl"
@@ -413,12 +418,14 @@ onUnmounted(() => {
           <div class="block-assistant">
             <template v-for="(block, bIdx) in event.message.content" :key="`${event._id}-${bIdx}`">
               <!-- text block — Markdown + DOMPurify (T678) -->
+              <!-- eslint-disable vue/no-v-html -- sanitized via DOMPurify -->
               <div
                 v-if="block.type === 'text'"
                 class="stream-markdown block-text py-3 px-4"
                 data-testid="block-text"
                 v-html="block._html ?? ''"
               />
+              <!-- eslint-enable vue/no-v-html -->
 
               <!-- tool_use / tool_result — delegated to StreamToolBlock (T816) -->
               <StreamToolBlock
@@ -459,11 +466,13 @@ onUnmounted(() => {
 
         <!-- text block — plain text output from non-Claude CLIs (T1197) -->
         <div v-if="event.type === 'text'" class="block-assistant">
+          <!-- eslint-disable vue/no-v-html -- sanitized via DOMPurify -->
           <div
             class="stream-markdown block-text py-3 px-4"
             data-testid="block-text-raw"
             v-html="event._html ?? event.text ?? ''"
           />
+          <!-- eslint-enable vue/no-v-html -->
         </div>
 
         <!-- error block — error events from non-Claude CLIs (T1197) -->

@@ -58,7 +58,9 @@ function relativeTime(ts: number): string {
             size="small"
             color="primary"
             class="he-chip-item"
-          >{{ EVENT_ICON[eventType] }} {{ eventType }}</v-chip>
+          >
+{{ EVENT_ICON[eventType] }} {{ eventType }}
+</v-chip>
         </v-chip-group>
         <div class="he-spacer" />
         <span class="he-count">{{ filtered.length }} event{{ filtered.length !== 1 ? 's' : '' }}</span>

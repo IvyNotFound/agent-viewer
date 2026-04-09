@@ -69,7 +69,9 @@ function formatDate(iso: string): string {
           color="primary"
           class="commit-task-badge"
           @click="emit('openTask', id)"
-        >T{{ id }}</v-chip>
+        >
+T{{ id }}
+</v-chip>
       </div>
     </div>
   </div>

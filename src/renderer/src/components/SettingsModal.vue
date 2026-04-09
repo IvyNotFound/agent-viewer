@@ -129,11 +129,6 @@ const availableDistroItems = computed(() =>
   }))
 )
 
-// Per-CLI model selectors (T1803)
-const modelCapableClis = computed<CliType[]>(() =>
-  settingsStore.enabledClis.filter(cli => CLI_CAPABILITIES[cli]?.modelSelection)
-)
-
 // All CLIs that support model selection, regardless of enabled state (T1824)
 const allModelCapableClis = computed<CliType[]>(() =>
   (Object.keys(CLI_CAPABILITIES) as CliType[]).filter(cli => CLI_CAPABILITIES[cli]?.modelSelection)
@@ -169,8 +164,7 @@ function onDefaultCliChange(v: string) {
 <template>
   <v-dialog model-value width="760" height="560" @update:model-value="emit('close')">
     <v-card class="d-flex flex-column" height="100%" @keydown="handleKeydown">
-
-      <!-- Header -->
+<!-- Header -->
       <v-toolbar density="compact" flat color="surface">
         <v-toolbar-title class="text-subtitle-1 font-weight-medium">
           {{ t('settings.title') }}
@@ -189,8 +183,7 @@ function onDefaultCliChange(v: string) {
 
       <!-- Body: nav rail + content panel -->
       <div class="settings-body d-flex flex-grow-1">
-
-        <!-- Nav rail -->
+<!-- Nav rail -->
         <v-list
           nav
           density="compact"
@@ -215,8 +208,7 @@ function onDefaultCliChange(v: string) {
 
         <!-- Content panel -->
         <div class="settings-content pa-4 d-flex flex-column ga-3">
-
-          <!-- Appearance: Language + Theme -->
+<!-- Appearance: Language + Theme -->
           <template v-if="activeSection === 'appearance'">
             <v-sheet rounded="lg" border class="pa-4">
               <p class="text-body-2 font-weight-medium mb-2">{{ t('settings.language') }}</p>
@@ -464,7 +456,9 @@ function onDefaultCliChange(v: string) {
                   color="primary"
                   :disabled="updaterStatus === 'checking' || updaterStatus === 'downloading'"
                   @click="checkUpdaterNow"
-                >{{ updaterStatus === 'checking' ? t('settings.checking') : t('settings.check') }}</v-btn>
+                >
+{{ updaterStatus === 'checking' ? t('settings.checking') : t('settings.check') }}
+</v-btn>
               </div>
               <div v-if="updaterStatus !== 'idle' && updaterStatus !== 'checking'" class="mt-2">
                 <span
@@ -495,15 +489,16 @@ function onDefaultCliChange(v: string) {
                 prepend-icon="mdi-download"
                 :disabled="exporting"
                 @click="showExportConfirm = true"
-              >{{ exporting ? t('settings.exporting') : t('settings.exportBtn') }}</v-btn>
+              >
+{{ exporting ? t('settings.exporting') : t('settings.exportBtn') }}
+</v-btn>
             </v-sheet>
             <v-sheet v-if="store.dbPath" rounded="lg" border class="pa-4">
               <p class="text-body-2 font-weight-medium mb-2">{{ t('settings.database') }}</p>
               <p class="text-body-2 text-medium-emphasis" style="font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace; word-break: break-all;">{{ store.dbPath }}</p>
             </v-sheet>
           </template>
-
-        </div>
+</div>
       </div>
     </v-card>
   </v-dialog>

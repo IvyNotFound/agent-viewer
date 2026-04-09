@@ -100,7 +100,9 @@ const testRatioVal = computed(() => data.value?.testRatio ?? null)
           class="telemetry-refresh-icon"
           :class="{ 'telemetry-refresh-icon--spin': loading }"
           size="18"
-        >mdi-refresh</v-icon>
+        >
+mdi-refresh
+</v-icon>
       </v-btn>
     </div>
 

@@ -259,7 +259,7 @@ exports[`TabBar — snapshots > matches snapshot: tab bar with one terminal tab 
     <div data-v-3c3dc65a="" class="tab-group" style="border: 1.5px solid rgba(255, 224, 130, 0.45); background: rgba(255, 224, 130, 0.12);">
       <!-- Pill header (identité de l'agent) --><button data-v-3c3dc65a="" class="tab-agent" style="color: rgb(0, 0, 0); background-color: rgb(255, 224, 130);">
         <v-icon data-v-3c3dc65a="" size="11" style="flex-shrink: 0;">mdi-console</v-icon><span data-v-3c3dc65a="" class="tab-agent-name">dev-front</span>
-        <v-icon data-v-3c3dc65a="" class="tab-chevron" style="transform: rotate(-90deg);" size="10">mdi-chevron-down</v-icon>
+        <v-icon data-v-3c3dc65a="" class="tab-chevron" style="transform: rotate(-90deg);" size="10"> mdi-chevron-down </v-icon>
         <!--v-if-->
       </button><!-- Sub-chips session (masqués si groupe collapsé) --><button data-v-3c3dc65a="" class="tab-sub tab-sub--active" style="background-color: rgb(255, 224, 130); color: rgb(0, 0, 0);" title="#1"><span data-v-3c3dc65a="" class="tab-sub-label">#1</span>
         <!--v-if--><span data-v-3c3dc65a="" class="tab-close text-label-medium" title="Fermer">✕</span>

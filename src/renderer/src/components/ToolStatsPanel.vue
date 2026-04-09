@@ -90,21 +90,29 @@ function formatDuration(ms: number | null): string {
                 size="small"
                 variant="tonal"
                 class="font-weight-medium ts-chip"
-              >{{ row.name }}</v-chip>
+              >
+{{ row.name }}
+</v-chip>
             </td>
             <td class="text-right text-medium-emphasis ts-mono">{{ row.calls }}</td>
             <td
               class="text-right ts-mono"
               :class="row.errors > 0 ? 'text-error' : 'text-medium-emphasis'"
-            >{{ row.errors }}</td>
+            >
+{{ row.errors }}
+</td>
             <td
               class="text-right ts-mono"
               :class="row.errorRate > 0 ? 'text-error' : 'text-medium-emphasis'"
-            >{{ row.errors > 0 ? (row.errorRate * 100).toFixed(0) + '%' : '—' }}</td>
+            >
+{{ row.errors > 0 ? (row.errorRate * 100).toFixed(0) + '%' : '—' }}
+</td>
             <td
               class="text-right ts-mono"
               :class="row.avgDurationMs !== null && row.avgDurationMs > 5000 ? 'text-warning' : 'text-medium-emphasis'"
-            >{{ formatDuration(row.avgDurationMs) }}</td>
+            >
+{{ formatDuration(row.avgDurationMs) }}
+</td>
           </tr>
         </tbody>
       </v-table>

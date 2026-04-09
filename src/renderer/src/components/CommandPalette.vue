@@ -149,8 +149,7 @@ function effortColor(effort: number): string {
           elevation="8"
           :style="{ height: 'min(72vh, 640px)', overflow: 'hidden' }"
         >
-
-          <!-- Search row -->
+<!-- Search row -->
           <div class="d-flex align-center ga-3 px-4 py-1 flex-shrink-0">
             <v-text-field
               ref="inputRef"
@@ -170,7 +169,9 @@ function effortColor(effort: number): string {
                 size="small"
                 color="primary"
                 @click="clearFilters"
-              >{{ t('commandPalette.resetFilters') }}</v-btn>
+              >
+{{ t('commandPalette.resetFilters') }}
+</v-btn>
               <kbd class="palette-kbd">ESC</kbd>
             </div>
           </div>
@@ -219,7 +220,9 @@ function effortColor(effort: number): string {
                     :style="filterAgentId === Number(agent.id)
                       ? { color: agentFg(agent.name), backgroundColor: agentBg(agent.name), borderColor: agentFg(agent.name) + '66', fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '0.75rem' }
                       : { fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '0.75rem' }"
-                  >{{ agent.name }}</v-chip>
+                  >
+{{ agent.name }}
+</v-chip>
                 </v-chip-group>
               </div>
 
@@ -238,7 +241,9 @@ function effortColor(effort: number): string {
                     :style="filterPerimetre === p.name
                       ? { color: agentFg(p.name), backgroundColor: agentBg(p.name), borderColor: agentFg(p.name) + '66', fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '0.75rem' }
                       : { fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '0.75rem' }"
-                  >{{ p.name }}</v-chip>
+                  >
+{{ p.name }}
+</v-chip>
                 </v-chip-group>
               </div>
             </div>
@@ -321,8 +326,7 @@ function effortColor(effort: number): string {
               <kbd class="palette-kbd">Ctrl+K</kbd> toggle
             </span>
           </div>
-
-        </v-card>
+</v-card>
       </div>
     </Transition>
   </v-dialog>
