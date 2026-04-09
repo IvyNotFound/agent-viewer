@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useSettingsStore } from '@renderer/stores/settings'
+import { CLI_LABELS } from '@renderer/utils/cliCapabilities'
+import type { CliType } from '@shared/cli-types'
+import type { CliModelDef } from '@shared/cli-models'
 
 const { t } = useI18n()
+const settingsStore = useSettingsStore()
 
 const props = defineProps<{
   projectPath: string
@@ -17,6 +22,49 @@ const emit = defineEmits<{
 const creating = ref(false)
 const errorMsg = ref<string | null>(null)
 const generateClaudeMd = ref(!props.hasCLAUDEmd)
+
+// CLI + model selectors (same pattern as CreateAgentModal)
+const selectedCli = ref<string | null>(null)
+const selectedModel = ref('')
+
+const cliItems = computed(() => {
+  const seen = new Set<string>()
+  for (const inst of settingsStore.allCliInstances) {
+    if (settingsStore.enabledClis.includes(inst.cli as CliType)) seen.add(inst.cli)
+  }
+  return Array.from(seen).map(cli => ({ title: CLI_LABELS[cli as CliType] ?? cli, value: cli }))
+})
+
+const effectiveCli = computed<CliType>(() =>
+  (selectedCli.value as CliType) ?? (settingsStore.enabledClis[0] as CliType) ?? 'claude'
+)
+
+const availableModels = computed(() => {
+  const models: CliModelDef[] = settingsStore.cliModels[effectiveCli.value] ?? []
+  return models.map(m => ({ title: m.label, value: m.modelId }))
+})
+
+const defaultModelLabel = computed(() => {
+  const modelId = settingsStore.getDefaultModel(effectiveCli.value)
+  if (!modelId) return null
+  const models: CliModelDef[] = settingsStore.cliModels[effectiveCli.value] ?? []
+  return models.find(m => m.modelId === modelId)?.label ?? modelId
+})
+
+const mounted = ref(false)
+watch(effectiveCli, () => {
+  if (mounted.value) selectedModel.value = ''
+})
+
+onMounted(async () => {
+  if (settingsStore.allCliInstances.length === 0) {
+    await settingsStore.refreshCliDetection()
+  }
+  if (Object.keys(settingsStore.cliModels).length === 0) {
+    await settingsStore.loadCliModels()
+  }
+  mounted.value = true
+})
 
 const projectName = computed(() =>
   props.projectPath.replace(/\\/g, '/').split('/').filter(Boolean).pop() ?? props.projectPath
@@ -66,6 +114,15 @@ async function handleSetup() {
     if (!props.hasCLAUDEmd && generateClaudeMd.value) {
       const claudeMdPath = `${props.projectPath.replace(/\\/g, '/')}/CLAUDE.md`
       await window.electronAPI.fsWriteFile(claudeMdPath, CLAUDE_MD_TEMPLATE, props.projectPath)
+    }
+
+    // Persist CLI + model defaults into project config DB
+    if (selectedCli.value) {
+      await window.electronAPI.setConfigValue(result.dbPath, 'defaultCliInstance', selectedCli.value)
+    }
+    if (selectedModel.value.trim()) {
+      const cli = effectiveCli.value
+      await window.electronAPI.setConfigValue(result.dbPath, `default_model_${cli}`, selectedModel.value.trim())
     }
 
     emit('done', { projectPath: props.projectPath, dbPath: result.dbPath })
@@ -118,6 +175,45 @@ async function handleSetup() {
             <div class="info-box text-caption text-medium-emphasis">
               <p>{{ t('setup.hasCLAUDEmdInfo') }}</p>
             </div>
+
+            <!-- CLI + model selectors (Case B) -->
+            <div v-if="cliItems.length > 0" class="d-flex flex-column ga-3">
+              <v-select
+                v-model="selectedCli"
+                :items="cliItems"
+                :label="t('setup.defaultCli')"
+                :placeholder="t('agent.globalDefault')"
+                :hint="t('setup.defaultCliNote')"
+                persistent-hint
+                clearable
+                variant="outlined"
+                density="compact"
+                color="primary"
+              />
+              <v-select
+                v-if="availableModels.length > 0"
+                v-model="selectedModel"
+                :items="availableModels"
+                :label="t('setup.defaultModel')"
+                clearable
+                :placeholder="defaultModelLabel ? t('agent.settingsDefaultNamed', { model: defaultModelLabel }) : t('agent.settingsDefault')"
+                :hint="t('setup.defaultModelNote')"
+                persistent-hint
+                variant="outlined"
+                density="compact"
+                color="primary"
+              />
+              <v-text-field
+                v-else
+                v-model="selectedModel"
+                :label="t('setup.defaultModel')"
+                placeholder="anthropic/claude-opus-4-5"
+                :hint="t('setup.defaultModelNote')"
+                persistent-hint
+                variant="outlined"
+                density="compact"
+              />
+            </div>
           </template>
 
           <!-- Case A: Neither CLAUDE.md nor DB -->
@@ -152,6 +248,45 @@ async function handleSetup() {
                   <p class="text-caption text-disabled mt-1">{{ t('setup.generateClaudeMdDesc') }}</p>
                 </div>
               </label>
+            </div>
+
+            <!-- CLI + model selectors (Case A) -->
+            <div v-if="cliItems.length > 0" class="d-flex flex-column ga-3">
+              <v-select
+                v-model="selectedCli"
+                :items="cliItems"
+                :label="t('setup.defaultCli')"
+                :placeholder="t('agent.globalDefault')"
+                :hint="t('setup.defaultCliNote')"
+                persistent-hint
+                clearable
+                variant="outlined"
+                density="compact"
+                color="primary"
+              />
+              <v-select
+                v-if="availableModels.length > 0"
+                v-model="selectedModel"
+                :items="availableModels"
+                :label="t('setup.defaultModel')"
+                clearable
+                :placeholder="defaultModelLabel ? t('agent.settingsDefaultNamed', { model: defaultModelLabel }) : t('agent.settingsDefault')"
+                :hint="t('setup.defaultModelNote')"
+                persistent-hint
+                variant="outlined"
+                density="compact"
+                color="primary"
+              />
+              <v-text-field
+                v-else
+                v-model="selectedModel"
+                :label="t('setup.defaultModel')"
+                placeholder="anthropic/claude-opus-4-5"
+                :hint="t('setup.defaultModelNote')"
+                persistent-hint
+                variant="outlined"
+                density="compact"
+              />
             </div>
           </template>
 

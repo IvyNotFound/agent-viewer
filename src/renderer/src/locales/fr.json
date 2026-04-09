@@ -268,7 +268,11 @@
     "createProjectDb": "Créer {projectDb}",
     "createProjectDbDesc": "Schéma complet avec périmètres par défaut",
     "generateClaudeMd": "Générer un {claudeMd} de base",
-    "generateClaudeMdDesc": "Template minimal — à compléter selon votre projet"
+    "generateClaudeMdDesc": "Template minimal — à compléter selon votre projet",
+    "defaultCli": "CLI par défaut",
+    "defaultCliNote": "Instance CLI par défaut pour ce projet",
+    "defaultModel": "Modèle par défaut",
+    "defaultModelNote": "Modèle utilisé par défaut lors du lancement des sessions"
   },
   "explorer": {
     "files": "Fichiers",

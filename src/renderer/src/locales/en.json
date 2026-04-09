@@ -268,7 +268,11 @@
     "createProjectDb": "Create {projectDb}",
     "createProjectDbDesc": "Full schema with default scopes",
     "generateClaudeMd": "Generate a base {claudeMd}",
-    "generateClaudeMdDesc": "Minimal template — to be completed for your project"
+    "generateClaudeMdDesc": "Minimal template — to be completed for your project",
+    "defaultCli": "Default CLI",
+    "defaultCliNote": "Default CLI instance for this project",
+    "defaultModel": "Default model",
+    "defaultModelNote": "Default model used when launching sessions"
   },
   "explorer": {
     "files": "Files",
