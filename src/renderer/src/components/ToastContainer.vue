@@ -23,6 +23,7 @@ const colorMap: Record<ToastType, string> = {
         icon
         variant="plain"
         density="compact"
+        class="ml-3"
         @click="dismiss(toast.id)"
       >
         <v-icon>mdi-close</v-icon>

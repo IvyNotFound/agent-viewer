@@ -107,7 +107,7 @@ const versionLabel = computed(() => (info.value?.version ? `v${info.value.versio
 .update-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   flex-shrink: 0;
 }
 </style>
