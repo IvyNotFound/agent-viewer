@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useSettingsStore } from '@renderer/stores/settings'
@@ -51,6 +51,7 @@ const maxSessionsDbValue = computed(() => maxSessions.value === '' ? -1 : parseI
 const preferredModel = ref('')
 const preferredCli = ref<string | null>(null)
 const showPrompt = ref(false)
+const promptSectionEl = ref<HTMLElement | null>(null)
 const loading = ref(false)
 const deleting = ref(false)
 const deleteError = ref<string | null>(null)
@@ -268,6 +269,15 @@ async function deleteAgent() {
   }
 }
 
+function togglePrompt() {
+  showPrompt.value = !showPrompt.value
+  if (showPrompt.value) {
+    nextTick(() => {
+      promptSectionEl.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    })
+  }
+}
+
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') emit('close')
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit()
@@ -479,14 +489,14 @@ function handleKeydown(e: KeyboardEvent) {
           </div>
 
           <!-- System prompt (optionnel, collapsible) -->
-          <div class="prompt-section">
+          <div ref="promptSectionEl" class="prompt-section">
             <div
               class="prompt-header"
               role="button"
               tabindex="0"
-              @click="showPrompt = !showPrompt"
-              @keydown.enter="showPrompt = !showPrompt"
-              @keydown.space.prevent="showPrompt = !showPrompt"
+              @click="togglePrompt"
+              @keydown.enter="togglePrompt"
+              @keydown.space.prevent="togglePrompt"
             >
               <div class="d-flex align-center ga-2 flex-1 min-width-0">
                 <v-icon :class="['prompt-arrow', showPrompt ? 'prompt-arrow--open' : '']" size="15">mdi-chevron-right</v-icon>
@@ -623,7 +633,7 @@ function handleKeydown(e: KeyboardEvent) {
 .prompt-section {
   border: 1px solid var(--edge-subtle);
   border-radius: 8px;
-  overflow: hidden;
+  overflow: clip;
 }
 .prompt-header {
   display: flex;
