@@ -29,7 +29,9 @@
     "prevPage": "Önceki",
     "nextPage": "Sonraki",
     "pageOf": "Sayfa {page} / {total} ({count} görev)",
-    "staleTasks": "{count} durağan görev | {count} durağan görev"
+    "staleTasks": "{count} durağan görev | {count} durağan görev",
+    "sortByAgent": "Ajana göre",
+    "sortByDate": "Tarihe göre"
   },
   "taskCard": {
     "relaunchAgent": "Ajanı yeniden başlat",

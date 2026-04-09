@@ -29,7 +29,9 @@
     "prevPage": "Anterior",
     "nextPage": "Próximo",
     "pageOf": "Página {page} / {total} ({count} tarefas)",
-    "staleTasks": "{count} tarefa parada | {count} tarefas paradas"
+    "staleTasks": "{count} tarefa parada | {count} tarefas paradas",
+    "sortByAgent": "Por agente",
+    "sortByDate": "Por data"
   },
   "taskCard": {
     "relaunchAgent": "Reiniciar agente",

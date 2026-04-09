@@ -31,7 +31,9 @@
     "pageOf": "Page {page} / {total} ({count} tasks)",
     "staleTasks": "{count} stale task | {count} stale tasks",
     "review": "Review",
-    "reviewLaunchFailed": "Review launch failed"
+    "reviewLaunchFailed": "Review launch failed",
+    "sortByAgent": "By agent",
+    "sortByDate": "By date"
   },
   "taskCard": {
     "relaunchAgent": "Relaunch agent",

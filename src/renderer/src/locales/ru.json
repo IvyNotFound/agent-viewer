@@ -29,7 +29,9 @@
     "prevPage": "Назад",
     "nextPage": "Вперёд",
     "pageOf": "Страница {page} / {total} ({count} задач)",
-    "staleTasks": "{count} зависшая задача | {count} зависших задач"
+    "staleTasks": "{count} зависшая задача | {count} зависших задач",
+    "sortByAgent": "По агенту",
+    "sortByDate": "По дате"
   },
   "taskCard": {
     "relaunchAgent": "Перезапустить агента",

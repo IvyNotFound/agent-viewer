@@ -29,7 +29,9 @@
     "prevPage": "Poprzednia",
     "nextPage": "Następna",
     "pageOf": "Strona {page} / {total} ({count} zadań)",
-    "staleTasks": "{count} przestarzałe zadanie | {count} przestarzałe zadania"
+    "staleTasks": "{count} przestarzałe zadanie | {count} przestarzałe zadania",
+    "sortByAgent": "Wg agenta",
+    "sortByDate": "Wg daty"
   },
   "taskCard": {
     "relaunchAgent": "Uruchom ponownie agenta",

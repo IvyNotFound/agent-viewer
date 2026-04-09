@@ -29,7 +29,9 @@
     "prevPage": "Edellinen",
     "nextPage": "Seuraava",
     "pageOf": "Sivu {page} / {total} ({count} tehtävää)",
-    "staleTasks": "{count} vanhentunut tehtävä | {count} vanhentunutta tehtävää"
+    "staleTasks": "{count} vanhentunut tehtävä | {count} vanhentunutta tehtävää",
+    "sortByAgent": "Agentin mukaan",
+    "sortByDate": "Päivämäärän mukaan"
   },
   "taskCard": {
     "relaunchAgent": "Käynnistä agentti uudelleen",

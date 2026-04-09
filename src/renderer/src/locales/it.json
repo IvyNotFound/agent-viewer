@@ -29,7 +29,9 @@
     "prevPage": "Precedente",
     "nextPage": "Successivo",
     "pageOf": "Pagina {page} / {total} ({count} attività)",
-    "staleTasks": "{count} attività in stallo | {count} attività in stallo"
+    "staleTasks": "{count} attività in stallo | {count} attività in stallo",
+    "sortByAgent": "Per agente",
+    "sortByDate": "Per data"
   },
   "taskCard": {
     "relaunchAgent": "Riavvia agente",

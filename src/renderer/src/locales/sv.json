@@ -29,7 +29,9 @@
     "prevPage": "Föregående",
     "nextPage": "Nästa",
     "pageOf": "Sida {page} / {total} ({count} uppgifter)",
-    "staleTasks": "{count} inaktiv uppgift | {count} inaktiva uppgifter"
+    "staleTasks": "{count} inaktiv uppgift | {count} inaktiva uppgifter",
+    "sortByAgent": "Per agent",
+    "sortByDate": "Per datum"
   },
   "taskCard": {
     "relaunchAgent": "Starta om agent",

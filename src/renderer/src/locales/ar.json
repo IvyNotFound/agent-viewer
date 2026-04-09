@@ -29,7 +29,9 @@
     "prevPage": "السابق",
     "nextPage": "التالي",
     "pageOf": "الصفحة {page} / {total} ({count} مهام)",
-    "staleTasks": "مهمة قديمة {count} | مهام قديمة {count}"
+    "staleTasks": "مهمة قديمة {count} | مهام قديمة {count}",
+    "sortByAgent": "حسب الوكيل",
+    "sortByDate": "حسب التاريخ"
   },
   "taskCard": {
     "relaunchAgent": "إعادة تشغيل الوكيل",

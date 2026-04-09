@@ -29,7 +29,9 @@
     "prevPage": "Anterior",
     "nextPage": "Siguiente",
     "pageOf": "Página {page} / {total} ({count} tareas)",
-    "staleTasks": "{count} tarea estancada | {count} tareas estancadas"
+    "staleTasks": "{count} tarea estancada | {count} tareas estancadas",
+    "sortByAgent": "Por agente",
+    "sortByDate": "Por fecha"
   },
   "taskCard": {
     "relaunchAgent": "Reiniciar agente",

@@ -29,7 +29,9 @@
     "prevPage": "Zurück",
     "nextPage": "Weiter",
     "pageOf": "Seite {page} / {total} ({count} Aufgaben)",
-    "staleTasks": "{count} veraltete Aufgabe | {count} veraltete Aufgaben"
+    "staleTasks": "{count} veraltete Aufgabe | {count} veraltete Aufgaben",
+    "sortByAgent": "Nach Agent",
+    "sortByDate": "Nach Datum"
   },
   "taskCard": {
     "relaunchAgent": "Agenten neu starten",

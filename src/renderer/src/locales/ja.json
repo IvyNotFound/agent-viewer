@@ -29,7 +29,9 @@
     "prevPage": "前へ",
     "nextPage": "次へ",
     "pageOf": "ページ {page} / {total} （{count} タスク）",
-    "staleTasks": "{count} 件の停滞タスク | {count} 件の停滞タスク"
+    "staleTasks": "{count} 件の停滞タスク | {count} 件の停滞タスク",
+    "sortByAgent": "エージェント別",
+    "sortByDate": "日付別"
   },
   "taskCard": {
     "relaunchAgent": "エージェントを再起動",

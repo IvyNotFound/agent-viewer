@@ -29,7 +29,9 @@
     "prevPage": "Forrige",
     "nextPage": "Næste",
     "pageOf": "Side {page} / {total} ({count} opgaver)",
-    "staleTasks": "{count} forældet opgave | {count} forældede opgaver"
+    "staleTasks": "{count} forældet opgave | {count} forældede opgaver",
+    "sortByAgent": "Efter agent",
+    "sortByDate": "Efter dato"
   },
   "taskCard": {
     "relaunchAgent": "Genstart agent",

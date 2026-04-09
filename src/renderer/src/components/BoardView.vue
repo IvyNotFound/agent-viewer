@@ -22,6 +22,9 @@ const pagination = useArchivedPagination()
 type BoardTab = 'backlog' | 'archive'
 const activeTab = ref<BoardTab>('backlog')
 
+type ArchiveSortMode = 'agent' | 'date'
+const archiveSortMode = ref<ArchiveSortMode>('agent')
+
 const emptyTasks = { todo: [], in_progress: [], done: [], archived: [] }
 const tasks = computed(() => store.tasksByStatus ?? emptyTasks)
 
@@ -149,6 +152,9 @@ const archivedGroupsSorted = computed(() => {
   return [...groups.entries()].sort((a, b) => b[1].length - a[1].length)
 })
 
+/** Flat list of archived tasks sorted by updated_at DESC (already sorted from backend). */
+const archivedFlat = computed(() => pagination.archivedTasks.value)
+
 </script>
 
 <template>
@@ -252,10 +258,30 @@ const archivedGroupsSorted = computed(() => {
 
       <!-- Tasks list + pagination -->
       <template v-else>
+        <!-- Sort toggle -->
+        <div class="archive-sort-bar px-4 pt-3">
+          <v-btn-toggle
+            v-model="archiveSortMode"
+            mandatory
+            density="compact"
+            class="archive-sort-toggle"
+            aria-label="Archive sort mode"
+          >
+            <v-btn value="agent" size="x-small" variant="outlined">
+              <v-icon start size="14">mdi-account-group</v-icon>
+              {{ t('board.sortByAgent') }}
+            </v-btn>
+            <v-btn value="date" size="x-small" variant="outlined">
+              <v-icon start size="14">mdi-sort-calendar-descending</v-icon>
+              {{ t('board.sortByDate') }}
+            </v-btn>
+          </v-btn-toggle>
+        </div>
+
         <!-- Scrollable tasks list -->
         <div class="archive-list py-3 px-4">
-          <div class="archive-groups">
-            <!-- Group by agent -->
+          <!-- Mode: grouped by agent -->
+          <div v-if="archiveSortMode === 'agent'" class="archive-groups">
             <div v-for="[agentName, agentTasks] in archivedGroupsSorted" :key="agentName" class="agent-group">
               <!-- Group header -->
               <div class="agent-group-header ga-2 mb-3">
@@ -271,12 +297,10 @@ const archivedGroupsSorted = computed(() => {
                   class="archive-card"
                   @click="store.openTask(task)"
                 >
-                  <!-- Row 1: title + agent badge -->
                   <div class="arc-row1">
                     <p class="arc-title">{{ task.title }}</p>
                     <AgentBadge v-if="task.agent_name" :name="task.agent_name" />
                   </div>
-                  <!-- Row 2: meta chips (scope, priority, id, effort, date) -->
                   <div class="arc-meta">
                     <v-chip
                       v-if="task.scope"
@@ -295,6 +319,38 @@ const archivedGroupsSorted = computed(() => {
                     <v-chip size="x-small" variant="tonal" class="arc-date-chip">{{ formatDate(task.updated_at) }}</v-chip>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mode: flat list by date -->
+          <div v-else class="task-list">
+            <div
+              v-for="task in archivedFlat"
+              :key="task.id"
+              class="archive-card"
+              @click="store.openTask(task)"
+            >
+              <div class="arc-row1">
+                <p class="arc-title">{{ task.title }}</p>
+                <AgentBadge v-if="task.agent_name" :name="task.agent_name" />
+              </div>
+              <div class="arc-meta">
+                <v-chip
+                  v-if="task.scope"
+                  size="x-small"
+                  variant="tonal"
+                  rounded="sm"
+                  :style="{
+                    color: perimeterFg(task.scope),
+                    backgroundColor: perimeterBg(task.scope),
+                  }"
+                >{{ task.scope }}</v-chip>
+                <v-chip v-if="task.priority === 'critical'" size="x-small" variant="tonal" color="chip-priority-critical">!!</v-chip>
+                <v-chip v-if="task.priority === 'high'" size="x-small" variant="tonal" color="chip-priority-high">!</v-chip>
+                <v-chip size="x-small" variant="tonal" class="arc-id-chip">#{{ task.id }}</v-chip>
+                <v-chip v-if="task.effort" size="x-small" variant="tonal" :color="EFFORT_COLOR[task.effort]">{{ EFFORT_LABEL[task.effort] }}</v-chip>
+                <v-chip size="x-small" variant="tonal" class="arc-date-chip">{{ formatDate(task.updated_at) }}</v-chip>
               </div>
             </div>
           </div>
@@ -425,6 +481,9 @@ const archivedGroupsSorted = computed(() => {
   font-size: 0.875rem;
   color: var(--content-faint);
   font-style: italic;
+}
+.archive-sort-bar {
+  flex-shrink: 0;
 }
 .archive-list {
   flex: 1;

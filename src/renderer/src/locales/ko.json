@@ -29,7 +29,9 @@
     "prevPage": "이전",
     "nextPage": "다음",
     "pageOf": "{page} / {total} 페이지 （{count}개 작업）",
-    "staleTasks": "{count}개의 지연 작업 | {count}개의 지연 작업"
+    "staleTasks": "{count}개의 지연 작업 | {count}개의 지연 작업",
+    "sortByAgent": "에이전트별",
+    "sortByDate": "날짜별"
   },
   "taskCard": {
     "relaunchAgent": "에이전트 재시작",

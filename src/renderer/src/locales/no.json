@@ -29,7 +29,9 @@
     "prevPage": "Forrige",
     "nextPage": "Neste",
     "pageOf": "Side {page} / {total} ({count} oppgaver)",
-    "staleTasks": "{count} foreldet oppgave | {count} foreldede oppgaver"
+    "staleTasks": "{count} foreldet oppgave | {count} foreldede oppgaver",
+    "sortByAgent": "Etter agent",
+    "sortByDate": "Etter dato"
   },
   "taskCard": {
     "relaunchAgent": "Start agent på nytt",

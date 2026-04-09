@@ -31,7 +31,9 @@
     "pageOf": "Page {page} / {total} ({count} tâches)",
     "staleTasks": "{count} tâche bloquée depuis trop longtemps | {count} tâches bloquées depuis trop longtemps",
     "review": "Review",
-    "reviewLaunchFailed": "Échec du lancement de la review"
+    "reviewLaunchFailed": "Échec du lancement de la review",
+    "sortByAgent": "Par agent",
+    "sortByDate": "Par date"
   },
   "taskCard": {
     "relaunchAgent": "Relancer l'agent",
