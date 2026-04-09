@@ -37,6 +37,7 @@ const SECTION_ICONS: Record<Section, string> = {
 
 const showExportConfirm = ref(false)
 const exporting = ref(false)
+const regenerating = ref(false)
 
 async function exportZip() {
   if (!store.dbPath) return
@@ -60,6 +61,29 @@ const { t } = useI18n()
 const settingsStore = useSettingsStore()
 const store = useTasksStore()
 const { status: updaterStatus, check: checkUpdaterNow } = useUpdater()
+
+async function regenerateRulesFiles() {
+  if (!store.projectPath) return
+  regenerating.value = true
+  try {
+    const detectedClis = settingsStore.allCliInstances.map(i => i.cli)
+    const uniqueClis = [...new Set(detectedClis)]
+    const result = await window.electronAPI.projectRegenerateRulesFiles(
+      store.projectPath,
+      uniqueClis,
+      settingsStore.language,
+    )
+    if (result.success && result.filesCreated) {
+      emit('toast', t('settings.regenerateSuccess', { files: result.filesCreated.join(', ') }), 'success')
+    } else {
+      emit('toast', t('settings.regenerateError', { error: result.error ?? 'Unknown error' }), 'error')
+    }
+  } catch (err) {
+    emit('toast', t('settings.regenerateError', { error: String(err) }), 'error')
+  } finally {
+    regenerating.value = false
+  }
+}
 
 const availableLocales = [
   { code: 'fr', label: 'Français' },
@@ -326,6 +350,18 @@ function onDefaultCliChange(v: string) {
                 @refresh="settingsStore.refreshCliDetection()"
                 @toggle="settingsStore.toggleCli($event)"
               />
+            </v-sheet>
+            <v-sheet v-if="store.projectPath" rounded="lg" border class="pa-4">
+              <p class="text-body-2 font-weight-medium mb-1">{{ t('settings.regenerateRules') }}</p>
+              <p class="text-body-2 text-medium-emphasis mb-3">{{ t('settings.regenerateRulesDesc') }}</p>
+              <v-btn
+                color="primary"
+                prepend-icon="mdi-file-refresh-outline"
+                :disabled="regenerating"
+                @click="regenerateRulesFiles"
+              >
+                {{ regenerating ? t('settings.regenerating') : t('settings.regenerateRulesBtn') }}
+              </v-btn>
             </v-sheet>
             <v-sheet rounded="lg" border class="pa-4">
               <p class="text-body-2 font-weight-medium mb-2">{{ t('settings.defaultCliInstance') }}</p>

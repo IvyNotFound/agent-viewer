@@ -89,6 +89,7 @@ const mockElectronAPI = {
   agentGroupsSetMember: vi.fn().mockResolvedValue({ success: true }),
   agentGroupsReorder: vi.fn().mockResolvedValue({ success: true }),
   sessionsStatsCost: vi.fn().mockResolvedValue({ success: true, rows: [] }),
+  projectRegenerateRulesFiles: vi.fn().mockResolvedValue({ success: true, filesCreated: ['CLAUDE.md'] }),
   projectExportZip: vi.fn().mockResolvedValue({ success: true, path: '/home/user/Downloads/project.zip' }),
   // Telemetry IPC (T810/T842)
   telemetryScan: vi.fn().mockResolvedValue({ languages: [], totalFiles: 0, totalLines: 0, scannedAt: new Date().toISOString() }),

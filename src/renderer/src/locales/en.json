@@ -238,6 +238,12 @@
     "cliNotDetected": "Not detected",
     "cliEnabled": "Enabled in launcher",
     "cliDisabled": "Disabled in launcher",
+    "regenerateRules": "Regenerate rules files",
+    "regenerateRulesDesc": "Regenerate project rules (CLAUDE.md, GEMINI.md, etc.) for each detected CLI.",
+    "regenerateRulesBtn": "Regenerate",
+    "regenerating": "Generating...",
+    "regenerateSuccess": "Generated: {files}",
+    "regenerateError": "Failed to regenerate rules: {error}",
     "sections": {
       "appearance": "Appearance",
       "automation": "Automation",

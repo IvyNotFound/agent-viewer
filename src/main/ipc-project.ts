@@ -2,7 +2,8 @@
  * IPC Handlers — Project management
  *
  * Covers: select-project-dir, create-project-db, find-project-db,
- *         select-new-project-dir, init-new-project, project:exportZip
+ *         select-new-project-dir, init-new-project, project:regenerateRulesFiles,
+ *         project:exportZip
  *
  * @module ipc-project
  */
@@ -342,6 +343,55 @@ export function registerProjectHandlers(): void {
       registerProjectPath(projectPath)
     }
     return dbPath
+  })
+
+  /**
+   * Regenerate CLI-agnostic project rules for each detected CLI (ADR-012 Part A § Regeneration).
+   * Called on-demand from SettingsModal when the user wants to refresh rule files
+   * (e.g. after installing a new CLI post-init).
+   *
+   * @param projectPath - Registered project path
+   * @param detectedClis - CLI names detected on the system (e.g. ['claude', 'gemini', 'codex'])
+   * @param lang - Agent prompt language (defaults to 'en')
+   * @returns {{ success: boolean, filesCreated?: string[], error?: string }}
+   */
+  ipcMain.handle('project:regenerateRulesFiles', async (
+    _event,
+    projectPath: string,
+    detectedClis: string[],
+    lang?: string,
+  ) => {
+    try {
+      assertProjectPathAllowed(projectPath)
+      const validLangs = Object.keys(GENERIC_AGENTS_BY_LANG) as AgentLanguage[]
+      const rulesLang: AgentLanguage = validLangs.includes(lang as AgentLanguage)
+        ? (lang as AgentLanguage)
+        : 'en'
+      const rules = getProjectRules(rulesLang)
+      const filesCreated: string[] = []
+      const clis = detectedClis ?? []
+
+      // Always regenerate CLAUDE.md (safe default)
+      await writeFile(join(projectPath, 'CLAUDE.md'), rules, 'utf-8')
+      filesCreated.push('CLAUDE.md')
+
+      // Per-CLI rule files (ADR-012)
+      if (clis.includes('gemini')) {
+        await writeFile(join(projectPath, 'GEMINI.md'), rules, 'utf-8')
+        filesCreated.push('GEMINI.md')
+      }
+      if (clis.includes('codex')) {
+        const codexDir = join(projectPath, '.codex')
+        await mkdir(codexDir, { recursive: true })
+        await writeFile(join(codexDir, 'instructions.md'), rules, 'utf-8')
+        filesCreated.push('.codex/instructions.md')
+      }
+
+      return { success: true, filesCreated }
+    } catch (err) {
+      console.error('[IPC project:regenerateRulesFiles]', err)
+      return { success: false, error: String(err) }
+    }
   })
 
   /**

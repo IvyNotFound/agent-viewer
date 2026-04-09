@@ -238,6 +238,12 @@
     "cliNotDetected": "Non détecté",
     "cliEnabled": "Activé dans le lanceur",
     "cliDisabled": "Désactivé dans le lanceur",
+    "regenerateRules": "Regénérer les fichiers de règles",
+    "regenerateRulesDesc": "Regénérer les règles projet (CLAUDE.md, GEMINI.md, etc.) pour chaque CLI détecté.",
+    "regenerateRulesBtn": "Regénérer",
+    "regenerating": "Génération...",
+    "regenerateSuccess": "Générés : {files}",
+    "regenerateError": "Erreur de regénération : {error}",
     "sections": {
       "appearance": "Apparence",
       "automation": "Automation",
