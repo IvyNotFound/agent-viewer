@@ -45,6 +45,7 @@ export function buildClaudeCmd(opts: {
   systemPromptFile?: string
   thinkingMode?: string
   permissionMode?: string
+  modelId?: string
 }): string {
   const cmd = (opts.claudeCommand && CLAUDE_CMD_REGEX.test(opts.claudeCommand))
     ? opts.claudeCommand
@@ -57,6 +58,10 @@ export function buildClaudeCmd(opts: {
     '--input-format', 'stream-json',
     '--output-format', 'stream-json',
   ]
+
+  if (opts.modelId) {
+    parts.push('--model', opts.modelId)
+  }
 
   if (opts.convId) {
     parts.push('--resume', opts.convId)
@@ -104,6 +109,7 @@ export function buildWindowsPS1Script(opts: {
   permissionMode?: string
   claudeBinaryPath?: string
   settingsTempFile?: string
+  modelId?: string
 }): string {
   const cmd = (opts.claudeCommand && CLAUDE_CMD_REGEX.test(opts.claudeCommand))
     ? opts.claudeCommand
@@ -164,6 +170,12 @@ export function buildWindowsPS1Script(opts: {
   lines.push('$a.Add(\'--output-format\')')
   lines.push('$a.Add(\'stream-json\')')
 
+  // Optional: select model (e.g. sonnet, opus, haiku — T1802):
+  if (opts.modelId) {
+    lines.push('$a.Add(\'--model\')')
+    lines.push(`$a.Add('${opts.modelId}')`)
+  }
+
   // Optional: resume an existing conversation (appended before prompt flags to keep order stable):
   if (opts.convId) {
     lines.push('$a.Add(\'--resume\')')
@@ -220,6 +232,7 @@ export const claudeAdapter: CliAdapter = {
       systemPromptFile: opts.systemPromptFile,
       thinkingMode: opts.thinkingMode,
       permissionMode: opts.permissionMode,
+      modelId: opts.modelId,
     })
     return { command: 'bash', args: ['-l', '-c', cmd] }
   },

@@ -87,8 +87,8 @@ function createMockDb({
 // ── CURRENT_SCHEMA_VERSION ────────────────────────────────────────────────────
 
 describe('CURRENT_SCHEMA_VERSION', () => {
-  it('equals the last migration version (32)', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(32)
+  it('equals the last migration version (33)', () => {
+    expect(CURRENT_SCHEMA_VERSION).toBe(33)
   })
 })
 
@@ -147,10 +147,10 @@ describe('migrateDb — legacy bootstrap', () => {
     })
   }
 
-  it('sets cursor to 23 (bootstrap) and returns 9 migrations (v24–v32)', () => {
+  it('sets cursor to 23 (bootstrap) and returns 10 migrations (v24–v33)', () => {
     const db = createLegacyDb()
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(9)
+    expect(result).toBe(10)
   })
 
   it('emits PRAGMA user_version = 23 (bootstrap cursor)', () => {

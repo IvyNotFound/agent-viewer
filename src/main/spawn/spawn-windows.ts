@@ -35,6 +35,7 @@ export function spawnWindows({
       permissionMode: opts.permissionMode,
       claudeBinaryPath: opts.claudeBinaryPath,
       settingsTempFile,
+      modelId: opts.modelId,
     })
     const scriptTempFile = join(tmpdir(), `claude-start-${id}.ps1`)
     writeFileSync(scriptTempFile, ps1Content, 'utf-8')

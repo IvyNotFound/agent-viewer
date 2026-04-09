@@ -6,6 +6,7 @@ import { runAddParentIdToAgentGroupsMigration } from './migrations/v4-agent-grou
 import { runAddWorktreeToAgentsMigration } from './migrations/v5-agent-worktree'
 import { runFixTasksSessionFkMigration } from './migrations/v6-tasks-session-fk'
 import { runAddPreferredModelToAgentsMigration } from './migrations/v7-agent-preferred-model'
+import { runAddPreferredCliToAgentsMigration } from './migrations/v8-agent-preferred-cli'
 
 // ── Numbered migration system ────────────────────────────────────────────────
 
@@ -342,6 +343,9 @@ const migrations: Migration[] = [
     if (!cols.has('duration_ms')) db.run('ALTER TABLE sessions ADD COLUMN duration_ms INTEGER')
     if (!cols.has('num_turns'))   db.run('ALTER TABLE sessions ADD COLUMN num_turns INTEGER')
   } },
+
+  // v33: add agents.preferred_cli for CLI tool preference per agent (T1802)
+  { version: 33, up: (db) => { runAddPreferredCliToAgentsMigration(db) } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */

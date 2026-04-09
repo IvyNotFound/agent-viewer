@@ -39,8 +39,9 @@ export const geminiAdapter: CliAdapter = {
       args.push('--resume', opts.convId)
     }
 
-    if (opts.model) {
-      args.push('-m', opts.model)
+    const effectiveModel = opts.modelId || opts.model
+    if (effectiveModel) {
+      args.push('-m', effectiveModel)
     }
 
     if (opts.initialMessage) {

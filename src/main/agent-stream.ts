@@ -115,8 +115,8 @@ export function registerAgentStreamHandlers(): void {
       }
     }
 
-    // T1356: Resolve model ID — agent.preferred_model → opencode_default_model config → undefined.
-    // Only resolved if not already set by caller and a DB+session context is available.
+    // T1802: Resolve model ID — agent.preferred_model → default_model_<cli> config → legacy fallback → undefined.
+    // Generic for all CLIs (replaces OpenCode-specific resolution from T1356).
     if (!opts.modelId && opts.dbPath && Number.isInteger(opts.sessionId) && opts.sessionId! > 0) {
       try {
         assertDbPathAllowed(opts.dbPath)
@@ -127,12 +127,17 @@ export function registerAgentStreamHandlers(): void {
         ) as Array<{ preferred_model: string | null }>
         const agentModel = agentRows[0]?.preferred_model ?? null
 
+        const cliName = opts.cli ?? 'claude'
+        const configKey = `default_model_${cliName}`
+        // Read both the new generic key and the legacy opencode key in one query
         const configRows = await queryLive(
           opts.dbPath,
-          `SELECT value FROM config WHERE key = 'opencode_default_model'`,
-          []
-        ) as Array<{ value: string | null }>
-        const globalModel = configRows[0]?.value ?? null
+          `SELECT key, value FROM config WHERE key IN (?, 'opencode_default_model')`,
+          [configKey]
+        ) as Array<{ key: string; value: string | null }>
+        const configMap = new Map(configRows.map(r => [r.key, r.value]))
+        // Prefer new generic key, fall back to legacy key for opencode backward compat
+        const globalModel = configMap.get(configKey) ?? (cliName === 'opencode' ? configMap.get('opencode_default_model') : null) ?? null
 
         const resolved = agentModel || globalModel || undefined
         if (resolved) opts.modelId = resolved

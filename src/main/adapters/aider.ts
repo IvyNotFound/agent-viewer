@@ -38,6 +38,10 @@ export const aiderAdapter: CliAdapter = {
       '--yes-always',       // non-interactive: answer yes to prompts automatically
     ]
 
+    if (opts.modelId) {
+      args.push('--model', opts.modelId)
+    }
+
     if (opts.systemPromptFile) {
       // --read prepends the file as context before the conversation
       args.push('--read', opts.systemPromptFile)

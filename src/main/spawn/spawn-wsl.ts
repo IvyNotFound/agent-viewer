@@ -42,6 +42,7 @@ export function spawnWsl({
       systemPromptFile: spTempFile ? toWslPath(spTempFile) : undefined,
       thinkingMode: opts.thinkingMode,
       permissionMode: opts.permissionMode,
+      modelId: opts.modelId,
     })
     const scriptTempFile = join(tmpdir(), `claude-start-${id}.sh`)
     writeFileSync(scriptTempFile, `#!/bin/bash\nexec ${claudeCmd}\n`, 'utf-8')
