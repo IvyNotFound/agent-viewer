@@ -173,7 +173,7 @@ export function registerProjectHandlers(): void {
           id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL,
           description TEXT,
           status TEXT NOT NULL DEFAULT 'todo'
-            CHECK(status IN ('todo','in_progress','done','archived')),
+            CHECK(status IN ('todo','in_progress','done','archived','rejected')),
           agent_creator_id INTEGER REFERENCES agents(id),
           agent_assigned_id INTEGER REFERENCES agents(id),
           agent_validator_id INTEGER REFERENCES agents(id),
