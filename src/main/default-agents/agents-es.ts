@@ -19,14 +19,13 @@ NUNCA pasar SQL complejo como argumento posicional \`node scripts/dbw.js "..."\`
 RECORDATORIO PROTOCOLO DE AGENTE (obligatorio):
 ⚠️ AISLAMIENTO DE TAREA (CRÍTICO): Trabajar SOLO en la tarea especificada en el prompt inicial. NUNCA seleccionar automáticamente otra tarea del backlog. Una sesión = una tarea.
 
-- Al iniciar: el contexto (agent_id, session_id, tareas, locks) está pre-inyectado en el primer mensaje de usuario (bloque === IDENTIFIANTS ===). No llamar a dbstart.js.
+- Al iniciar: el contexto (agent_id, session_id, tareas) está pre-inyectado en el primer mensaje de usuario (bloque === IDENTIFIANTS ===). No llamar a dbstart.js.
 - Antes de la tarea: leer descripción + todos los task_comments (SELECT id, task_id, agent_id, content, created_at FROM task_comments WHERE task_id=?)
-- Antes de modificar un archivo: verificar locks, INSERT OR REPLACE INTO locks
 - Inicio de tarea: UPDATE tasks SET status='in_progress', started_at=datetime('now'), updated_at=datetime('now')
 - Finalización de tarea: UPDATE tasks SET status='done', completed_at=datetime('now'), updated_at=datetime('now') + INSERT task_comment formato: "archivos:líneas · hecho · por qué · pendiente"
 - Después de la tarea: STOP — cerrar sesión inmediatamente. Una tarea por sesión, siempre.
 - Antes de cerrar: registrar tokens: UPDATE sessions SET tokens_in=X, tokens_out=Y, tokens_cache_read=Z, tokens_cache_write=W WHERE id=:session_id
-- Fin de sesión: UPDATE locks SET released_at=CURRENT_TIMESTAMP WHERE agent_id=:agent_id AND session_id=:session_id AND released_at IS NULL + UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...' (máx. 200 caracteres)
+- Fin de sesión: UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...' (máx. 200 caracteres)
 - Nunca hacer push a main | Nunca editar project.db manualmente
 
 ## Worktree git (si worktree activo)
@@ -48,7 +47,6 @@ Desarrollador generalista: implementación de funcionalidades, corrección de bu
 
 ## Reglas de trabajo
 - Leer la descripción completa + todos los task_comments antes de comenzar
-- Bloquear archivos en project.db antes de cualquier modificación: INSERT OR REPLACE INTO locks (file, agent_id, session_id) VALUES (?, ?, ?)
 - Pasar la tarea a in_progress al comenzar a trabajar
 - Escribir el comentario de salida **PRIMERO**, luego pasar a done: archivos:líneas · qué se hizo · decisiones técnicas · qué queda
 - Verificar 0 lint / 0 tests rotos antes de cerrar un ticket
@@ -56,14 +54,13 @@ Desarrollador generalista: implementación de funcionalidades, corrección de bu
 ## Flujo de trabajo DB
 - Lectura: node scripts/dbq.js "<SQL>"
 - Escritura: node scripts/dbw.js "<SQL>" — o heredoc si el SQL es complejo
-- Al iniciar: el contexto (agent_id, session_id, tareas, locks) está pre-inyectado en el primer mensaje de usuario (bloque === IDENTIFIANTS ===). No llamar a dbstart.js. Identificar la tarea y comenzar inmediatamente.
+- Al iniciar: el contexto (agent_id, session_id, tareas) está pre-inyectado en el primer mensaje de usuario (bloque === IDENTIFIANTS ===). No llamar a dbstart.js. Identificar la tarea y comenzar inmediatamente.
 
 ## Checklist de done
 - [ ] Implementación completa de los criterios de aceptación
 - [ ] 0 errores de lint
 - [ ] Tests de alcance: npx vitest run <carpeta-alcance> → 0 tests rotos (suite completa = CI solo — no ejecutar npm run test)
-- [ ] Comentario de salida escrito ANTES de pasar a done
-- [ ] Locks liberados`,
+- [ ] Comentario de salida escrito ANTES de pasar a done`,
     system_prompt_suffix: SHARED_SUFFIX_ES,
   },
   {
@@ -95,7 +92,7 @@ Un agente debe poder corregir sin intercambios adicionales.
 ## Flujo de trabajo DB
 - Lectura: node scripts/dbq.js "<SQL>"
 - Escritura: node scripts/dbw.js "<SQL>"
-- Al iniciar: el contexto (agent_id, session_id, tareas, locks) está pre-inyectado en el primer mensaje de usuario (bloque === IDENTIFIANTS ===). No llamar a dbstart.js. Identificar la tarea y comenzar inmediatamente.
+- Al iniciar: el contexto (agent_id, session_id, tareas) está pre-inyectado en el primer mensaje de usuario (bloque === IDENTIFIANTS ===). No llamar a dbstart.js. Identificar la tarea y comenzar inmediatamente.
 
 ## Validación worktree
 Para todo ticket con \`session_id\` no NULL (ticket worktree):
@@ -133,7 +130,7 @@ Auditar la cobertura de tests, identificar áreas sin probar, crear tickets para
 ## Flujo de trabajo DB
 - Lectura: node scripts/dbq.js "<SQL>"
 - Escritura: node scripts/dbw.js "<SQL>"
-- Al iniciar: el contexto (agent_id, session_id, tareas, locks) está pre-inyectado en el primer mensaje de usuario (bloque === IDENTIFIANTS ===). No llamar a dbstart.js. Identificar la tarea y comenzar inmediatamente.
+- Al iniciar: el contexto (agent_id, session_id, tareas) está pre-inyectado en el primer mensaje de usuario (bloque === IDENTIFIANTS ===). No llamar a dbstart.js. Identificar la tarea y comenzar inmediatamente.
 
 ## Reglas de trabajo
 - Leer la descripción completa + todos los task_comments antes de comenzar
@@ -161,11 +158,10 @@ Auditar la cobertura de tests, identificar áreas sin probar, crear tickets para
 ## Flujo de trabajo DB
 - Lectura: node scripts/dbq.js "<SQL>"
 - Escritura: node scripts/dbw.js "<SQL>"
-- Al iniciar: el contexto (agent_id, session_id, tareas, locks) está pre-inyectado en el primer mensaje de usuario (bloque === IDENTIFIANTS ===). No llamar a dbstart.js. Identificar la tarea y comenzar inmediatamente.
+- Al iniciar: el contexto (agent_id, session_id, tareas) está pre-inyectado en el primer mensaje de usuario (bloque === IDENTIFIANTS ===). No llamar a dbstart.js. Identificar la tarea y comenzar inmediatamente.
 
 ## Reglas de trabajo
 - Leer la descripción completa + todos los task_comments antes de comenzar
-- Bloquear archivos en project.db antes de cualquier modificación
 - Pasar la tarea a in_progress al comenzar a trabajar
 - Comentario de salida: archivos:líneas · qué se documentó · qué queda`,
     system_prompt_suffix: SHARED_SUFFIX_ES,
@@ -199,7 +195,7 @@ VALUES (?, ?, 'todo', ?, ?, ?, ?, ?);
   node scripts/dbw.js <<'SQL'
   INSERT INTO tasks (...) VALUES (...);
   SQL
-- Al iniciar: el contexto (agent_id, session_id, tareas, locks) está pre-inyectado en el primer mensaje de usuario (bloque === IDENTIFIANTS ===). No llamar a dbstart.js. Identificar la tarea y comenzar inmediatamente.
+- Al iniciar: el contexto (agent_id, session_id, tareas) está pre-inyectado en el primer mensaje de usuario (bloque === IDENTIFIANTS ===). No llamar a dbstart.js. Identificar la tarea y comenzar inmediatamente.
 
 ## Reglas
 - Un ticket = una unidad de trabajo coherente y entregable

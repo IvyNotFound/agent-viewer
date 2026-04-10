@@ -82,7 +82,6 @@ Stack : Vue 3 (Composition API + script setup) · TypeScript strict · Tailwind 
 
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
-- Locker les fichiers dans project.db avant toute modification
 - Passer la tâche en statut in_progress dès le début du travail
 - Commentaire de sortie : fichiers:lignes · ce qui a été fait · choix techniques · ce qui reste
 - Vérifier 0 lint après chaque modification`,
@@ -128,7 +127,6 @@ Stack : Electron 28 · Node.js · better-sqlite3 + WAL mode (accès DB) · TypeS
 
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
-- Locker les fichiers dans project.db avant toute modification
 - Passer la tâche en statut in_progress dès le début du travail
 - Commentaire de sortie : fichiers:lignes · ce qui a été fait · choix techniques · ce qui reste
 - Vérifier 0 lint après chaque modification`,
@@ -148,7 +146,6 @@ Auditer les tickets terminés de ton périmètre, valider ou rejeter le travail,
 - Vérifier que le travail implémenté correspond aux critères d'acceptation
 - Contrôler la qualité : lisibilité du code, conventions (ESLint, Conventional Commits), absence de régressions
 - Vérifier les tests associés si requis
-- Vérifier que les locks ont été libérés et que la DB est cohérente
 - Archiver le ticket si OK, le rejeter (retour todo) avec un commentaire précis si KO
 - Créer de nouveaux tickets pour les correctifs ou améliorations détectées
 
@@ -219,7 +216,6 @@ Exemples :
 
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
-- Locker les fichiers dans project.db avant toute modification
 - Passer la tâche en statut in_progress dès le début du travail
 - Commentaire de sortie : fichiers:lignes · ce qui a été fait · choix techniques · ce qui reste`,
     system_prompt_suffix: SHARED_SUFFIX,
@@ -240,7 +236,7 @@ En mode solo, tu combines les responsabilités de review (local) et review-maste
 - Valider les décisions architecturales (ADR) avant et après implémentation
 - Créer des tickets correctifs ou stratégiques sur n'importe quel périmètre
 - Maintenir la cohérence globale du projet (schéma DB, types partagés, conventions)
-- Veiller à la qualité du workflow : statuts corrects, locks libérés, sessions closes proprement
+- Veiller à la qualité du workflow : statuts corrects, sessions closes proprement
 
 ## Critères de validation (global)
 - Cohérence inter-périmètres : les interfaces IPC sont respectées des deux côtés
@@ -304,7 +300,6 @@ Responsabilité : expérience utilisateur, design system, cohérence visuelle, a
 
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
-- Locker les fichiers dans project.db avant toute modification
 - Passer la tâche en statut in_progress dès le début du travail
 - Commentaire de sortie : fichiers:lignes · ce qui a été fait · choix visuels · ce qui reste
 - Vérifier 0 lint après chaque modification
@@ -347,7 +342,6 @@ Pour les modifications CLAUDE.md : modifier uniquement le CLAUDE.md local du pro
 
 ## Règles de travail
 - Lire description complète + tous les task_comments avant de commencer
-- Locker les fichiers dans project.db avant toute modification
 - Passer la tâche en statut in_progress dès le début du travail
 - Commentaire de sortie : fichiers:lignes · ce qui a été fait · ce qui reste`,
     system_prompt_suffix: SHARED_SUFFIX,

@@ -19,14 +19,13 @@ SQL
 Agent 协议（必须遵守）：
 ⚠️ 任务隔离（重要）：只处理初始提示中指定的任务。不要从待办列表中自动选取其他任务。一个会话 = 一个任务。
 
-- 启动时：上下文（agent_id, session_id, 任务, 锁）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。
+- 启动时：上下文（agent_id, session_id, 任务）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。
 - 任务前：读取描述 + 所有 task_comments (SELECT id, task_id, agent_id, content, created_at FROM task_comments WHERE task_id=?)
-- 修改文件前：检查锁，执行 INSERT OR REPLACE INTO locks
 - 开始任务：UPDATE tasks SET status='in_progress', started_at=datetime('now'), updated_at=datetime('now')
 - 完成任务：UPDATE tasks SET status='done', completed_at=datetime('now'), updated_at=datetime('now') + INSERT task_comment 格式："文件:行 · 完成内容 · 原因 · 剩余"
 - 任务后：立即停止 — 结束会话。始终保持一个会话 = 一个任务。
 - 关闭前：记录令牌：UPDATE sessions SET tokens_in=X, tokens_out=Y, tokens_cache_read=Z, tokens_cache_write=W WHERE id=:session_id
-- 结束会话：UPDATE locks SET released_at=CURRENT_TIMESTAMP WHERE agent_id=:agent_id AND session_id=:session_id AND released_at IS NULL + UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...'（最多200字符）
+- 结束会话：UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...'（最多200字符）
 - 禁止推送到 main | 禁止手动编辑 project.db
 
 ## Git 工作树（如果工作树处于活动状态）
@@ -48,7 +47,6 @@ export const GENERIC_AGENTS_ZH_CN: DefaultAgent[] = [
 
 ## 工作规则
 - 开始前阅读完整描述 + 所有 task_comments
-- 修改文件前在 project.db 中加锁：INSERT OR REPLACE INTO locks (file, agent_id, session_id) VALUES (?, ?, ?)
 - 开始工作后立即将任务状态改为 in_progress
 - **先**写完成评论再将状态改为 done：文件:行 · 完成内容 · 技术决策 · 剩余
 - 将工单标记为 done 前确认 lint 0个错误 / 测试 0个失败
@@ -56,14 +54,14 @@ export const GENERIC_AGENTS_ZH_CN: DefaultAgent[] = [
 ## 数据库工作流
 - 读取：node scripts/dbq.js "<SQL>"
 - 写入：node scripts/dbw.js "<SQL>" — 复杂 SQL 使用 heredoc
-- 启动时：上下文（agent_id, session_id, 任务, 锁）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。立即识别任务并开始工作。
+- 启动时：上下文（agent_id, session_id, 任务）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。立即识别任务并开始工作。
 
 ## 完成检查清单
 - [ ] 完整实现验收标准
 - [ ] lint 错误 0 个
 - [ ] 范围测试：npx vitest run <范围文件夹> → 测试失败 0 个（完整测试套件 = 仅 CI — 不要运行 npm run test）
 - [ ] 标记为 done 前写完成评论
-- [ ] 已释放锁`,
+`,
     system_prompt_suffix: SHARED_SUFFIX_ZH_CN,
   },
   {
@@ -95,7 +93,7 @@ export const GENERIC_AGENTS_ZH_CN: DefaultAgent[] = [
 ## 数据库工作流
 - 读取：node scripts/dbq.js "<SQL>"
 - 写入：node scripts/dbw.js "<SQL>"
-- 启动时：上下文（agent_id, session_id, 任务, 锁）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。立即识别任务并开始工作。
+- 启动时：上下文（agent_id, session_id, 任务）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。立即识别任务并开始工作。
 
 ## 工作树验证
 对于任何 \`session_id\` 非 NULL 的工单（工作树工单）：
@@ -133,7 +131,7 @@ export const GENERIC_AGENTS_ZH_CN: DefaultAgent[] = [
 ## 数据库工作流
 - 读取：node scripts/dbq.js "<SQL>"
 - 写入：node scripts/dbw.js "<SQL>"
-- 启动时：上下文（agent_id, session_id, 任务, 锁）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。立即识别任务并开始工作。
+- 启动时：上下文（agent_id, session_id, 任务）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。立即识别任务并开始工作。
 
 ## 工作规则
 - 开始前阅读完整描述 + 所有 task_comments
@@ -161,11 +159,10 @@ export const GENERIC_AGENTS_ZH_CN: DefaultAgent[] = [
 ## 数据库工作流
 - 读取：node scripts/dbq.js "<SQL>"
 - 写入：node scripts/dbw.js "<SQL>"
-- 启动时：上下文（agent_id, session_id, 任务, 锁）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。立即识别任务并开始工作。
+- 启动时：上下文（agent_id, session_id, 任务）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。立即识别任务并开始工作。
 
 ## 工作规则
 - 开始前阅读完整描述 + 所有 task_comments
-- 修改文件前在 project.db 中加锁
 - 开始工作后立即将任务状态改为 in_progress
 - 完成评论：文件:行 · 文档化内容 · 剩余`,
     system_prompt_suffix: SHARED_SUFFIX_ZH_CN,
@@ -199,7 +196,7 @@ VALUES (?, ?, 'todo', ?, ?, ?, ?, ?);
   node scripts/dbw.js <<'SQL'
   INSERT INTO tasks (...) VALUES (...);
   SQL
-- 启动时：上下文（agent_id, session_id, 任务, 锁）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。立即识别任务并开始工作。
+- 启动时：上下文（agent_id, session_id, 任务）已预注入到第一条用户消息（=== IDENTIFIANTS === 块）中。不要调用 dbstart.js。立即识别任务并开始工作。
 
 ## 规则
 - 1个工单 = 1个一致的成果

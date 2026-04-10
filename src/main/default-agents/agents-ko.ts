@@ -19,14 +19,13 @@ SQL
 에이전트 프로토콜 (필수):
 ⚠️ 작업 격리 (중요): 초기 프롬프트에서 지정된 작업만 처리하세요. 백로그에서 다른 작업을 자동으로 선택하지 마세요. 1세션 = 1작업.
 
-- 시작 시: 컨텍스트 (agent_id, session_id, 작업, 락)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요.
+- 시작 시: 컨텍스트 (agent_id, session_id, 작업)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요.
 - 작업 전: 설명 + 모든 task_comments 읽기 (SELECT id, task_id, agent_id, content, created_at FROM task_comments WHERE task_id=?)
-- 파일 변경 전: 락 확인 후 INSERT OR REPLACE INTO locks 실행
 - 작업 시작: UPDATE tasks SET status='in_progress', started_at=datetime('now'), updated_at=datetime('now')
 - 작업 완료: UPDATE tasks SET status='done', completed_at=datetime('now'), updated_at=datetime('now') + INSERT task_comment 형식: "파일:줄 · 수행 내용 · 이유 · 잔여"
 - 작업 후: 즉시 STOP — 세션 종료. 항상 1세션 = 1작업.
 - 종료 전: 토큰 기록: UPDATE sessions SET tokens_in=X, tokens_out=Y, tokens_cache_read=Z, tokens_cache_write=W WHERE id=:session_id
-- 세션 종료: UPDATE locks SET released_at=CURRENT_TIMESTAMP WHERE agent_id=:agent_id AND session_id=:session_id AND released_at IS NULL + UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...' (최대 200자)
+- 세션 종료: UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...' (최대 200자)
 - main으로 push 금지 | project.db 수동 편집 금지
 
 ## Git 워크트리 (워크트리 활성 시)
@@ -48,7 +47,6 @@ export const GENERIC_AGENTS_KO: DefaultAgent[] = [
 
 ## 작업 규칙
 - 시작 전에 전체 설명 + 모든 task_comments를 읽으세요
-- 파일 변경 전 project.db에 락 설정: INSERT OR REPLACE INTO locks (file, agent_id, session_id) VALUES (?, ?, ?)
 - 작업 시작 직후 작업 상태를 in_progress로 변경
 - 완료 댓글을 **먼저** 작성한 후 상태를 done으로: 파일:줄 · 수행 내용 · 기술적 결정 · 잔여
 - 티켓을 done으로 변경하기 전에 lint 0개 / 테스트 0개 실패 확인
@@ -56,14 +54,13 @@ export const GENERIC_AGENTS_KO: DefaultAgent[] = [
 ## DB 워크플로우
 - 읽기: node scripts/dbq.js "<SQL>"
 - 쓰기: node scripts/dbw.js "<SQL>" — 복잡한 SQL은 heredoc 사용
-- 시작 시: 컨텍스트 (agent_id, session_id, 작업, 락)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요. 작업을 파악하고 즉시 시작하세요.
+- 시작 시: 컨텍스트 (agent_id, session_id, 작업)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요. 작업을 파악하고 즉시 시작하세요.
 
 ## 완료 체크리스트
 - [ ] 수락 기준 완전 구현
 - [ ] lint 오류 0개
 - [ ] 스코프 테스트: npx vitest run <스코프 폴더> → 테스트 실패 0개 (전체 스위트 = CI 전용 — npm run test 실행하지 않음)
-- [ ] done 설정 전에 완료 댓글 작성
-- [ ] 락 해제 완료`,
+- [ ] done 설정 전에 완료 댓글 작성`,
     system_prompt_suffix: SHARED_SUFFIX_KO,
   },
   {
@@ -95,7 +92,7 @@ export const GENERIC_AGENTS_KO: DefaultAgent[] = [
 ## DB 워크플로우
 - 읽기: node scripts/dbq.js "<SQL>"
 - 쓰기: node scripts/dbw.js "<SQL>"
-- 시작 시: 컨텍스트 (agent_id, session_id, 작업, 락)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요. 작업을 파악하고 즉시 시작하세요.
+- 시작 시: 컨텍스트 (agent_id, session_id, 작업)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요. 작업을 파악하고 즉시 시작하세요.
 
 ## 워크트리 검증
 \`session_id\`가 NULL이 아닌 티켓(워크트리 티켓)의 경우:
@@ -133,7 +130,7 @@ export const GENERIC_AGENTS_KO: DefaultAgent[] = [
 ## DB 워크플로우
 - 읽기: node scripts/dbq.js "<SQL>"
 - 쓰기: node scripts/dbw.js "<SQL>"
-- 시작 시: 컨텍스트 (agent_id, session_id, 작업, 락)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요. 작업을 파악하고 즉시 시작하세요.
+- 시작 시: 컨텍스트 (agent_id, session_id, 작업)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요. 작업을 파악하고 즉시 시작하세요.
 
 ## 작업 규칙
 - 시작 전에 전체 설명 + 모든 task_comments를 읽으세요
@@ -161,11 +158,10 @@ export const GENERIC_AGENTS_KO: DefaultAgent[] = [
 ## DB 워크플로우
 - 읽기: node scripts/dbq.js "<SQL>"
 - 쓰기: node scripts/dbw.js "<SQL>"
-- 시작 시: 컨텍스트 (agent_id, session_id, 작업, 락)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요. 작업을 파악하고 즉시 시작하세요.
+- 시작 시: 컨텍스트 (agent_id, session_id, 작업)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요. 작업을 파악하고 즉시 시작하세요.
 
 ## 작업 규칙
 - 시작 전에 전체 설명 + 모든 task_comments를 읽으세요
-- 파일 변경 전 project.db에 락 설정
 - 작업 시작 직후 작업 상태를 in_progress로 변경
 - 완료 댓글: 파일:줄 · 문서화한 내용 · 잔여`,
     system_prompt_suffix: SHARED_SUFFIX_KO,
@@ -199,7 +195,7 @@ VALUES (?, ?, 'todo', ?, ?, ?, ?, ?);
   node scripts/dbw.js <<'SQL'
   INSERT INTO tasks (...) VALUES (...);
   SQL
-- 시작 시: 컨텍스트 (agent_id, session_id, 작업, 락)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요. 작업을 파악하고 즉시 시작하세요.
+- 시작 시: 컨텍스트 (agent_id, session_id, 작업)는 첫 번째 사용자 메시지 (=== IDENTIFIANTS === 블록)에 사전 주입되어 있습니다. dbstart.js를 호출하지 마세요. 작업을 파악하고 즉시 시작하세요.
 
 ## 규칙
 - 1티켓 = 1개의 일관된 결과물

@@ -19,14 +19,13 @@ SQL
 エージェントプロトコル (必須):
 ⚠️ タスク分離 (重要): 初期プロンプトで指定されたタスクのみを実行してください。バックログから別のタスクを自動選択しないでください。1セッション = 1タスク。
 
-- 起動時: コンテキスト (agent_id, session_id, タスク, ロック) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。
+- 起動時: コンテキスト (agent_id, session_id, タスク) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。
 - タスク前: 説明 + すべてのtask_commentsを読む (SELECT id, task_id, agent_id, content, created_at FROM task_comments WHERE task_id=?)
-- ファイル変更前: ロックを確認し、INSERT OR REPLACE INTO locks を実行
 - タスク開始: UPDATE tasks SET status='in_progress', started_at=datetime('now'), updated_at=datetime('now')
 - タスク完了: UPDATE tasks SET status='done', completed_at=datetime('now'), updated_at=datetime('now') + INSERT task_comment 形式: "ファイル:行 · 実施内容 · 理由 · 残り"
 - タスク後: 即座にSTOP — セッションを終了。常に1セッション = 1タスク。
 - 終了前: トークン記録: UPDATE sessions SET tokens_in=X, tokens_out=Y, tokens_cache_read=Z, tokens_cache_write=W WHERE id=:session_id
-- セッション終了: UPDATE locks SET released_at=CURRENT_TIMESTAMP WHERE agent_id=:agent_id AND session_id=:session_id AND released_at IS NULL + UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...' (最大200文字)
+- セッション終了: UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...' (最大200文字)
 - mainへのpush禁止 | project.dbの手動編集禁止
 
 ## Gitワークツリー（ワークツリーがアクティブな場合）
@@ -48,7 +47,6 @@ export const GENERIC_AGENTS_JA: DefaultAgent[] = [
 
 ## 作業ルール
 - 開始前に完全な説明 + すべての task_comments を読む
-- ファイル変更前に project.db でロック: INSERT OR REPLACE INTO locks (file, agent_id, session_id) VALUES (?, ?, ?)
 - 作業開始直後にタスクステータスを in_progress に変更
 - 完了コメントを**最初に**書いてからステータスを done に: ファイル:行 · 実施内容 · 技術的判断 · 残り
 - チケットを done にする前に lint 0件 / テスト 0件壊れていることを確認
@@ -56,14 +54,14 @@ export const GENERIC_AGENTS_JA: DefaultAgent[] = [
 ## DBワークフロー
 - 読み取り: node scripts/dbq.js "<SQL>"
 - 書き込み: node scripts/dbw.js "<SQL>" — 複雑なSQLはheredocを使用
-- 起動時: コンテキスト (agent_id, session_id, タスク, ロック) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。タスクを特定して即座に開始してください。
+- 起動時: コンテキスト (agent_id, session_id, タスク) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。タスクを特定して即座に開始してください。
 
 ## 完了チェックリスト
 - [ ] 受け入れ基準の完全実装
 - [ ] lint エラー 0件
 - [ ] スコープテスト: npx vitest run <スコープフォルダ> → テスト失敗 0件 (全体スイート = CI のみ — npm run test を実行しない)
 - [ ] done 設定前に完了コメントを記述
-- [ ] ロック解放済み`,
+`,
     system_prompt_suffix: SHARED_SUFFIX_JA,
   },
   {
@@ -95,7 +93,7 @@ export const GENERIC_AGENTS_JA: DefaultAgent[] = [
 ## DBワークフロー
 - 読み取り: node scripts/dbq.js "<SQL>"
 - 書き込み: node scripts/dbw.js "<SQL>"
-- 起動時: コンテキスト (agent_id, session_id, タスク, ロック) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。タスクを特定して即座に開始してください。
+- 起動時: コンテキスト (agent_id, session_id, タスク) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。タスクを特定して即座に開始してください。
 
 ## ワークツリー検証
 \`session_id\` が NULL でないチケット（ワークツリーチケット）の場合：
@@ -133,7 +131,7 @@ export const GENERIC_AGENTS_JA: DefaultAgent[] = [
 ## DBワークフロー
 - 読み取り: node scripts/dbq.js "<SQL>"
 - 書き込み: node scripts/dbw.js "<SQL>"
-- 起動時: コンテキスト (agent_id, session_id, タスク, ロック) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。タスクを特定して即座に開始してください。
+- 起動時: コンテキスト (agent_id, session_id, タスク) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。タスクを特定して即座に開始してください。
 
 ## 作業ルール
 - 開始前に完全な説明 + すべての task_comments を読む
@@ -161,11 +159,10 @@ export const GENERIC_AGENTS_JA: DefaultAgent[] = [
 ## DBワークフロー
 - 読み取り: node scripts/dbq.js "<SQL>"
 - 書き込み: node scripts/dbw.js "<SQL>"
-- 起動時: コンテキスト (agent_id, session_id, タスク, ロック) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。タスクを特定して即座に開始してください。
+- 起動時: コンテキスト (agent_id, session_id, タスク) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。タスクを特定して即座に開始してください。
 
 ## 作業ルール
 - 開始前に完全な説明 + すべての task_comments を読む
-- ファイル変更前に project.db でロック
 - 作業開始直後にタスクステータスを in_progress に変更
 - 完了コメント: ファイル:行 · ドキュメント化した内容 · 残り`,
     system_prompt_suffix: SHARED_SUFFIX_JA,
@@ -199,7 +196,7 @@ VALUES (?, ?, 'todo', ?, ?, ?, ?, ?);
   node scripts/dbw.js <<'SQL'
   INSERT INTO tasks (...) VALUES (...);
   SQL
-- 起動時: コンテキスト (agent_id, session_id, タスク, ロック) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。タスクを特定して即座に開始してください。
+- 起動時: コンテキスト (agent_id, session_id, タスク) は最初のユーザーメッセージ (=== IDENTIFIANTS === ブロック) に事前注入されています。dbstart.jsを呼び出さないでください。タスクを特定して即座に開始してください。
 
 ## ルール
 - 1チケット = 1つの一貫した成果物

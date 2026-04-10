@@ -165,7 +165,7 @@ Gérer le schéma de la base de données SQLite : migrations, évolutions de sch
 - Tests migration.spec.ts mis à jour et passants
 
 ## Workflow
-Suivre le protocole agent standard : lock fichiers avant modification, commentaire de sortie obligatoire, libérer les locks.`,
+Suivre le protocole agent standard : commentaire de sortie obligatoire.`,
     system_prompt_suffix: SHARED_SUFFIX,
   },
   {
@@ -205,13 +205,12 @@ Suivre le protocole agent standard : lock fichiers avant modification, commentai
     system_prompt_suffix: `---
 AGENT PROTOCOL REMINDER (mandatory):
 - DB read: node scripts/dbq.js "<SQL>" | DB write: node scripts/dbw.js "<SQL>"
-- On startup: votre contexte (agent_id, session_id, tâches, locks) est pré-injecté dans le premier message user (bloc === IDENTIFIANTS ===). Ne pas appeler dbstart.js. Identifier votre tâche et démarrer immédiatement.
+- On startup: votre contexte (agent_id, session_id, tâches) est pré-injecté dans le premier message user (bloc === IDENTIFIANTS ===). Ne pas appeler dbstart.js. Identifier votre tâche et démarrer immédiatement.
 - Before starting a task: read description + all task_comments (SELECT id, task_id, agent_id, content, created_at FROM task_comments WHERE task_id=?)
-- Before modifying a file: check locks, INSERT OR REPLACE INTO locks
 - Taking task: UPDATE tasks SET status='in_progress', started_at=datetime('now')
 - Finishing task: UPDATE tasks SET status='done', completed_at=datetime('now') + INSERT INTO task_comments (task_id, agent_id, content) VALUES (?, ?, ?)
 - After task: check backlog, take next or close session
-- Ending session: release locks + UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...'
+- Ending session: UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...'
 - Never push to main | Never edit project.db manually
 
 ## SQL avec caractères spéciaux
@@ -261,13 +260,12 @@ Ne JAMAIS passer du SQL complexe en argument positionnel \`node scripts/dbw.js "
     system_prompt_suffix: `---
 AGENT PROTOCOL REMINDER (mandatory):
 - DB read: node scripts/dbq.js "<SQL>" | DB write: node scripts/dbw.js "<SQL>"
-- On startup: votre contexte (agent_id, session_id, tâches, locks) est pré-injecté dans le premier message user (bloc === IDENTIFIANTS ===). Ne pas appeler dbstart.js. Identifier votre tâche et démarrer immédiatement.
+- On startup: votre contexte (agent_id, session_id, tâches) est pré-injecté dans le premier message user (bloc === IDENTIFIANTS ===). Ne pas appeler dbstart.js. Identifier votre tâche et démarrer immédiatement.
 - Before starting a task: read description + all task_comments (SELECT id, task_id, agent_id, content, created_at FROM task_comments WHERE task_id=?)
-- Before modifying a file: check locks, INSERT OR REPLACE INTO locks
 - Taking task: UPDATE tasks SET status='in_progress', started_at=datetime('now')
 - Finishing task: UPDATE tasks SET status='done', completed_at=datetime('now') + INSERT INTO task_comments (task_id, agent_id, content) VALUES (?, ?, ?)
 - After task: check backlog, take next or close session
-- Ending session: release locks + UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...'
+- Ending session: UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...'
 - Never push to main | Never edit project.db manually
 
 ## SQL avec caractères spéciaux

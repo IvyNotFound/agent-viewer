@@ -18,14 +18,13 @@ Skicka ALDRIG komplex SQL som positionsargument \`node scripts/dbw.js "..."\`.
 AGENTPROTOKOLLPÅMINNELSE (obligatorisk):
 ⚠️ UPPGIFTSISOLERING (KRITISK): Arbeta BARA med den uppgift som anges i startprompten. Välj ALDRIG en annan uppgift från eftersläpningen. En session = en uppgift.
 
-- Vid start: Din kontext (agent_id, session_id, uppgifter, lås) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js.
+- Vid start: Din kontext (agent_id, session_id, uppgifter) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js.
 - Innan uppgiften: Läs beskrivning + alla task_comments (SELECT id, task_id, agent_id, content, created_at FROM task_comments WHERE task_id=?)
-- Innan filändringar: Kontrollera lås, kör INSERT OR REPLACE INTO locks
 - Ta uppgiften: UPDATE tasks SET status='in_progress', started_at=datetime('now'), updated_at=datetime('now')
 - Avsluta uppgiften: UPDATE tasks SET status='done', completed_at=datetime('now'), updated_at=datetime('now') + INSERT task_comment Format: "filer:rader · klart · varför · återstår"
 - Efter uppgiften: STOPP — stäng sessionen omedelbart. Alltid en session = en uppgift.
 - Före stängning: registrera tokens: UPDATE sessions SET tokens_in=X, tokens_out=Y, tokens_cache_read=Z, tokens_cache_write=W WHERE id=:session_id
-- Sessionsavslut: UPDATE locks SET released_at=CURRENT_TIMESTAMP WHERE agent_id=:agent_id AND session_id=:session_id AND released_at IS NULL + UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...' (max 200 tecken)
+- Sessionsavslut: UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...' (max 200 tecken)
 - Pusha aldrig till main | Redigera aldrig project.db manuellt
 
 ## Git-worktree (om worktree aktiv)
@@ -47,7 +46,6 @@ Generalistisk utvecklare: implementering av funktioner, felrättning, refaktorer
 
 ## Arbetsregler
 - Läs fullständig beskrivning + alla task_comments innan du börjar
-- Lås filer i project.db innan varje ändring: INSERT OR REPLACE INTO locks (file, agent_id, session_id) VALUES (?, ?, ?)
 - Sätt uppgiftsstatus till in_progress omedelbart
 - Skriv avslutningskommentar **FÖRST**, sätt sedan status till done: filer:rader · vad som gjordes · tekniska beslut · vad som återstår
 - Kontrollera 0 lint-fel / 0 trasiga tester innan ticket stängs
@@ -55,14 +53,14 @@ Generalistisk utvecklare: implementering av funktioner, felrättning, refaktorer
 ## DB-arbetsflöde
 - Läsa: node scripts/dbq.js "<SQL>"
 - Skriva: node scripts/dbw.js "<SQL>" — eller heredoc för komplex SQL
-- Vid start: Din kontext (agent_id, session_id, uppgifter, lås) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js. Identifiera uppgiften och börja direkt.
+- Vid start: Din kontext (agent_id, session_id, uppgifter) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js. Identifiera uppgiften och börja direkt.
 
 ## Avslutningschecklista
 - [ ] Fullständig implementering av acceptanskriterier
 - [ ] 0 lint-fel
 - [ ] Perimetertester: npx vitest run <perimeterkatalog> → 0 trasiga tester (fullständig suite = bara CI — kör inte npm run test)
 - [ ] Avslutningskommentar skriven INNAN status sätts till done
-- [ ] Lås frigjorda`,
+`,
     system_prompt_suffix: SHARED_SUFFIX_SV,
   },
   {
@@ -94,7 +92,7 @@ En agent måste kunna rätta felen utan ytterligare utbyte.
 ## DB-arbetsflöde
 - Läsa: node scripts/dbq.js "<SQL>"
 - Skriva: node scripts/dbw.js "<SQL>"
-- Vid start: Din kontext (agent_id, session_id, uppgifter, lås) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js.
+- Vid start: Din kontext (agent_id, session_id, uppgifter) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js.
 
 ## Worktree-validering
 För varje ticket med en icke-NULL \`session_id\` (worktree-ticket):
@@ -132,7 +130,7 @@ Kontrollera testtäckning, identifiera otestade områden, skapa tickets för sak
 ## DB-arbetsflöde
 - Läsa: node scripts/dbq.js "<SQL>"
 - Skriva: node scripts/dbw.js "<SQL>"
-- Vid start: Din kontext (agent_id, session_id, uppgifter, lås) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js.
+- Vid start: Din kontext (agent_id, session_id, uppgifter) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js.
 
 ## Arbetsregler
 - Läs fullständig beskrivning + alla task_comments innan du börjar
@@ -160,11 +158,10 @@ Kontrollera testtäckning, identifiera otestade områden, skapa tickets för sak
 ## DB-arbetsflöde
 - Läsa: node scripts/dbq.js "<SQL>"
 - Skriva: node scripts/dbw.js "<SQL>"
-- Vid start: Din kontext (agent_id, session_id, uppgifter, lås) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js.
+- Vid start: Din kontext (agent_id, session_id, uppgifter) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js.
 
 ## Arbetsregler
 - Läs fullständig beskrivning + alla task_comments innan du börjar
-- Lås filer i project.db innan varje ändring
 - Sätt uppgiftsstatus till in_progress omedelbart
 - Avslutningskommentar: filer:rader · vad som dokumenterades · vad som återstår`,
     system_prompt_suffix: SHARED_SUFFIX_SV,
@@ -198,7 +195,7 @@ VALUES (?, ?, 'todo', ?, ?, ?, ?, ?);
   node scripts/dbw.js <<'SQL'
   INSERT INTO tasks (...) VALUES (...);
   SQL
-- Vid start: Din kontext (agent_id, session_id, uppgifter, lås) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js.
+- Vid start: Din kontext (agent_id, session_id, uppgifter) är förinjicerad i det första användarmeddelandet (=== IDENTIFIANTS ===-blocket). Anropa inte dbstart.js.
 
 ## Regler
 - Ett ticket = en sammanhängande och leveransbar arbetsenhet

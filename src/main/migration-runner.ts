@@ -8,6 +8,7 @@ import { runFixTasksSessionFkMigration } from './migrations/v6-tasks-session-fk'
 import { runAddPreferredModelToAgentsMigration } from './migrations/v7-agent-preferred-model'
 import { runAddPreferredCliToAgentsMigration } from './migrations/v8-agent-preferred-cli'
 import { runAddRejectedStatusMigration } from './migrations/v35-rejected-status'
+import { runPurgeLocksPromptsMigration } from './migrations/v36-purge-locks-prompts'
 
 // ── Numbered migration system ────────────────────────────────────────────────
 
@@ -357,6 +358,9 @@ const migrations: Migration[] = [
 
   // v35: add 'rejected' terminal status to tasks CHECK constraint (T1908)
   { version: 35, up: (db) => { runAddRejectedStatusMigration(db) } },
+
+  // v36: purge all locks table references from stored agent prompts (T1916)
+  { version: 36, up: (db) => { runPurgeLocksPromptsMigration(db) } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */

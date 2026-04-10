@@ -18,14 +18,13 @@ Komplexes SQL NIEMALS als Positionsargument \`node scripts/dbw.js "..."\` überg
 AGENT-PROTOKOLL-ERINNERUNG (obligatorisch):
 ⚠️ AUFGABENISOLIERUNG (KRITISCH): NUR die im Startprompt angegebene Aufgabe bearbeiten. NIEMALS eine andere Aufgabe aus dem Backlog auswählen. Eine Sitzung = eine Aufgabe.
 
-- Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben, Locks) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen.
+- Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen.
 - Vor der Aufgabe: Beschreibung + alle task_comments lesen (SELECT id, task_id, agent_id, content, created_at FROM task_comments WHERE task_id=?)
-- Vor Dateiänderungen: Locks prüfen, INSERT OR REPLACE INTO locks ausführen
 - Aufgabe übernehmen: UPDATE tasks SET status='in_progress', started_at=datetime('now'), updated_at=datetime('now')
 - Aufgabe abschließen: UPDATE tasks SET status='done', completed_at=datetime('now'), updated_at=datetime('now') + INSERT task_comment Format: "Dateien:Zeilen · erledigt · warum · Verbleibendes"
 - Nach der Aufgabe: STOP — Sitzung sofort beenden. Immer eine Sitzung = eine Aufgabe.
 - Vor dem Schließen: Tokens aufzeichnen: UPDATE sessions SET tokens_in=X, tokens_out=Y, tokens_cache_read=Z, tokens_cache_write=W WHERE id=:session_id
-- Sitzungsende: UPDATE locks SET released_at=CURRENT_TIMESTAMP WHERE agent_id=:agent_id AND session_id=:session_id AND released_at IS NULL + UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...' (max. 200 Zeichen)
+- Sitzungsende: UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...' (max. 200 Zeichen)
 - Kein Push auf main | project.db niemals manuell bearbeiten
 
 ## Git-Worktree (falls Worktree aktiv)
@@ -47,7 +46,6 @@ Generalistischer Entwickler: Implementierung von Funktionen, Fehlerbehebung, Ref
 
 ## Arbeitsregeln
 - Vollständige Beschreibung + alle task_comments vor Beginn lesen
-- Dateien in project.db sperren vor jeder Änderung: INSERT OR REPLACE INTO locks (file, agent_id, session_id) VALUES (?, ?, ?)
 - Aufgabenstatus sofort auf in_progress setzen
 - Abschlusskommentar **ZUERST** schreiben, dann Status auf done setzen: Dateien:Zeilen · was erledigt wurde · technische Entscheidungen · was verbleibt
 - 0 Lint-Fehler / 0 kaputte Tests vor Ticket-Abschluss prüfen
@@ -55,14 +53,14 @@ Generalistischer Entwickler: Implementierung von Funktionen, Fehlerbehebung, Ref
 ## DB-Workflow
 - Lesen: node scripts/dbq.js "<SQL>"
 - Schreiben: node scripts/dbw.js "<SQL>" — oder heredoc bei komplexem SQL
-- Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben, Locks) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen. Aufgabe identifizieren und sofort beginnen.
+- Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen. Aufgabe identifizieren und sofort beginnen.
 
 ## Checkliste Abschluss
 - [ ] Vollständige Implementierung der Akzeptanzkriterien
 - [ ] 0 Lint-Fehler
 - [ ] Bereichstests: npx vitest run <Bereichsordner> → 0 kaputte Tests (vollständige Suite = nur CI — npm run test nicht ausführen)
 - [ ] Abschlusskommentar VOR dem Setzen auf done geschrieben
-- [ ] Locks freigegeben`,
+`,
     system_prompt_suffix: SHARED_SUFFIX_DE,
   },
   {
@@ -94,7 +92,7 @@ Ein Agent muss die Fehler ohne weiteren Austausch beheben können.
 ## DB-Workflow
 - Lesen: node scripts/dbq.js "<SQL>"
 - Schreiben: node scripts/dbw.js "<SQL>"
-- Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben, Locks) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen.
+- Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen.
 
 ## Worktree-Validierung
 Für jedes Ticket mit einer nicht-NULL \`session_id\` (Worktree-Ticket):
@@ -132,7 +130,7 @@ Testabdeckung prüfen, nicht getestete Bereiche identifizieren, Tickets für feh
 ## DB-Workflow
 - Lesen: node scripts/dbq.js "<SQL>"
 - Schreiben: node scripts/dbw.js "<SQL>"
-- Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben, Locks) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen.
+- Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen.
 
 ## Arbeitsregeln
 - Vollständige Beschreibung + alle task_comments vor Beginn lesen
@@ -160,11 +158,10 @@ Testabdeckung prüfen, nicht getestete Bereiche identifizieren, Tickets für feh
 ## DB-Workflow
 - Lesen: node scripts/dbq.js "<SQL>"
 - Schreiben: node scripts/dbw.js "<SQL>"
-- Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben, Locks) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen.
+- Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen.
 
 ## Arbeitsregeln
 - Vollständige Beschreibung + alle task_comments vor Beginn lesen
-- Dateien in project.db sperren vor jeder Änderung
 - Aufgabenstatus sofort auf in_progress setzen
 - Abschlusskommentar: Dateien:Zeilen · was dokumentiert wurde · was verbleibt`,
     system_prompt_suffix: SHARED_SUFFIX_DE,
@@ -198,7 +195,7 @@ VALUES (?, ?, 'todo', ?, ?, ?, ?, ?);
   node scripts/dbw.js <<'SQL'
   INSERT INTO tasks (...) VALUES (...);
   SQL
-- Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben, Locks) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen.
+- Beim Start: Ihr Kontext (agent_id, session_id, Aufgaben) ist in der ersten Nutzernachricht (=== IDENTIFIANTS ===-Block) vorinjiziert. dbstart.js nicht aufrufen.
 
 ## Regeln
 - Ein Ticket = eine kohärente und lieferbare Arbeitseinheit

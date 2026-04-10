@@ -18,14 +18,13 @@ SQL
 AGENTTIPROTOKOLLA MUISTUTUS (pakollinen):
 ⚠️ TEHTÄVÄERISTYS (KRIITTINEN): Työskentele VAIN aloituskehotteessa annetulla tehtävällä. ÄLÄ KOSKAAN valitse toista tehtävää backlogista automaattisesti. Yksi istunto = yksi tehtävä.
 
-- Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät, lukot) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js.
+- Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js.
 - Ennen tehtävää: Lue kuvaus + kaikki task_comments (SELECT id, task_id, agent_id, content, created_at FROM task_comments WHERE task_id=?)
-- Ennen tiedostomuutoksia: Tarkista lukot, suorita INSERT OR REPLACE INTO locks
 - Tehtävän ottaminen: UPDATE tasks SET status='in_progress', started_at=datetime('now'), updated_at=datetime('now')
 - Tehtävän päättäminen: UPDATE tasks SET status='done', completed_at=datetime('now'), updated_at=datetime('now') + INSERT task_comment Muoto: "tiedostot:rivit · tehty · miksi · jäljellä"
 - Tehtävän jälkeen: STOP — sulje istunto välittömästi. Aina yksi istunto = yksi tehtävä.
 - Ennen sulkemista: kirjaa tokenit: UPDATE sessions SET tokens_in=X, tokens_out=Y, tokens_cache_read=Z, tokens_cache_write=W WHERE id=:session_id
-- Istunnon päättäminen: UPDATE locks SET released_at=CURRENT_TIMESTAMP WHERE agent_id=:agent_id AND session_id=:session_id AND released_at IS NULL + UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...' (maks. 200 merkkiä)
+- Istunnon päättäminen: UPDATE sessions SET status='completed', summary='Done:... Pending:... Next:...' (maks. 200 merkkiä)
 - Älä koskaan pushaa mainiin | Älä koskaan muokkaa project.db:tä manuaalisesti
 
 ## Git-työtree (jos työtree aktiivinen)
@@ -47,7 +46,6 @@ Yleiskehittäjä: ominaisuuksien toteutus, virheiden korjaus, refaktorointi.
 
 ## Työsäännöt
 - Lue koko kuvaus + kaikki task_comments ennen aloittamista
-- Lukitse tiedostot project.db:ssä ennen jokaista muutosta: INSERT OR REPLACE INTO locks (file, agent_id, session_id) VALUES (?, ?, ?)
 - Aseta tehtävän tila heti in_progress-tilaan
 - Kirjoita sulkemiskommentti **ENSIN**, aseta sitten tila doneksi: tiedostot:rivit · mitä tehtiin · tekniset päätökset · mitä jäljellä
 - Varmista 0 lint-virhettä / 0 rikkinäistä testiä ennen tiketin sulkemista
@@ -55,14 +53,13 @@ Yleiskehittäjä: ominaisuuksien toteutus, virheiden korjaus, refaktorointi.
 ## DB-työnkulku
 - Lukeminen: node scripts/dbq.js "<SQL>"
 - Kirjoittaminen: node scripts/dbw.js "<SQL>" — tai heredoc monimutkaiselle SQL:lle
-- Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät, lukot) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js. Tunnista tehtävä ja aloita välittömästi.
+- Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js. Tunnista tehtävä ja aloita välittömästi.
 
 ## Sulkemistarkistuslista
 - [ ] Hyväksymiskriteerien täydellinen toteutus
 - [ ] 0 lint-virhettä
 - [ ] Perimeeritestit: npx vitest run <perimeerikansio> → 0 rikkinäistä testiä (täysi sarja = vain CI — älä suorita npm run test)
-- [ ] Sulkemiskommentti kirjoitettu ENNEN tilan asettamista doneksi
-- [ ] Lukot vapautettu`,
+- [ ] Sulkemiskommentti kirjoitettu ENNEN tilan asettamista doneksi`,
     system_prompt_suffix: SHARED_SUFFIX_FI,
   },
   {
@@ -94,7 +91,7 @@ Agentin täytyy pystyä korjaamaan virheet ilman lisäkeskustelua.
 ## DB-työnkulku
 - Lukeminen: node scripts/dbq.js "<SQL>"
 - Kirjoittaminen: node scripts/dbw.js "<SQL>"
-- Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät, lukot) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js.
+- Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js.
 
 ## Työtreen validointi
 Jokaiselle tiketille, jolla on ei-NULL \`session_id\` (työtree-tiketti):
@@ -132,7 +129,7 @@ Tarkasta testikattavuus, tunnista testaamattomat alueet, luo tikettejä puuttuvi
 ## DB-työnkulku
 - Lukeminen: node scripts/dbq.js "<SQL>"
 - Kirjoittaminen: node scripts/dbw.js "<SQL>"
-- Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät, lukot) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js.
+- Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js.
 
 ## Työsäännöt
 - Lue koko kuvaus + kaikki task_comments ennen aloittamista
@@ -160,11 +157,10 @@ Tarkasta testikattavuus, tunnista testaamattomat alueet, luo tikettejä puuttuvi
 ## DB-työnkulku
 - Lukeminen: node scripts/dbq.js "<SQL>"
 - Kirjoittaminen: node scripts/dbw.js "<SQL>"
-- Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät, lukot) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js.
+- Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js.
 
 ## Työsäännöt
 - Lue koko kuvaus + kaikki task_comments ennen aloittamista
-- Lukitse tiedostot project.db:ssä ennen jokaista muutosta
 - Aseta tehtävän tila heti in_progress-tilaan
 - Sulkemiskommentti: tiedostot:rivit · mitä dokumentoitiin · mitä jäljellä`,
     system_prompt_suffix: SHARED_SUFFIX_FI,
@@ -198,7 +194,7 @@ VALUES (?, ?, 'todo', ?, ?, ?, ?, ?);
   node scripts/dbw.js <<'SQL'
   INSERT INTO tasks (...) VALUES (...);
   SQL
-- Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät, lukot) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js.
+- Käynnistyksessä: Kontekstisi (agent_id, session_id, tehtävät) on valmiiksi injektoitu ensimmäiseen käyttäjäviestiin (=== IDENTIFIANTS ===-lohkoon). Älä kutsu dbstart.js.
 
 ## Säännöt
 - Yksi tiketti = yksi yhtenäinen ja toimitettava työn yksikkö
