@@ -203,8 +203,10 @@ const {
               :key="row.agent_id"
               class="ts-agent-row ga-3"
             >
-              <AgentBadge v-if="row.agent_name" :name="row.agent_name" />
-              <span v-else class="ts-dim">—</span>
+              <div class="ts-agent-name">
+                <AgentBadge v-if="row.agent_name" :name="row.agent_name" />
+                <span v-else class="ts-dim">—</span>
+              </div>
 
               <div class="ts-bar-wrap">
                 <div class="ts-bar-fill" :style="{ width: barWidth(row.total) }" />
@@ -423,6 +425,13 @@ const {
 /* agent bar rows */
 .ts-agent-rows { display: flex; flex-direction: column; gap: 6px; }
 .ts-agent-row { display: flex; align-items: center; }
+.ts-agent-name {
+  flex-shrink: 0;
+  width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .ts-bar-wrap {
   flex: 1;
