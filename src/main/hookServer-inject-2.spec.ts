@@ -707,3 +707,65 @@ describe('injectHookUrls — fileExists conditional', () => {
     expect(mockWriteFile).toHaveBeenCalledOnce()
   })
 })
+
+// ── injectHookUrls — localhost (127.0.0.1) for non-WSL platforms (T1906) ─────
+
+describe('injectHookUrls — localhost injection for non-WSL platforms', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    mockWriteFile.mockResolvedValue(undefined)
+    mockMkdir.mockResolvedValue(undefined)
+  })
+
+  it('bootstraps all hook URLs with 127.0.0.1 when settings file is missing', async () => {
+    mockReadFile.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }))
+    await injectHookUrls('/home/user/.claude/settings.json', '127.0.0.1')
+    expect(mockWriteFile).toHaveBeenCalledOnce()
+    const written = JSON.parse(mockWriteFile.mock.calls[0][1] as string)
+    // All managed hook events must be present
+    for (const event of Object.keys(HOOK_ROUTES)) {
+      expect(written.hooks[event]).toBeDefined()
+      const url = written.hooks[event][0].hooks[0].url
+      expect(url).toContain('http://127.0.0.1:27182/hooks/')
+    }
+  })
+
+  it('updates existing WSL IP URLs to 127.0.0.1', async () => {
+    const existing = {
+      hooks: {
+        Stop: [{ hooks: [{ type: 'http', url: 'http://172.25.160.1:27182/hooks/stop' }] }],
+      }
+    }
+    mockReadFile.mockResolvedValue(JSON.stringify(existing))
+    await injectHookUrls('/home/user/.claude/settings.json', '127.0.0.1')
+    expect(mockWriteFile).toHaveBeenCalledOnce()
+    const written = JSON.parse(mockWriteFile.mock.calls[0][1] as string)
+    expect(written.hooks.Stop[0].hooks[0].url).toBe('http://127.0.0.1:27182/hooks/stop')
+  })
+
+  it('preserves existing command-type hooks when injecting localhost URLs', async () => {
+    const existing = {
+      hooks: {
+        PreToolUse: [{ hooks: [{ type: 'command', command: '/usr/local/bin/cbm-code-discovery-gate' }] }],
+      }
+    }
+    mockReadFile.mockResolvedValue(JSON.stringify(existing))
+    await injectHookUrls('/home/user/.claude/settings.json', '127.0.0.1')
+    expect(mockWriteFile).toHaveBeenCalledOnce()
+    const written = JSON.parse(mockWriteFile.mock.calls[0][1] as string)
+    // Command hook is preserved
+    const preToolGroups = written.hooks.PreToolUse
+    const cmdHook = preToolGroups.find(
+      (g: { hooks: Array<{ type: string; command?: string }> }) =>
+        g.hooks.some(h => h.type === 'command')
+    )
+    expect(cmdHook).toBeDefined()
+    // HTTP hook was added alongside
+    const httpHook = preToolGroups.find(
+      (g: { hooks: Array<{ type: string; url?: string }> }) =>
+        g.hooks.some(h => h.type === 'http')
+    )
+    expect(httpHook).toBeDefined()
+    expect(httpHook.hooks[0].url).toContain('http://127.0.0.1:27182/')
+  })
+})

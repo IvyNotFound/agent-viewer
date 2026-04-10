@@ -184,17 +184,16 @@ app.whenReady().then(async () => {
   registerAgentStreamHandlers()
   hookServer = startHookServer(app.getPath('userData'))
   const wslIp = detectWslGatewayIp()
-  // Inject into Windows global settings and project settings
-  const winGlobalSettings = join(app.getPath('home'), '.claude', 'settings.json')
+  const listenIp = wslIp ?? '127.0.0.1'
+  // Inject into global settings and project settings (all platforms)
+  const globalSettings = join(app.getPath('home'), '.claude', 'settings.json')
   const projectSettings = join(process.cwd(), '.claude', 'settings.json')
-  for (const p of [winGlobalSettings, projectSettings]) {
+  for (const p of [globalSettings, projectSettings]) {
     injectHookSecret(p).catch(() => {})
-    if (wslIp) injectHookUrls(p, wslIp).catch(() => {})
+    injectHookUrls(p, listenIp).catch(() => {})
   }
   // Inject into active WSL distros via UNC paths
   if (process.platform === 'win32') injectIntoWslDistros(wslIp).catch(() => {})
-  // Inject Gemini CLI lifecycle hooks
-  const listenIp = wslIp ?? '127.0.0.1'
   const stubsDir = join(app.getPath('userData'), 'hooks')
   const geminiSettings = join(app.getPath('home'), '.gemini', 'settings.json')
   injectGeminiHooks(geminiSettings, listenIp, getHookSecret(), stubsDir).catch(() => {})

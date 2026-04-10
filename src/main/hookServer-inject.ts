@@ -214,7 +214,7 @@ export async function injectHookUrls(settingsPath: string, ip: string): Promise<
       await mkdir(dirname(settingsPath), { recursive: true })
     }
     await writeFile(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf-8')
-    console.log('[hookServer] Updated hook URLs with WSL gateway IP:', ip, '| created:', !fileExists)
+    console.log('[hookServer] Updated hook URLs with IP:', ip, '| created:', !fileExists)
   }
 }
 
