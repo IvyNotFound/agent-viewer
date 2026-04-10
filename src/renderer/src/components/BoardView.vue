@@ -24,7 +24,7 @@ const activeTab = ref<BoardTab>('backlog')
 type ArchiveSortMode = 'agent' | 'date'
 const archiveSortMode = ref<ArchiveSortMode>('agent')
 
-const emptyTasks = { todo: [], in_progress: [], done: [], archived: [] }
+const emptyTasks = { todo: [], in_progress: [], done: [], archived: [], rejected: [] }
 const tasks = computed(() => store.tasksByStatus ?? emptyTasks)
 
 /** Review agent resolved from the store (hidden if absent). */

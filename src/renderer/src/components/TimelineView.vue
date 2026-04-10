@@ -228,6 +228,7 @@ function statusColorClass(status: string): string {
     case 'in_progress': return 'tl-bg-progress'
     case 'done': return 'tl-bg-done'
     case 'archived': return 'tl-bg-archived'
+    case 'rejected': return 'tl-bg-rejected'
     default: return 'tl-bg-todo'
   }
 }
@@ -277,6 +278,7 @@ const legendItems = computed(() => [
   { status: 'in_progress', label: t('columns.in_progress') },
   { status: 'done', label: t('columns.done') },
   { status: 'archived', label: t('columns.archived') },
+  { status: 'rejected', label: t('columns.rejected') },
 ])
 </script>
 
@@ -539,7 +541,8 @@ const legendItems = computed(() => [
 .tl-bg-progress { background: rgb(var(--v-theme-primary)); }
 .tl-bg-done     { background: rgb(var(--v-theme-secondary)); }
 .tl-bg-todo     { background: rgba(var(--v-theme-on-surface), 0.35); }
-.tl-bg-archived { background: rgba(var(--v-theme-on-surface), 0.18); }
+.tl-bg-archived  { background: rgba(var(--v-theme-on-surface), 0.18); }
+.tl-bg-rejected  { background: rgb(var(--v-theme-chip-rejected)); }
 
 /* Legend — flex-shrink:0 keeps it fixed at the bottom, outside the scrollable canvas */
 .tl-legend {

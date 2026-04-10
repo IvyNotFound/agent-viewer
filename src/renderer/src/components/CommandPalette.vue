@@ -34,6 +34,7 @@ const STATUTS = computed(() => [
   { key: 'in_progress', label: t('columns.in_progress'), color: 'rgb(var(--v-theme-secondary))' },
   { key: 'done',        label: t('columns.done'),        color: 'var(--content-faint)' },
   { key: 'archived',    label: t('columns.archived'),    color: 'rgb(var(--v-theme-primary))' },
+  { key: 'rejected',    label: t('columns.rejected'),    color: 'rgb(var(--v-theme-chip-rejected))' },
 ])
 
 // Pre-computed lowercase index — recomputes only when tasks list changes, not on every keystroke

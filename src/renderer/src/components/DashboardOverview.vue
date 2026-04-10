@@ -167,6 +167,7 @@ function statusColor(status: string): string {
     in_progress: 'info',
     done: 'default',
     archived: 'default',
+    rejected: 'error',
   }
   return map[status] ?? 'default'
 }

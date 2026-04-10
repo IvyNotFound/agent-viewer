@@ -53,7 +53,7 @@ function makeDeps(overrides: Partial<TaskRefreshDeps> = {}): TaskRefreshDeps {
     tasks: ref([]),
     agents: ref([]),
     perimetresData: ref([]),
-    stats: ref({ todo: 0, in_progress: 0, done: 0, archived: 0 }),
+    stats: ref({ todo: 0, in_progress: 0, done: 0, archived: 0, rejected: 0 }),
     lastRefresh: ref(null),
     loading: ref(false),
     error: ref(null),

@@ -43,7 +43,8 @@
     "todo": "À faire",
     "in_progress": "En cours",
     "done": "Terminé",
-    "archived": "Archivé"
+    "archived": "Archivé",
+    "rejected": "Rejeté"
   },
   "statusColumn": {
     "noTasks": "Aucune tâche"
@@ -580,6 +581,7 @@
     "inProgress": "en cours",
     "done": "terminée",
     "archived": "archivée",
+    "rejected": "rejetée",
     "completed": "Terminées",
     "started": "Démarrées",
     "blocked": "Bloquées"

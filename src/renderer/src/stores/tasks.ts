@@ -35,7 +35,7 @@ export const useTasksStore = defineStore('tasks', () => {
   // Local tasks state
   const tasks = ref<Task[]>([])
   const perimetresData = ref<Perimetre[]>([])
-  const stats = ref<Stats>({ todo: 0, in_progress: 0, done: 0, archived: 0 })
+  const stats = ref<Stats>({ todo: 0, in_progress: 0, done: 0, archived: 0, rejected: 0 })
   const lastRefresh = ref<Date | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -97,8 +97,8 @@ export const useTasksStore = defineStore('tasks', () => {
   )
 
   const tasksByStatus = computed(() => {
-    const groups: { todo: Task[]; in_progress: Task[]; done: Task[]; archived: Task[] } = {
-      todo: [], in_progress: [], done: [], archived: [],
+    const groups: { todo: Task[]; in_progress: Task[]; done: Task[]; archived: Task[]; rejected: Task[] } = {
+      todo: [], in_progress: [], done: [], archived: [], rejected: [],
     }
     for (const t of filteredTasks.value) {
       if (t.status in groups) groups[t.status as keyof typeof groups].push(t)
@@ -184,7 +184,7 @@ export const useTasksStore = defineStore('tasks', () => {
     agentGroups.value = []
     perimetresData.value = []
     boardAssignees.value.clear()
-    stats.value = { todo: 0, in_progress: 0, done: 0, archived: 0 }
+    stats.value = { todo: 0, in_progress: 0, done: 0, archived: 0, rejected: 0 }
     selectedTask.value = null
     taskComments.value = []
     selectedAgentId.value = null

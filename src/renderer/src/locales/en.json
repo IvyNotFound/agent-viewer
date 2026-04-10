@@ -43,7 +43,8 @@
     "todo": "To do",
     "in_progress": "In progress",
     "done": "Done",
-    "archived": "Archived"
+    "archived": "Archived",
+    "rejected": "Rejected"
   },
   "statusColumn": {
     "noTasks": "No tasks"
@@ -588,6 +589,7 @@
     "inProgress": "in progress",
     "done": "done",
     "archived": "archived",
+    "rejected": "rejected",
     "completed": "Completed",
     "started": "Started",
     "blocked": "Blocked"

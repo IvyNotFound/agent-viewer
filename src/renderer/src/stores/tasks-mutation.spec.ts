@@ -204,7 +204,7 @@ describe('tasks — tasksByStatus status equality grouping', () => {
     expect(byStatus.done).toHaveLength(1)
     expect(byStatus.archived).toHaveLength(1)
     // Total = 4 — no duplicates across buckets
-    const total = byStatus.todo.length + byStatus.in_progress.length + byStatus.done.length + byStatus.archived.length
+    const total = byStatus.todo.length + byStatus.in_progress.length + byStatus.done.length + byStatus.archived.length + byStatus.rejected.length
     expect(total).toBe(4)
   })
 

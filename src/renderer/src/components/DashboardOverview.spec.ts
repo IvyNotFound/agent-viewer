@@ -32,7 +32,7 @@ const BASE_STATE = {
     dbPath: '/tmp/test.db',
     tasks: [],
     agents: [],
-    stats: { todo: 0, in_progress: 0, done: 0, archived: 0 },
+    stats: { todo: 0, in_progress: 0, done: 0, archived: 0, rejected: 0 },
   },
 }
 
@@ -48,7 +48,7 @@ describe('DashboardOverview (T923)', () => {
 
   it('shows empty state when dbPath is null', async () => {
     const { wrapper } = mountWithState({
-      tasks: { dbPath: null, tasks: [], agents: [], stats: { todo: 0, in_progress: 0, done: 0, archived: 0 } },
+      tasks: { dbPath: null, tasks: [], agents: [], stats: { todo: 0, in_progress: 0, done: 0, archived: 0, rejected: 0 } },
     })
     await flushPromises()
     expect(wrapper.text()).toContain('No project open')
@@ -71,7 +71,7 @@ describe('DashboardOverview (T923)', () => {
         dbPath: '/tmp/test.db',
         tasks: [],
         agents: [],
-        stats: { todo: 5, in_progress: 3, done: 0, archived: 0 },
+        stats: { todo: 5, in_progress: 3, done: 0, archived: 0, rejected: 0 },
       },
     })
     await flushPromises()
@@ -92,7 +92,7 @@ describe('DashboardOverview (T923)', () => {
           { id: 2, name: 'agent-b', session_status: 'completed' },
           { id: 3, name: 'agent-c', session_status: 'started' },
         ],
-        stats: { todo: 0, in_progress: 0, done: 0, archived: 0 },
+        stats: { todo: 0, in_progress: 0, done: 0, archived: 0, rejected: 0 },
       },
     })
     await flushPromises()
@@ -125,7 +125,7 @@ describe('DashboardOverview (T923)', () => {
           { id: 2, title: 'Task Beta', status: 'in_progress', updated_at: '2026-01-02T10:00:00', priority: 'high', agent_name: 'agent-x' },
         ],
         agents: [],
-        stats: { todo: 1, in_progress: 1, done: 0, archived: 0 },
+        stats: { todo: 1, in_progress: 1, done: 0, archived: 0, rejected: 0 },
       },
     })
     await flushPromises()

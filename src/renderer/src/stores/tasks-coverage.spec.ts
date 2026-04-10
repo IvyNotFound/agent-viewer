@@ -123,11 +123,11 @@ describe('tasks — closeProject clears all state (ArrayDeclaration)', () => {
   it('resets stats to zeros on closeProject', async () => {
     const store = useTasksStore()
     await store.setProject('/p', '/p/.claude/db')
-    store.stats = { todo: 5, in_progress: 3, done: 2, archived: 1 }
+    store.stats = { todo: 5, in_progress: 3, done: 2, archived: 1, rejected: 0 }
 
     store.closeProject()
 
-    expect(store.stats).toEqual({ todo: 0, in_progress: 0, done: 0, archived: 0 })
+    expect(store.stats).toEqual({ todo: 0, in_progress: 0, done: 0, archived: 0, rejected: 0 })
   })
 
   it('clears selectedAgentId and selectedPerimetre on closeProject', async () => {

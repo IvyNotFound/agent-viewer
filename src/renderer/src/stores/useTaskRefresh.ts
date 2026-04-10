@@ -122,7 +122,7 @@ export function useTaskRefresh(deps: TaskRefreshDeps) {
       deps.agents.value = rawAgents
       deps.perimetresData.value = rawPerimetres
 
-      const s: Stats = { todo: 0, in_progress: 0, done: 0, archived: 0 }
+      const s: Stats = { todo: 0, in_progress: 0, done: 0, archived: 0, rejected: 0 }
       for (const row of rawStats) {
         if (row.status in s) {
           s[row.status as keyof Stats] = row.count

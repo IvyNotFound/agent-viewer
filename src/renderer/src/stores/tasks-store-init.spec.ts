@@ -67,10 +67,10 @@ describe('tasks — initial state shape (L36-50 mutations)', () => {
     expect(store.stats.archived).toBe(0)
   })
 
-  it('stats is a plain object with exactly 4 status keys', () => {
+  it('stats is a plain object with exactly 5 status keys', () => {
     const store = useTasksStore()
     const keys = Object.keys(store.stats).sort()
-    expect(keys).toEqual(['archived', 'done', 'in_progress', 'todo'])
+    expect(keys).toEqual(['archived', 'done', 'in_progress', 'rejected', 'todo'])
   })
 
   it('taskLinks is initially an empty array (not a non-empty array)', () => {
@@ -180,7 +180,7 @@ describe('tasks — tasksByStatus: status key presence (L98 ConditionalExpressio
     ] as never
 
     const groups = store.tasksByStatus
-    const total = groups.todo.length + groups.in_progress.length + groups.done.length + groups.archived.length
+    const total = groups.todo.length + groups.in_progress.length + groups.done.length + groups.archived.length + groups.rejected.length
     expect(total).toBe(2) // unknown_status excluded
     expect(groups.todo).toHaveLength(1)
     expect(groups.done).toHaveLength(1)

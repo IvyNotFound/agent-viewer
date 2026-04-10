@@ -195,7 +195,7 @@ describe('tasks — closeProject: unwatchDb LogicalOperator (L172)', () => {
   it('resets stats to all-zero on closeProject', async () => {
     const store = useTasksStore()
     await store.setProject('/p', '/p/.claude/db')
-    store.stats = { todo: 5, in_progress: 2, done: 3, archived: 1 }
+    store.stats = { todo: 5, in_progress: 2, done: 3, archived: 1, rejected: 0 }
 
     store.closeProject()
 

@@ -41,7 +41,7 @@ export interface Agent {
 }
 
 /** Task status values. */
-export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'archived'
+export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'archived' | 'rejected'
 
 /** Task priority values. */
 export type TaskPriority = 'low' | 'normal' | 'high' | 'critical'
@@ -106,6 +106,7 @@ export interface Stats {
   in_progress: number
   done: number
   archived: number
+  rejected: number
 }
 
 /** Scope record from the `scopes` table. */
