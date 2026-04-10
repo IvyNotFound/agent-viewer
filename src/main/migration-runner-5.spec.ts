@@ -252,10 +252,10 @@ describe('migrateDb v26 — drop locks table', () => {
     expect(calls.some((s: string) => s === 'DROP TABLE IF EXISTS locks')).toBe(true)
   })
 
-  it('updates user_version to 34 (v26–v34 apply from v25)', () => {
+  it('updates user_version to 35 (v26–v35 apply from v25)', () => {
     const db = makeMockDb({ userVersion: 25 })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(db._getVersion()).toBe(34)
+    expect(db._getVersion()).toBe(35)
   })
 })
 
@@ -328,10 +328,10 @@ describe('migrateDb v27 — missing indexes on critical columns', () => {
     expect(calls.some((s: string) => s.includes('idx_task_comments_agent_id') && s.includes('task_comments(agent_id)'))).toBe(true)
   })
 
-  it('updates user_version to 34 (v27–v34 apply from v26)', () => {
+  it('updates user_version to 35 (v27–v35 apply from v26)', () => {
     const db = makeMockDb({ userVersion: 26 })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(db._getVersion()).toBe(34)
+    expect(db._getVersion()).toBe(35)
   })
 
   it('uses CREATE INDEX IF NOT EXISTS for all indexes', () => {
@@ -384,16 +384,16 @@ describe('migrateDb v34 — add missing DB indexes (T1852)', () => {
     expect(v34Indexes.every((s: string) => s.includes('IF NOT EXISTS'))).toBe(true)
   })
 
-  it('updates user_version to 34', () => {
+  it('updates user_version to 35 (v34 + v35)', () => {
     const db = makeMockDb({ userVersion: 33 })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(db._getVersion()).toBe(34)
+    expect(db._getVersion()).toBe(35)
   })
 
-  it('skips v34 when already at version 34', () => {
+  it('skips v34 when already at version 34 (only v35 runs)', () => {
     const db = makeMockDb({ userVersion: 34 })
     const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(applied).toBe(0)
+    expect(applied).toBe(1)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('idx_sessions_conv_id'))).toBe(false)
   })
@@ -407,6 +407,6 @@ describe('CURRENT_SCHEMA_VERSION alignment', () => {
     const db = makeMockDb({ userVersion: 0 })
     const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     expect(applied).toBeGreaterThan(0)
-    expect(db._getVersion()).toBe(34)
+    expect(db._getVersion()).toBe(35)
   })
 })

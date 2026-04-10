@@ -7,6 +7,7 @@ import { runAddWorktreeToAgentsMigration } from './migrations/v5-agent-worktree'
 import { runFixTasksSessionFkMigration } from './migrations/v6-tasks-session-fk'
 import { runAddPreferredModelToAgentsMigration } from './migrations/v7-agent-preferred-model'
 import { runAddPreferredCliToAgentsMigration } from './migrations/v8-agent-preferred-cli'
+import { runAddRejectedStatusMigration } from './migrations/v35-rejected-status'
 
 // ── Numbered migration system ────────────────────────────────────────────────
 
@@ -353,6 +354,9 @@ const migrations: Migration[] = [
     db.run('CREATE INDEX IF NOT EXISTS idx_tasks_agent_status ON tasks(agent_assigned_id, status)')
     db.run('CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status)')
   } },
+
+  // v35: add 'rejected' terminal status to tasks CHECK constraint (T1908)
+  { version: 35, up: (db) => { runAddRejectedStatusMigration(db) } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */
