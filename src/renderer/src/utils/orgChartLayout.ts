@@ -47,20 +47,17 @@ export const CHILD_H_GAP = 14
 export const GROUP_GAP = 22
 export const CANVAS_PAD = 32
 
-export const DOT_COLORS_DARK: Record<DotStatus, string> = {
-  cyan: '#67e8f9',
-  green: '#86efac',
-  yellow: '#fde047',
-  red: '#fca5a5',
-  gray: '#a1a1aa',
-}
-
-export const DOT_COLORS_LIGHT: Record<DotStatus, string> = {
-  cyan: '#0891b2',
-  green: '#16a34a',
-  yellow: '#ca8a04',
-  red: '#dc2626',
-  gray: '#52525b',
+/**
+ * Status colors mapped to Vuetify theme tokens (CSS vars).
+ * Theme-reactive: the browser resolves the var() values based on the active theme.
+ * No isDark() switch needed — a single map works for both dark and light modes.
+ */
+export const STATUS_COLORS: Record<DotStatus, string> = {
+  cyan: 'rgb(var(--v-theme-chip-in-progress))',
+  green: 'rgb(var(--v-theme-chip-todo))',
+  yellow: 'rgb(var(--v-theme-content-muted))',
+  red: 'rgb(var(--v-theme-chip-rejected))',
+  gray: 'rgb(var(--v-theme-chip-archived))',
 }
 
 // ── Status ────────────────────────────────────────────────────────────────────

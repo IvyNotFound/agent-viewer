@@ -111,12 +111,18 @@ body,
   --md-hr:          rgb(var(--v-theme-md-hr));
 }
 
-/* ── Dark mode elevation — stronger shadows + inner-glow for depth (T1808) ── */
+/* ── Elevation — theme-aware shadows + inner-glow for depth (T1808/T1893) ── */
 [data-v-theme="dark"] {
   --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.4);
   --elevation-2: 0 2px 6px rgba(0, 0, 0, 0.5);
   --elevation-3: 0 4px 12px rgba(0, 0, 0, 0.6);
   --inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+[data-v-theme="light"] {
+  --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --elevation-2: 0 2px 6px rgba(0, 0, 0, 0.16);
+  --elevation-3: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --inner-glow: 0 0 0 transparent;
 }
 
 /* Shell + modal elevation — dark mode depth reinforcement (T1812) */

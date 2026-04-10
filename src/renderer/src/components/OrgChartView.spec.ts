@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import i18n from '@renderer/plugins/i18n'
 import OrgChartView from '@renderer/components/OrgChartView.vue'
+import { STATUS_COLORS } from '@renderer/utils/orgChartLayout'
 
 const AGENT_ROW = (overrides = {}) => ({
   id: 1,
@@ -163,7 +164,7 @@ describe('OrgChartView (T921/T1041)', () => {
     })
     await flushPromises()
     const circles = wrapper.findAll('circle')
-    const cyanCircle = circles.find(c => c.attributes('fill') === '#67e8f9')
+    const cyanCircle = circles.find(c => c.attributes('style')?.includes(STATUS_COLORS.cyan))
     expect(cyanCircle).toBeDefined()
     wrapper.unmount()
   })
@@ -181,7 +182,7 @@ describe('OrgChartView (T921/T1041)', () => {
     })
     await flushPromises()
     const circles = wrapper.findAll('circle')
-    const redCircle = circles.find(c => c.attributes('fill') === '#fca5a5')
+    const redCircle = circles.find(c => c.attributes('style')?.includes(STATUS_COLORS.red))
     expect(redCircle).toBeDefined()
     wrapper.unmount()
   })
@@ -199,7 +200,7 @@ describe('OrgChartView (T921/T1041)', () => {
     })
     await flushPromises()
     const circles = wrapper.findAll('circle')
-    const greenCircle = circles.find(c => c.attributes('fill') === '#86efac')
+    const greenCircle = circles.find(c => c.attributes('style')?.includes(STATUS_COLORS.green))
     expect(greenCircle).toBeDefined()
     wrapper.unmount()
   })

@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { useAgentsStore } from '@renderer/stores/agents'
-import { agentFg, isDark, colorVersion } from '@renderer/utils/agentColor'
+import { agentAccent } from '@renderer/utils/agentColor'
 import {
   type AgentRow,
   type LayoutGroup,
@@ -13,8 +13,7 @@ import {
   GROUP_HEADER_H,
   GROUP_GAP,
   CANVAS_PAD,
-  DOT_COLORS_DARK,
-  DOT_COLORS_LIGHT,
+  STATUS_COLORS,
   buildGroupLayout,
   buildFlatGroup,
   flattenGroups,
@@ -127,11 +126,6 @@ const layout = computed<{ groups: LayoutGroup[]; totalW: number; totalH: number 
 const allGroupsFlat = computed(() => flattenGroups(layout.value.groups))
 const allAgentsFlat = computed(() => allGroupsFlat.value.flatMap(g => g.agents))
 
-const dotColors = computed(() => {
-  void colorVersion.value
-  return isDark() ? DOT_COLORS_DARK : DOT_COLORS_LIGHT
-})
-
 // ── Pan/zoom ──────────────────────────────────────────────────────────────────
 
 const transform = ref({ x: 0, y: 0, scale: 1 })
@@ -206,7 +200,7 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
         <!-- Legend -->
         <div class="oc-legend">
           <v-chip
-            v-for="(color, key) in dotColors"
+            v-for="(color, key) in STATUS_COLORS"
             :key="key"
             size="x-small"
             variant="tonal"
@@ -253,7 +247,6 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             :y="group.y + NESTING_PAD + GROUP_HEADER_H / 2 + 4"
             text-anchor="middle"
             font-size="12"
-            font-family="ui-sans-serif, system-ui, sans-serif"
             font-weight="500"
             letter-spacing="0.031em"
             :style="{ fill: 'rgb(var(--v-theme-content-secondary))' }"
@@ -261,33 +254,45 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
         </g>
 
         <!-- Agent cards (rendered last = on top of all group rects) -->
-        <g v-for="node in allAgentsFlat" :key="`card-${node.id}`">
-          <!-- Card background with elevation -->
+        <g v-for="node in allAgentsFlat" :key="`card-${node.id}`" class="oc-card">
+          <!-- Card background with theme-aware elevation -->
           <rect
             :x="node.x"
             :y="node.y"
             :width="CARD_W"
             :height="CARD_H"
             rx="8"
-            :style="{ fill: 'rgb(var(--v-theme-surface-base))', filter: 'drop-shadow(0px 1px 3px rgba(0,0,0,0.4))' }"
+            class="oc-card-bg"
+            :style="{ fill: 'rgb(var(--v-theme-surface-base))', filter: 'drop-shadow(var(--elevation-1))' }"
             stroke="rgb(var(--v-theme-edge-default))"
             stroke-width="1"
           />
-          <!-- Inner glow overlay (dark mode surface tint) -->
+          <!-- Surface tint overlay (MD3 elevation tint — theme-aware) -->
           <rect
             :x="node.x"
             :y="node.y"
             :width="CARD_W"
             :height="CARD_H"
             rx="8"
-            fill="rgba(255,255,255,0.03)"
+            :style="{ fill: 'rgba(var(--v-theme-on-surface), 0.03)' }"
+            pointer-events="none"
+          />
+          <!-- Hover state layer (MD3 state layer pattern) -->
+          <rect
+            :x="node.x"
+            :y="node.y"
+            :width="CARD_W"
+            :height="CARD_H"
+            rx="8"
+            class="oc-card-state"
+            :style="{ fill: 'rgb(var(--v-theme-on-surface))' }"
             pointer-events="none"
           />
           <circle
             :cx="node.x + CARD_W - 14"
             :cy="node.y + 14"
             r="4"
-            :fill="dotColors[node.status]"
+            :style="{ fill: STATUS_COLORS[node.status] }"
           >
             <animate
               v-if="node.status === 'cyan'"
@@ -301,15 +306,13 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             :x="node.x + 10"
             :y="node.y + 22"
             font-size="13"
-            font-family="ui-sans-serif, system-ui, sans-serif"
             font-weight="500"
-            :fill="agentFg(node.name)"
+            :fill="agentAccent(node.name)"
           >{{ node.name.length > 16 ? node.name.slice(0, 15) + '\u2026' : node.name }}</text>
           <text
             :x="node.x + 10"
             :y="node.y + 38"
             font-size="11"
-            font-family="ui-sans-serif, system-ui, sans-serif"
             font-weight="400"
             letter-spacing="0.02em"
             :style="{ fill: 'rgb(var(--v-theme-content-subtle))' }"
@@ -318,9 +321,8 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
             :x="node.x + 10"
             :y="node.y + 56"
             font-size="11"
-            font-family="ui-sans-serif, system-ui, sans-serif"
             font-weight="500"
-            :fill="dotColors[node.status]"
+            :style="{ fill: STATUS_COLORS[node.status] }"
           >{{ node.status === 'cyan' ? t('orgchart.status.active') : node.status === 'green' ? t('orgchart.status.todoAssigned') : node.status === 'yellow' ? t('orgchart.status.idle') : node.status === 'red' ? t('orgchart.status.blocked') : t('orgchart.status.inactive') }}</text>
         </g>
       </g>
@@ -359,7 +361,10 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
   flex: 1;
 }
 .oc-empty-text {}
-.oc-svg { flex: 1; width: 100%; }
+.oc-svg { flex: 1; width: 100%; font-family: inherit; }
 .oc-svg--grab { cursor: grab; }
 .oc-svg--grabbing { cursor: grabbing; }
+.oc-card { cursor: pointer; }
+.oc-card-state { opacity: 0; transition: opacity 150ms ease; }
+.oc-card:hover .oc-card-state { opacity: 0.08; }
 </style>
