@@ -1095,7 +1095,7 @@ describe('agent-stream part 4 — mutation targets', () => {
       await handler({ sender: mockSender }, { systemPrompt: 'my prompt' })
 
       const spWriteCall = mockWriteFile.mock.calls.find(
-        ([p]: [unknown]) => String(p).includes('claude-sp-')
+        ([p]: [unknown]) => String(p).includes('ka-sp-')
       )!
       const spPath = spWriteCall[0] as string
 

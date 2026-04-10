@@ -313,7 +313,7 @@ describe('agent-stream', () => {
         sessionId: 7,
       })
 
-      const spCall = mockWriteFile.mock.calls.find(([p]: [unknown]) => String(p).includes('claude-sp'))
+      const spCall = mockWriteFile.mock.calls.find(([p]: [unknown]) => String(p).includes('ka-sp'))
       expect(spCall?.[1]).toContain('Worktree: /tmp/wt/session-7 (branch: session-7)')
     })
 
@@ -325,7 +325,7 @@ describe('agent-stream', () => {
         // no projectPath → no worktree
       })
 
-      const spCall = mockWriteFile.mock.calls.find(([p]: [unknown]) => String(p).includes('claude-sp'))
+      const spCall = mockWriteFile.mock.calls.find(([p]: [unknown]) => String(p).includes('ka-sp'))
       expect(spCall?.[1]).toBe('Base prompt')
     })
   })

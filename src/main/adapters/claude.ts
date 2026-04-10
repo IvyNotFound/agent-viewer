@@ -239,7 +239,7 @@ export const claudeAdapter: CliAdapter = {
   },
 
   async prepareSystemPrompt(prompt: string, tempDir: string): Promise<SystemPromptResult> {
-    const filePath = join(tempDir, `claude-sp-${Date.now()}.txt`)
+    const filePath = join(tempDir, `ka-sp-${Date.now()}.txt`)
     writeFileSync(filePath, prompt, 'utf-8')
     return {
       filePath,

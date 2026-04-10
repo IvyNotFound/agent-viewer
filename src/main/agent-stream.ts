@@ -171,14 +171,14 @@ export function registerAgentStreamHandlers(): void {
     // avoids command-line serialization issues on both WSL (T705) and Windows native (T916).
     let spTempFile: string | undefined
     if (effectiveSystemPrompt) {
-      spTempFile = join(tmpdir(), `claude-sp-${id}.txt`)
+      spTempFile = join(tmpdir(), `ka-sp-${id}.txt`)
       await writeFile(spTempFile, effectiveSystemPrompt, 'utf-8')
     }
 
     // T1107: Write settings JSON to a temp file for Windows native (.cmd wrapper bypass).
     let settingsTempFile: string | undefined
     if (process.platform === 'win32' && opts.wslDistro === 'local' && opts.thinkingMode === 'disabled') {
-      settingsTempFile = join(tmpdir(), `claude-settings-${id}.json`)
+      settingsTempFile = join(tmpdir(), `ka-settings-${id}.json`)
       await writeFile(settingsTempFile, JSON.stringify({ alwaysThinkingEnabled: false }), 'utf-8')
     }
 

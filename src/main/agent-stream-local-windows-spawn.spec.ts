@@ -238,7 +238,7 @@ describe('agent:create — local Windows spawn (T916)', () => {
 
     // Settings temp file must be written (async writeFile from fs/promises)
     const settingsCall = mockWriteFile.mock.calls.find(
-      ([p]: [unknown]) => String(p).includes('claude-settings') && String(p).endsWith('.json')
+      ([p]: [unknown]) => String(p).includes('ka-settings') && String(p).endsWith('.json')
     )
     expect(settingsCall).toBeDefined()
     expect(settingsCall![1]).toBe('{"alwaysThinkingEnabled":false}')
@@ -262,7 +262,7 @@ describe('agent:create — local Windows spawn (T916)', () => {
 
     // Find the settings temp file path (async writeFile from fs/promises)
     const settingsCall = mockWriteFile.mock.calls.find(
-      ([p]: [unknown]) => String(p).includes('claude-settings') && String(p).endsWith('.json')
+      ([p]: [unknown]) => String(p).includes('ka-settings') && String(p).endsWith('.json')
     )
     const settingsPath = String(settingsCall![0])
 
@@ -283,7 +283,7 @@ describe('agent:create — local Windows spawn (T916)', () => {
     await handler({ sender: mockSender }, { wslDistro: 'local' })
 
     const settingsCall = mockWriteFile.mock.calls.find(
-      ([p]: [unknown]) => String(p).includes('claude-settings') && String(p).endsWith('.json')
+      ([p]: [unknown]) => String(p).includes('ka-settings') && String(p).endsWith('.json')
     )
     expect(settingsCall).toBeUndefined()
   })

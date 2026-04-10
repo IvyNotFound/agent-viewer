@@ -54,7 +54,7 @@ describe('buildWindowsPS1Script', () => {
   })
 
   it('reads system prompt from file via ReadAllText (no $(cat ...) bash syntax)', () => {
-    const script = buildWindowsPS1Script({ spTempFile: 'C:\\Users\\foo\\AppData\\Local\\Temp\\claude-sp-1.txt' })
+    const script = buildWindowsPS1Script({ spTempFile: 'C:\\Users\\foo\\AppData\\Local\\Temp\\ka-sp-1.txt' })
     expect(script).toContain('ReadAllText')
     expect(script).toContain('--append-system-prompt')
     expect(script).toContain('$a.Add($sp)')
@@ -77,9 +77,9 @@ describe('buildWindowsPS1Script', () => {
   it('passes settingsTempFile path directly to --settings when settingsTempFile provided (T1195)', () => {
     const script = buildWindowsPS1Script({
       thinkingMode: 'disabled',
-      settingsTempFile: 'C:\\Users\\foo\\AppData\\Local\\Temp\\claude-settings-1.json',
+      settingsTempFile: 'C:\\Users\\foo\\AppData\\Local\\Temp\\ka-settings-1.json',
     })
-    expect(script).toContain('claude-settings-1.json')
+    expect(script).toContain('ka-settings-1.json')
     expect(script).toContain("$a.Add('--settings')")
     // Must NOT contain ReadAllText or $settingsJson — path is passed directly
     expect(script).not.toContain('ReadAllText')

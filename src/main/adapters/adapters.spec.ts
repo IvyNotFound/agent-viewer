@@ -376,12 +376,13 @@ describe('prepareSystemPrompt', () => {
   ] as const) {
     it(`${name}: writes temp file and returns filePath + cleanup`, async () => {
       const result = await adapter.prepareSystemPrompt('my prompt', '/tmp')
+      const prefix = name === 'claude' ? 'ka-sp-' : `${name}-sp-`
       expect(mockWriteFileSync).toHaveBeenCalledWith(
-        expect.stringContaining(`${name}-sp-`),
+        expect.stringContaining(prefix),
         'my prompt',
         'utf-8'
       )
-      expect(result.filePath).toContain(`${name}-sp-`)
+      expect(result.filePath).toContain(prefix)
       expect(typeof result.cleanup).toBe('function')
     })
   }

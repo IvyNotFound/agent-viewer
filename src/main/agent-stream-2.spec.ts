@@ -266,10 +266,10 @@ describe('agent-stream', () => {
   })
 
   it('buildClaudeCmd passes systemPromptFile using $(cat ...) substitution', () => {
-    const cmd = agentStream._testing.buildClaudeCmd({ systemPromptFile: '/tmp/claude-sp-1.txt' })
+    const cmd = agentStream._testing.buildClaudeCmd({ systemPromptFile: '/tmp/ka-sp-1.txt' })
     expect(cmd).toContain('--append-system-prompt')
     // Must use $(cat '...') — no ANSI-C $'...' quoting, no base64
-    expect(cmd).toContain("$(cat '/tmp/claude-sp-1.txt')")
+    expect(cmd).toContain("$(cat '/tmp/ka-sp-1.txt')")
     expect(cmd).not.toContain("$'")
     expect(cmd).not.toContain('base64')
   })
@@ -332,7 +332,7 @@ describe('agent-stream', () => {
       const event = { sender: mockSender }
       await handler(event, { systemPrompt: 'Base prompt' })
 
-      const spCall = mockWriteFile.mock.calls.find(([p]: [unknown]) => String(p).includes('claude-sp'))
+      const spCall = mockWriteFile.mock.calls.find(([p]: [unknown]) => String(p).includes('ka-sp'))
       expect(spCall?.[1]).toBe('Base prompt')
       // queryLive must NOT be called
       expect(mockQueryLive).not.toHaveBeenCalled()
@@ -347,7 +347,7 @@ describe('agent-stream', () => {
       const event = { sender: mockSender }
       await handler(event, { systemPrompt: 'Base prompt', dbPath: '/fake/project.db', sessionId: 5 })
 
-      const spCall = mockWriteFile.mock.calls.find(([p]: [unknown]) => String(p).includes('claude-sp'))
+      const spCall = mockWriteFile.mock.calls.find(([p]: [unknown]) => String(p).includes('ka-sp'))
       expect(spCall?.[1]).toBe('Base prompt\n\nActive tasks: #42 #67')
     })
 
@@ -357,7 +357,7 @@ describe('agent-stream', () => {
       const event = { sender: mockSender }
       await handler(event, { systemPrompt: 'Base prompt', dbPath: '/fake/project.db', sessionId: 5 })
 
-      const spCall = mockWriteFile.mock.calls.find(([p]: [unknown]) => String(p).includes('claude-sp'))
+      const spCall = mockWriteFile.mock.calls.find(([p]: [unknown]) => String(p).includes('ka-sp'))
       expect(spCall?.[1]).toBe('Base prompt')
     })
 
