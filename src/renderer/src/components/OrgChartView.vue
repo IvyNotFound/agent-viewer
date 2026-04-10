@@ -140,7 +140,6 @@ const dragStart = ref({ mx: 0, my: 0, tx: 0, ty: 0 })
 const svgEl = ref<SVGSVGElement | null>(null)
 
 function onWheel(e: WheelEvent): void {
-  e.preventDefault()
   const delta = e.deltaY > 0 ? 0.9 : 1.1
   transform.value.scale = Math.min(2, Math.max(0.15, transform.value.scale * delta))
 }
@@ -233,7 +232,7 @@ watch(() => store.dbPath, async () => { await fetchData(); fitView() })
       ref="svgEl"
       class="oc-svg"
       :class="dragging ? 'oc-svg--grabbing' : 'oc-svg--grab'"
-      @wheel.passive="onWheel"
+      @wheel.prevent="onWheel"
       @mousedown="onMouseDown"
     >
       <g :transform="`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`">
