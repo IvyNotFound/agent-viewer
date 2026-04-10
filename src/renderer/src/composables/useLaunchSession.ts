@@ -197,6 +197,9 @@ export function useLaunchSession() {
         }
       }
 
+      // Model resolution: explicit opts > agent preferred_model > backend default
+      const resolvedModelId = opts?.modelId ?? agent.preferred_model ?? undefined
+
       tabsStore.addTerminal(
         agent.name,
         resolvedInstance?.distro,
@@ -210,7 +213,7 @@ export function useLaunchSession() {
         'stream',
         resolvedCli,
         resolvedWorkDir,
-        opts?.modelId
+        resolvedModelId
       )
 
       return 'ok'
