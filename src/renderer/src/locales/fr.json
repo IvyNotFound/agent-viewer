@@ -246,7 +246,7 @@
     "regenerateError": "Erreur de regénération : {error}",
     "sections": {
       "appearance": "Apparence",
-      "automation": "Automation",
+      "automation": "Automatisation",
       "editor": "Éditeur",
       "cli": "CLI & Agents",
       "notifications": "Notifications",
