@@ -146,7 +146,7 @@ describe('migrateDb — strict > (not >=) in pending filter', () => {
   })
 
   it('returns CURRENT_SCHEMA_VERSION - N migrations when starting at version N', () => {
-    for (const [start, expected] of [[27, 10], [28, 9], [24, 13]]) {
+    for (const [start, expected] of [[27, 11], [28, 10], [24, 14]]) {
       const db = makeMockDb({ userVersion: start, colMap: { agents: ['id', 'name'], sessions: ['id', 'status'] } })
       const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
       expect(result).toBe(expected)
@@ -318,25 +318,25 @@ describe('migrateDb — ArithmeticOperator: return value is pending.length', () 
   beforeEach(() => vi.clearAllMocks())
 
   it('return value matches exactly the number of SAVEPOINT calls made', () => {
-    // At version 27: v28, v29, v30, v31, v32, v33, v34, v35, v36, v37 run → 10 SAVEPOINTs → return 10
+    // At version 27: v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38 run → 11 SAVEPOINTs → return 11
     const db = makeMockDb({ userVersion: 27, colMap: { agents: ['id', 'name'], sessions: ['id', 'status'] } })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const savepointCount = calls.filter((s: string) => /^SAVEPOINT m\d+$/.test(s)).length
     // Return value must equal the number of savepoints (one per migration)
     expect(result).toBe(savepointCount)
-    expect(result).toBe(10)
+    expect(result).toBe(11)
     expect(result).not.toBe(0)
-    expect(result).not.toBe(9)
-    expect(result).not.toBe(11)
+    expect(result).not.toBe(10)
+    expect(result).not.toBe(12)
   })
 
-  it('return value is 4 (not 3 or 5) when four migrations run (v34, v35, v36, v37)', () => {
+  it('return value is 5 (not 4 or 6) when five migrations run (v34, v35, v36, v37, v38)', () => {
     const db = makeMockDb({ userVersion: 33 })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(4)
-    expect(result).not.toBe(3)
-    expect(result).not.toBe(5)
+    expect(result).toBe(5)
+    expect(result).not.toBe(4)
+    expect(result).not.toBe(6)
   })
 
   it('return value decreases by 1 per additional starting version', () => {

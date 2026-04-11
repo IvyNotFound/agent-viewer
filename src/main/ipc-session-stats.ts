@@ -81,7 +81,8 @@ export function registerSessionStatsHandlers(): void {
           SUM(s.num_turns) as total_turns,
           SUM(s.tokens_in + s.tokens_out) as total_tokens,
           SUM(s.tokens_cache_read) as cache_read,
-          SUM(s.tokens_cache_write) as cache_write
+          SUM(s.tokens_cache_write) as cache_write,
+          s.model_used
         FROM sessions s
         JOIN agents a ON a.id = s.agent_id
         WHERE ${where}

@@ -97,7 +97,9 @@ export async function buildSchema(): Promise<any> {
       tokens_in INTEGER DEFAULT 0,
       tokens_out INTEGER DEFAULT 0,
       tokens_cache_read INTEGER DEFAULT 0,
-      tokens_cache_write INTEGER DEFAULT 0
+      tokens_cache_write INTEGER DEFAULT 0,
+      cli_type TEXT,
+      model_used TEXT
     )`)
 
     db.run(`CREATE TABLE IF NOT EXISTS task_comments (

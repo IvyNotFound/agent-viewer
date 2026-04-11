@@ -288,6 +288,14 @@ const migrations: Migration[] = [
     db.run('DROP INDEX IF EXISTS idx_sessions_conv_id')
     db.run('CREATE INDEX IF NOT EXISTS idx_sessions_conv_id ON sessions(conv_id)')
   } },
+
+  // v38: add sessions.model_used to track the effective model per session (T1923)
+  { version: 38, up: (db) => {
+    const cols = db.exec('PRAGMA table_info(sessions)')
+    if (cols.length === 0) return
+    const has = cols[0].values.some((r: unknown[]) => r[1] === 'model_used')
+    if (!has) db.run('ALTER TABLE sessions ADD COLUMN model_used TEXT')
+  } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */

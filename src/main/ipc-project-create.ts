@@ -77,7 +77,8 @@ export async function createProjectDb(
         cost_usd REAL,
         duration_ms INTEGER,
         num_turns INTEGER,
-        cli_type TEXT
+        cli_type TEXT,
+        model_used TEXT
       );
       CREATE TABLE IF NOT EXISTS agent_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

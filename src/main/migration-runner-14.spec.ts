@@ -100,16 +100,16 @@ describe('migrateDb v34 — add missing DB indexes (T1852)', () => {
     expect(v34Indexes.every((s: string) => s.includes('IF NOT EXISTS'))).toBe(true)
   })
 
-  it('updates user_version to 37 (v34 + v35 + v36 + v37)', () => {
+  it('updates user_version to 38 (v34 + v35 + v36 + v37 + v38)', () => {
     const db = makeMockDb({ userVersion: 33 })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(db._getVersion()).toBe(37)
+    expect(db._getVersion()).toBe(38)
   })
 
-  it('skips v34 when already at version 34 (v35, v36, v37 run)', () => {
+  it('skips v34 when already at version 34 (v35, v36, v37, v38 run)', () => {
     const db = makeMockDb({ userVersion: 34 })
     const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(applied).toBe(3)
+    expect(applied).toBe(4)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     // v34 creates idx_sessions_conv_id ON sessions(claude_conv_id) — that specific column name must not appear
     // (v36 re-creates same index name but on sessions(conv_id), which is fine)
@@ -125,6 +125,6 @@ describe('CURRENT_SCHEMA_VERSION alignment', () => {
     const db = makeMockDb({ userVersion: 0 })
     const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     expect(applied).toBeGreaterThan(0)
-    expect(db._getVersion()).toBe(37)
+    expect(db._getVersion()).toBe(38)
   })
 })

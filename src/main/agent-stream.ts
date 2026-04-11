@@ -22,7 +22,7 @@ import { ipcMain, app } from 'electron'
 import { writeFile } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
-import { queryLive, assertDbPathAllowed } from './db'
+import { queryLive, writeDb, assertDbPathAllowed } from './db'
 import {
   UUID_REGEX,
   logDebug,
@@ -145,6 +145,14 @@ export function registerAgentStreamHandlers(): void {
 
         const resolved = agentModel || globalModel || undefined
         if (resolved) opts.modelId = resolved
+        // T1923: persist the resolved model so cost calculations can use accurate pricing
+        if (resolved) {
+          try {
+            await writeDb(opts.dbPath, (db) => {
+              db.run('UPDATE sessions SET model_used = ? WHERE id = ?', [resolved, opts.sessionId])
+            })
+          } catch { /* never block spawn on model_used persistence failure */ }
+        }
       } catch { /* never block spawn on model resolution failure */ }
     }
 
