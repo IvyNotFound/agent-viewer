@@ -4,6 +4,55 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.40.2] - 2026-04-11
+
+### Features
+- feat(front-vuejs): redesign SetupWizard with multi-CLI selection + language config (T1913) (06180cf)
+- feat(front-vuejs): display 'rejected' status in all task views (T1909) (d36d096)
+- feat(back-electron): refactor init-new-project for multi-CLI project setup (T1912) (910ae5a)
+- feat(back-electron): add 'rejected' terminal status to tasks schema (T1908) (8893292)
+- feat(back-electron): enforce 400-line limit via hookServer PostToolUse feedback (T1898) (83cd9d6)
+- feat(front-vuejs): add image lightbox in StreamView (T1894) (00d4063)
+
+### Bug Fixes
+- fix(front-vuejs): replace no-explicit-any cast in useStreamEvents test helper (8424c4b)
+- fix(front-vuejs): prevent premature auto-close of agent tabs and protect active sessions (T1930, T1931) (1de9f30)
+- fix(back-electron): harden migration runner for fresh English-schema DBs (T1911) (f804a43)
+- fix(front-vuejs): inject agent.preferred_model into launchReviewSession and SidebarPerimetreSection (T1929) (48132a3)
+- fix(back-electron): purge locks table references from agent prompts and templates (T1916) (b6302dd)
+- fix(front-vuejs): inject agent.preferred_model into drag-drop session launch (T1927) (8a5e7e9)
+- fix(back-electron): inject hook URLs on all platforms, not only WSL (T1906) (fa1ccdc)
+- fix(back-electron): copy .claude/settings*.json into worktrees at creation (T1920) (e19089d)
+- fix(back-electron): add 'rejected' status to create-project-db CHECK constraint (aa46b99)
+- fix(back-electron): align create-project-db schema with migration v34 (T1910) (956abd9)
+- fix(back-electron): dual-listen hookServer for WSL gateway race condition (T1905) (513aaea)
+- fix(front-vuejs): surface migrateDb failures to user with error feedback (T1914) (2d6f1d5)
+- fix(i18n): translate "Automation" to "Automatisation" in fr.json (T1897) (ef3dd38)
+- fix(front-vuejs): align CreateAgentModal switches and toggles with MD3 styling (T1896) (ab49a6f)
+- fix(front-vuejs): align per-agent bar gauges in TokenStatsView (T1890) (7f57c6f)
+- fix(front-vuejs): replace @wheel.passive with @wheel.prevent in OrgChartView (T1892) (9fd1e58)
+- fix(front-vuejs): add missing mdi-fit-to-screen icon to mdiSvgSet (T1891) (9124611)
+
+### Refactoring
+- refactor(back-electron): rename claude_conv_id to conv_id across schema and codebase (T1917) (f90cf2d)
+- refactor(back-electron): generalize claudeCommand to customBinaryName in agent-stream (T1919) (c673788)
+- refactor(back-electron): split 4 backend files exceeding 400-line limit (T1902) (56d592d)
+- refactor(back-electron): split 38 backend test files exceeding 400-line limit (T1903) (2a40b27)
+- refactor(global): replace hardcoded claude fallbacks with project config primary_cli (T1918) (279a333)
+- refactor(front-vuejs): split 22 test files exceeding 400-line limit (T1904) (b46310b)
+- refactor(back-electron): rename claude-prefixed temp files to ka- prefix (T1921) (dfd81df)
+- refactor(front-vuejs): redesign OrgChartView for MD3 compliance and dark mode color fix (T1893) (b9fa854)
+- refactor(front-vuejs): remove stale task notification feature (T1895) (2139366)
+
+### Tests
+- test(back-electron): update migration test expectations for CURRENT_SCHEMA_VERSION 37 (8ca9a87)
+
+### Chores
+- chore(front-vuejs): add missing i18n keys columns.rejected and status.rejected to all locales (f5fde5e)
+- chore(global): update package.json description to reflect multi-CLI purpose (T1922) (004dab4)
+- chore(back-electron): remove obsolete init-project.js and related files (T1915) (28ef5f6)
+- chore(devops): add timeout-minutes and optimize mutation CI workflow (T1900) (f032f6b)
+
 ## [0.40.1] - 2026-04-09
 
 ### Bug Fixes
