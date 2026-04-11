@@ -32,7 +32,7 @@ export function installMockElectronAPI(): void {
       configurable: true,
     })
   } catch {
-    (window as any).electronAPI = mockElectronAPI
+    (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI
   }
 }
 
