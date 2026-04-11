@@ -164,7 +164,7 @@ async function buildSchema(): Promise<void> {
       updated_at TEXT,
       status TEXT,
       summary TEXT,
-      claude_conv_id TEXT,
+      conv_id TEXT,
       cost_usd REAL,
       duration_ms INTEGER,
       num_turns INTEGER,

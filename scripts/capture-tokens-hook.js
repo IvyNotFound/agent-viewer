@@ -7,7 +7,7 @@
  *   { hook_event_name, session_id, transcript_path, cwd }
  *
  * Reads the JSONL transcript, sums token usage from finalized assistant messages,
- * and persists the counts to sessions.tokens_* WHERE claude_conv_id = session_id.
+ * and persists the counts to sessions.tokens_* WHERE conv_id = session_id.
  *
  * Fallback: if no session found by conv_id, updates the most recent completed/started
  * session with tokens_in = 0.
@@ -100,12 +100,16 @@ async function main() {
     const db = new Database(DB_PATH, { readonly: true })
     db.pragma('busy_timeout = 5000')
 
-    const byConvId = db.prepare('SELECT id FROM sessions WHERE claude_conv_id = ?').get(convId)
+    // Detect column name: v37+ uses 'conv_id', legacy uses 'claude_conv_id'
+    const cols = db.pragma('table_info(sessions)')
+    const convCol = cols.some(c => c.name === 'conv_id') ? 'conv_id' : 'claude_conv_id'
+
+    const byConvId = db.prepare(`SELECT id FROM sessions WHERE ${convCol} = ?`).get(convId)
     if (byConvId) sessionId = byConvId.id
 
     if (sessionId === null) {
       const fallback = db.prepare(
-        "SELECT id FROM sessions WHERE (tokens_in = 0 OR tokens_in IS NULL) AND statut IN ('started','completed') ORDER BY id DESC LIMIT 1"
+        "SELECT id FROM sessions WHERE (tokens_in = 0 OR tokens_in IS NULL) AND status IN ('started','completed') ORDER BY id DESC LIMIT 1"
       ).get()
       if (fallback) {
         sessionId = fallback.id

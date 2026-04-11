@@ -51,7 +51,7 @@ export const SessionIdSchema = z.string().regex(
 
 /**
  * Claude Code conversation UUID (lowercase hex, 8-4-4-4-12 format).
- * Validated before being stored in sessions.claude_conv_id.
+ * Validated before being stored in sessions.conv_id.
  */
 export const ConvIdSchema = z.string().regex(
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,

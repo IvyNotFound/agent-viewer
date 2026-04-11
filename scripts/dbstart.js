@@ -25,6 +25,34 @@ const { randomUUID } = require('node:crypto')
 const { acquireLock, releaseLock, cleanupOrphanTmp } = require('./dblock')
 const { getDbPath, getPort, queryDaemon } = require('./db-client')
 
+/**
+ * Detect whether the sessions table uses 'conv_id' (v37+) or 'claude_conv_id' (legacy).
+ * Returns the actual column name found via PRAGMA table_info.
+ * @param {import('child_process')} _unused
+ * @returns {string} 'conv_id' or 'claude_conv_id'
+ */
+function detectConvIdColumn(dbPathForDetect, sqlExecFn) {
+  try {
+    const raw = sqlExecFn(`PRAGMA table_info(sessions)`, ['-json'])
+    const cols = JSON.parse(raw || '[]')
+    if (cols.some(c => c.name === 'conv_id')) return 'conv_id'
+  } catch { /* fall through */ }
+  return 'claude_conv_id'
+}
+
+/**
+ * Detect conv_id column name via the daemon.
+ * @param {number} daemonPort
+ * @returns {Promise<string>} 'conv_id' or 'claude_conv_id'
+ */
+async function detectConvIdColumnDaemon(daemonPort) {
+  try {
+    const rows = await daemonQuery(`PRAGMA table_info(sessions)`)
+    if (rows && rows.some(c => c.name === 'conv_id')) return 'conv_id'
+  } catch { /* fall through */ }
+  return 'claude_conv_id'
+}
+
 const agent = process.argv[2]
 const type = process.argv[3] || agent
 const scope = process.argv[4] || 'global'
@@ -152,10 +180,13 @@ async function runWithDaemon() {
     process.exit(2)
   }
 
+  // Detect column name for conv_id (v37+ uses 'conv_id', legacy uses 'claude_conv_id')
+  const convCol = await detectConvIdColumnDaemon(port)
+
   // 4. Create session with pre-assigned conv_id + get session_id
   const sessionUUID = randomUUID()
   const r5 = await daemonExec(
-    `INSERT INTO sessions (agent_id, claude_conv_id) VALUES (${agentId}, ${esc(sessionUUID)});\n` +
+    `INSERT INTO sessions (agent_id, ${convCol}) VALUES (${agentId}, ${esc(sessionUUID)});\n` +
     `SELECT last_insert_rowid();`
   )
   if (!r5 || !r5.rows || r5.rows.length === 0) return false
@@ -305,11 +336,14 @@ function runWithCli() {
       process.exit(2)
     }
 
+    // Detect column name for conv_id (v37+ uses 'conv_id', legacy uses 'claude_conv_id')
+    const convCol = detectConvIdColumn(dbPath, sqlExec)
+
     // 4. Create session with pre-assigned conv_id (T626) + get session_id
     const sessionUUID = randomUUID()
     const sessionId = parseInt(
       sqlExec(
-        `INSERT INTO sessions (agent_id, claude_conv_id) VALUES (${agentId}, ${esc(sessionUUID)});\n` +
+        `INSERT INTO sessions (agent_id, ${convCol}) VALUES (${agentId}, ${esc(sessionUUID)});\n` +
         `SELECT last_insert_rowid();`
       ),
       10

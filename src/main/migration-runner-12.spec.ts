@@ -70,8 +70,8 @@ function makeMockDb({
 describe('migrateDb v22 — FTS4 exact trigger SQL', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('INSERT trigger (tasks_fts_ai) uses new.id, new.titre, new.description', () => {
-    const db = makeMockDb({ userVersion: 21 })
+  it('INSERT trigger (tasks_fts_ai) uses new.id, new.titre, new.description on French schema', () => {
+    const db = makeMockDb({ userVersion: 21, colMap: { tasks: ['id', 'titre', 'description', 'statut'] } })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const aiTrigger = calls.find((s: string) => s.includes('tasks_fts_ai'))
@@ -82,7 +82,7 @@ describe('migrateDb v22 — FTS4 exact trigger SQL', () => {
   })
 
   it('UPDATE trigger (tasks_fts_au) deletes old.id and inserts new.id', () => {
-    const db = makeMockDb({ userVersion: 21 })
+    const db = makeMockDb({ userVersion: 21, colMap: { tasks: ['id', 'titre', 'description', 'statut'] } })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const auTrigger = calls.find((s: string) => s.includes('tasks_fts_au'))
@@ -92,7 +92,7 @@ describe('migrateDb v22 — FTS4 exact trigger SQL', () => {
   })
 
   it('DELETE trigger (tasks_fts_ad) deletes old.id', () => {
-    const db = makeMockDb({ userVersion: 21 })
+    const db = makeMockDb({ userVersion: 21, colMap: { tasks: ['id', 'titre', 'description', 'statut'] } })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const adTrigger = calls.find((s: string) => s.includes('tasks_fts_ad'))
@@ -101,8 +101,8 @@ describe('migrateDb v22 — FTS4 exact trigger SQL', () => {
     expect(adTrigger).toContain('DELETE FROM tasks_fts')
   })
 
-  it('INSERT initial data uses titre, description columns (not title)', () => {
-    const db = makeMockDb({ userVersion: 21 })
+  it('INSERT initial data uses titre on French schema', () => {
+    const db = makeMockDb({ userVersion: 21, colMap: { tasks: ['id', 'titre', 'description', 'statut'] } })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const seedInsert = calls.find((s: string) => s.includes('INSERT INTO tasks_fts') && s.includes('SELECT'))
@@ -111,13 +111,23 @@ describe('migrateDb v22 — FTS4 exact trigger SQL', () => {
     expect(seedInsert).toContain('description')
   })
 
-  it('virtual table DDL uses fts4(titre, description)', () => {
-    const db = makeMockDb({ userVersion: 21 })
+  it('virtual table DDL uses fts4(titre, description) on French schema', () => {
+    const db = makeMockDb({ userVersion: 21, colMap: { tasks: ['id', 'titre', 'description', 'statut'] } })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const ftsCreate = calls.find((s: string) => s.includes('CREATE VIRTUAL TABLE'))
     expect(ftsCreate).toBeDefined()
     expect(ftsCreate).toContain('fts4(titre, description)')
+  })
+
+  it('uses title (not titre) for FTS on English schema', () => {
+    const db = makeMockDb({ userVersion: 21, colMap: { tasks: ['id', 'title', 'description', 'status'] } })
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
+    const calls = db.run.mock.calls.map((c: string[]) => c[0])
+    const ftsCreate = calls.find((s: string) => s.includes('CREATE VIRTUAL TABLE'))
+    expect(ftsCreate).toBeDefined()
+    expect(ftsCreate).toContain('fts4(title, description)')
+    expect(ftsCreate).not.toContain('titre')
   })
 })
 

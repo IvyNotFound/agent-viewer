@@ -151,7 +151,7 @@ export interface Session {
   updated_at: string
   status: 'started' | 'completed' | 'blocked'
   summary: string | null
-  claude_conv_id: string | null
+  conv_id: string | null
   tokens_in: number
   tokens_out: number
   tokens_cache_read: number

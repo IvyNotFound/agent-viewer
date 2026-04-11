@@ -216,7 +216,7 @@ export async function handleStop(
   try {
     await writeDbNative(dbPath, (db) => {
       // 1. Try to find session by conv_id
-      const byConvIdRow = db.prepare('SELECT id FROM sessions WHERE claude_conv_id = ?').get(convId) as { id: number } | undefined
+      const byConvIdRow = db.prepare('SELECT id FROM sessions WHERE conv_id = ?').get(convId) as { id: number } | undefined
       let sessionId: number | null = byConvIdRow?.id ?? null
 
       // 2. Fallback: most recent started/completed session with no tokens
@@ -279,7 +279,7 @@ export async function handleLifecycleEvent(
 
   try {
     await writeDbNative(dbPath, (db) => {
-      const row = db.prepare('SELECT s.id, s.agent_id FROM sessions s WHERE s.claude_conv_id = ?').get(convId) as { id: number; agent_id: number } | undefined
+      const row = db.prepare('SELECT s.id, s.agent_id FROM sessions s WHERE s.conv_id = ?').get(convId) as { id: number; agent_id: number } | undefined
       if (!row) return
 
       db.prepare('INSERT INTO agent_logs (session_id, agent_id, level, action, detail, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))')

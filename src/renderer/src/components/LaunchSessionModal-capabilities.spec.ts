@@ -174,7 +174,7 @@ describe('LaunchSessionModal — capabilities (T1036)', () => {
 
   it('hides resume switch for Codex (convResume=false)', async () => {
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
-    api.queryDb.mockResolvedValue([{ claude_conv_id: 'conv-abc' }])
+    api.queryDb.mockResolvedValue([{ conv_id: 'conv-abc' }])
 
     const wrapper = shallowMount(LaunchSessionModal, {
       props: { agent: mockAgent as never },

@@ -148,7 +148,7 @@ const VALID_UUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
 async function insertSession(agentId: number, opts?: { convId?: string; status?: string; tokensIn?: number }): Promise<number> {
   await writeDb<void>(TEST_DB_PATH, (db) => {
     db.run(
-      'INSERT INTO sessions (agent_id, status, claude_conv_id, tokens_in) VALUES (?, ?, ?, ?)',
+      'INSERT INTO sessions (agent_id, status, conv_id, tokens_in) VALUES (?, ?, ?, ?)',
       [agentId, opts?.status ?? 'started', opts?.convId ?? null, opts?.tokensIn ?? 0]
     )
   })
@@ -233,8 +233,8 @@ describe('session:setConvId — parameter validation (T1268)', () => {
     expect(result.success).toBe(true)
     expect(result.updated).toBe(true)
 
-    const rows = await queryLive(TEST_DB_PATH, 'SELECT claude_conv_id FROM sessions WHERE id = ?', [sessionId]) as Array<{ claude_conv_id: string }>
-    expect(rows[0].claude_conv_id).toBe(VALID_UUID)
+    const rows = await queryLive(TEST_DB_PATH, 'SELECT conv_id FROM sessions WHERE id = ?', [sessionId]) as Array<{ conv_id: string }>
+    expect(rows[0].conv_id).toBe(VALID_UUID)
   })
 
   it('returns updated=false when no matching session found', async () => {

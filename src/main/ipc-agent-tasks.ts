@@ -108,7 +108,7 @@ export function registerAgentTaskHandlers(): void {
         if (!agentRows.length || !agentRows[0].values.length) return null
         const [name, type, scope] = agentRows[0].values[0] as [string, string | null, string | null]
 
-        // Create session (claude_conv_id set later by session:setConvId when system:init arrives)
+        // Create session (conv_id set later by session:setConvId when system:init arrives)
         db.run(`INSERT INTO sessions (agent_id) VALUES (${agentId})`)
         const sessionRows = db.exec('SELECT last_insert_rowid()')
         const sessionId = sessionRows[0].values[0][0] as number

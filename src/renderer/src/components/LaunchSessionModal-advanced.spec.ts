@@ -40,7 +40,7 @@ describe('LaunchSessionModal — advanced features (T353)', () => {
       systemPromptSuffix: 'Always be thorough.',
       thinkingMode: 'auto',
     })
-    api.queryDb.mockResolvedValue([{ claude_conv_id: 'conv-abc-123' }])
+    api.queryDb.mockResolvedValue([{ conv_id: 'conv-abc-123' }])
     api.buildAgentPrompt.mockResolvedValue('test prompt')
   })
 

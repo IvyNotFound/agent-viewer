@@ -69,7 +69,7 @@ export async function createProjectDb(
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         status TEXT NOT NULL DEFAULT 'started' CHECK(status IN ('started','completed','blocked')),
         summary TEXT,
-        claude_conv_id TEXT,
+        conv_id TEXT,
         tokens_in INTEGER DEFAULT 0,
         tokens_out INTEGER DEFAULT 0,
         tokens_cache_read INTEGER DEFAULT 0,
@@ -176,7 +176,7 @@ export async function createProjectDb(
       CREATE INDEX IF NOT EXISTS idx_task_comments_task_id ON task_comments(task_id);
       CREATE INDEX IF NOT EXISTS idx_task_links_from_task ON task_links(from_task);
       CREATE INDEX IF NOT EXISTS idx_task_links_to_task ON task_links(to_task);
-      CREATE INDEX IF NOT EXISTS idx_sessions_conv_id ON sessions(claude_conv_id);
+      CREATE INDEX IF NOT EXISTS idx_sessions_conv_id ON sessions(conv_id);
       CREATE INDEX IF NOT EXISTS idx_tasks_agent_status ON tasks(agent_assigned_id, status);
       CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
       CREATE INDEX IF NOT EXISTS idx_task_agents_task_id ON task_agents(task_id);

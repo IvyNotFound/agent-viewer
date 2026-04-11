@@ -57,7 +57,7 @@ export async function buildSchema(): Promise<void> {
       updated_at TEXT,
       status TEXT,
       summary TEXT,
-      claude_conv_id TEXT,
+      conv_id TEXT,
       tokens_in INTEGER NOT NULL DEFAULT 0,
       tokens_out INTEGER NOT NULL DEFAULT 0,
       tokens_cache_read INTEGER NOT NULL DEFAULT 0,

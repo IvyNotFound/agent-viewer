@@ -148,7 +148,7 @@ const VALID_UUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
 async function insertSession(agentId: number, opts?: { convId?: string; status?: string; tokensIn?: number }): Promise<number> {
   await writeDb<void>(TEST_DB_PATH, (db) => {
     db.run(
-      'INSERT INTO sessions (agent_id, status, claude_conv_id, tokens_in) VALUES (?, ?, ?, ?)',
+      'INSERT INTO sessions (agent_id, status, conv_id, tokens_in) VALUES (?, ?, ?, ?)',
       [agentId, opts?.status ?? 'started', opts?.convId ?? null, opts?.tokensIn ?? 0]
     )
   })
@@ -206,7 +206,7 @@ describe('session:syncAllTokens — logic mutants (T1268)', () => {
 
     for (const uuid of [uuid1, uuid2, uuid3, uuid4, uuid5, uuid6]) {
       await writeDb<void>(TEST_DB_PATH, (db) => {
-        db.run('INSERT INTO sessions (agent_id, status, claude_conv_id, tokens_in) VALUES (?, ?, ?, ?)',
+        db.run('INSERT INTO sessions (agent_id, status, conv_id, tokens_in) VALUES (?, ?, ?, ?)',
           [agentId, 'completed', uuid, 0])
       })
     }
@@ -287,7 +287,7 @@ describe('session:collectTokens — parameter validation (T1268)', () => {
   it('session tokens updated via collectTokens', async () => {
     const agentId = await insertAgent('collect-tokens-persist-agent')
     const sessionId = await writeDb<number>(TEST_DB_PATH, (db) => {
-      db.run('INSERT INTO sessions (agent_id, status, claude_conv_id, tokens_in) VALUES (?, ?, ?, ?)',
+      db.run('INSERT INTO sessions (agent_id, status, conv_id, tokens_in) VALUES (?, ?, ?, ?)',
         [agentId, 'completed', VALID_UUID, 0])
       const rows = db.exec('SELECT last_insert_rowid() as id')
       return rows[0].values[0][0] as number

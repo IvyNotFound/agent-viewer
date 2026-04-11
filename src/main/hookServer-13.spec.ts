@@ -172,7 +172,7 @@ describe('handleStop — SQL string literals in DB callback', () => {
     expect(mockRun).toHaveBeenNthCalledWith(2, 42)
   })
 
-  it('SELECT by conv_id uses correct column name claude_conv_id', async () => {
+  it('SELECT by conv_id uses correct column name conv_id', async () => {
     writeFileSync(tmpFile, makeTranscript({ tokensIn: 200, tokensOut: 80 }))
 
     let capturedCb: ((db: unknown) => void) | null = null

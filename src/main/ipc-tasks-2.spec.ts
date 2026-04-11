@@ -161,7 +161,7 @@ async function buildSchema(): Promise<void> {
       updated_at TEXT,
       status TEXT,
       summary TEXT,
-      claude_conv_id TEXT
+      conv_id TEXT
     )`)
 
     db.run(`CREATE TABLE IF NOT EXISTS task_comments (

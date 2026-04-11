@@ -152,7 +152,7 @@ const VALID_JSONL = [
 
 async function insertSession(agentId: number, convId?: string): Promise<number> {
   await writeDb<void>(TEST_DB_PATH, (db) => {
-    db.run('INSERT INTO sessions (agent_id, status, claude_conv_id) VALUES (?, ?, ?)', [agentId, 'completed', convId ?? null])
+    db.run('INSERT INTO sessions (agent_id, status, conv_id) VALUES (?, ?, ?)', [agentId, 'completed', convId ?? null])
   })
   const rows = await queryLive(TEST_DB_PATH, 'SELECT id FROM sessions WHERE agent_id = ? ORDER BY id DESC LIMIT 1', [agentId]) as Array<{ id: number }>
   return rows[0].id

@@ -329,7 +329,7 @@ describe('close-agent-sessions (T985)', () => {
 describe('session:setConvId (T985)', () => {
   const VALID_UUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
 
-  it('sets claude_conv_id on the latest started session for an agent', async () => {
+  it('sets conv_id on the latest started session for an agent', async () => {
     const agentId = await insertAgent('agent-conv')
     const sessionId = await insertSession(agentId, { status: 'started' })
 
@@ -342,10 +342,10 @@ describe('session:setConvId (T985)', () => {
 
     const rows = await queryLive(
       TEST_DB_PATH,
-      'SELECT claude_conv_id FROM sessions WHERE id = ?',
+      'SELECT conv_id FROM sessions WHERE id = ?',
       [sessionId]
-    ) as Array<{ claude_conv_id: string }>
-    expect(rows[0].claude_conv_id).toBe(VALID_UUID)
+    ) as Array<{ conv_id: string }>
+    expect(rows[0].conv_id).toBe(VALID_UUID)
   })
 
   it('returns { success: true, updated: false } when no matching session found', async () => {
@@ -359,7 +359,7 @@ describe('session:setConvId (T985)', () => {
     expect(result.updated).toBe(false)
   })
 
-  it('does not overwrite existing claude_conv_id (already set)', async () => {
+  it('does not overwrite existing conv_id (already set)', async () => {
     const agentId = await insertAgent('agent-conv-existing')
     await insertSession(agentId, { status: 'started', convId: 'existing-uuid' })
 

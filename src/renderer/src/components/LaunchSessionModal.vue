@@ -135,19 +135,19 @@ onMounted(async () => {
       window.electronAPI.getAgentSystemPrompt(tasksStore.dbPath, props.agent.id),
       window.electronAPI.queryDb(
         tasksStore.dbPath,
-        `SELECT claude_conv_id FROM sessions
-         WHERE agent_id = ? AND claude_conv_id IS NOT NULL
+        `SELECT conv_id FROM sessions
+         WHERE agent_id = ? AND conv_id IS NOT NULL
          ORDER BY id DESC LIMIT 1`,
         [props.agent.id]
-      ) as Promise<Array<{ claude_conv_id: string }>>
+      ) as Promise<Array<{ conv_id: string }>>
     ])
     if (promptResult.success) {
       systemPrompt.value = promptResult.systemPrompt
       systemPromptSuffix.value = promptResult.systemPromptSuffix
       thinkingMode.value = (promptResult.thinkingMode as 'auto' | 'disabled') ?? 'auto'
     }
-    if (sessionRows.length > 0 && sessionRows[0].claude_conv_id) {
-      lastConvId.value = sessionRows[0].claude_conv_id
+    if (sessionRows.length > 0 && sessionRows[0].conv_id) {
+      lastConvId.value = sessionRows[0].conv_id
       useResume.value = false
     }
   }

@@ -140,7 +140,7 @@ async function buildSchema(): Promise<void> {
     db.run(`CREATE TABLE IF NOT EXISTS sessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id INTEGER,
       started_at TEXT, ended_at TEXT, updated_at TEXT, status TEXT, summary TEXT,
-      claude_conv_id TEXT, cost_usd REAL, duration_ms INTEGER, num_turns INTEGER,
+      conv_id TEXT, cost_usd REAL, duration_ms INTEGER, num_turns INTEGER,
       tokens_in INTEGER, tokens_out INTEGER, tokens_cache_read INTEGER, tokens_cache_write INTEGER
     )`)
     db.run(`CREATE TABLE IF NOT EXISTS task_comments (

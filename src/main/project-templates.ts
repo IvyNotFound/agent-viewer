@@ -207,7 +207,7 @@ export const WORKFLOW_MD_TEMPLATE = `# Ticket Workflow — Full SQL Reference
 
 \`\`\`
 agents          (id PK, name, type, scope, system_prompt, system_prompt_suffix, thinking_mode, allowed_tools, auto_launch, permission_mode, max_sessions, worktree_enabled, preferred_model, preferred_cli, created_at)
-sessions        (id PK, agent_id→agents, started_at, ended_at, updated_at, status CHECK(status IN ('started','completed','blocked')), summary, claude_conv_id, tokens_in, tokens_out, tokens_cache_read, tokens_cache_write, cost_usd, duration_ms, num_turns, cli_type)
+sessions        (id PK, agent_id→agents, started_at, ended_at, updated_at, status CHECK(status IN ('started','completed','blocked')), summary, conv_id, tokens_in, tokens_out, tokens_cache_read, tokens_cache_write, cost_usd, duration_ms, num_turns, cli_type)
 tasks           (id PK, title, description, status, agent_creator_id→agents, agent_assigned_id→agents, agent_validator_id→agents, parent_task_id→tasks, session_id→sessions, scope, effort, priority, created_at, updated_at, started_at, completed_at, validated_at)
 task_comments   (id PK, task_id→tasks, agent_id→agents, content, created_at)
 task_links      (id PK, from_task→tasks, to_task→tasks, type CHECK(type IN ('blocks','depends_on','related_to','duplicates')), created_at)

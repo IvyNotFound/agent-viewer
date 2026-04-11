@@ -215,13 +215,18 @@ describe('migrateDb v6 — task_agents DDL details', () => {
 describe('migrateDb v5 — all 9 exact index names', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  const v4Db = () => makeMockDb({
+  // French-schema DB: has locks table and agent_assigne_id column
+  const v4FrenchDb = () => makeMockDb({
     userVersion: 4,
-    colMap: { agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'] },
+    colMap: {
+      agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'],
+      tasks: ['id', 'titre', 'statut', 'agent_assigne_id'],
+    },
+    tableMap: { locks: true },
   })
 
-  it('creates all 9 indexes in v5', () => {
-    const db = v4Db()
+  it('creates all 9 indexes in v5 on French schema', () => {
+    const db = v4FrenchDb()
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const expectedIndexes = [
@@ -241,7 +246,7 @@ describe('migrateDb v5 — all 9 exact index names', () => {
   })
 
   it('v5 index CREATE statements all use IF NOT EXISTS', () => {
-    const db = v4Db()
+    const db = v4FrenchDb()
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const v5Indexes = calls.filter((s: string) => s.includes('idx_') && s.includes('ON ') && s.includes('CREATE INDEX'))
@@ -256,16 +261,35 @@ describe('migrateDb v5 — all 9 exact index names', () => {
   })
 
   it('idx_agent_logs_created_at uses DESC', () => {
-    const db = v4Db()
+    const db = v4FrenchDb()
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('idx_agent_logs_created_at') && s.includes('DESC'))).toBe(true)
   })
 
-  it('idx_tasks_agent_assigne uses column agent_assigne_id', () => {
-    const db = v4Db()
+  it('idx_tasks_agent_assigne uses column agent_assigne_id on French schema', () => {
+    const db = v4FrenchDb()
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s.includes('idx_tasks_agent_assigne') && s.includes('agent_assigne_id'))).toBe(true)
+  })
+
+  it('skips locks index and agent_assigne index on English schema', () => {
+    const db = makeMockDb({
+      userVersion: 4,
+      colMap: {
+        agents: ['id', 'name', 'system_prompt', 'system_prompt_suffix', 'thinking_mode', 'allowed_tools'],
+        tasks: ['id', 'title', 'status', 'agent_assigned_id'],
+      },
+      // No locks table
+    })
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
+    const calls = db.run.mock.calls.map((c: string[]) => c[0])
+    // v5 should NOT CREATE the locks index or agent_assigne index (use CREATE INDEX to exclude v26 DROP)
+    expect(calls.every((s: string) => !(s.includes('CREATE INDEX') && s.includes('idx_locks_released_at')))).toBe(true)
+    expect(calls.every((s: string) => !(s.includes('CREATE INDEX') && s.includes('idx_tasks_agent_assigne')))).toBe(true)
+    // Other indexes should still be created
+    expect(calls.some((s: string) => s.includes('idx_sessions_agent_id'))).toBe(true)
+    expect(calls.some((s: string) => s.includes('idx_tasks_updated_at'))).toBe(true)
   })
 })

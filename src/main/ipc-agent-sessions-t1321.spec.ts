@@ -151,13 +151,13 @@ function makeUuid(n: number): string {
 async function insertSessionWithConvId(agentId: number, uuid: string, tokensIn = 0): Promise<number> {
   await writeDb<void>(TEST_DB_PATH, (db) => {
     db.run(
-      'INSERT INTO sessions (agent_id, status, claude_conv_id, tokens_in) VALUES (?, ?, ?, ?)',
+      'INSERT INTO sessions (agent_id, status, conv_id, tokens_in) VALUES (?, ?, ?, ?)',
       [agentId, 'completed', uuid, tokensIn]
     )
   })
   const rows = await queryLive(
     TEST_DB_PATH,
-    'SELECT id FROM sessions WHERE claude_conv_id = ?',
+    'SELECT id FROM sessions WHERE conv_id = ?',
     [uuid]
   ) as Array<{ id: number }>
   return rows[0].id
@@ -250,11 +250,11 @@ describe('session:syncAllTokens — empty rows (T1321)', () => {
     expect(result.errors).toHaveLength(0)
   })
 
-  it('sessions exist but all have NULL claude_conv_id → not eligible → updated=0', async () => {
+  it('sessions exist but all have NULL conv_id → not eligible → updated=0', async () => {
     const agentId = await insertAgent('no-conv-id-agent')
     await writeDb<void>(TEST_DB_PATH, (db) => {
       db.run(
-        'INSERT INTO sessions (agent_id, status, claude_conv_id, tokens_in) VALUES (?, ?, NULL, 0)',
+        'INSERT INTO sessions (agent_id, status, conv_id, tokens_in) VALUES (?, ?, NULL, 0)',
         [agentId, 'completed']
       )
     })

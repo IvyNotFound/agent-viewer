@@ -90,7 +90,7 @@ export async function buildSchema(): Promise<any> {
       updated_at TEXT DEFAULT (datetime('now')),
       status TEXT DEFAULT 'started',
       summary TEXT,
-      claude_conv_id TEXT,
+      conv_id TEXT,
       cost_usd REAL,
       duration_ms INTEGER,
       num_turns INTEGER,
@@ -210,7 +210,7 @@ export async function insertSession(
 ): Promise<number> {
   await writeDb<void>(TEST_DB_PATH, (db) => {
     db.run(
-      'INSERT INTO sessions (agent_id, status, claude_conv_id, cost_usd, started_at) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO sessions (agent_id, status, conv_id, cost_usd, started_at) VALUES (?, ?, ?, ?, ?)',
       [
         agentId,
         opts?.status ?? opts?.statut ?? 'started',

@@ -104,10 +104,10 @@ export function registerAgentSessionHandlers(): void {
       assertDbPathAllowed(dbPath)
       const rowsModified = await writeDb<number>(dbPath, (db) => {
         db.run(
-          `UPDATE sessions SET claude_conv_id = ?
+          `UPDATE sessions SET conv_id = ?
            WHERE id = (
              SELECT id FROM sessions
-             WHERE agent_id = ? AND status = 'started' AND claude_conv_id IS NULL
+             WHERE agent_id = ? AND status = 'started' AND conv_id IS NULL
              ORDER BY id DESC LIMIT 1
            )`,
           [convId, agentId]
@@ -125,7 +125,7 @@ export function registerAgentSessionHandlers(): void {
   /**
    * T518: Parse token usage from a completed Claude Code session JSONL and persist to DB.
    * Reads ~/.claude/projects/<slug>/<convId>.jsonl, sums finalized assistant messages,
-   * and updates sessions.tokens_* WHERE claude_conv_id = convId.
+   * and updates sessions.tokens_* WHERE conv_id = convId.
    *
    * @param dbPath - Registered DB path
    * @param convId - Claude Code conversation UUID
@@ -142,7 +142,7 @@ export function registerAgentSessionHandlers(): void {
         db.run(
           `UPDATE sessions
            SET tokens_in = ?, tokens_out = ?, tokens_cache_read = ?, tokens_cache_write = ?
-           WHERE claude_conv_id = ?`,
+           WHERE conv_id = ?`,
           [counts.tokensIn, counts.tokensOut, counts.cacheRead, counts.cacheWrite, convId]
         )
       })
@@ -155,7 +155,7 @@ export function registerAgentSessionHandlers(): void {
   })
 
   /**
-   * T518: Retroactively sync token counts for all sessions that have a claude_conv_id
+   * T518: Retroactively sync token counts for all sessions that have a conv_id
    * but zero tokens. Useful for populating data from sessions started before T518.
    *
    * @param dbPath - Registered DB path
@@ -169,12 +169,12 @@ export function registerAgentSessionHandlers(): void {
 
       const rows = await queryLive(
         dbPath,
-        `SELECT id, claude_conv_id FROM sessions
-         WHERE claude_conv_id IS NOT NULL
+        `SELECT id, conv_id FROM sessions
+         WHERE conv_id IS NOT NULL
            AND (tokens_in = 0 OR tokens_in IS NULL)
          ORDER BY id DESC`,
         []
-      ) as Array<{ id: number; claude_conv_id: string }>
+      ) as Array<{ id: number; conv_id: string }>
 
       let updated = 0
       const errors: string[] = []
@@ -186,7 +186,7 @@ export function registerAgentSessionHandlers(): void {
         const batch = rows.slice(i, i + SYNC_CONCURRENCY)
         await Promise.all(batch.map(async (row) => {
           try {
-            const counts = await parseConvTokens(resolvedProjectPath, row.claude_conv_id)
+            const counts = await parseConvTokens(resolvedProjectPath, row.conv_id)
             if (counts.tokensIn > 0 || counts.tokensOut > 0) {
               updates.push({ id: row.id, counts })
             }
@@ -238,20 +238,20 @@ export function registerAgentSessionHandlers(): void {
 
       const rows = await queryLive(
         dbPath,
-        `SELECT s.id, s.claude_conv_id
+        `SELECT s.id, s.conv_id
          FROM sessions s
          JOIN agents a ON a.id = s.agent_id
          WHERE a.name = ?
-           AND s.claude_conv_id IS NOT NULL
+           AND s.conv_id IS NOT NULL
            AND (s.tokens_in = 0 OR s.tokens_in IS NULL)
          ORDER BY s.id DESC
          LIMIT 1`,
         [agentName]
-      ) as Array<{ id: number; claude_conv_id: string }>
+      ) as Array<{ id: number; conv_id: string }>
 
       if (rows.length === 0) return { success: true, tokens: null }
 
-      const { id: sessionId, claude_conv_id: convId } = rows[0]
+      const { id: sessionId, conv_id: convId } = rows[0]
       const counts = await parseConvTokens(resolvedProjectPath, convId)
       await writeDb(dbPath, (db) => {
         db.run(

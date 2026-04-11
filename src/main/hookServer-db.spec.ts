@@ -195,7 +195,7 @@ describe('handleStop — DB write path via real transcript', () => {
 
     // Should have prepared a SELECT statement with conv_id lookup
     expect(mockDb.prepare).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT id FROM sessions WHERE claude_conv_id = ?')
+      expect.stringContaining('SELECT id FROM sessions WHERE conv_id = ?')
     )
     // Should have called stmt.get with the conv_id
     expect(mockStmt.get).toHaveBeenCalledWith('conv-lookup')
