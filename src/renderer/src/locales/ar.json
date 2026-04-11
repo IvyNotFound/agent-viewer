@@ -43,7 +43,8 @@
     "todo": "للتنفيذ",
     "in_progress": "قيد التنفيذ",
     "done": "مكتمل",
-    "archived": "مؤرشف"
+    "archived": "مؤرشف",
+    "rejected": "مرفوض"
   },
   "statusColumn": {
     "noTasks": "لا توجد مهام"
@@ -586,7 +587,8 @@
     "archived": "مؤرشف",
     "completed": "مكتمل",
     "started": "بدأت",
-    "blocked": "محظور"
+    "blocked": "محظور",
+    "rejected": "مرفوض"
   },
   "project": {
     "activeTitle": "المشروع النشط",

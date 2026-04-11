@@ -43,7 +43,8 @@
     "todo": "К выполнению",
     "in_progress": "В работе",
     "done": "Готово",
-    "archived": "В архиве"
+    "archived": "В архиве",
+    "rejected": "Отклонено"
   },
   "statusColumn": {
     "noTasks": "Нет задач"
@@ -586,7 +587,8 @@
     "archived": "архивировано",
     "completed": "Завершённые",
     "started": "Запущенные",
-    "blocked": "Заблокированные"
+    "blocked": "Заблокированные",
+    "rejected": "отклонено"
   },
   "project": {
     "activeTitle": "Активный проект",

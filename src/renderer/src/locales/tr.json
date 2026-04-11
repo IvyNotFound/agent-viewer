@@ -43,7 +43,8 @@
     "todo": "Yapılacak",
     "in_progress": "Devam Ediyor",
     "done": "Tamamlandı",
-    "archived": "Arşivlendi"
+    "archived": "Arşivlendi",
+    "rejected": "Reddedildi"
   },
   "statusColumn": {
     "noTasks": "Görev yok"
@@ -586,7 +587,8 @@
     "archived": "arşivlendi",
     "completed": "Tamamlananlar",
     "started": "Başlatılanlar",
-    "blocked": "Engellenmiş"
+    "blocked": "Engellenmiş",
+    "rejected": "reddedildi"
   },
   "project": {
     "activeTitle": "Aktif proje",

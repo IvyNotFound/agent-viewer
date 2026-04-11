@@ -43,7 +43,8 @@
     "todo": "할 일",
     "in_progress": "진행 중",
     "done": "완료",
-    "archived": "보관됨"
+    "archived": "보관됨",
+    "rejected": "거부됨"
   },
   "statusColumn": {
     "noTasks": "작업 없음"
@@ -586,7 +587,8 @@
     "archived": "보관됨",
     "completed": "완료된",
     "started": "시작됨",
-    "blocked": "차단됨"
+    "blocked": "차단됨",
+    "rejected": "거부됨"
   },
   "project": {
     "activeTitle": "활성 프로젝트",

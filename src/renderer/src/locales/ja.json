@@ -43,7 +43,8 @@
     "todo": "未着手",
     "in_progress": "進行中",
     "done": "完了",
-    "archived": "アーカイブ済み"
+    "archived": "アーカイブ済み",
+    "rejected": "却下"
   },
   "statusColumn": {
     "noTasks": "タスクなし"
@@ -586,7 +587,8 @@
     "archived": "アーカイブ済み",
     "completed": "完了済み",
     "started": "開始済み",
-    "blocked": "ブロック中"
+    "blocked": "ブロック中",
+    "rejected": "却下"
   },
   "project": {
     "activeTitle": "アクティブなプロジェクト",

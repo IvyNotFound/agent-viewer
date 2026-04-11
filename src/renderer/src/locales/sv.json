@@ -43,7 +43,8 @@
     "todo": "Att göra",
     "in_progress": "Pågående",
     "done": "Klar",
-    "archived": "Arkiverad"
+    "archived": "Arkiverad",
+    "rejected": "Avvisad"
   },
   "statusColumn": {
     "noTasks": "Inga uppgifter"
@@ -586,7 +587,8 @@
     "archived": "arkiverad",
     "completed": "Slutförda",
     "started": "Startade",
-    "blocked": "Blockerade"
+    "blocked": "Blockerade",
+    "rejected": "avvisad"
   },
   "project": {
     "activeTitle": "Aktivt projekt",

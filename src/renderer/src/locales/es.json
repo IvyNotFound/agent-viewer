@@ -43,7 +43,8 @@
     "todo": "Por hacer",
     "in_progress": "En progreso",
     "done": "Hecho",
-    "archived": "Archivado"
+    "archived": "Archivado",
+    "rejected": "Rechazado"
   },
   "statusColumn": {
     "noTasks": "Sin tareas"
@@ -586,7 +587,8 @@
     "archived": "archivado",
     "completed": "Completadas",
     "started": "Iniciadas",
-    "blocked": "Bloqueadas"
+    "blocked": "Bloqueadas",
+    "rejected": "rechazado"
   },
   "project": {
     "activeTitle": "Proyecto activo",

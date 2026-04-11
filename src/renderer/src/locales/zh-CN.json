@@ -43,7 +43,8 @@
     "todo": "待办",
     "in_progress": "进行中",
     "done": "完成",
-    "archived": "已归档"
+    "archived": "已归档",
+    "rejected": "已拒绝"
   },
   "statusColumn": {
     "noTasks": "暂无任务"
@@ -586,7 +587,8 @@
     "archived": "已归档",
     "completed": "已完成",
     "started": "已开始",
-    "blocked": "已阻塞"
+    "blocked": "已阻塞",
+    "rejected": "已拒绝"
   },
   "project": {
     "activeTitle": "活跃项目",

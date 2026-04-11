@@ -43,7 +43,8 @@
     "todo": "Tehtävänä",
     "in_progress": "Käynnissä",
     "done": "Valmis",
-    "archived": "Arkistoitu"
+    "archived": "Arkistoitu",
+    "rejected": "Hylätty"
   },
   "statusColumn": {
     "noTasks": "Ei tehtäviä"
@@ -586,7 +587,8 @@
     "archived": "arkistoitu",
     "completed": "Valmistuneet",
     "started": "Käynnistetyt",
-    "blocked": "Estetyt"
+    "blocked": "Estetyt",
+    "rejected": "hylätty"
   },
   "project": {
     "activeTitle": "Aktiivinen projekti",

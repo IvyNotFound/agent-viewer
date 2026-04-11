@@ -43,7 +43,8 @@
     "todo": "Å gjøre",
     "in_progress": "Pågår",
     "done": "Ferdig",
-    "archived": "Arkivert"
+    "archived": "Arkivert",
+    "rejected": "Avvist"
   },
   "statusColumn": {
     "noTasks": "Ingen oppgaver"
@@ -586,7 +587,8 @@
     "archived": "arkivert",
     "completed": "Fullførte",
     "started": "Startede",
-    "blocked": "Blokkerte"
+    "blocked": "Blokkerte",
+    "rejected": "avvist"
   },
   "project": {
     "activeTitle": "Aktivt prosjekt",

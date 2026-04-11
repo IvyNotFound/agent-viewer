@@ -43,7 +43,8 @@
     "todo": "Ausstehend",
     "in_progress": "In Bearbeitung",
     "done": "Erledigt",
-    "archived": "Archiviert"
+    "archived": "Archiviert",
+    "rejected": "Abgelehnt"
   },
   "statusColumn": {
     "noTasks": "Keine Aufgaben"
@@ -586,7 +587,8 @@
     "archived": "archiviert",
     "completed": "Abgeschlossen",
     "started": "Gestartet",
-    "blocked": "Blockiert"
+    "blocked": "Blockiert",
+    "rejected": "abgelehnt"
   },
   "project": {
     "activeTitle": "Aktives Projekt",
