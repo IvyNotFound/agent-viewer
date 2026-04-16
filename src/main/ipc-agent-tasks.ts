@@ -8,7 +8,7 @@
  */
 
 import { ipcMain } from 'electron'
-import { assertDbPathAllowed, writeDb } from './db'
+import { assertDbPathAllowed, writeDb, writeDbNative } from './db'
 import { registerAgentTaskQueryHandlers } from './ipc-agent-tasks-query'
 import { PositiveIdSchema, AgentDisplayNameSchema } from '../shared/ipc-schemas'
 
@@ -102,41 +102,31 @@ export function registerAgentTaskHandlers(): void {
     try {
       assertDbPathAllowed(dbPath)
 
-      const contextBlock = await writeDb(dbPath, (db) => {
+      const contextBlock = await writeDbNative(dbPath, (db) => {
         // Get agent info
-        const agentRows = db.exec(`SELECT name, type, scope FROM agents WHERE id = ${agentId}`)
-        if (!agentRows.length || !agentRows[0].values.length) return null
-        const [name, type, scope] = agentRows[0].values[0] as [string, string | null, string | null]
+        const agent = db.prepare('SELECT name, type, scope FROM agents WHERE id = ?').get(agentId) as { name: string; type: string | null; scope: string | null } | undefined
+        if (!agent) return null
+        const { name, type, scope } = agent
 
         // Create session (conv_id set later by session:setConvId when system:init arrives)
-        db.run(`INSERT INTO sessions (agent_id) VALUES (${agentId})`)
-        const sessionRows = db.exec('SELECT last_insert_rowid()')
-        const sessionId = sessionRows[0].values[0][0] as number
+        const insertResult = db.prepare('INSERT INTO sessions (agent_id) VALUES (?)').run(agentId)
+        const sessionId = insertResult.lastInsertRowid as number
 
         // Last completed session summary
-        const prevRows = db.exec(`
-          SELECT summary FROM sessions
-          WHERE agent_id = ${agentId} AND status = 'completed' AND summary IS NOT NULL
-          ORDER BY id DESC LIMIT 1
-        `)
-        const prevSummary = prevRows.length && prevRows[0].values.length
-          ? (prevRows[0].values[0][0] as string | null)
-          : null
+        const prevRow = db.prepare(
+          "SELECT summary FROM sessions WHERE agent_id = ? AND status = 'completed' AND summary IS NOT NULL ORDER BY id DESC LIMIT 1"
+        ).get(agentId) as { summary: string | null } | undefined
+        const prevSummary = prevRow?.summary ?? null
 
         // Open tasks
-        const taskRows = db.exec(`
-          SELECT id, status, scope, priority, title
-          FROM tasks
-          WHERE agent_assigned_id = ${agentId} AND status IN ('todo', 'in_progress')
-          ORDER BY status DESC, updated_at DESC
-        `)
+        const taskRows = db.prepare(
+          "SELECT id, status, scope, priority, title FROM tasks WHERE agent_assigned_id = ? AND status IN ('todo', 'in_progress') ORDER BY status DESC, updated_at DESC"
+        ).all(agentId) as Array<{ id: number; status: string; scope: string | null; priority: string; title: string }>
 
         // Active locks
-        const lockRows = db.exec(`
-          SELECT l.file, a.name FROM locks l
-          JOIN agents a ON a.id = l.agent_id
-          WHERE l.released_at IS NULL
-        `)
+        const lockRows = db.prepare(
+          'SELECT l.file, a.name AS owner FROM locks l JOIN agents a ON a.id = l.agent_id WHERE l.released_at IS NULL'
+        ).all() as Array<{ file: string; owner: string }>
 
         // Format all queried data into a structured context block for agent startup:
         const lines: string[] = [
@@ -151,19 +141,19 @@ export function registerAgentTaskHandlers(): void {
           '=== TÂCHES ASSIGNÉES ===',
         ]
 
-        if (!taskRows.length || !taskRows[0].values.length) {
+        if (taskRows.length === 0) {
           lines.push('(aucune tâche todo / in_progress)')
         } else {
-          for (const [id, taskStatus, taskScope, priority, title] of taskRows[0].values as [number, string, string, string, string][]) {
+          for (const { id, status: taskStatus, scope: taskScope, priority, title } of taskRows) {
             lines.push(`[T${id}] ${taskStatus} | ${taskScope ?? '-'} | prio:${priority} | ${title}`)
           }
         }
 
         lines.push('', '=== LOCKS ACTIFS ===')
-        if (!lockRows.length || !lockRows[0].values.length) {
+        if (lockRows.length === 0) {
           lines.push('(aucun)')
         } else {
-          for (const [file, owner] of lockRows[0].values as [string, string][]) {
+          for (const { file, owner } of lockRows) {
             lines.push(`${file} → ${owner}`)
           }
         }
