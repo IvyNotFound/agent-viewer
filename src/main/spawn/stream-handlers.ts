@@ -10,6 +10,7 @@ import { webContents } from 'electron'
 import type { ChildProcess } from 'child_process'
 import type { CliAdapter, TokenCounts } from '../../shared/cli-types'
 import type { WorktreeInfo } from '../worktree-manager'
+import type { SinglshotRespawnData } from './types'
 import { removeWorktree } from '../worktree-manager'
 import { MAX_STDERR_BUFFER_SIZE, logDebug } from '../agent-stream-helpers'
 import {
@@ -39,6 +40,10 @@ export interface StreamHandlerOpts {
   /** Absolute path to the SQLite DB file. Used on process close to persist cli_type and token counts. */
   dbPath: string | undefined
   agentAdapters: Map<string, CliAdapter>
+  /** Main-process convId store — updated when extractConvId fires (T1991). */
+  agentConvIds?: Map<string, string>
+  /** Re-spawn data for singleShotStdin adapters — accumulated tokens updated on close (T1991). */
+  agentRespawnData?: Map<string, SinglshotRespawnData>
 }
 
 /** Wire readline + stderr + error + close handlers. Call once per spawn. */
@@ -56,6 +61,8 @@ export function attachStreamHandlers({
   projectPath,
   dbPath,
   agentAdapters,
+  agentConvIds,
+  agentRespawnData,
 }: StreamHandlerOpts): void {
   let eventsReceived = 0
   let stderrBuffer = ''
@@ -122,6 +129,7 @@ export function attachStreamHandlers({
 
       const convId = adapter.extractConvId?.(event) ?? null
       if (convId) {
+        agentConvIds?.set(id, convId)  // persist in main process for re-spawn (T1991)
         const wc = webContents.fromId(wcId)
         if (wc && !wc.isDestroyed()) {
           wc.send(`agent:convId:${id}`, convId)
@@ -166,8 +174,11 @@ export function attachStreamHandlers({
     rl.close()
     rlStderr?.close()
     agents.delete(id)
-    agentAdapters.delete(id)
-    webContentsAgents.get(wcId)?.delete(id)
+    // singleShotStdin (opencode): keep adapter + webContents registration so re-spawn works (T1991)
+    if (!adapter.singleShotStdin || !agentRespawnData?.has(id)) {
+      agentAdapters.delete(id)
+      webContentsAgents.get(wcId)?.delete(id)
+    }
     if (spCleanup) spCleanup().catch(() => { /* cleanup best-effort */ })
     else if (spTempFile) try { unlinkSync(spTempFile) } catch { /* cleanup best-effort */ }
     if (settingsTempFile) try { unlinkSync(settingsTempFile) } catch { /* cleanup best-effort */ }
@@ -178,18 +189,31 @@ export function attachStreamHandlers({
 
     logDebug(`close id=${id}: exitCode=${exitCode} eventsReceived=${eventsReceived} stderr=${stderrBuffer.slice(0, 200)} stdout_error=${stdoutErrorBuffer.slice(0, 200)}`)
 
-    // Persist cli_type and (for non-Claude CLIs) accumulated token counts to DB
+    // Persist cli_type and (for non-Claude CLIs) accumulated token counts to DB.
+    // For singleShotStdin adapters: accumulate across re-spawns into agentRespawnData (T1991).
     if (dbPath && sessionId) {
-      const hasTokens = adapter.cli !== 'claude' && tokenAccum.tokensIn > 0
+      let effectiveAccum = tokenAccum
+      const rd = adapter.singleShotStdin ? agentRespawnData?.get(id) : undefined
+      if (rd) {
+        rd.prevTokenAccum.tokensIn += tokenAccum.tokensIn
+        rd.prevTokenAccum.tokensOut += tokenAccum.tokensOut
+        rd.prevTokenAccum.cacheRead += tokenAccum.cacheRead
+        rd.prevTokenAccum.cacheWrite += tokenAccum.cacheWrite
+        if (typeof tokenAccum.costUsd === 'number') {
+          rd.prevTokenAccum.costUsd = (rd.prevTokenAccum.costUsd ?? 0) + tokenAccum.costUsd
+        }
+        effectiveAccum = rd.prevTokenAccum
+      }
+      const hasTokens = adapter.cli !== 'claude' && effectiveAccum.tokensIn > 0
       writeDb(dbPath, (db) => {
         if (hasTokens) {
           db.run(
             `UPDATE sessions SET cli_type = ?, tokens_in = ?, tokens_out = ?,
              tokens_cache_read = ?, tokens_cache_write = ?,
              cost_usd = COALESCE(?, cost_usd) WHERE id = ?`,
-            [adapter.cli, tokenAccum.tokensIn, tokenAccum.tokensOut,
-             tokenAccum.cacheRead, tokenAccum.cacheWrite,
-             tokenAccum.costUsd ?? null, sessionId]
+            [adapter.cli, effectiveAccum.tokensIn, effectiveAccum.tokensOut,
+             effectiveAccum.cacheRead, effectiveAccum.cacheWrite,
+             effectiveAccum.costUsd ?? null, sessionId]
           )
         } else {
           db.run(`UPDATE sessions SET cli_type = ? WHERE id = ?`, [adapter.cli, sessionId])

@@ -42,6 +42,7 @@ import {
 } from './agent-stream-registry'
 import { resolveSpawnFn } from './spawn/index'
 import { attachStreamHandlers } from './spawn/stream-handlers'
+import type { SinglshotRespawnData } from './spawn/types'
 import { resolvePermission, type PermissionDecision } from './hookServer'
 
 // Re-export _testing for backward compat with spec files
@@ -49,6 +50,13 @@ export { _testing } from './agent-stream-registry'
 
 // Maps agent ID → adapter, used by agent:send to format stdin messages correctly.
 const agentAdapters = new Map<string, CliAdapter>()
+
+// ── singleShotStdin re-spawn support (T1991) ──────────────────────────────────
+
+/** Maps agent ID → last known conversation/session ID (populated by extractConvId). */
+const agentConvIds = new Map<string, string>()
+/** Maps agent ID → re-spawn data for singleShotStdin adapters. */
+const agentRespawnData = new Map<string, SinglshotRespawnData>()
 
 // ── Handler registration ──────────────────────────────────────────────────────
 
@@ -110,7 +118,11 @@ export function registerAgentStreamHandlers(): void {
       event.sender.once('destroyed', () => {
         const ids = webContentsAgents.get(wcId)
         if (ids) {
-          for (const aid of ids) killAgent(aid)
+          for (const aid of ids) {
+            killAgent(aid)
+            agentConvIds.delete(aid)
+            agentRespawnData.delete(aid)
+          }
           webContentsAgents.delete(wcId)
         }
       })
@@ -225,6 +237,18 @@ export function registerAgentStreamHandlers(): void {
     agents.set(id, proc)
     agentAdapters.set(id, adapter)
 
+    // T1991: store re-spawn data for singleShotStdin adapters (opencode, gemini) so that
+    // follow-up messages sent via agent:send can launch a new process on the same stream channel.
+    if (adapter.singleShotStdin) {
+      agentRespawnData.set(id, {
+        wcId,
+        spawnFn,
+        worktreeInfo,
+        originalOpts: { ...opts },
+        prevTokenAccum: { tokensIn: 0, tokensOut: 0, cacheRead: 0, cacheWrite: 0 },
+      })
+    }
+
     // singleShotStdin adapters (e.g. opencode) pass initialMessage as a positional arg and then
     // block waiting for stdin EOF. Close stdin immediately so the process can proceed.
     // Without this, opencode (bun) hangs indefinitely when spawned with an open pipe on stdin.
@@ -234,7 +258,8 @@ export function registerAgentStreamHandlers(): void {
 
     attachStreamHandlers({
       proc, id, wcId, adapter, worktreeInfo, spTempFile, spCleanup, settingsTempFile, scriptTempFile,
-      sessionId: opts.sessionId, projectPath: opts.projectPath, dbPath: opts.dbPath, agentAdapters,
+      sessionId: opts.sessionId, projectPath: opts.projectPath, dbPath: opts.dbPath,
+      agentAdapters, agentConvIds, agentRespawnData,
     })
 
     return id
@@ -244,10 +269,43 @@ export function registerAgentStreamHandlers(): void {
     if (typeof id !== 'string' || typeof text !== 'string') {
       throw new Error('agent:send requires id: string and text: string')
     }
+
+    const adapter = agentAdapters.get(id)
     const proc = agents.get(id)
+
+    // T1991: singleShotStdin re-spawn — when the process has exited, re-launch with --session <convId>
+    // so the follow-up message continues the same OpenCode/Gemini conversation.
+    if (adapter?.singleShotStdin && (!proc || proc.stdin?.writableEnded)) {
+      const respawn = agentRespawnData.get(id)
+      if (!respawn) throw new Error(`No respawn data for singleShotStdin agent id=${id}`)
+      const convId = agentConvIds.get(id)
+      const reOpts: AgentCreateOpts = { ...respawn.originalOpts, initialMessage: text, convId }
+      const { proc: newProc, scriptTempFile } = respawn.spawnFn({
+        id,
+        adapter,
+        validConvId: convId,  // passed as convId to buildCommand → --session flag
+        opts: reOpts,
+        worktreeInfo: respawn.worktreeInfo,
+        spTempFile: undefined,
+        settingsTempFile: undefined,
+      })
+      agents.set(id, newProc)
+      if (newProc.stdin && !newProc.stdin.writableEnded) newProc.stdin.end()
+      attachStreamHandlers({
+        proc: newProc, id, wcId: respawn.wcId, adapter,
+        worktreeInfo: respawn.worktreeInfo,
+        spTempFile: undefined, spCleanup: undefined, settingsTempFile: undefined, scriptTempFile,
+        sessionId: respawn.originalOpts.sessionId,
+        projectPath: respawn.originalOpts.projectPath,
+        dbPath: respawn.originalOpts.dbPath,
+        agentAdapters, agentConvIds, agentRespawnData,
+      })
+      return
+    }
+
+    // Standard stdin write for non-singleShot adapters (Claude, Aider, etc.)
     if (!proc || !proc.stdin) throw new Error(`No active agent process for id=${id}`)
     if (proc.stdin.writableEnded) throw new Error(`Agent stdin is closed (id=${id})`)
-    const adapter = agentAdapters.get(id)
     const msg = adapter?.formatStdinMessage?.(text)
       ?? JSON.stringify({ type: 'user', message: { role: 'user', content: [{ type: 'text', text }] } }) + '\n'
     proc.stdin.write(msg)
@@ -257,6 +315,8 @@ export function registerAgentStreamHandlers(): void {
   ipcMain.handle('agent:kill', (_event, id: string) => {
     if (typeof id !== 'string') throw new Error('agent:kill requires id: string')
     killAgent(id)
+    agentConvIds.delete(id)
+    agentRespawnData.delete(id)
   })
 
   // T1816: Resolve a pending PermissionRequest from the hook server.

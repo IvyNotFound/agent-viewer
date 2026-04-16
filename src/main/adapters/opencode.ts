@@ -31,6 +31,10 @@ export const opencodeAdapter: CliAdapter = {
   binaries: ['opencode'],
   singleShotStdin: true,
 
+  extractConvId(event: StreamEvent): string | null {
+    return typeof event.session_id === 'string' ? event.session_id : null
+  },
+
   /**
    * Extract token usage from an OpenCode stream event.
    *
@@ -73,8 +77,14 @@ export const opencodeAdapter: CliAdapter = {
 
     const args: string[] = ['run'] // non-interactive subcommand (no TUI launched)
 
+    // Multi-turn re-spawn: resume a specific session via --session <id> (T1991).
+    // The flag must come before the message positional arg.
+    if (opts.convId) {
+      args.push('--session', opts.convId)
+    }
+
     // Initial message is a positional argument that must come right after the
-    // subcommand, BEFORE any flags: `opencode run "message" --format json`.
+    // subcommand (or after --session on re-spawns), BEFORE other flags: `opencode run "message" --format json`.
     // Placing it after --format causes OpenCode to ignore it (T1990).
     //
     // System prompt injection (T1987):
@@ -155,6 +165,13 @@ export const opencodeAdapter: CliAdapter = {
     try {
       const parsed = JSON.parse(line) as Record<string, unknown>
       const evType = parsed.type
+      // T1991: propagate sessionID so extractConvId can capture it for multi-turn re-spawns.
+      const sid = typeof parsed.sessionID === 'string' ? parsed.sessionID : undefined
+      const withSid = <T extends StreamEvent | StreamEvent[]>(ev: T): T => {
+        if (!sid) return ev
+        if (Array.isArray(ev)) { for (const e of ev) e.session_id = sid } else { (ev as StreamEvent).session_id = sid }
+        return ev
+      }
 
       if (evType === 'text' || evType === 'reasoning') {
         // Text and reasoning blocks — show as text output.
@@ -170,9 +187,9 @@ export const opencodeAdapter: CliAdapter = {
           // Unknown structure — surface raw line rather than silently dropping content.
           // Log to help diagnose future format changes.
           console.warn('[opencode] parseLine: text event with unknown structure, surfacing raw line')
-          return { type: 'text', text: line }
+          return withSid({ type: 'text', text: line })
         }
-        return { type: 'text', text }
+        return withSid({ type: 'text', text })
       }
       if (evType === 'error') {
         // Error events — handle both flat {message} and nested {error:{data:{message}}} formats (v1.2+)
@@ -186,7 +203,7 @@ export const opencodeAdapter: CliAdapter = {
           : typeof parsed.text === 'string' ? parsed.text
           : typeof errData?.message === 'string' ? errData.message
           : line
-        return { type: 'error', text: msg }
+        return withSid({ type: 'error', text: msg })
       }
       if (evType === 'step_finish') {
         // May carry usage data — return as system event so extractTokenUsage can access it

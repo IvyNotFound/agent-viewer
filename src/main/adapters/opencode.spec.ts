@@ -184,22 +184,22 @@ describe('opencodeAdapter.parseLine', () => {
 
   it('maps type:text event — new part-wrapped format v1.3.4+ (primary format)', () => {
     const line = '{"type":"text","sessionID":"ses_abc","part":{"id":"p1","type":"text","text":"hello","time":{"start":0,"end":1}}}'
-    expect(opencodeAdapter.parseLine(line)).toEqual({ type: 'text', text: 'hello' })
+    expect(opencodeAdapter.parseLine(line)).toEqual({ type: 'text', text: 'hello', session_id: 'ses_abc' })
   })
 
   it('maps type:text event — legacy flat format (backward compat < v1.3.4)', () => {
     const event = opencodeAdapter.parseLine('{"type":"text","text":"hello","sessionID":"s1"}')
-    expect(event).toEqual({ type: 'text', text: 'hello' })
+    expect(event).toEqual({ type: 'text', text: 'hello', session_id: 's1' })
   })
 
   it('maps type:reasoning event — new part-wrapped format v1.3.4+ (primary format)', () => {
     const line = '{"type":"reasoning","sessionID":"ses_abc","part":{"id":"r1","type":"reasoning","text":"thinking...","time":{"start":0,"end":2}}}'
-    expect(opencodeAdapter.parseLine(line)).toEqual({ type: 'text', text: 'thinking...' })
+    expect(opencodeAdapter.parseLine(line)).toEqual({ type: 'text', text: 'thinking...', session_id: 'ses_abc' })
   })
 
   it('maps type:reasoning event — legacy flat format (backward compat < v1.3.4)', () => {
     const event = opencodeAdapter.parseLine('{"type":"reasoning","text":"thinking...","sessionID":"s1"}')
-    expect(event).toEqual({ type: 'text', text: 'thinking...' })
+    expect(event).toEqual({ type: 'text', text: 'thinking...', session_id: 's1' })
   })
 
   it('maps type:error event using message field', () => {
@@ -372,12 +372,12 @@ describe('opencodeAdapter.parseLine', () => {
 
   it('maps type:text event with part-wrapped format (v1.3+)', () => {
     const event = opencodeAdapter.parseLine('{"type":"text","part":{"id":"p1","type":"text","text":"hello from part","time":{"start":0,"end":1}},"sessionID":"s1"}')
-    expect(event).toEqual({ type: 'text', text: 'hello from part' })
+    expect(event).toEqual({ type: 'text', text: 'hello from part', session_id: 's1' })
   })
 
   it('maps type:reasoning event with part-wrapped format (v1.3+)', () => {
     const event = opencodeAdapter.parseLine('{"type":"reasoning","part":{"id":"r1","type":"reasoning","text":"thinking via part","time":{"start":0,"end":2}},"sessionID":"s1"}')
-    expect(event).toEqual({ type: 'text', text: 'thinking via part' })
+    expect(event).toEqual({ type: 'text', text: 'thinking via part', session_id: 's1' })
   })
 
   it('prefers part.text over flat text when both present', () => {
@@ -404,7 +404,7 @@ describe('opencodeAdapter.parseLine', () => {
   it('maps type:error with nested error.data.message (opencode v1.2+ format)', () => {
     const line = '{"type":"error","timestamp":1000,"sessionID":"s1","error":{"name":"ProviderAuthError","data":{"providerID":"google","message":"API key is missing"}}}'
     const event = opencodeAdapter.parseLine(line)
-    expect(event).toEqual({ type: 'error', text: 'API key is missing' })
+    expect(event).toEqual({ type: 'error', text: 'API key is missing', session_id: 's1' })
   })
 
   it('falls back to raw line for type:error with unknown nested structure', () => {
@@ -599,6 +599,82 @@ describe('opencodeAdapter.formatStdinMessage', () => {
 describe('opencodeAdapter.singleShotStdin', () => {
   it('is true (opencode run reads one prompt per spawn — stdin must be closed after write)', () => {
     expect(opencodeAdapter.singleShotStdin).toBe(true)
+  })
+})
+
+// ── opencodeAdapter.extractConvId (T1991) ─────────────────────────────────────
+
+describe('opencodeAdapter.extractConvId', () => {
+  it('is defined', () => {
+    expect(typeof opencodeAdapter.extractConvId).toBe('function')
+  })
+
+  it('returns session_id when present on event', () => {
+    const event = { type: 'text' as const, text: 'hello', session_id: 'ses_abc123' }
+    expect(opencodeAdapter.extractConvId!(event)).toBe('ses_abc123')
+  })
+
+  it('returns null when session_id is absent', () => {
+    const event = { type: 'text' as const, text: 'hello' }
+    expect(opencodeAdapter.extractConvId!(event)).toBeNull()
+  })
+
+  it('returns null when session_id is not a string', () => {
+    const event = { type: 'text' as const, text: 'hello', session_id: 42 as unknown as string }
+    expect(opencodeAdapter.extractConvId!(event)).toBeNull()
+  })
+
+  it('extracts session_id from parsed text event that had sessionID in raw JSON', () => {
+    const event = opencodeAdapter.parseLine('{"type":"text","text":"hello","sessionID":"ses_xyz"}')
+    expect(event).not.toBeNull()
+    expect(opencodeAdapter.extractConvId!(event as any)).toBe('ses_xyz')
+  })
+})
+
+// ── opencodeAdapter.buildCommand — --session flag (T1991) ────────────────────
+
+describe('opencodeAdapter.buildCommand — --session flag (T1991)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockReadFileSync.mockReturnValue('')
+  })
+
+  it('adds --session <convId> when convId is provided', () => {
+    const spec = opencodeAdapter.buildCommand({ convId: 'ses_abc123' })
+    expect(spec.args).toContain('--session')
+    const idx = spec.args.indexOf('--session')
+    expect(spec.args[idx + 1]).toBe('ses_abc123')
+  })
+
+  it('does not add --session when convId is absent', () => {
+    const spec = opencodeAdapter.buildCommand({})
+    expect(spec.args).not.toContain('--session')
+  })
+
+  it('--session comes before the message positional arg', () => {
+    const spec = opencodeAdapter.buildCommand({ convId: 'ses_abc', initialMessage: 'follow-up' })
+    const sessionIdx = spec.args.indexOf('--session')
+    const msgIdx = spec.args.indexOf('follow-up')
+    expect(sessionIdx).toBeGreaterThan(-1)
+    expect(msgIdx).toBeGreaterThan(-1)
+    expect(sessionIdx).toBeLessThan(msgIdx)
+  })
+
+  it('--session comes before --format flag', () => {
+    const spec = opencodeAdapter.buildCommand({ convId: 'ses_abc' })
+    const sessionIdx = spec.args.indexOf('--session')
+    const formatIdx = spec.args.indexOf('--format')
+    expect(sessionIdx).toBeLessThan(formatIdx)
+  })
+
+  it('with convId + message + model: correct arg order (run --session id msg --format json --model id)', () => {
+    const spec = opencodeAdapter.buildCommand({ convId: 'ses_abc', initialMessage: 'follow', modelId: 'claude-opus-4-7' })
+    expect(spec.args[0]).toBe('run')
+    expect(spec.args[1]).toBe('--session')
+    expect(spec.args[2]).toBe('ses_abc')
+    expect(spec.args[3]).toBe('follow')
+    expect(spec.args).toContain('--format')
+    expect(spec.args).toContain('--model')
   })
 })
 
