@@ -120,4 +120,28 @@ describe('StreamView auto-close on process exit (T1373)', () => {
     vi.advanceTimersByTime(5000)
     expect(closeTabSpy).not.toHaveBeenCalled()
   })
+
+  it('does NOT close tab on non-zero exit code — crash keeps tab visible (T1937)', async () => {
+    const { tabsStore } = await mountWithCli('claude')
+    const closeTabSpy = vi.spyOn(tabsStore, 'closeTab')
+    vi.useFakeTimers()
+
+    const [, exitCallback] = vi.mocked(mockElectronAPI.onAgentExit).mock.calls[0] ?? []
+    ;(exitCallback as (code: number | null) => void)(1)
+
+    vi.advanceTimersByTime(5000)
+    expect(closeTabSpy).not.toHaveBeenCalled()
+  })
+
+  it('does NOT close tab on null exit code — signal kill keeps tab visible (T1937)', async () => {
+    const { tabsStore } = await mountWithCli('claude')
+    const closeTabSpy = vi.spyOn(tabsStore, 'closeTab')
+    vi.useFakeTimers()
+
+    const [, exitCallback] = vi.mocked(mockElectronAPI.onAgentExit).mock.calls[0] ?? []
+    ;(exitCallback as (code: number | null) => void)(null)
+
+    vi.advanceTimersByTime(5000)
+    expect(closeTabSpy).not.toHaveBeenCalled()
+  })
 })

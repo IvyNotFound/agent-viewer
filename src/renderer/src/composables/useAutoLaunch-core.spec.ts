@@ -189,6 +189,7 @@ describe('composables/useAutoLaunch', () => {
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
     const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
+    termTab.taskId = 1 // T1937: link to task so Chemin 1 matches (Chemin 2 now guards on streamId)
     termTab.streamId = 'stream-waiting'
 
     // Task transitions to done

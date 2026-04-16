@@ -109,8 +109,7 @@ describe('useAutoLaunch T1105: no-task close — no fallback (T1246)', () => {
 
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('review-master', 'Ubuntu-24.04')
-    const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    termTab.streamId = 'stream-notask-1min'
+    // T1937: no streamId — Chemin 2 guard now skips tabs with active process
 
     tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
     await nextTick()
@@ -133,8 +132,7 @@ describe('useAutoLaunch T1105: no-task close — no fallback (T1246)', () => {
 
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('review-master', 'Ubuntu-24.04')
-    const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    termTab.streamId = 'stream-notask-no-fallback'
+    // T1937: no streamId — Chemin 2 guard now skips tabs with active process
 
     tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
     await nextTick()

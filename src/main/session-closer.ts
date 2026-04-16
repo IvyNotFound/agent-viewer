@@ -128,12 +128,14 @@ export async function closeZombieSessions(dbPath: string): Promise<number[]> {
       )
     }
 
-    // T1884: close stale sessions started > 2 hours ago (regardless of task status)
+    // T1884: close stale sessions started > 6 hours ago (regardless of task status)
+    // T1937: increased from 2h to 6h — the previous threshold killed long-running agents.
+    // Cascade is now safe: V1 fix ensures closeTabGroup won't kill tabs with active streamId.
     const staleResult = db.exec(
       `SELECT id, agent_id FROM sessions
        WHERE status = 'started'
          AND agent_id IS NOT NULL
-         AND started_at < datetime('now', '-2 hours')`
+         AND started_at < datetime('now', '-6 hours')`
     )
     const staleRows = staleResult[0]?.values ?? []
     if (staleRows.length > 0) {

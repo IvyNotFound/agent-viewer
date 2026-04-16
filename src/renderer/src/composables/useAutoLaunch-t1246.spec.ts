@@ -90,8 +90,7 @@ describe('useAutoLaunch T1246/T1820: no-task tabs have 120s safety fallback', ()
 
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('review-master', 'Ubuntu-24.04')
-    const reviewTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    reviewTab.streamId = 'stream-review-no-fallback'
+    // T1937: no streamId — Chemin 2 guard now skips tabs with active process
     // No taskId — Chemin 2 path
 
     // Trigger watch to schedule the no-task close (with fallbackMs=120_000)
@@ -105,10 +104,10 @@ describe('useAutoLaunch T1246/T1820: no-task tabs have 120s safety fallback', ()
     expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(1)
   })
 
-  it('should close a no-task tab via 120s fallback when session never completes (T1820)', async () => {
-    // review agent tab without taskId (Chemin 2).
-    // Session never completes → 120s fallback fires → close with 30s post-complete delay.
-    const agent = makeAgent({ id: 55, name: 'review-master' })
+  it('should NOT schedule close for no-task tab with active streamId (T1937)', async () => {
+    // T1937: Chemin 2 must skip tabs with an active process (streamId set).
+    // Even past 120s fallback, the tab must stay open.
+    const agent = makeAgent({ id: 52, name: 'review-master' })
     agents.value = [agent]
 
     useAutoLaunch({ tasks, agents, dbPath })
@@ -118,15 +117,38 @@ describe('useAutoLaunch T1246/T1820: no-task tabs have 120s safety fallback', ()
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('review-master', 'Ubuntu-24.04')
     const reviewTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    reviewTab.streamId = 'stream-review-fallback-120'
+    reviewTab.streamId = 'stream-review-active'
+
+    tasks.value = [makeTask({ id: 99, status: 'done', agent_assigned_id: 999 })]
+    await nextTick()
+
+    // Advance past 120s fallback — tab must stay open because process is active
+    await vi.advanceTimersByTimeAsync(120_000 + 30_000 + 100)
+    expect(api.agentKill).not.toHaveBeenCalled()
+    expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(1)
+  })
+
+  it('should close a no-task tab via 120s fallback when session never completes (T1820)', async () => {
+    // review agent tab without taskId (Chemin 2).
+    // Session never completes → 120s fallback fires → close with 30s post-complete delay.
+    // T1937: no streamId (process already exited) so Chemin 2 is allowed to schedule.
+    const agent = makeAgent({ id: 55, name: 'review-master' })
+    agents.value = [agent]
+
+    useAutoLaunch({ tasks, agents, dbPath })
+    tasks.value = []
+    await nextTick()
+
+    const tabsStore = useTabsStore()
+    tabsStore.addTerminal('review-master', 'Ubuntu-24.04')
 
     // Trigger watch to schedule the no-task close
     tasks.value = [makeTask({ id: 99, status: 'done', agent_assigned_id: 999 })]
     await nextTick()
 
-    // Advance past 120s fallback — agentKill fires
+    // Advance past 120s fallback — no streamId so no agentKill, but doClose still fires
     await vi.advanceTimersByTimeAsync(120_000 + 100)
-    expect(api.agentKill).toHaveBeenCalledWith('stream-review-fallback-120')
+    expect(api.agentKill).not.toHaveBeenCalled()
 
     // Tab still open until 30s post-complete delay
     expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(1)
@@ -138,6 +160,7 @@ describe('useAutoLaunch T1246/T1820: no-task tabs have 120s safety fallback', ()
   it('should close the no-task tab when session completes before the 120s fallback', async () => {
     // review agent runs for 60s before completing.
     // Poll detects session completed → close before fallback fires.
+    // T1937: no streamId (process already exited).
     const agent = makeAgent({ id: 51, name: 'review-master' })
     agents.value = [agent]
 
@@ -147,8 +170,6 @@ describe('useAutoLaunch T1246/T1820: no-task tabs have 120s safety fallback', ()
 
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('review-master', 'Ubuntu-24.04')
-    const reviewTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    reviewTab.streamId = 'stream-review-early-complete'
 
     // Trigger no-task close scheduling
     tasks.value = [makeTask({ id: 99, status: 'done', agent_assigned_id: 999 })]
@@ -163,8 +184,8 @@ describe('useAutoLaunch T1246/T1820: no-task tabs have 120s safety fallback', ()
     api.queryDb.mockResolvedValue([{ id: 77 }])
     await vi.advanceTimersByTimeAsync(5_000 + 100)
 
-    // Tab closed (agentKill then closeTab after 30s post-complete delay)
-    expect(api.agentKill).toHaveBeenCalledWith('stream-review-early-complete')
+    // T1937: no streamId → agentKill not called, tab closed via closeTab after delay
+    expect(api.agentKill).not.toHaveBeenCalled()
 
     await vi.advanceTimersByTimeAsync(30_000)
     expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(0)

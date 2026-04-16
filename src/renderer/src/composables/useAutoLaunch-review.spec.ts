@@ -308,8 +308,7 @@ describe('composables/useAutoLaunch', () => {
 
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('review-master', 'Ubuntu-24.04')
-      const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-      termTab.streamId = 'stream-review-master-close'
+      // T1937: no streamId — Chemin 2 guard now skips tabs with active process
 
       // Trigger no-task check
       tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
@@ -322,7 +321,8 @@ describe('composables/useAutoLaunch', () => {
       api.queryDb.mockResolvedValue([{ id: 99 }])
       await vi.advanceTimersByTimeAsync(5_000 + 100) // POLL_INTERVAL_MS = 5_000
 
-      expect(api.agentKill).toHaveBeenCalledWith('stream-review-master-close')
+      // T1937: no streamId → agentKill not called, tab closed via closeTab after delay
+      expect(api.agentKill).not.toHaveBeenCalled()
     })
 
     it('should pass a notBefore ISO timestamp as 2nd queryDb param (with 5min lookback)', async () => {

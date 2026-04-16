@@ -141,10 +141,11 @@ export function useStreamIpc(options: {
         scrollToBottom(true)
       })
 
-      unsubExit = window.electronAPI.onAgentExit(id, (_exitCode: number | null) => {
+      unsubExit = window.electronAPI.onAgentExit(id, (exitCode: number | null) => {
         if (isStreaming.value) { const e: StreamEvent = { type: 'result' }; assignEventId(e); events.value.push(e) }
         // T1930: only auto-close if setting is enabled; skip interactive agents
-        if (settingsStore.autoLaunchAgentSessions) {
+        // T1937: only auto-close on clean exit (0) — keep tab visible on crash for diagnosis
+        if (settingsStore.autoLaunchAgentSessions && exitCode === 0) {
           const tb = tabsStore.tabs.find(tb => tb.id === terminalId)
           if (tb) {
             const agent = agentsStore.agents.find(a => a.name === tb.agentName)

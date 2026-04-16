@@ -336,7 +336,7 @@ describe('session-closer', () => {
       // Second exec call is the stale query
       const staleSql = mockDb.exec.mock.calls[1][0] as string
       expect(staleSql).toContain("status = 'started'")
-      expect(staleSql).toContain("datetime('now', '-2 hours')")
+      expect(staleSql).toContain("datetime('now', '-6 hours')")
       expect(staleSql).toContain('agent_id IS NOT NULL')
     })
   })

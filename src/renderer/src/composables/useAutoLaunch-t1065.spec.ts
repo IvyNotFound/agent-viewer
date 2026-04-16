@@ -173,6 +173,7 @@ describe('composables/useAutoLaunch', () => {
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
       const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
+      termTab.taskId = 1 // T1937: link to task so Chemin 1 matches (Chemin 2 now guards on streamId)
       termTab.streamId = 'stream-debounce'
 
       // First done transition — starts 80ms debounce
@@ -221,7 +222,7 @@ describe('composables/useAutoLaunch', () => {
 
     it('should NOT re-trigger task-done close when prevStatus is done (same task stays done)', async () => {
       // prevStatus !== 'done' guard: task-done path doesn't schedule twice.
-      // Only the no-task path fires once → agentKill called exactly once.
+      // T1937: Chemin 2 no longer fires with streamId set, so we verify via no-task path without streamId.
       useAutoLaunch({ tasks, agents, dbPath })
 
       // Seed: task already done → prevStatus[1] = 'done'
@@ -230,16 +231,16 @@ describe('composables/useAutoLaunch', () => {
 
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
-      const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-      termTab.streamId = 'stream-stable-done'
+      // T1937: no streamId — Chemin 2 guard skips tabs with active process
 
       // Task stays done — prevStatus[1] === 'done' → task-done path condition fails
       tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 10 })]
       await nextTick()
       await vi.advanceTimersByTimeAsync(200)
 
-      // No-task path fires once → agentKill once.
-      expect(api.agentKill).toHaveBeenCalledTimes(1)
+      // T1937: Chemin 1 doesn't re-trigger (prevStatus=done), Chemin 2 fires but
+      // no streamId → agentKill not called. Tab still gets closed via doClose→closeTab.
+      expect(api.agentKill).not.toHaveBeenCalled()
     })
   })
 
@@ -290,15 +291,16 @@ describe('composables/useAutoLaunch', () => {
 
       const tabsStore = useTabsStore()
       tabsStore.addTerminal('dev-front-vuejs', 'Ubuntu-24.04')
-      const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-      termTab.streamId = 'stream-all-done'
+      // T1937: no streamId — Chemin 2 guard now skips tabs with active process
 
       // All tasks done → hasActiveTasks = false → no-task close scheduled
       tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 10 })]
       await nextTick()
       await vi.advanceTimersByTimeAsync(200)
 
-      expect(api.agentKill).toHaveBeenCalledWith('stream-all-done')
+      // T1937: no streamId → agentKill not called, but Chemin 2 still fires (queryDb polled)
+      expect(api.agentKill).not.toHaveBeenCalled()
+      expect(api.queryDb).toHaveBeenCalled()
     })
   })
 

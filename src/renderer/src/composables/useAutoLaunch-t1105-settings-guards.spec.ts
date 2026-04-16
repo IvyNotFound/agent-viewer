@@ -87,8 +87,8 @@ describe('useAutoLaunch T1105: autoReviewEnabled false skips review at init', ()
 
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('review-master', 'Ubuntu-24.04')
-    const termTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    termTab.streamId = 'stream-notask-disabled'
+    // T1937: no streamId — Chemin 2 guard now skips tabs with active process,
+    // so we test that the autoLaunchAgentSessions=false setting itself prevents close.
 
     tasks.value = [makeTask({ id: 1, status: 'done', agent_assigned_id: 999 })]
     await nextTick()

@@ -172,8 +172,7 @@ describe('useAutoLaunch T1249: multi-tab independence — same agent, different 
 
     const tabsStore = useTabsStore()
     tabsStore.addTerminal('review-master', 'Ubuntu-24.04')
-    const reviewTab = tabsStore.tabs.find(t => t.type === 'terminal')!
-    reviewTab.streamId = 'stream-review-30s'
+    // T1937: no streamId — Chemin 2 guard now skips tabs with active process
     // no taskId — Chemin 2 path
 
     // Trigger watch to schedule no-task close
@@ -187,8 +186,8 @@ describe('useAutoLaunch T1249: multi-tab independence — same agent, different 
     api.queryDb.mockResolvedValue([{ id: 99 }])
     await vi.advanceTimersByTimeAsync(5_000 + 100) // poll interval
 
-    // agentKill fired immediately by doClose
-    expect(api.agentKill).toHaveBeenCalledWith('stream-review-30s')
+    // T1937: no streamId → agentKill not called, tab closed via closeTab after delay
+    expect(api.agentKill).not.toHaveBeenCalled()
 
     // Tab still open — closeTab fires after 30s post-complete delay
     expect(tabsStore.tabs.filter(t => t.type === 'terminal')).toHaveLength(1)
