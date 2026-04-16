@@ -342,10 +342,10 @@ describe('migrateDb bootstrap (T958)', () => {
     expect(mockDb.run).toHaveBeenCalledWith('ALTER TABLE agent_groups ADD COLUMN parent_id INTEGER')
   })
 
-  it('returns 16 (v24–v39 applied) for legacy DB with cursor set to 23', () => {
+  it('returns 17 (v24–v40 applied) for legacy DB with cursor set to 23', () => {
     const mockDb = createLegacyBootstrapMockDb()
     const result = migrateDb(mockDb as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(16)
+    expect(result).toBe(17)
   })
 
   it('runs all migrations from scratch when user_version=0 and no config table', () => {

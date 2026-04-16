@@ -146,7 +146,7 @@ describe('migrateDb — strict > (not >=) in pending filter', () => {
   })
 
   it('returns CURRENT_SCHEMA_VERSION - N migrations when starting at version N', () => {
-    for (const [start, expected] of [[27, 12], [28, 11], [24, 15]]) {
+    for (const [start, expected] of [[27, 13], [28, 12], [24, 16]]) {
       const db = makeMockDb({ userVersion: start, colMap: { agents: ['id', 'name'], sessions: ['id', 'status'] } })
       const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
       expect(result).toBe(expected)
@@ -328,15 +328,15 @@ describe('migrateDb — ArithmeticOperator: return value is pending.length', () 
     expect(result).toBe(13)
     expect(result).not.toBe(0)
     expect(result).not.toBe(11)
-    expect(result).not.toBe(13)
+    expect(result).not.toBe(14)
   })
 
-  it('return value is 6 (not 5 or 7) when six migrations run (v34, v35, v36, v37, v38, v39)', () => {
+  it('return value is 7 (not 6 or 8) when seven migrations run (v34, v35, v36, v37, v38, v39, v40)', () => {
     const db = makeMockDb({ userVersion: 33 })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(6)
-    expect(result).not.toBe(5)
-    expect(result).not.toBe(7)
+    expect(result).toBe(7)
+    expect(result).not.toBe(6)
+    expect(result).not.toBe(8)
   })
 
   it('return value decreases by 1 per additional starting version', () => {
