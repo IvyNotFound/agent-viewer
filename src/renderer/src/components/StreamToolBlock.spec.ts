@@ -98,7 +98,7 @@ describe('StreamToolBlock (T842)', () => {
 
   // T1938 — auto-rejected OpenCode permission renders blocked indicator
   it('renders blocked indicator for unknown tool_use (T1938)', () => {
-    const block: StreamContentBlock = { type: 'tool_use', name: 'unknown', input: {} }
+    const block: StreamContentBlock = { type: 'tool_use', name: 'unknown', input: {}, _blocked: true }
     const wrapper = mount(StreamToolBlock, { props: { ...defaultProps, block }, global: { plugins: [i18n, pinia] } })
     expect(wrapper.find('[data-testid="block-tool-blocked"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="block-tool-use"]').exists()).toBe(false)
