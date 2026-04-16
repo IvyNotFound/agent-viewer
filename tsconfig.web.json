@@ -9,8 +9,9 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@renderer/*": ["src/renderer/src/*"]
+      "@renderer/*": ["src/renderer/src/*"],
+      "@shared/*": ["src/shared/*"]
     }
   },
-  "include": ["src/renderer/src/**/*"]
+  "include": ["src/renderer/src/**/*", "src/shared/**/*"]
 }
