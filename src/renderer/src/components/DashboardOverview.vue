@@ -99,7 +99,7 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   load()
-  pollTimer = setInterval(load, 10000)
+  pollTimer = setInterval(load, 30000)
 })
 
 onUnmounted(() => {

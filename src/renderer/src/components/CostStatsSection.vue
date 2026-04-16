@@ -6,7 +6,7 @@
  * keep the two selectors in sync).
  */
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { agentAccent } from '@renderer/utils/agentColor'
 import { getModelPricing } from '@shared/cli-models'
@@ -109,10 +109,15 @@ async function fetchCostStats(): Promise<void> {
   }
 }
 
+let _debounceTimer: ReturnType<typeof setTimeout> | null = null
+function debouncedFetch(): void {
+  if (_debounceTimer) clearTimeout(_debounceTimer)
+  _debounceTimer = setTimeout(fetchCostStats, 200)
+}
+
 onMounted(fetchCostStats)
-watch(selectedPeriod, fetchCostStats)
-watch(() => props.period, fetchCostStats)
-watch(() => props.dbPath, fetchCostStats)
+onUnmounted(() => { if (_debounceTimer) clearTimeout(_debounceTimer) })
+watch([selectedPeriod, () => props.period, () => props.dbPath], debouncedFetch)
 
 const byAgent = computed<AgentCostAgg[]>(() => {
   const map = new Map<string, AgentCostAgg>()

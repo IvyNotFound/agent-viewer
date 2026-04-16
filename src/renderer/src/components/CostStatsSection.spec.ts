@@ -39,7 +39,7 @@ describe('CostStatsSection (T824)', () => {
     })
     await flushPromises()
     const text = wrapper.text()
-    expect(text).toMatch(/aucune donn|no data/i)
+    expect(text).toMatch(/aucune donn|no (cost )?data/i)
     wrapper.unmount()
   })
 
@@ -132,6 +132,7 @@ describe('CostStatsSection (T824)', () => {
   })
 
   it('re-fetches when period selector changes (day→week)', async () => {
+    vi.useFakeTimers()
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.sessionsStatsCost.mockResolvedValue({ success: true, rows: [] })
 
@@ -148,10 +149,12 @@ describe('CostStatsSection (T824)', () => {
     const weekBtn = buttons.find(b => b.text().match(/semaine|week/i))
     expect(weekBtn?.exists()).toBe(true)
     await weekBtn!.trigger('click')
+    vi.runAllTimers()
     await flushPromises()
     expect(api.sessionsStatsCost).toHaveBeenCalledTimes(2)
     expect(api.sessionsStatsCost).toHaveBeenLastCalledWith('/p/db', { period: 'week', limit: 30 })
     wrapper.unmount()
+    vi.useRealTimers()
   })
 
   it('formatCost: $0.01 for 0.01, $0.00 for 0 cost row', async () => {
@@ -188,6 +191,7 @@ describe('CostStatsSection (T824)', () => {
   })
 
   it('re-fetches when dbPath prop changes', async () => {
+    vi.useFakeTimers()
     const api = window.electronAPI as Record<string, ReturnType<typeof vi.fn>>
     api.sessionsStatsCost.mockResolvedValue({ success: true, rows: [] })
 
@@ -199,8 +203,10 @@ describe('CostStatsSection (T824)', () => {
     expect(api.sessionsStatsCost).toHaveBeenCalledWith('/p/db1', { period: 'day', limit: 30 })
 
     await wrapper.setProps({ dbPath: '/p/db2' })
+    vi.runAllTimers()
     await flushPromises()
     expect(api.sessionsStatsCost).toHaveBeenCalledWith('/p/db2', { period: 'day', limit: 30 })
     wrapper.unmount()
+    vi.useRealTimers()
   })
 })
