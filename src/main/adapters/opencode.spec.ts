@@ -220,6 +220,11 @@ describe('opencodeAdapter.parseLine', () => {
     expect(event?.message?.content[0]?.name).toBe('unknown')
   })
 
+  it('does NOT set _blocked on tool_use with unknown name (opencode has no permission-deny concept — T1942)', () => {
+    const event = opencodeAdapter.parseLine('{"type":"tool_use","input":{}}')
+    expect(event?.message?.content[0]?._blocked).toBeUndefined()
+  })
+
   it('converts type:tool_use with null input to empty object fallback', () => {
     const event = opencodeAdapter.parseLine('{"type":"tool_use","name":"bash","input":null}')
     expect(event?.message?.content[0]?.input).toEqual({})

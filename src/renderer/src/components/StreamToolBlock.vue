@@ -155,9 +155,9 @@ function resultPreview(html: string | undefined): string {
     </div>
   </div>
 
-  <!-- tool_use with name=unknown — auto-rejected permission (T1938) -->
+  <!-- tool_use explicitly blocked by permission hook — _blocked flag set by claude adapter (T1938, T1942) -->
   <div
-    v-else-if="block.type === 'tool_use' && block.name === 'unknown'"
+    v-else-if="block.type === 'tool_use' && block._blocked === true"
     class="tool-block tool-block--blocked mb-2"
     data-testid="block-tool-blocked"
   >

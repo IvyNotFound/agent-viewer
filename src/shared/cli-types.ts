@@ -177,6 +177,8 @@ export interface StreamEvent {
       content?: string
       /** tool_result block: whether the tool call failed */
       is_error?: boolean
+      /** Explicitly auto-rejected by the permission hook system (T1942) — set by claude adapter */
+      _blocked?: boolean
     }>
   }
   /** Plain-text output line (non-JSONL CLIs). */

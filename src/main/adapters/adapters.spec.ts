@@ -111,6 +111,33 @@ describe('claudeAdapter', () => {
     const event = { type: 'system' as const, subtype: 'init' }
     expect(claudeAdapter.extractConvId!(event)).toBeNull()
   })
+
+  it('parseLine marks tool_use with name=unknown as _blocked (T1942)', () => {
+    const raw = JSON.stringify({
+      type: 'assistant',
+      message: { role: 'assistant', content: [{ type: 'tool_use', name: 'unknown', input: {} }] },
+    })
+    const event = claudeAdapter.parseLine(raw)
+    expect(event?.message?.content[0]._blocked).toBe(true)
+  })
+
+  it('parseLine marks tool_use with missing name as _blocked (T1942)', () => {
+    const raw = JSON.stringify({
+      type: 'assistant',
+      message: { role: 'assistant', content: [{ type: 'tool_use', input: {} }] },
+    })
+    const event = claudeAdapter.parseLine(raw)
+    expect(event?.message?.content[0]._blocked).toBe(true)
+  })
+
+  it('parseLine does NOT mark _blocked on tool_use with a real name (T1942)', () => {
+    const raw = JSON.stringify({
+      type: 'assistant',
+      message: { role: 'assistant', content: [{ type: 'tool_use', name: 'Bash', input: {} }] },
+    })
+    const event = claudeAdapter.parseLine(raw)
+    expect(event?.message?.content[0]._blocked).toBeUndefined()
+  })
 })
 
 // ── buildClaudeCmd (re-exported from claude adapter) ─────────────────────────

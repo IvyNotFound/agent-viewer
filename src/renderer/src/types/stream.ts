@@ -20,6 +20,8 @@ export interface StreamContentBlock {
   _lineCount?: number
   /** Fallback question text for AskUserQuestion blocks when input.question is missing after IPC structured-clone (T1764) */
   _question?: string
+  /** Explicitly auto-rejected by the permission hook system — set by claude adapter, checked by StreamToolBlock (T1942) */
+  _blocked?: boolean
 }
 
 export interface StreamEvent {

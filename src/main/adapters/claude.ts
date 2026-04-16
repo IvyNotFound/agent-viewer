@@ -250,7 +250,18 @@ export const claudeAdapter: CliAdapter = {
 
   parseLine(line: string): StreamEvent | null {
     try {
-      return JSON.parse(line) as StreamEvent
+      const event = JSON.parse(line) as StreamEvent
+      // Mark auto-rejected tool_use blocks with _blocked: true.
+      // Claude Code emits tool_use events with name === 'unknown' (or absent) for tools
+      // that were auto-rejected by the permission hook system (T1938, T1942).
+      if (event.type === 'assistant' && Array.isArray(event.message?.content)) {
+        for (const block of event.message!.content) {
+          if (block.type === 'tool_use' && (!block.name || block.name === 'unknown')) {
+            block._blocked = true
+          }
+        }
+      }
+      return event
     } catch {
       return null
     }
