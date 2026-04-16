@@ -169,14 +169,14 @@ describe('migrateDb — bootstrap requires BOTH permission_mode AND max_sessions
     expect(firstUVCall).toBe('PRAGMA user_version = 23')
   })
 
-  it('all 31 migrations run when neither permission_mode nor max_sessions present', () => {
+  it('all migrations run when neither permission_mode nor max_sessions present', () => {
     const db = makeMockDb({
       userVersion: 0,
       hasConfigTable: true,
       colMap: { agents: ['id', 'name'] },
     })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(39)
+    expect(result).toBe(40)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.some((s: string) => s === 'ADD COLUMN permission_mode' || s.includes('ADD COLUMN permission_mode'))).toBe(true)
   })

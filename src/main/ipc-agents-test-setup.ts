@@ -145,6 +145,7 @@ export async function buildSchema(): Promise<void> {
     )`)
 
     db.run(`CREATE INDEX IF NOT EXISTS idx_agm_group ON agent_group_members(group_id)`)
+    db.run(`CREATE INDEX IF NOT EXISTS idx_agm_agent ON agent_group_members(agent_id)`)
   })
 }
 

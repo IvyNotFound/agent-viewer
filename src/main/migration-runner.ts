@@ -301,6 +301,11 @@ const migrations: Migration[] = [
   { version: 39, up: (db) => {
     db.run('CREATE INDEX IF NOT EXISTS idx_tasks_scope ON tasks(scope)')
   } },
+
+  // v40: add index on agent_group_members(agent_id) — speeds up DELETE WHERE agent_id = ? (T1970)
+  { version: 40, up: (db) => {
+    db.run('CREATE INDEX IF NOT EXISTS idx_agm_agent ON agent_group_members(agent_id)')
+  } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */

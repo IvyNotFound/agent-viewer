@@ -45,23 +45,64 @@ describe('migrateDb v39 — add idx_tasks_scope index', () => {
     expect(calls.some(s => s.includes('CREATE INDEX IF NOT EXISTS idx_tasks_scope ON tasks(scope)'))).toBe(true)
   })
 
-  it('updates user_version to 39', () => {
+  it('updates user_version to 40', () => {
     const db = makeMockDb({ userVersion: 38 })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(db._getVersion()).toBe(39)
+    expect(db._getVersion()).toBe(40)
   })
 
-  it('applies only v39 when starting from v38', () => {
+  it('applies v39 + v40 when starting from v38', () => {
     const db = makeMockDb({ userVersion: 38 })
+    const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
+    expect(applied).toBe(2)
+  })
+
+  it('is a no-op for idx_tasks_scope when already at v39', () => {
+    const db = makeMockDb({ userVersion: 39 })
+    const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
+    expect(applied).toBe(1) // only v40 applied
+    const calls = db.run.mock.calls.map((c: string[]) => c[0])
+    expect(calls.every(s => !s.includes('idx_tasks_scope'))).toBe(true)
+  })
+})
+
+// ── v40: add idx_agm_agent on agent_group_members(agent_id) (T1970) ──────────
+
+describe('migrateDb v40 — idx_agm_agent on agent_group_members(agent_id)', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('creates idx_agm_agent index when migrating from v39', () => {
+    const db = makeMockDb({ userVersion: 39 })
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
+    const calls = db.run.mock.calls.map((c: string[]) => c[0])
+    expect(calls.some(s => s.includes('idx_agm_agent') && s.includes('agent_group_members(agent_id)'))).toBe(true)
+  })
+
+  it('uses CREATE INDEX IF NOT EXISTS (idempotent)', () => {
+    const db = makeMockDb({ userVersion: 39 })
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
+    const calls = db.run.mock.calls.map((c: string[]) => c[0])
+    const indexCall = calls.find(s => s.includes('idx_agm_agent'))
+    expect(indexCall).toMatch(/CREATE INDEX IF NOT EXISTS/)
+  })
+
+  it('updates user_version to 40', () => {
+    const db = makeMockDb({ userVersion: 39 })
+    migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
+    expect(db._getVersion()).toBe(40)
+  })
+
+  it('applies only v40 when starting from v39', () => {
+    const db = makeMockDb({ userVersion: 39 })
     const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     expect(applied).toBe(1)
   })
 
-  it('is a no-op when already at v39', () => {
-    const db = makeMockDb({ userVersion: 39 })
+  it('is a no-op when already at v40', () => {
+    const db = makeMockDb({ userVersion: 40 })
     const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     expect(applied).toBe(0)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
-    expect(calls.every(s => !s.includes('idx_tasks_scope'))).toBe(true)
+    expect(calls.every(s => !s.includes('idx_agm_agent'))).toBe(true)
   })
 })

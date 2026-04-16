@@ -183,6 +183,7 @@ export async function createProjectDb(
       CREATE INDEX IF NOT EXISTS idx_task_agents_task_id ON task_agents(task_id);
       CREATE INDEX IF NOT EXISTS idx_task_agents_agent_id ON task_agents(agent_id);
       CREATE INDEX IF NOT EXISTS idx_agm_group ON agent_group_members(group_id);
+      CREATE INDEX IF NOT EXISTS idx_agm_agent ON agent_group_members(agent_id);
       CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
       CREATE INDEX IF NOT EXISTS idx_sessions_agent_status ON sessions(agent_id, status, started_at DESC);
       CREATE INDEX IF NOT EXISTS idx_task_comments_agent_id ON task_comments(agent_id);

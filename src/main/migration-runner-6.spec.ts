@@ -189,7 +189,7 @@ describe('migrateDb — exact return value', () => {
   it('returns 12 when twelve migrations are pending (v28–v39)', () => {
     const db = makeMockDb({ userVersion: 27, colMap: { agents: ['id', 'name'], sessions: ['id', 'status'] } })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(12) // v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39
+    expect(result).toBe(13) // v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40
   })
 
   it('returns 0 exactly (not falsy) when already at CURRENT_SCHEMA_VERSION', () => {
@@ -225,7 +225,7 @@ describe('migrateDb — exact return value', () => {
       tableMap: { config: true },
     })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(16) // v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39
+    expect(result).toBe(17) // v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40
     expect(result).not.toBe(15)
     expect(result).not.toBe(17)
   })

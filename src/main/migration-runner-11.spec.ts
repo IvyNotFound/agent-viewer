@@ -318,14 +318,14 @@ describe('migrateDb — ArithmeticOperator: return value is pending.length', () 
   beforeEach(() => vi.clearAllMocks())
 
   it('return value matches exactly the number of SAVEPOINT calls made', () => {
-    // At version 27: v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39 run → 12 SAVEPOINTs → return 12
+    // At version 27: v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40 run → 13 SAVEPOINTs → return 12
     const db = makeMockDb({ userVersion: 27, colMap: { agents: ['id', 'name'], sessions: ['id', 'status'] } })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     const savepointCount = calls.filter((s: string) => /^SAVEPOINT m\d+$/.test(s)).length
     // Return value must equal the number of savepoints (one per migration)
     expect(result).toBe(savepointCount)
-    expect(result).toBe(12)
+    expect(result).toBe(13)
     expect(result).not.toBe(0)
     expect(result).not.toBe(11)
     expect(result).not.toBe(13)
