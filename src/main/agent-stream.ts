@@ -29,6 +29,7 @@ import {
   getActiveTasksLine,
 } from './agent-stream-helpers'
 import type { CliAdapter } from '../shared/cli-types'
+import { MODEL_ID_REGEX } from '../shared/cli-types'
 import { getAdapter } from './adapters/index'
 import { createWorktree, copyWorktreeConfigs, type WorktreeInfo } from './worktree-manager'
 import {
@@ -86,6 +87,17 @@ export function registerAgentStreamHandlers(): void {
         throw new Error(`Invalid binary name for ${adapter.cli}: ${opts.customBinaryName}`)
       }
     }
+    // T1945: Validate modelId format at IPC boundary — reject shell metacharacters before
+    // the value reaches any adapter or spawn call.
+    if (opts.modelId && !MODEL_ID_REGEX.test(opts.modelId)) {
+      throw new Error(`Invalid model ID format: ${opts.modelId}`)
+    }
+
+    // T1945: Reject null bytes in initialMessage — they could corrupt CLI arg strings.
+    if (opts.initialMessage && opts.initialMessage.includes('\0')) {
+      throw new Error('initialMessage must not contain null bytes')
+    }
+
     const validConvId = opts.convId && UUID_REGEX.test(opts.convId) ? opts.convId : undefined
 
     const id = incrementAgentId()
@@ -154,6 +166,13 @@ export function registerAgentStreamHandlers(): void {
           } catch { /* never block spawn on model_used persistence failure */ }
         }
       } catch { /* never block spawn on model resolution failure */ }
+    }
+
+    // T1945: Validate DB-resolved modelId — warn and clear rather than throw,
+    // to avoid blocking the spawn due to corrupted DB config values.
+    if (opts.modelId && !MODEL_ID_REGEX.test(opts.modelId)) {
+      console.warn(`[agent-stream] Ignoring invalid model ID resolved from DB: ${opts.modelId}`)
+      opts.modelId = undefined
     }
 
     // T772: Inject active tasks context into system prompt (DB-first, ultra-compact).

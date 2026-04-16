@@ -10,6 +10,23 @@
  * @module shared/cli-types
  */
 
+// ── Validation regexes ────────────────────────────────────────────────────────
+
+/**
+ * Validates model identifier strings at the IPC boundary (T1945).
+ *
+ * Allows alphanumeric characters, dots, hyphens, underscores, and slashes
+ * (slashes cover namespaced model IDs like `google/gemini-2.0-flash` or
+ * `anthropic.claude-3-5-sonnet-20241022` on Bedrock).
+ *
+ * Rejects shell metacharacters (`&`, `|`, `;`, `$`, `(`, `)`, etc.) that could
+ * enable command injection when args are passed through spawn with shell:true on Windows.
+ *
+ * @example Valid: `claude-opus-4-6`, `gemini-2.5-flash`, `google/gemini-2.0-flash`
+ * @example Invalid: `foo & calc.exe`, `$(whoami)`, `foo|bar`
+ */
+export const MODEL_ID_REGEX = /^[a-zA-Z0-9._/-]+$/
+
 // ── CLI identity ───────────────────────────────────────────────────────────────
 
 /**
