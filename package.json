@@ -1,6 +1,6 @@
 {
   "name": "kanbagent",
-  "version": "0.40.4",
+  "version": "0.41.0",
   "description": "Desktop task orchestrator for multi-CLI AI agents (Claude, Gemini, Codex, Aider, and more)",
   "author": "IvyNotFound",
   "main": "out/main/index.js",

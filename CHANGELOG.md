@@ -4,6 +4,45 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.41.0] - 2026-04-16
+
+### Features
+- feat(global): per-model pricing registry with multi-CLI cost calculation (T1924) (316c061)
+- feat(back-electron): generate opencode.json in worktree to allow external_directory (T1939) (f972d38)
+
+### Bug Fixes
+- fix(front-vuejs): cleanup activity timers and cap pendingCloseTimers on project close (T1958) (cd50fe9)
+- fix(global): sync vitest.stryker.config.ts aliases with vitest.config.ts (T1980) (0400e84)
+- fix(front-vuejs): upgrade dompurify 3.3.3 → 3.4.0 (GHSA-39q2-94rc-95cp) (8e4ab22)
+- fix(front-vuejs): stop effectScope on LRU eviction in hookEvents to prevent computed ref leak (T1954) (c109ebb)
+- fix(back-electron): sanitize spawn args for shell:true on Windows (T1943) (785dade)
+- fix(back-electron): add modelId validation regex at IPC boundary for all CLI adapters (T1945) (5e41845)
+- fix(front-vuejs): add @shared Vite alias and tsconfig path for cli-models resolution (T1941) (8c2254b)
+- fix(review): resolve T1924 merge integration issues (a0b4900)
+- fix(back-electron): render blocked indicator for auto-rejected tool_use events (T1938) (4803c1d)
+- fix(back-electron): use GROUP_CONCAT(DISTINCT) for model_used in statsCost query (T1933) (169dcca)
+- fix(back-electron): handle OpenCode v1.3+ part wrapper in tool_use/tool_result parsing (T1935) (1eff2ef)
+
+### Performance
+- perf(front-vuejs): optimize computed filters for large datasets (T1966) (70f49e7)
+- perf(back-electron): add overlap guard to session-closer poll (T1963) (a4d5df8)
+- perf(front-vuejs): replace per-tab setInterval with single shared poller in useAutoLaunch (T1962) (bf34cf9)
+- perf(front-vuejs): debounce IPC-triggering watchers across dashboard components (T1960) (5a11b4f)
+- perf(front-vuejs): reduce IPC polling and watcher noise in dashboard (T1956) (c913913)
+
+### Tests
+- test(front-vuejs): add tests for parsePromptContext + useLaunchModalInit (T1969) (3019da1)
+- test(front-vuejs): add refresh lifecycle tests for useTaskRefresh (T1959) (93607ae)
+- test(front-vuejs): useDiffLines — full coverage computeDiffLines/computeWriteLines (T1955) (7d43413)
+- test(back-electron): add tests for fallback adapter and project-templates (T1953) (d54f61c)
+- test(back-electron): add tests for telemetry-scanner.ts (T1952) (b4aa5fe)
+- test(back-electron): add tests for ipc-project-create.ts — createProjectDb, AGENT_SCRIPTS copy (T1949) (54aca95)
+- test(back-electron): add tests for hookServer-handlers.ts — permission lifecycle, timeout, MAX_PENDING, handleLifecycleEvent, handleStop (T1947) (8e73c72)
+- test(back-electron): add tests for claude adapter, hookServer-tokens, agent-stream-registry, ipc-project-zip (T1946, T1948, T1950, T1951) (fb8b9c7)
+
+### Chores
+- chore(front-vuejs): add missing stream.toolBlocked i18n key to 16 locales (T1940) (f759292)
+
 ## [0.40.4] - 2026-04-16
 
 ### Features
