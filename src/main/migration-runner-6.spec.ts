@@ -177,19 +177,19 @@ describe('migrateDb — bootstrap config empty values edge case', () => {
 describe('migrateDb — exact return value', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('returns 6 when six migrations are pending (v33, v34, v35, v36, v37, v38)', () => {
+  it('returns 7 when seven migrations are pending (v33, v34, v35, v36, v37, v38, v39)', () => {
     const db = makeMockDb({
       userVersion: 32,
       colMap: { sessions: ['id', 'status', 'cost_usd', 'duration_ms', 'num_turns', 'cli_type'], agents: ['id', 'name'] },
     })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(6)
+    expect(result).toBe(7)
   })
 
-  it('returns 11 when eleven migrations are pending (v28–v38)', () => {
+  it('returns 12 when twelve migrations are pending (v28–v39)', () => {
     const db = makeMockDb({ userVersion: 27, colMap: { agents: ['id', 'name'], sessions: ['id', 'status'] } })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(11) // v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38
+    expect(result).toBe(12) // v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39
   })
 
   it('returns 0 exactly (not falsy) when already at CURRENT_SCHEMA_VERSION', () => {
@@ -208,7 +208,7 @@ describe('migrateDb — exact return value', () => {
     expect(result).not.toBe(CURRENT_SCHEMA_VERSION - 1)
   })
 
-  it('returns 15 for genuine legacy bootstrap (v0 + config + permission_mode + max_sessions = runs v24..v38)', () => {
+  it('returns 16 for genuine legacy bootstrap (v0 + config + permission_mode + max_sessions = runs v24..v39)', () => {
     const db = makeMockDb({
       userVersion: 0,
       hasConfigTable: true,
@@ -225,9 +225,9 @@ describe('migrateDb — exact return value', () => {
       tableMap: { config: true },
     })
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(15) // v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38
-    expect(result).not.toBe(14)
-    expect(result).not.toBe(16)
+    expect(result).toBe(16) // v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39
+    expect(result).not.toBe(15)
+    expect(result).not.toBe(17)
   })
 
   it('returns CURRENT_SCHEMA_VERSION for external DB (v0 + config, no permission_mode/max_sessions)', () => {

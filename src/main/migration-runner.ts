@@ -296,6 +296,11 @@ const migrations: Migration[] = [
     const has = cols[0].values.some((r: unknown[]) => r[1] === 'model_used')
     if (!has) db.run('ALTER TABLE sessions ADD COLUMN model_used TEXT')
   } },
+
+  // v39: add missing index on tasks(scope) for scope-filtered queries (T1967)
+  { version: 39, up: (db) => {
+    db.run('CREATE INDEX IF NOT EXISTS idx_tasks_scope ON tasks(scope)')
+  } },
 ]
 
 /** Current schema version — always equals the last migration's version number. */

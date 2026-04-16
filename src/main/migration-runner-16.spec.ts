@@ -65,15 +65,15 @@ describe('migrateDb v38 — add sessions.model_used column', () => {
     expect(calls.every(s => !s.includes('ADD COLUMN model_used'))).toBe(true)
   })
 
-  it('updates user_version to 38', () => {
+  it('updates user_version to 39 (v38 + v39)', () => {
     const db = makeMockDb({ userVersion: 37, colMap: { sessions: ['id', 'status'] } })
     migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(db._getVersion()).toBe(38)
+    expect(db._getVersion()).toBe(39)
   })
 
-  it('applies only v38 when starting from v37', () => {
+  it('applies v38 and v39 when starting from v37', () => {
     const db = makeMockDb({ userVersion: 37, colMap: { sessions: ['id', 'status'] } })
     const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(applied).toBe(1)
+    expect(applied).toBe(2)
   })
 })
