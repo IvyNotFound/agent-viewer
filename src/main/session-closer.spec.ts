@@ -159,6 +159,26 @@ describe('session-closer', () => {
       expect(queryLive).toHaveBeenCalledTimes(6)
     })
 
+    it('should skip concurrent poll cycle when previous one is still running (overlap guard)', async () => {
+      // Hang cycle 1 by returning a promise that never resolves (for hasStartedSessions pre-check)
+      let resolveFirstCycle!: (value: unknown[]) => void
+      const hangingPromise = new Promise<unknown[]>((resolve) => { resolveFirstCycle = resolve })
+      vi.mocked(queryLive).mockReturnValueOnce(hangingPromise as ReturnType<typeof queryLive>)
+
+      startSessionCloser('/fake/project.db')
+
+      // Tick 1 at t=30s: async callback starts, sets polling=true, then awaits queryLive (hangs)
+      vi.advanceTimersByTime(30_000)
+      // Tick 2 at t=60s: polling=true → skipped entirely
+      vi.advanceTimersByTime(30_000)
+
+      // Only cycle 1's pre-check queryLive should have been called
+      expect(queryLive).toHaveBeenCalledTimes(1)
+
+      // Clean up: resolve the hanging promise so polling=false is eventually set
+      resolveFirstCycle([])
+    })
+
     it('should update lastCheckedAt between cycles (no re-emission of prev cycle sessions)', async () => {
       // First cycle: pre-check + manually-closed returns agent 10
       vi.mocked(queryLive).mockResolvedValueOnce([{ '1': 1 }])    // cycle 1 pre-check

@@ -19,6 +19,7 @@
 import { writeDb, queryLive, assertDbPathAllowed } from './db'
 
 let pollerInterval: ReturnType<typeof setInterval> | null = null
+let polling = false
 
 /**
  * Quick pre-check: returns true if at least one session is in 'started' status.
@@ -61,6 +62,8 @@ export function startSessionCloser(
   stopSessionCloser()
   lastCheckedAt = currentSqliteTime()
   pollerInterval = setInterval(async () => {
+    if (polling) return
+    polling = true
     try {
       if (!(await hasStartedSessions(dbPath))) {
         lastCheckedAt = currentSqliteTime()
@@ -73,6 +76,8 @@ export function startSessionCloser(
       if (allIds.length > 0) onSessionsClosed?.(allIds)
     } catch (err) {
       console.error('[session-closer] poll error:', err)
+    } finally {
+      polling = false
     }
   }, 30_000)
   console.log('[session-closer] started for', dbPath)
@@ -84,6 +89,7 @@ export function stopSessionCloser(): void {
     clearInterval(pollerInterval)
     pollerInterval = null
   }
+  polling = false
 }
 
 /**
