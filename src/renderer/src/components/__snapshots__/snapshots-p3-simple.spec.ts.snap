@@ -4,7 +4,7 @@ exports[`AgentLogRow > matches snapshot (collapsed) 1`] = `
 "<div data-v-7ce377f8="" class="al-row">
   <!-- Main line -->
   <div data-v-7ce377f8="" class="al-row-main">
-    <v-chip data-v-7ce377f8="" color="blue" size="x-small" variant="tonal" class="al-level-chip">info</v-chip><span data-v-7ce377f8="" class="al-time text-label-medium" title="16/04 15:35:03">15:35</span>
+    <v-chip data-v-7ce377f8="" color="blue" size="x-small" variant="tonal" class="al-level-chip">info</v-chip><span data-v-7ce377f8="" class="al-time text-label-medium" title="16/04 15:37:12">15:37</span>
     <agent-badge-stub data-v-7ce377f8="" name="dev-front-vuejs" active="false"></agent-badge-stub><span data-v-7ce377f8="" class="al-action text-body-2">task_done</span>
     <!--v-if-->
   </div><!-- Expandable detail -->
