@@ -60,7 +60,9 @@ interface AutoLaunchOptions {
 }
 
 interface PendingClose {
-  intervalId: ReturnType<typeof setInterval>
+  agentId: number
+  path: string
+  notBefore: string
   fallbackId: ReturnType<typeof setTimeout> | null
   postCompleteDelayMs: number
 }
@@ -90,6 +92,8 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
   let previousStatuses = new Map<number, string>()
   /** Pending close pollers keyed by tabId (unique per tab — T1249) */
   const pendingCloses = new Map<string, PendingClose>()
+  /** Single shared interval that polls DB for all pending-close tabs (T1962) */
+  let sharedIntervalId: ReturnType<typeof setInterval> | null = null
   /** Guard: prevents duplicate immediate polls when watch fires rapidly for the same tab */
   const pendingImmediatePolls = new Set<string>()
   /** Flag: skip first watch trigger (initial load) */
@@ -176,10 +180,10 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
       debounceId = null
     }
     for (const pending of pendingCloses.values()) {
-      clearInterval(pending.intervalId)
       if (pending.fallbackId) clearTimeout(pending.fallbackId)
     }
     pendingCloses.clear()
+    stopSharedPoller()
   })
 
   onUnmounted(() => {
@@ -188,10 +192,10 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
       debounceId = null
     }
     for (const pending of pendingCloses.values()) {
-      clearInterval(pending.intervalId)
       if (pending.fallbackId) clearTimeout(pending.fallbackId)
     }
     pendingCloses.clear()
+    stopSharedPoller()
     for (const id of looseTimeouts) {
       clearTimeout(id)
     }
@@ -219,9 +223,9 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
   function doClose(tabId: string): void {
     if (!pendingCloses.has(tabId)) return // T1243 race guard
     const pending = pendingCloses.get(tabId)!
-    clearInterval(pending.intervalId)
     if (pending.fallbackId) clearTimeout(pending.fallbackId)
     pendingCloses.delete(tabId)
+    if (pendingCloses.size === 0) stopSharedPoller()
 
     const tab = tabsStore.tabs.find(t => t.id === tabId)
     if (tab) {
@@ -258,7 +262,6 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
     const key = tab.id
     const existing = pendingCloses.get(key)
     if (existing) {
-      clearInterval(existing.intervalId)
       if (existing.fallbackId) clearTimeout(existing.fallbackId)
     }
 
@@ -284,21 +287,35 @@ export function useAutoLaunch({ tasks, agents, dbPath }: AutoLaunchOptions): voi
       const pollId = setTimeout(() => {
         looseTimeouts.delete(pollId)
         pendingImmediatePolls.delete(key)
-        pollSessionStatus(key, agentId, path, notBefore)
+        void pollSessionStatus(key, agentId, path, notBefore)
       }, 0)
       looseTimeouts.add(pollId)
     }
-
-    const intervalId = setInterval(
-      () => pollSessionStatus(key, agentId, path, notBefore),
-      POLL_INTERVAL_MS
-    )
 
     // fallbackMs=0 means no fallback (T1246: no forced close for no-task agents)
     const fallbackId = fallbackMs > 0 ? setTimeout(() => {
       doClose(key)
     }, fallbackMs) : null
 
-    pendingCloses.set(key, { intervalId, fallbackId, postCompleteDelayMs })
+    // Store poll data in the entry — the single shared interval reads it each tick (T1962)
+    pendingCloses.set(key, { agentId, path, notBefore, fallbackId, postCompleteDelayMs })
+    startSharedPoller()
+  }
+
+  /** Start the single shared poll interval if not already running (T1962) */
+  function startSharedPoller(): void {
+    if (sharedIntervalId !== null) return
+    sharedIntervalId = setInterval(() => {
+      for (const [tabId, pending] of pendingCloses) {
+        void pollSessionStatus(tabId, pending.agentId, pending.path, pending.notBefore)
+      }
+    }, POLL_INTERVAL_MS)
+  }
+
+  /** Stop the single shared poll interval (T1962) */
+  function stopSharedPoller(): void {
+    if (sharedIntervalId === null) return
+    clearInterval(sharedIntervalId)
+    sharedIntervalId = null
   }
 }
