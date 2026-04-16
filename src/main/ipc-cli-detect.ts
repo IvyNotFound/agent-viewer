@@ -90,23 +90,31 @@ export async function detectLocalClis(filterClis?: CliType[], forceRefresh = fal
   if (process.platform === 'win32') {
     await enrichWindowsPath(forceRefresh)
     const results: CliInstance[] = []
-    for (const [cli, { binary }] of entries) {
-      try {
-        await execPromise('where', [binary], { timeout: LOCAL_TIMEOUT })
-        const { stdout } = await execPromise(binary, ['--version'], {
-          timeout: LOCAL_TIMEOUT,
-          shell: true,
-        })
-        const raw = stdout.trim()
-        if (!raw) continue
-        results.push({
-          cli,
-          distro: 'local',
-          version: parseVersion(raw),
-          isDefault: true,
-          type: 'local',
-        })
-      } catch { /* binary not in PATH */ }
+    for (let i = 0; i < entries.length; i += CONCURRENCY) {
+      const batch = entries.slice(i, i + CONCURRENCY)
+      const batchResults = await Promise.allSettled(
+        batch.map(async ([cli, { binary }]) => {
+          await execPromise('where', [binary], { timeout: LOCAL_TIMEOUT })
+          const { stdout } = await execPromise(binary, ['--version'], {
+            timeout: LOCAL_TIMEOUT,
+            shell: true,
+          })
+          const raw = stdout.trim()
+          if (!raw) return null
+          return {
+            cli,
+            distro: 'local',
+            version: parseVersion(raw),
+            isDefault: true,
+            type: 'local',
+          } as CliInstance
+        }),
+      )
+      for (const result of batchResults) {
+        if (result.status === 'fulfilled' && result.value !== null) {
+          results.push(result.value)
+        }
+      }
     }
     return results
   }

@@ -301,14 +301,15 @@ describe('runFullDetection — Windows batch concurrency', () => {
 
   it('includes both local and WSL results in final array', async () => {
     getWslDistrosMock.mockResolvedValueOnce([{ distro: 'Ubuntu', isDefault: true }])
+    // Parallel local detection (CONCURRENCY=2): both "where" calls in batch happen before "--version"
     execFileMock
-      .mockResolvedValueOnce({ stdout: 'C:\\claude.cmd\n', stderr: '' }) // where claude
+      .mockResolvedValueOnce({ stdout: 'C:\\claude.cmd\n', stderr: '' }) // where claude (batch1[0])
+      .mockRejectedValueOnce(new Error('not found'))                      // where codex (batch1[1])
       .mockResolvedValueOnce({ stdout: '2.0.0\n', stderr: '' })          // claude --version (local)
-      .mockRejectedValueOnce(new Error('not found'))                      // where codex
-      .mockRejectedValueOnce(new Error('not found'))                      // where gemini
-      .mockRejectedValueOnce(new Error('not found'))                      // where opencode
-      .mockRejectedValueOnce(new Error('not found'))                      // where aider
-      .mockRejectedValueOnce(new Error('not found'))                      // where goose
+      .mockRejectedValueOnce(new Error('not found'))                      // where gemini (batch2[0])
+      .mockRejectedValueOnce(new Error('not found'))                      // where opencode (batch2[1])
+      .mockRejectedValueOnce(new Error('not found'))                      // where aider (batch3[0])
+      .mockRejectedValueOnce(new Error('not found'))                      // where goose (batch3[1])
       .mockResolvedValueOnce({ stdout: 'aider:0.50.0\n', stderr: '' })  // WSL Ubuntu
     const result = await callHandler() as Array<{ type: string; cli: string }>
     const localResults = result.filter(r => r.type === 'local')

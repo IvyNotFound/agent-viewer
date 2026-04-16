@@ -174,14 +174,27 @@ describe('detectLocalClis — Windows — exact command arguments', () => {
   })
 
   it('detects all 6 CLIs when all are present', async () => {
-    const clis = ['claude', 'codex', 'gemini', 'opencode', 'aider', 'goose']
-    for (const cli of clis) {
-      execFileMock.mockResolvedValueOnce({ stdout: `C:\\${cli}.cmd\n`, stderr: '' })
-      execFileMock.mockResolvedValueOnce({ stdout: '1.0.0\n', stderr: '' })
-    }
+    // Parallel batches (CONCURRENCY=2): within each batch, both "where" calls happen
+    // before either "--version" call. Batch order: [claude,codex], [gemini,opencode], [aider,goose].
+    execFileMock
+      // batch1: where claude, where codex, claude --version, codex --version
+      .mockResolvedValueOnce({ stdout: 'C:\\claude.cmd\n', stderr: '' })
+      .mockResolvedValueOnce({ stdout: 'C:\\codex.cmd\n', stderr: '' })
+      .mockResolvedValueOnce({ stdout: '1.0.0\n', stderr: '' })
+      .mockResolvedValueOnce({ stdout: '1.0.0\n', stderr: '' })
+      // batch2: where gemini, where opencode, gemini --version, opencode --version
+      .mockResolvedValueOnce({ stdout: 'C:\\gemini.cmd\n', stderr: '' })
+      .mockResolvedValueOnce({ stdout: 'C:\\opencode.cmd\n', stderr: '' })
+      .mockResolvedValueOnce({ stdout: '1.0.0\n', stderr: '' })
+      .mockResolvedValueOnce({ stdout: '1.0.0\n', stderr: '' })
+      // batch3: where aider, where goose, aider --version, goose --version
+      .mockResolvedValueOnce({ stdout: 'C:\\aider.cmd\n', stderr: '' })
+      .mockResolvedValueOnce({ stdout: 'C:\\goose.cmd\n', stderr: '' })
+      .mockResolvedValueOnce({ stdout: '1.0.0\n', stderr: '' })
+      .mockResolvedValueOnce({ stdout: '1.0.0\n', stderr: '' })
     const result = await detectLocalClis()
     expect(result).toHaveLength(6)
-    expect(result.map(r => r.cli).sort()).toEqual(clis.sort())
+    expect(result.map(r => r.cli).sort()).toEqual(['aider', 'claude', 'codex', 'gemini', 'goose', 'opencode'])
   })
 })
 

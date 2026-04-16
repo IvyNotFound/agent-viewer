@@ -156,12 +156,13 @@ describe('detectLocalClis — Windows', () => {
   })
 
   it('detects claude and codex via where loop', async () => {
+    // Parallel batch: where claude + where codex run simultaneously, then --version for each
     execFileMock
-      .mockResolvedValueOnce({ stdout: 'C:\\claude.cmd\n', stderr: '' }) // where claude
+      .mockResolvedValueOnce({ stdout: 'C:\\claude.cmd\n', stderr: '' }) // where claude (batch1[0])
+      .mockResolvedValueOnce({ stdout: 'C:\\codex.cmd\n', stderr: '' }) // where codex (batch1[1])
       .mockResolvedValueOnce({ stdout: '2.1.58 (Claude Code)\n', stderr: '' }) // claude --version
-      .mockResolvedValueOnce({ stdout: 'C:\\codex.cmd\n', stderr: '' }) // where codex
       .mockResolvedValueOnce({ stdout: '1.0.0\n', stderr: '' }) // codex --version
-      // remaining CLIs: where fails
+      // batch2 (gemini, opencode) and batch3 (aider, goose): where fails
       .mockRejectedValue(new Error('not found'))
     const result = await detectLocalClis()
     expect(result).toHaveLength(2)
@@ -176,10 +177,12 @@ describe('detectLocalClis — Windows', () => {
   })
 
   it('skips CLI when --version returns empty', async () => {
+    // Parallel batch: where claude succeeds, where codex fails, claude --version is empty
     execFileMock
-      .mockResolvedValueOnce({ stdout: 'C:\\claude.cmd\n', stderr: '' })
-      .mockResolvedValueOnce({ stdout: '', stderr: '' }) // empty version
-      .mockRejectedValue(new Error('not found'))
+      .mockResolvedValueOnce({ stdout: 'C:\\claude.cmd\n', stderr: '' }) // where claude (batch1[0])
+      .mockRejectedValueOnce(new Error('not found'))                       // where codex (batch1[1])
+      .mockResolvedValueOnce({ stdout: '', stderr: '' })                  // claude --version (empty)
+      .mockRejectedValue(new Error('not found'))                           // batch2, batch3
     const result = await detectLocalClis()
     expect(result).toEqual([])
   })
@@ -324,16 +327,16 @@ describe('wsl:get-cli-instances — Windows', () => {
     // WSL one-liner for Ubuntu — override rejections for this specific call
     execFileMock.mockResolvedValueOnce({ stdout: 'codex:1.0.0\n', stderr: '' })
 
-    // Reset and re-setup mock sequence properly
+    // Reset and re-setup mock sequence for parallel local detection (CONCURRENCY=2)
     execFileMock.mockReset()
     execFileMock
-      .mockResolvedValueOnce({ stdout: 'C:\\claude.cmd\n', stderr: '' }) // where claude
-      .mockResolvedValueOnce({ stdout: '2.1.58\n', stderr: '' })         // claude --version
-      .mockRejectedValueOnce(new Error('not found'))                      // where codex
-      .mockRejectedValueOnce(new Error('not found'))                      // where gemini
-      .mockRejectedValueOnce(new Error('not found'))                      // where opencode
-      .mockRejectedValueOnce(new Error('not found'))                      // where aider
-      .mockRejectedValueOnce(new Error('not found'))                      // where goose
+      .mockResolvedValueOnce({ stdout: 'C:\\claude.cmd\n', stderr: '' }) // where claude (batch1[0])
+      .mockRejectedValueOnce(new Error('not found'))                      // where codex (batch1[1])
+      .mockResolvedValueOnce({ stdout: '2.1.58\n', stderr: '' })         // claude --version (after batch1)
+      .mockRejectedValueOnce(new Error('not found'))                      // where gemini (batch2[0])
+      .mockRejectedValueOnce(new Error('not found'))                      // where opencode (batch2[1])
+      .mockRejectedValueOnce(new Error('not found'))                      // where aider (batch3[0])
+      .mockRejectedValueOnce(new Error('not found'))                      // where goose (batch3[1])
       .mockResolvedValueOnce({ stdout: 'codex:1.0.0\n', stderr: '' })    // WSL Ubuntu one-liner
 
     const result = await callHandler() as Array<{ cli: string; type: string; version: string }>
