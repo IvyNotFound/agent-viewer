@@ -11,7 +11,7 @@
  * @module worktree-manager
  */
 import { execFile } from 'child_process'
-import { copyFile, mkdir } from 'fs/promises'
+import { copyFile, mkdir, writeFile } from 'fs/promises'
 import { promisify } from 'util'
 import path from 'path'
 import { queryLive } from './db'
@@ -72,7 +72,28 @@ export const WORKTREE_CONFIG_FILES: Record<CliType, string[]> = {
 }
 
 /**
+ * Generate an OpenCode config file in the worktree that allows access to
+ * external directories (specifically the main project repo root).
+ *
+ * OpenCode running in a worktree considers the main repo an "external_directory"
+ * and auto-rejects permission requests by default. This generated config grants
+ * that access. The file is cleaned up automatically when the worktree is removed.
+ *
+ * @param worktreePath - Absolute path to the worktree directory.
+ */
+async function generateOpenCodeWorktreeConfig(worktreePath: string): Promise<void> {
+  const config = { permission: { external_directory: 'allow' } }
+  const dst = path.join(worktreePath, 'opencode.json')
+  try {
+    await writeFile(dst, JSON.stringify(config, null, 2), 'utf-8')
+  } catch {
+    // Non-fatal — silently skip if generation fails
+  }
+}
+
+/**
  * Copy non-git-tracked CLI config files from the main repo into a worktree.
+ * For CLIs requiring dynamic config (OpenCode), generates files as needed.
  *
  * Called after worktree creation and before session spawn (refresh).
  * Missing source files are silently skipped. Target directories are created
@@ -102,6 +123,12 @@ export async function copyWorktreeConfigs(
     } catch {
       // Source file absent or copy failed — non-fatal, skip silently
     }
+  }
+
+  // OpenCode requires a dynamic config to allow external_directory access
+  // (the main repo appears as external when running in a worktree).
+  if (cliTypes.includes('opencode')) {
+    await generateOpenCodeWorktreeConfig(worktreePath)
   }
 }
 

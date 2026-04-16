@@ -12,14 +12,17 @@ import path from 'path'
 
 const mockCopyFile = vi.hoisted(() => vi.fn())
 const mockMkdir = vi.hoisted(() => vi.fn())
+const mockWriteFile = vi.hoisted(() => vi.fn())
 
 vi.mock('fs/promises', () => ({
   default: {
     copyFile: (...args: unknown[]) => mockCopyFile(...args),
     mkdir: (...args: unknown[]) => mockMkdir(...args),
+    writeFile: (...args: unknown[]) => mockWriteFile(...args),
   },
   copyFile: (...args: unknown[]) => mockCopyFile(...args),
   mkdir: (...args: unknown[]) => mockMkdir(...args),
+  writeFile: (...args: unknown[]) => mockWriteFile(...args),
 }))
 
 // ── child_process mock (required by worktree-manager imports) ────────────────
@@ -62,6 +65,7 @@ describe('copyWorktreeConfigs', () => {
     vi.clearAllMocks()
     mockCopyFile.mockResolvedValue(undefined)
     mockMkdir.mockResolvedValue(undefined)
+    mockWriteFile.mockResolvedValue(undefined)
   })
 
   it('copies claude settings files by default', async () => {
@@ -130,5 +134,52 @@ describe('copyWorktreeConfigs', () => {
 
     await expect(copyWorktreeConfigs(REPO, WT_PATH)).resolves.toBeUndefined()
     expect(mockCopyFile).toHaveBeenCalledTimes(2)
+  })
+
+  // ── OpenCode dynamic config generation ──────────────────────────────────────
+
+  it('generates opencode.json when cliTypes includes opencode', async () => {
+    await copyWorktreeConfigs(REPO, WT_PATH, ['opencode'])
+
+    expect(mockWriteFile).toHaveBeenCalledTimes(1)
+    expect(mockWriteFile).toHaveBeenCalledWith(
+      path.join(WT_PATH, 'opencode.json'),
+      expect.any(String),
+      'utf-8',
+    )
+    expect(mockCopyFile).not.toHaveBeenCalled()
+  })
+
+  it('generated opencode.json contains permission.external_directory=allow', async () => {
+    await copyWorktreeConfigs(REPO, WT_PATH, ['opencode'])
+
+    const [, content] = mockWriteFile.mock.calls[0] as [string, string, string]
+    const parsed = JSON.parse(content)
+    expect(parsed.permission?.external_directory).toBe('allow')
+  })
+
+  it('does not generate opencode.json when opencode not in cliTypes', async () => {
+    await copyWorktreeConfigs(REPO, WT_PATH, ['claude'])
+
+    expect(mockWriteFile).not.toHaveBeenCalled()
+  })
+
+  it('generates opencode.json even when cliTypes also includes claude', async () => {
+    await copyWorktreeConfigs(REPO, WT_PATH, ['claude', 'opencode'])
+
+    // Claude: 2 copyFile calls; OpenCode: 1 writeFile call
+    expect(mockCopyFile).toHaveBeenCalledTimes(2)
+    expect(mockWriteFile).toHaveBeenCalledTimes(1)
+    expect(mockWriteFile).toHaveBeenCalledWith(
+      path.join(WT_PATH, 'opencode.json'),
+      expect.any(String),
+      'utf-8',
+    )
+  })
+
+  it('writeFile failure for opencode config is non-fatal', async () => {
+    mockWriteFile.mockRejectedValue(new Error('EPERM: permission denied'))
+
+    await expect(copyWorktreeConfigs(REPO, WT_PATH, ['opencode'])).resolves.toBeUndefined()
   })
 })
