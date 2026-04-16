@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.40.4] - 2026-04-16
+
+### Features
+- feat(back-electron): implement ADR-013 multi-instance hook server (T1932) (3d9884c)
+- feat(back-electron): add model_used column to sessions and persist at launch (T1923) (eac997e)
+
+### Bug Fixes
+- fix(global): prevent premature agent kills via 4 remaining vectors (T1937) (8f73384)
+
+### Refactoring
+- refactor(front-vuejs): split 15+ Vue components over 400 lines (T1901) (0985f48)
+
+### Documentation
+- docs(arch): update WORKFLOW.md sessions schema — add model_used, fix conv_id (T1934) (9b5eb12)
+- docs(arch): add ADR-013 — Multi-Instance Hook Server (T1907) (efb45b0)
+
+### Chores
+- chore(deps-dev): bump the testing group with 4 updates (c4abd4a)
+- chore(deps-dev): bump eslint from 10.0.3 to 10.2.0 (a0d6e75)
+
+### Other
+- Merge pull request #25 from IvyNotFound/dependabot/npm_and_yarn/testing-590870f65f (cb435d9)
+- Merge pull request #27 from IvyNotFound/dependabot/npm_and_yarn/eslint-10.2.0 (b527094)
+
 ## [0.40.3] - 2026-04-11
 
 ### Bug Fixes
