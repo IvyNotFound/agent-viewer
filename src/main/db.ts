@@ -88,16 +88,40 @@ export function assertTranscriptPathAllowed(transcriptPath: string, cwd: string)
 }
 
 // ── Connection pool ──────────────────────────────────────────────────────────
+
+/** Maximum number of concurrent open connections kept in the pool (LRU eviction). */
+export const MAX_POOL_SIZE = 5
+
 const dbPool = new Map<string, Database.Database>()
 
 /**
  * Get or create a better-sqlite3 connection for the given path.
  * Enables WAL mode, busy_timeout, and foreign keys on first open.
+ *
+ * LRU eviction: pool is capped at MAX_POOL_SIZE. On a cache hit the entry is
+ * moved to the tail (most-recently-used). On overflow the head entry (LRU) is
+ * closed and removed before the new connection is inserted.
  */
 function getDb(dbPath: string): Database.Database {
-  let db = dbPool.get(dbPath)
-  if (db) return db
-  db = new Database(dbPath)
+  const existing = dbPool.get(dbPath)
+  if (existing) {
+    // Refresh LRU order: move entry to tail
+    dbPool.delete(dbPath)
+    dbPool.set(dbPath, existing)
+    return existing
+  }
+
+  // Evict LRU entry if pool is at capacity
+  if (dbPool.size >= MAX_POOL_SIZE) {
+    const lruKey = dbPool.keys().next().value as string
+    const lruDb = dbPool.get(lruKey)
+    if (lruDb) {
+      try { lruDb.close() } catch { /* already closed */ }
+    }
+    dbPool.delete(lruKey)
+  }
+
+  const db = new Database(dbPath)
   db.pragma('journal_mode = WAL')
   db.pragma('busy_timeout = 5000')
   db.pragma('foreign_keys = ON')

@@ -70,6 +70,7 @@ import {
   writeDb,
   queryLive,
   FORBIDDEN_WRITE_PATTERN,
+  MAX_POOL_SIZE,
 } from './db'
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -253,6 +254,55 @@ describe('queryLive (T1157)', () => {
 
     await expect(queryLive(dbPath, 'SELECT * FROM tasks', [])).rejects.toMatchObject({ code: 'SQLITE_CORRUPT' })
     expect(mockClose).toHaveBeenCalled()
+  })
+})
+
+// ── Connection pool LRU eviction (T1978) ─────────────────────────────────────
+
+describe('dbPool LRU eviction (T1978)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Seed mockPrepare so queryLive calls don't throw
+    mockPrepare.mockReturnValue({ all: vi.fn().mockReturnValue([]) })
+  })
+
+  it('MAX_POOL_SIZE is 5', () => {
+    expect(MAX_POOL_SIZE).toBe(5)
+  })
+
+  it('evicts the LRU entry when pool exceeds MAX_POOL_SIZE', async () => {
+    // Open MAX_POOL_SIZE + 1 distinct paths — the first one should be evicted
+    const paths = Array.from({ length: MAX_POOL_SIZE + 1 }, (_, i) => `/lru/test-${i}.db`)
+
+    for (const p of paths) {
+      clearDbCacheEntry(p)
+      await queryLive(p, 'SELECT 1', [])
+    }
+
+    // The first path was LRU — its connection must have been closed
+    expect(mockClose).toHaveBeenCalled()
+  })
+
+  it('accessing an existing entry refreshes its LRU position', async () => {
+    const paths = Array.from({ length: MAX_POOL_SIZE }, (_, i) => `/lru/refresh-${i}.db`)
+
+    for (const p of paths) {
+      clearDbCacheEntry(p)
+      await queryLive(p, 'SELECT 1', [])
+    }
+
+    mockClose.mockClear()
+
+    // Re-access paths[0] to move it to MRU position
+    await queryLive(paths[0], 'SELECT 1', [])
+
+    // Adding a new entry should evict paths[1] (now LRU), not paths[0]
+    const newPath = '/lru/refresh-new.db'
+    clearDbCacheEntry(newPath)
+    await queryLive(newPath, 'SELECT 1', [])
+
+    // close() was called once (for the evicted LRU entry)
+    expect(mockClose).toHaveBeenCalledTimes(1)
   })
 })
 
