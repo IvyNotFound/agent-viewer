@@ -260,6 +260,24 @@ describe('sessions:statsCost (T985)', () => {
     expect(result.rows[0].agent_name).toBe('agent-stats-a')
   })
 
+  it('returns deterministic model_used via GROUP_CONCAT when agent uses multiple models in same period', async () => {
+    const agentId = await insertAgent('agent-multi-model')
+    await insertSession(agentId, { status: 'completed', costUsd: 0.01, startedAt: '2026-03-01 10:00:00', modelUsed: 'sonnet' })
+    await insertSession(agentId, { status: 'completed', costUsd: 0.02, startedAt: '2026-03-01 11:00:00', modelUsed: 'opus' })
+    await insertSession(agentId, { status: 'completed', costUsd: 0.01, startedAt: '2026-03-01 12:00:00', modelUsed: 'sonnet' })
+
+    const result = await handlers['sessions:statsCost'](
+      null, TEST_DB_PATH, { period: 'day', agentId, limit: 10 }
+    ) as { success: boolean; rows: Array<{ model_used: string; session_count: number }> }
+
+    expect(result.success).toBe(true)
+    expect(result.rows).toHaveLength(1)
+    // GROUP_CONCAT(DISTINCT) returns each model once — order may vary
+    const models = result.rows[0].model_used.split(',').sort()
+    expect(models).toEqual(['opus', 'sonnet'])
+    expect(result.rows[0].session_count).toBe(3)
+  })
+
   it('rejects unregistered dbPath', async () => {
     await expect(
       handlers['sessions:statsCost'](null, '/evil/db.db', { period: 'day' })

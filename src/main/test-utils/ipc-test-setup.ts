@@ -208,17 +208,19 @@ export async function insertSession(
     convId?: string
     costUsd?: number
     startedAt?: string
+    modelUsed?: string
   }
 ): Promise<number> {
   await writeDb<void>(TEST_DB_PATH, (db) => {
     db.run(
-      'INSERT INTO sessions (agent_id, status, conv_id, cost_usd, started_at) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO sessions (agent_id, status, conv_id, cost_usd, started_at, model_used) VALUES (?, ?, ?, ?, ?, ?)',
       [
         agentId,
         opts?.status ?? opts?.statut ?? 'started',
         opts?.convId ?? null,
         opts?.costUsd ?? null,
         opts?.startedAt ?? "datetime('now')",
+        opts?.modelUsed ?? null,
       ]
     )
   })
