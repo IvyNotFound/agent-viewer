@@ -40,11 +40,11 @@ describe('CLI_CAPABILITIES — exhaustive boolean assertions', () => {
     })
   })
 
-  it('opencode: worktree and modelSelection enabled', () => {
+  it('opencode: worktree, systemPrompt, and modelSelection enabled', () => {
     expect(CLI_CAPABILITIES.opencode).toEqual({
       worktree: true,
       profileSelection: false,
-      systemPrompt: false,
+      systemPrompt: true,
       thinkingMode: false,
       convResume: false,
       modelSelection: true,
@@ -106,7 +106,7 @@ describe('CLI_CAPABILITIES — exhaustive boolean assertions', () => {
     const withSystemPrompt = Object.entries(CLI_CAPABILITIES)
       .filter(([, v]) => v.systemPrompt)
       .map(([k]) => k)
-    expect(withSystemPrompt).toEqual(['claude', 'codex', 'aider', 'goose'])
+    expect(withSystemPrompt).toEqual(['claude', 'codex', 'opencode', 'aider', 'goose'])
   })
 
   it('all CLIs have worktree=true', () => {
