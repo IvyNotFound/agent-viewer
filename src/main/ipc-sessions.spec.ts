@@ -217,16 +217,20 @@ describe('sessions:statsCost (T985)', () => {
     expect(result.error).toBe('INVALID_PERIOD')
   })
 
-  it('returns { success: true, rows: [] } when no sessions have cost_usd', async () => {
+  it('includes sessions without cost_usd (T1924: removed cost_usd IS NOT NULL filter)', async () => {
     const agentId = await insertAgent('agent-stats')
-    await insertSession(agentId, { status: 'completed' })
+    await insertSession(agentId, { status: 'completed', startedAt: '2026-03-01 10:00:00' })
 
     const result = await handlers['sessions:statsCost'](
       null, TEST_DB_PATH, { period: 'day' }
-    ) as { success: boolean; rows: unknown[] }
+    ) as { success: boolean; rows: Array<{ agent_name: string; total_cost: number | null; session_count: number }> }
 
     expect(result.success).toBe(true)
-    expect(result.rows).toHaveLength(0)
+    // Session without cost_usd is included — total_cost will be null for this row
+    expect(result.rows).toHaveLength(1)
+    expect(result.rows[0].agent_name).toBe('agent-stats')
+    expect(result.rows[0].session_count).toBe(1)
+    expect(result.rows[0].total_cost).toBeNull()
   })
 
   it('aggregates cost per agent per day', async () => {

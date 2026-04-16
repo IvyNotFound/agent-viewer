@@ -171,7 +171,9 @@ async function buildSchema(): Promise<void> {
       tokens_in INTEGER,
       tokens_out INTEGER,
       tokens_cache_read INTEGER,
-      tokens_cache_write INTEGER
+      tokens_cache_write INTEGER,
+      cli_type TEXT,
+      model_used TEXT
     )`)
 
     db.run(`CREATE TABLE IF NOT EXISTS task_comments (

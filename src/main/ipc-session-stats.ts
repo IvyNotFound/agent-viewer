@@ -62,13 +62,13 @@ export function registerSessionStatsHandlers(): void {
     const periodFmt = PERIOD_FORMATS[params?.period]
     if (!periodFmt) return { success: false, error: 'INVALID_PERIOD' }
     const limit = Math.min(Math.max(1, Math.floor(Number(params.limit ?? 30))), 365)
-    const conditions: string[] = ['s.cost_usd IS NOT NULL']
+    const conditions: string[] = []
     const binds: unknown[] = []
     if (params.agentId != null && Number.isInteger(params.agentId)) {
       conditions.push('s.agent_id = ?')
       binds.push(params.agentId)
     }
-    const where = conditions.join(' AND ')
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
     try {
       const rows = await queryLive(dbPath, `
         SELECT
@@ -79,14 +79,17 @@ export function registerSessionStatsHandlers(): void {
           ROUND(SUM(s.cost_usd), 4) as total_cost,
           ROUND(AVG(s.duration_ms) / 1000.0, 1) as avg_duration_s,
           SUM(s.num_turns) as total_turns,
-          SUM(s.tokens_in + s.tokens_out) as total_tokens,
-          SUM(s.tokens_cache_read) as cache_read,
-          SUM(s.tokens_cache_write) as cache_write,
-          GROUP_CONCAT(DISTINCT s.model_used) as model_used
+          SUM(COALESCE(s.tokens_in, 0) + COALESCE(s.tokens_out, 0)) as total_tokens,
+          SUM(COALESCE(s.tokens_in, 0)) as tokens_in,
+          SUM(COALESCE(s.tokens_out, 0)) as tokens_out,
+          SUM(COALESCE(s.tokens_cache_read, 0)) as cache_read,
+          SUM(COALESCE(s.tokens_cache_write, 0)) as cache_write,
+          s.model_used,
+          s.cli_type
         FROM sessions s
         JOIN agents a ON a.id = s.agent_id
-        WHERE ${where}
-        GROUP BY s.agent_id, strftime('${periodFmt}', s.started_at)
+        ${where}
+        GROUP BY s.agent_id, strftime('${periodFmt}', s.started_at), s.model_used, s.cli_type
         ORDER BY period DESC
         LIMIT ?
       `, [...binds, limit])

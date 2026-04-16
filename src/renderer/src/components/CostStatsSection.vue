@@ -9,6 +9,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { agentAccent } from '@renderer/utils/agentColor'
+import { getModelPricing } from '@shared/cli-models'
+import type { CliType } from '@shared/cli-types'
 import AgentBadge from './AgentBadge.vue'
 import CostSparkline from './CostSparkline.vue'
 
@@ -33,8 +35,36 @@ interface CostRow {
   avg_duration_s: number | null
   total_turns: number | null
   total_tokens: number | null
+  tokens_in: number | null
+  tokens_out: number | null
   cache_read: number | null
   cache_write: number | null
+  model_used: string | null
+  cli_type: string | null
+}
+
+// Sonnet 4.6 fallback for legacy Claude sessions (model_used=NULL, cli_type='claude' or null)
+const SONNET_FALLBACK_PRICING = { input: 3.00, output: 15.00, cacheRead: 0.30, cacheWrite: 3.75 }
+
+/**
+ * Compute effective cost for a row. Uses total_cost when reported by the CLI;
+ * otherwise estimates from token counts + pricing registry (T1924).
+ */
+function rowEffectiveCost(row: CostRow): number {
+  if (row.total_cost != null) return row.total_cost
+  const p = row.model_used
+    ? getModelPricing(row.model_used, (row.cli_type ?? undefined) as CliType | undefined)
+    : null
+  const pricing = p ?? (
+    row.cli_type === 'claude' || row.cli_type == null ? SONNET_FALLBACK_PRICING : null
+  )
+  if (!pricing) return 0
+  return (
+    (row.tokens_in  ?? 0) * pricing.input              / 1_000_000 +
+    (row.tokens_out ?? 0) * pricing.output             / 1_000_000 +
+    (row.cache_read  ?? 0) * (pricing.cacheRead  ?? 0) / 1_000_000 +
+    (row.cache_write ?? 0) * (pricing.cacheWrite ?? 0) / 1_000_000
+  )
 }
 
 interface AgentCostAgg {
@@ -100,7 +130,7 @@ const byAgent = computed<AgentCostAgg[]>(() => {
     }
     map.set(key, {
       ...ex,
-      total_cost:    ex.total_cost    + (row.total_cost    ?? 0),
+      total_cost:    ex.total_cost    + rowEffectiveCost(row),
       session_count: ex.session_count + row.session_count,
       total_tokens:  ex.total_tokens  + (row.total_tokens  ?? 0),
       cache_read:    ex.cache_read    + (row.cache_read    ?? 0),
@@ -114,7 +144,7 @@ const byAgent = computed<AgentCostAgg[]>(() => {
 const sparkPeriods = computed<Array<{ label: string; cost: number }>>(() => {
   const periodMap = new Map<string, number>()
   for (const row of rows.value) {
-    periodMap.set(row.period, (periodMap.get(row.period) ?? 0) + (row.total_cost ?? 0))
+    periodMap.set(row.period, (periodMap.get(row.period) ?? 0) + rowEffectiveCost(row))
   }
   const sorted = [...periodMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   return sorted.slice(-7).map(([label, cost]) => ({ label, cost }))

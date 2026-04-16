@@ -141,7 +141,8 @@ async function buildSchema(): Promise<void> {
       id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id INTEGER,
       started_at TEXT, ended_at TEXT, updated_at TEXT, status TEXT, summary TEXT,
       conv_id TEXT, cost_usd REAL, duration_ms INTEGER, num_turns INTEGER,
-      tokens_in INTEGER, tokens_out INTEGER, tokens_cache_read INTEGER, tokens_cache_write INTEGER
+      tokens_in INTEGER, tokens_out INTEGER, tokens_cache_read INTEGER, tokens_cache_write INTEGER,
+      cli_type TEXT, model_used TEXT
     )`)
     db.run(`CREATE TABLE IF NOT EXISTS task_comments (
       id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER, agent_id INTEGER,

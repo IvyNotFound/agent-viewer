@@ -12,6 +12,8 @@ import { useTabsStore } from '@renderer/stores/tabs'
 import { usePolledData } from '@renderer/composables/usePolledData'
 import { agentFg, agentBg, agentBorder } from '@renderer/utils/agentColor'
 import { parseUtcDate } from '@renderer/utils/parseDate'
+import { getModelPricing } from '@shared/cli-models'
+import type { CliType } from '@shared/cli-types'
 
 export interface AgentTokenRow {
   agent_id: number
@@ -35,6 +37,8 @@ export interface SessionTokenRow {
   cli_type: string | null
   /** Cost in USD as reported directly by the CLI, or `null` if the CLI does not emit cost data. When non-null, `estimateSessionCost()` uses this value as-is instead of computing from token counts. */
   cost_usd: number | null
+  /** Model identifier stored at launch (e.g. 'sonnet', 'claude-sonnet-4-6', 'gemini-2.5-pro'). `null` for legacy sessions. */
+  model_used: string | null
   tokens_in: number
   tokens_out: number
   tokens_cache_read: number
@@ -68,9 +72,9 @@ export const PERIODS = [
 
 export type PeriodKey = (typeof PERIODS)[number]['key']
 
-// ── Pricing constants (Anthropic Sonnet 4.6 — last checked 2026-02-27)
-// See: https://www.anthropic.com/pricing
-const PRICING = {
+// ── Sonnet 4.6 fallback pricing for legacy Claude sessions (model_used=NULL)
+// Used when model_used is unknown but cli_type is 'claude' or null.
+const SONNET_FALLBACK = {
   input:       3.00,   // $ per 1M tokens
   output:      15.00,  // $ per 1M tokens
   cache_read:  0.30,   // $ per 1M tokens
@@ -94,24 +98,35 @@ export function formatCost(usd: number): string {
  * Returns the cost in USD for a session row, or null when no estimate is available.
  *
  * Priority:
- * 1. `cost_usd` from DB (populated by the CLI when it reports the cost directly)
- * 2. Anthropic Sonnet 4.6 pricing formula for Claude sessions (`cli_type='claude'` or legacy `null`)
- * 3. `null` for all other CLIs that do not provide a direct cost
+ * 1. `cost_usd` from DB (populated by the CLI when it reports the cost directly — Aider, OpenCode)
+ * 2. Pricing registry lookup via `model_used` + `cli_type` (T1924)
+ * 3. Sonnet 4.6 fallback for legacy Claude sessions (`model_used=NULL`, `cli_type='claude'` or `null`)
+ * 4. `null` for CLIs without known pricing and no direct cost report
  *
  * @param row - Session token row from the `sessions` table
  * @returns Estimated cost in USD, or `null` if no estimate is available for this CLI type
  */
 export function estimateSessionCost(row: SessionTokenRow): number | null {
   if (row.cost_usd != null) return row.cost_usd
-  if (row.cli_type === 'claude' || row.cli_type == null) {
-    return (
-      row.tokens_in        * PRICING.input       +
-      row.tokens_out       * PRICING.output      +
-      row.tokens_cache_read  * PRICING.cache_read  +
-      row.tokens_cache_write * PRICING.cache_write
-    ) / 1_000_000
-  }
-  return null
+
+  const pricing = row.model_used
+    ? getModelPricing(row.model_used, (row.cli_type ?? undefined) as CliType | undefined)
+    : null
+
+  const p = pricing ?? (
+    row.cli_type === 'claude' || row.cli_type == null
+      ? { input: SONNET_FALLBACK.input, output: SONNET_FALLBACK.output, cacheRead: SONNET_FALLBACK.cache_read, cacheWrite: SONNET_FALLBACK.cache_write }
+      : null
+  )
+
+  if (!p) return null
+
+  return (
+    row.tokens_in          * p.input             +
+    row.tokens_out         * p.output            +
+    row.tokens_cache_read  * (p.cacheRead  ?? 0) +
+    row.tokens_cache_write * (p.cacheWrite ?? 0)
+  ) / 1_000_000
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
@@ -195,6 +210,7 @@ export function useTokenStats() {
                   s.started_at, s.ended_at, s.status,
                   s.cli_type,
                   s.cost_usd,
+                  s.model_used,
                   COALESCE(s.tokens_in, 0) as tokens_in,
                   COALESCE(s.tokens_out, 0) as tokens_out,
                   COALESCE(s.tokens_cache_read, 0) as tokens_cache_read,
@@ -255,15 +271,11 @@ export function useTokenStats() {
     return Math.round(globalStats.value.total / globalStats.value.session_count)
   })
 
-  const estimatedCost = computed(() => {
-    const s = globalStats.value
-    return (
-      s.tokens_in        * PRICING.input       +
-      s.tokens_out       * PRICING.output      +
-      s.tokens_cache_read  * PRICING.cache_read  +
-      s.tokens_cache_write * PRICING.cache_write
-    ) / 1_000_000
-  })
+  // Sum per-session estimated costs from sessionRows (capped at 50 by the query).
+  // Uses the pricing registry so multi-model sessions are priced correctly.
+  const estimatedCost = computed(() =>
+    sessionRows.value.reduce((sum, row) => sum + (estimateSessionCost(row) ?? 0), 0)
+  )
 
   const cacheHitRate = computed(() => {
     const total = globalStats.value.tokens_in + globalStats.value.tokens_cache_read
