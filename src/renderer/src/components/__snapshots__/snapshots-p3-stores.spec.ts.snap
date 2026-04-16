@@ -1,0 +1,315 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CodeTelemetryPanel > matches snapshot (no project path) 1`] = `
+"<div data-v-4b82114c="" class="telemetry-panel">
+  <!-- Header -->
+  <div data-v-4b82114c="" class="telemetry-header"><span data-v-4b82114c="" class="telemetry-title text-body-2 font-weight-medium">Télémétrie code</span>
+    <v-btn data-v-4b82114c="" icon="" variant="text" density="compact" class="telemetry-refresh-btn" disabled="true" title="Scanner">
+      <v-icon data-v-4b82114c="" class="telemetry-refresh-icon" size="18"> mdi-refresh </v-icon>
+    </v-btn>
+  </div><!-- Body -->
+  <div data-v-4b82114c="" class="telemetry-body">
+    <!-- No project -->
+    <div data-v-4b82114c="" class="telemetry-center">
+      <p data-v-4b82114c="" class="telemetry-empty-text text-label-medium">Aucun projet ouvert</p>
+    </div>
+  </div>
+</div>"
+`;
+
+exports[`DashboardRecentPanel > matches snapshot (empty state) 1`] = `
+"<v-row data-v-0e0c8452="" class="row-16">
+  <!-- Recent tasks -->
+  <v-col data-v-0e0c8452="" cols="6">
+    <v-card data-v-0e0c8452="" elevation="0" class="metric-card section-card">
+      <div data-v-0e0c8452="" class="section-header"><span data-v-0e0c8452="" class="text-body-2 font-weight-medium section-title">Tâches récentes</span></div>
+      <div data-v-0e0c8452="" class="d-flex align-center justify-center pa-8"><span data-v-0e0c8452="" class="text-caption text-disabled font-italic">Aucune tâche</span></div>
+    </v-card>
+  </v-col><!-- Recent activity -->
+  <v-col data-v-0e0c8452="" cols="6">
+    <v-card data-v-0e0c8452="" elevation="0" class="metric-card section-card">
+      <div data-v-0e0c8452="" class="section-header"><span data-v-0e0c8452="" class="text-body-2 font-weight-medium section-title">Activité récente</span></div>
+      <div data-v-0e0c8452="" class="d-flex align-center justify-center pa-8"><span data-v-0e0c8452="" class="text-caption text-disabled font-italic">Aucune activité</span></div>
+    </v-card>
+  </v-col>
+</v-row>"
+`;
+
+exports[`SettingsAppearanceSection > matches snapshot 1`] = `
+"<v-sheet rounded="lg" border="" class="pa-4">
+  <p class="text-body-2 font-weight-medium mb-2">Langue</p>
+  <v-select model-value="en" items="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" item-title="label" item-value="code" variant="outlined" density="compact" hide-details="" data-testid="lang-select"></v-select>
+</v-sheet>
+<v-sheet rounded="lg" border="" class="pa-4">
+  <p class="text-body-2 font-weight-medium mb-2">Thème</p>
+  <v-btn-toggle model-value="dark" mandatory="" color="primary" variant="outlined" density="compact" data-testid="theme-toggle">
+    <v-btn value="dark">Sombre</v-btn>
+    <v-btn value="light">Clair</v-btn>
+  </v-btn-toggle>
+</v-sheet>"
+`;
+
+exports[`SettingsApplicationSection > matches snapshot 1`] = `
+"<v-sheet rounded="lg" border="" class="pa-4">
+  <p class="text-body-2 font-weight-medium mb-3">Mises à jour</p>
+  <div class="d-flex align-center justify-space-between"><span class="text-body-2 text-medium-emphasis">Version: <code>0.40.4</code></span>
+    <v-btn color="primary" disabled="false">Vérifier</v-btn>
+  </div>
+  <!--v-if-->
+</v-sheet>
+<v-sheet rounded="lg" border="" class="pa-4">
+  <p class="text-body-2 font-weight-medium mb-2">À propos</p>
+  <p class="text-body-2 text-medium-emphasis">KanbAgent v0.40.4</p>
+  <p class="text-body-2 text-medium-emphasis mt-1">Interface desktop pour visualiser les tâches des agents</p>
+</v-sheet>
+<v-sheet rounded="lg" border="" class="pa-4">
+  <p class="text-body-2 font-weight-medium mb-3">Données</p>
+  <v-btn color="primary" prepend-icon="mdi-download">Exporter les données (ZIP)</v-btn>
+</v-sheet>
+<v-sheet rounded="lg" border="" class="pa-4">
+  <p class="text-body-2 font-weight-medium mb-2">Base de données</p>
+  <p class="text-body-2 text-medium-emphasis" style="font-family: ui-monospace, &quot;Cascadia Code&quot;, &quot;Fira Code&quot;, Consolas, monospace; word-break: break-all;">/home/user/project.db</p>
+</v-sheet>"
+`;
+
+exports[`SettingsAutomationSection > matches snapshot (auto-review disabled) 1`] = `
+"<v-sheet rounded="lg" border="" class="pa-4">
+  <div class="d-flex align-center justify-space-between ga-4">
+    <div>
+      <p class="text-body-2 font-weight-medium">Fermeture auto</p>
+      <p class="text-body-2 text-medium-emphasis">Fermer automatiquement le terminal quand la tâche passe en done</p>
+    </div>
+    <v-switch hide-details="" density="compact" color="primary" model-value="true"></v-switch>
+  </div>
+</v-sheet>
+<v-sheet rounded="lg" border="" class="pa-4">
+  <div class="d-flex align-center justify-space-between ga-4">
+    <div>
+      <p class="text-body-2 font-weight-medium">Review automatique</p>
+      <p class="text-body-2 text-medium-emphasis">Lancer une session review quand assez de tâches sont terminées</p>
+    </div>
+    <v-switch hide-details="" density="compact" color="primary" model-value="false"></v-switch>
+  </div>
+  <!--v-if-->
+</v-sheet>
+<v-sheet rounded="lg" border="" class="pa-4">
+  <div class="d-flex align-center justify-space-between ga-4">
+    <div>
+      <p class="text-body-2 font-weight-medium">Isolation worktree par défaut</p>
+      <p class="text-body-2 text-medium-emphasis">Crée un worktree git isolé pour chaque nouvelle session agent</p>
+    </div>
+    <v-switch hide-details="" density="compact" color="primary" model-value="false"></v-switch>
+  </div>
+</v-sheet>"
+`;
+
+exports[`SettingsAutomationSection > matches snapshot (auto-review enabled — shows threshold) 1`] = `
+"<v-sheet rounded="lg" border="" class="pa-4">
+  <div class="d-flex align-center justify-space-between ga-4">
+    <div>
+      <p class="text-body-2 font-weight-medium">Fermeture auto</p>
+      <p class="text-body-2 text-medium-emphasis">Fermer automatiquement le terminal quand la tâche passe en done</p>
+    </div>
+    <v-switch hide-details="" density="compact" color="primary" model-value="true"></v-switch>
+  </div>
+</v-sheet>
+<v-sheet rounded="lg" border="" class="pa-4">
+  <div class="d-flex align-center justify-space-between ga-4">
+    <div>
+      <p class="text-body-2 font-weight-medium">Review automatique</p>
+      <p class="text-body-2 text-medium-emphasis">Lancer une session review quand assez de tâches sont terminées</p>
+    </div>
+    <v-switch hide-details="" density="compact" color="primary" model-value="true"></v-switch>
+  </div>
+  <div class="d-flex align-center ga-2 mt-3"><label class="text-body-2 text-medium-emphasis">Seuil :</label>
+    <v-text-field type="number" model-value="5" min="3" max="100" variant="outlined" density="compact" hide-details="" style="width: 80px;"></v-text-field>
+  </div>
+</v-sheet>
+<v-sheet rounded="lg" border="" class="pa-4">
+  <div class="d-flex align-center justify-space-between ga-4">
+    <div>
+      <p class="text-body-2 font-weight-medium">Isolation worktree par défaut</p>
+      <p class="text-body-2 text-medium-emphasis">Crée un worktree git isolé pour chaque nouvelle session agent</p>
+    </div>
+    <v-switch hide-details="" density="compact" color="primary" model-value="true"></v-switch>
+  </div>
+</v-sheet>"
+`;
+
+exports[`SidebarAgentItem > matches snapshot (inactive, not selected) 1`] = `
+"<div data-v-cdc29496="" class="agent-item" draggable="true">
+  <v-list-item data-v-cdc29496="" density="compact" rounded="lg" class="px-1" active="false" active-color="secondary-container">
+    <div data-v-cdc29496="" class="agent-row"><span data-v-cdc29496="" class="agent-status"><v-progress-circular data-v-cdc29496="" indeterminate="" size="12" width="2" style="color: rgb(161, 136, 127); display: none;" class="status-spinner"></v-progress-circular><v-icon data-v-cdc29496="" size="12" style="color: rgb(161, 136, 127); display: none;">mdi-circle-medium</v-icon><span data-v-cdc29496="" class="status-dot" style="background-color: rgb(161, 136, 127);"></span></span><span data-v-cdc29496="" class="agent-name">dev-front-vuejs</span>
+      <div data-v-cdc29496="" class="agent-actions"><span data-v-cdc29496="" class="drag-handle" title="Déplacer"><v-icon data-v-cdc29496="" size="12">mdi-drag</v-icon></span>
+        <v-btn data-v-cdc29496="" variant="text" density="compact" size="x-small" class="action-btn" title="Éditer l'agent">
+          <v-icon data-v-cdc29496="" size="12">mdi-pencil</v-icon>
+        </v-btn>
+        <v-btn data-v-cdc29496="" variant="text" density="compact" size="x-small" class="action-btn action-btn--launch" style="color: rgb(78, 52, 46); background-color: rgb(188, 170, 164);" title="Lancer dev-front-vuejs">
+          <v-icon data-v-cdc29496="" size="12">mdi-play</v-icon>
+        </v-btn>
+      </div>
+    </div>
+  </v-list-item>
+</div>"
+`;
+
+exports[`SidebarAgentItem > matches snapshot (selected) 1`] = `
+"<div data-v-cdc29496="" class="agent-item" draggable="true">
+  <v-list-item data-v-cdc29496="" density="compact" rounded="lg" class="px-1" active="true" active-color="secondary-container">
+    <div data-v-cdc29496="" class="agent-row"><span data-v-cdc29496="" class="agent-status"><v-progress-circular data-v-cdc29496="" indeterminate="" size="12" width="2" style="color: rgb(161, 136, 127); display: none;" class="status-spinner"></v-progress-circular><v-icon data-v-cdc29496="" size="12" style="color: rgb(161, 136, 127); display: none;">mdi-circle-medium</v-icon><span data-v-cdc29496="" class="status-dot" style="background-color: rgb(161, 136, 127);"></span></span><span data-v-cdc29496="" class="agent-name agent-name--active">dev-front-vuejs</span>
+      <div data-v-cdc29496="" class="agent-actions"><span data-v-cdc29496="" class="drag-handle" title="Déplacer"><v-icon data-v-cdc29496="" size="12">mdi-drag</v-icon></span>
+        <v-btn data-v-cdc29496="" variant="text" density="compact" size="x-small" class="action-btn" title="Éditer l'agent">
+          <v-icon data-v-cdc29496="" size="12">mdi-pencil</v-icon>
+        </v-btn>
+        <v-btn data-v-cdc29496="" variant="text" density="compact" size="x-small" class="action-btn action-btn--launch" style="color: rgb(78, 52, 46); background-color: rgb(188, 170, 164);" title="Lancer dev-front-vuejs">
+          <v-icon data-v-cdc29496="" size="12">mdi-play</v-icon>
+        </v-btn>
+      </div>
+    </div>
+  </v-list-item>
+</div>"
+`;
+
+exports[`TaskDetailRightCol > matches snapshot (not blocked, no commits) 1`] = `
+"<div data-v-97d57a62="" class="task-right-col">
+  <!-- T553: Blocked indicator -->
+  <!--v-if-->
+  <!-- Section Agents -->
+  <div data-v-97d57a62="" class="right-section">
+    <p data-v-97d57a62="" class="section-label mb-2 text-label-medium">Agents</p>
+    <div data-v-97d57a62="" class="d-flex flex-column ga-2">
+      <div data-v-97d57a62="" class="d-flex align-center ga-2"><span data-v-97d57a62="" class="meta-label text-label-medium">Créateur</span>
+        <agent-badge-stub data-v-97d57a62="" name="review-master" active="false"></agent-badge-stub>
+      </div>
+      <div data-v-97d57a62="" class="d-flex align-center ga-2"><span data-v-97d57a62="" class="meta-label text-label-medium">Assigné</span>
+        <agent-badge-stub data-v-97d57a62="" name="dev-front-vuejs" active="false"></agent-badge-stub>
+      </div>
+      <div data-v-97d57a62="" class="d-flex align-center ga-2"><span data-v-97d57a62="" class="meta-label text-label-medium">Valideur</span>
+        <agent-badge-stub data-v-97d57a62="" name="review-master" active="false"></agent-badge-stub>
+      </div>
+    </div>
+  </div><!-- Section Dependencies -->
+  <div data-v-97d57a62="" class="right-section">
+    <p data-v-97d57a62="" class="section-label mb-2 text-label-medium">Dépendances</p>
+    <task-dependency-graph-stub data-v-97d57a62="" taskid="42" links=""></task-dependency-graph-stub>
+  </div><!-- Section Commits (T761) -->
+  <!--v-if-->
+  <!-- Section Assignees (read-only — T571) -->
+  <div data-v-97d57a62="" class="right-section">
+    <p data-v-97d57a62="" class="section-label mb-2 text-label-medium">Assignés</p>
+    <p data-v-97d57a62="" class="empty-text pt-2 text-caption">Aucun agent assigné</p>
+  </div><!-- Comments header -->
+  <div data-v-97d57a62="" class="right-section right-section--no-bottom">
+    <p data-v-97d57a62="" class="section-label text-label-medium">Commentaires
+      <!--v-if-->
+    </p>
+  </div>
+  <task-comments-section-stub data-v-97d57a62="" comments=""></task-comments-section-stub>
+</div>"
+`;
+
+exports[`TelemetryLanguageSection > matches snapshot (advanced metrics) 1`] = `
+"<!-- Language bar (GitHub-style) -->
+<v-card data-v-90c07cc7="" elevation="0" class="telem-metric-card telem-section-card">
+  <div data-v-90c07cc7="" class="telem-section-header"><span data-v-90c07cc7="" class="text-body-2 font-weight-medium telem-section-title">Répartition des langages</span></div>
+  <div data-v-90c07cc7="" class="pa-4 d-flex flex-column ga-2">
+    <div data-v-90c07cc7="" class="telem-lang-bar">
+      <div data-v-90c07cc7="" style="width: 65%; background-color: rgb(124, 172, 248);" title="TypeScript — 65.0%" class="telem-lang-segment"></div>
+      <div data-v-90c07cc7="" style="width: 35%; background-color: rgb(110, 219, 167);" title="Vue — 35.0%" class="telem-lang-segment"></div>
+    </div>
+    <div data-v-90c07cc7="" class="telem-lang-legend mt-1">
+      <div data-v-90c07cc7="" class="telem-lang-legend-item text-caption"><span data-v-90c07cc7="" class="telem-dot" style="background-color: rgb(124, 172, 248);"></span> TypeScript <span data-v-90c07cc7="" class="telem-subtle">65.0%</span></div>
+      <div data-v-90c07cc7="" class="telem-lang-legend-item text-caption"><span data-v-90c07cc7="" class="telem-dot" style="background-color: rgb(110, 219, 167);"></span> Vue <span data-v-90c07cc7="" class="telem-subtle">35.0%</span></div>
+    </div>
+  </div>
+</v-card>
+<!-- Detailed table -->
+<v-card data-v-90c07cc7="" elevation="0" class="telem-metric-card telem-section-card">
+  <div data-v-90c07cc7="" class="telem-section-header"><span data-v-90c07cc7="" class="text-body-2 font-weight-medium telem-section-title">Détail des langages</span></div>
+  <div data-v-90c07cc7="" class="telem-table-wrap text-body-2">
+    <table data-v-90c07cc7="" class="telem-table text-body-2">
+      <thead data-v-90c07cc7="">
+        <tr data-v-90c07cc7="" class="telem-thead-row text-label-medium">
+          <th data-v-90c07cc7="" class="telem-th telem-th--left">Langage</th>
+          <th data-v-90c07cc7="" class="telem-th telem-th--right">Lignes</th>
+          <th data-v-90c07cc7="" class="telem-th telem-th--right">Source</th>
+          <th data-v-90c07cc7="" class="telem-th telem-th--right">Tests</th>
+          <th data-v-90c07cc7="" class="telem-th telem-th--right">Fichiers</th>
+          <th data-v-90c07cc7="" class="telem-th telem-th--right">%</th>
+        </tr>
+      </thead>
+      <tbody data-v-90c07cc7="">
+        <tr data-v-90c07cc7="" class="telem-tbody-row">
+          <td data-v-90c07cc7="" class="telem-td telem-td--lang ga-2"><span data-v-90c07cc7="" class="telem-dot" style="background-color: rgb(124, 172, 248);"></span><span data-v-90c07cc7="" class="telem-td-text">TypeScript</span></td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-tertiary">10 000</td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-value--green-soft">0</td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-value--amber-soft">0</td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-tertiary">50</td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-muted">65.0%</td>
+        </tr>
+        <tr data-v-90c07cc7="" class="telem-tbody-row">
+          <td data-v-90c07cc7="" class="telem-td telem-td--lang ga-2"><span data-v-90c07cc7="" class="telem-dot" style="background-color: rgb(110, 219, 167);"></span><span data-v-90c07cc7="" class="telem-td-text">Vue</span></td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-tertiary">5 000</td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-value--green-soft">0</td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-value--amber-soft">0</td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-tertiary">30</td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-muted">35.0%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</v-card>"
+`;
+
+exports[`TelemetryLanguageSection > matches snapshot (basic metrics) 1`] = `
+"<!-- Language bar (GitHub-style) -->
+<v-card data-v-90c07cc7="" elevation="0" class="telem-metric-card telem-section-card">
+  <div data-v-90c07cc7="" class="telem-section-header"><span data-v-90c07cc7="" class="text-body-2 font-weight-medium telem-section-title">Répartition des langages</span></div>
+  <div data-v-90c07cc7="" class="pa-4 d-flex flex-column ga-2">
+    <div data-v-90c07cc7="" class="telem-lang-bar">
+      <div data-v-90c07cc7="" style="width: 65%; background-color: rgb(124, 172, 248);" title="TypeScript — 65.0%" class="telem-lang-segment"></div>
+      <div data-v-90c07cc7="" style="width: 35%; background-color: rgb(110, 219, 167);" title="Vue — 35.0%" class="telem-lang-segment"></div>
+    </div>
+    <div data-v-90c07cc7="" class="telem-lang-legend mt-1">
+      <div data-v-90c07cc7="" class="telem-lang-legend-item text-caption"><span data-v-90c07cc7="" class="telem-dot" style="background-color: rgb(124, 172, 248);"></span> TypeScript <span data-v-90c07cc7="" class="telem-subtle">65.0%</span></div>
+      <div data-v-90c07cc7="" class="telem-lang-legend-item text-caption"><span data-v-90c07cc7="" class="telem-dot" style="background-color: rgb(110, 219, 167);"></span> Vue <span data-v-90c07cc7="" class="telem-subtle">35.0%</span></div>
+    </div>
+  </div>
+</v-card>
+<!-- Detailed table -->
+<v-card data-v-90c07cc7="" elevation="0" class="telem-metric-card telem-section-card">
+  <div data-v-90c07cc7="" class="telem-section-header"><span data-v-90c07cc7="" class="text-body-2 font-weight-medium telem-section-title">Détail des langages</span></div>
+  <div data-v-90c07cc7="" class="telem-table-wrap text-body-2">
+    <table data-v-90c07cc7="" class="telem-table text-body-2">
+      <thead data-v-90c07cc7="">
+        <tr data-v-90c07cc7="" class="telem-thead-row text-label-medium">
+          <th data-v-90c07cc7="" class="telem-th telem-th--left">Langage</th>
+          <th data-v-90c07cc7="" class="telem-th telem-th--right">Lignes</th>
+          <!--v-if-->
+          <!--v-if-->
+          <th data-v-90c07cc7="" class="telem-th telem-th--right">Fichiers</th>
+          <th data-v-90c07cc7="" class="telem-th telem-th--right">%</th>
+        </tr>
+      </thead>
+      <tbody data-v-90c07cc7="">
+        <tr data-v-90c07cc7="" class="telem-tbody-row">
+          <td data-v-90c07cc7="" class="telem-td telem-td--lang ga-2"><span data-v-90c07cc7="" class="telem-dot" style="background-color: rgb(124, 172, 248);"></span><span data-v-90c07cc7="" class="telem-td-text">TypeScript</span></td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-tertiary">10 000</td>
+          <!--v-if-->
+          <!--v-if-->
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-tertiary">50</td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-muted">65.0%</td>
+        </tr>
+        <tr data-v-90c07cc7="" class="telem-tbody-row">
+          <td data-v-90c07cc7="" class="telem-td telem-td--lang ga-2"><span data-v-90c07cc7="" class="telem-dot" style="background-color: rgb(110, 219, 167);"></span><span data-v-90c07cc7="" class="telem-td-text">Vue</span></td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-tertiary">5 000</td>
+          <!--v-if-->
+          <!--v-if-->
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-tertiary">30</td>
+          <td data-v-90c07cc7="" class="telem-td telem-td--num telem-muted">35.0%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</v-card>"
+`;

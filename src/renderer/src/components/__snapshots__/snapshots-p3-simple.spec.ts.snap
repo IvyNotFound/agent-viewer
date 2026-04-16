@@ -1,0 +1,528 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`AgentLogRow > matches snapshot (collapsed) 1`] = `
+"<div data-v-7ce377f8="" class="al-row">
+  <!-- Main line -->
+  <div data-v-7ce377f8="" class="al-row-main">
+    <v-chip data-v-7ce377f8="" color="blue" size="x-small" variant="tonal" class="al-level-chip">info</v-chip><span data-v-7ce377f8="" class="al-time text-label-medium" title="16/04 13:25:58">13:25</span>
+    <agent-badge-stub data-v-7ce377f8="" name="dev-front-vuejs" active="false"></agent-badge-stub><span data-v-7ce377f8="" class="al-action text-body-2">task_done</span>
+    <!--v-if-->
+  </div><!-- Expandable detail -->
+  <!--v-if-->
+</div>"
+`;
+
+exports[`AgentSystemPromptSection > matches snapshot (edit mode) 1`] = `
+"<div data-v-be01fcad="" class="prompt-section">
+  <div data-v-be01fcad="" class="prompt-header" role="button" tabindex="0">
+    <div data-v-be01fcad="" class="d-flex align-center ga-2 flex-1 min-width-0">
+      <v-icon data-v-be01fcad="" class="prompt-arrow" size="15">mdi-chevron-right</v-icon><span data-v-be01fcad="" class="prompt-title">System prompt</span>
+      <!--v-if-->
+    </div>
+    <v-chip data-v-be01fcad="" size="x-small" variant="tonal" class="ml-auto flex-shrink-0">54 chars </v-chip>
+  </div>
+  <div data-v-be01fcad="" class="prompt-preview-line">You are a helpful assistant.</div>
+  <!--v-if-->
+</div>"
+`;
+
+exports[`AgentSystemPromptSection > matches snapshot (view mode) 1`] = `
+"<div data-v-be01fcad="" class="prompt-section">
+  <div data-v-be01fcad="" class="prompt-header" role="button" tabindex="0">
+    <div data-v-be01fcad="" class="d-flex align-center ga-2 flex-1 min-width-0">
+      <v-icon data-v-be01fcad="" class="prompt-arrow" size="15">mdi-chevron-right</v-icon><span data-v-be01fcad="" class="prompt-title">System prompt</span><span data-v-be01fcad="" class="prompt-optional">(optionnel)</span>
+    </div>
+    <v-chip data-v-be01fcad="" size="x-small" variant="tonal" class="ml-auto flex-shrink-0">28 chars </v-chip>
+  </div>
+  <div data-v-be01fcad="" class="prompt-preview-line">You are a helpful assistant.</div>
+  <!--v-if-->
+</div>"
+`;
+
+exports[`ArchiveTaskList > matches snapshot (empty, not loading) 1`] = `
+"<div data-v-5ba84ab7="" class="archive-area">
+  <!-- Loading state -->
+  <!-- Empty state -->
+  <div data-v-5ba84ab7="" class="state-centered">
+    <p data-v-5ba84ab7="" class="state-text">Aucun ticket archivé</p>
+  </div>
+</div>"
+`;
+
+exports[`ArchiveTaskList > matches snapshot (loading) 1`] = `
+"<div data-v-5ba84ab7="" class="archive-area">
+  <!-- Loading state -->
+  <div data-v-5ba84ab7="" class="state-centered">
+    <p data-v-5ba84ab7="" class="state-text">Chargement…</p>
+  </div>
+</div>"
+`;
+
+exports[`CliDetectionList > matches snapshot (empty, not loading) 1`] = `
+"<div data-v-a4add4af="" class="cli-list">
+  <!-- Refresh button -->
+  <div data-v-a4add4af="" class="cli-refresh-row">
+    <v-btn data-v-a4add4af="" color="primary" disabled="false" class="cli-refresh-btn">
+      <!-- spinner while loading -->
+      <v-icon data-v-a4add4af="" class="cli-icon" size="14">mdi-refresh</v-icon> Actualiser
+    </v-btn>
+  </div><!-- CLI rows -->
+  <div data-v-a4add4af="" class="cli-row">
+    <!-- Left: name + vendor + version badge -->
+    <div data-v-a4add4af="" class="cli-row-left">
+      <div data-v-a4add4af="" class="cli-labels"><span data-v-a4add4af="" class="cli-label text-caption">Claude Code</span><span data-v-a4add4af="" class="cli-vendor text-label-medium">Anthropic</span></div><span data-v-a4add4af="" class="cli-version-badge text-label-medium">Non détecté</span>
+    </div><!-- Right: v-switch MD3 toggle -->
+    <v-switch data-v-a4add4af="" model-value="false" color="primary" hide-details="" density="compact" class="flex-grow-0"></v-switch>
+  </div>
+  <div data-v-a4add4af="" class="cli-row">
+    <!-- Left: name + vendor + version badge -->
+    <div data-v-a4add4af="" class="cli-row-left">
+      <div data-v-a4add4af="" class="cli-labels"><span data-v-a4add4af="" class="cli-label text-caption">Codex CLI</span><span data-v-a4add4af="" class="cli-vendor text-label-medium">OpenAI</span></div><span data-v-a4add4af="" class="cli-version-badge text-label-medium">Non détecté</span>
+    </div><!-- Right: v-switch MD3 toggle -->
+    <v-switch data-v-a4add4af="" model-value="false" color="primary" hide-details="" density="compact" class="flex-grow-0"></v-switch>
+  </div>
+  <div data-v-a4add4af="" class="cli-row">
+    <!-- Left: name + vendor + version badge -->
+    <div data-v-a4add4af="" class="cli-row-left">
+      <div data-v-a4add4af="" class="cli-labels"><span data-v-a4add4af="" class="cli-label text-caption">Gemini CLI</span><span data-v-a4add4af="" class="cli-vendor text-label-medium">Google</span></div><span data-v-a4add4af="" class="cli-version-badge text-label-medium">Non détecté</span>
+    </div><!-- Right: v-switch MD3 toggle -->
+    <v-switch data-v-a4add4af="" model-value="false" color="primary" hide-details="" density="compact" class="flex-grow-0"></v-switch>
+  </div>
+  <div data-v-a4add4af="" class="cli-row">
+    <!-- Left: name + vendor + version badge -->
+    <div data-v-a4add4af="" class="cli-row-left">
+      <div data-v-a4add4af="" class="cli-labels"><span data-v-a4add4af="" class="cli-label text-caption">OpenCode</span><span data-v-a4add4af="" class="cli-vendor text-label-medium">SST</span></div><span data-v-a4add4af="" class="cli-version-badge text-label-medium">Non détecté</span>
+    </div><!-- Right: v-switch MD3 toggle -->
+    <v-switch data-v-a4add4af="" model-value="false" color="primary" hide-details="" density="compact" class="flex-grow-0"></v-switch>
+  </div>
+  <div data-v-a4add4af="" class="cli-row">
+    <!-- Left: name + vendor + version badge -->
+    <div data-v-a4add4af="" class="cli-row-left">
+      <div data-v-a4add4af="" class="cli-labels"><span data-v-a4add4af="" class="cli-label text-caption">Aider</span><span data-v-a4add4af="" class="cli-vendor text-label-medium">Paul Gauthier</span></div><span data-v-a4add4af="" class="cli-version-badge text-label-medium">Non détecté</span>
+    </div><!-- Right: v-switch MD3 toggle -->
+    <v-switch data-v-a4add4af="" model-value="false" color="primary" hide-details="" density="compact" class="flex-grow-0"></v-switch>
+  </div>
+  <div data-v-a4add4af="" class="cli-row">
+    <!-- Left: name + vendor + version badge -->
+    <div data-v-a4add4af="" class="cli-row-left">
+      <div data-v-a4add4af="" class="cli-labels"><span data-v-a4add4af="" class="cli-label text-caption">Goose</span><span data-v-a4add4af="" class="cli-vendor text-label-medium">Block</span></div><span data-v-a4add4af="" class="cli-version-badge text-label-medium">Non détecté</span>
+    </div><!-- Right: v-switch MD3 toggle -->
+    <v-switch data-v-a4add4af="" model-value="false" color="primary" hide-details="" density="compact" class="flex-grow-0"></v-switch>
+  </div>
+</div>"
+`;
+
+exports[`CliDetectionList > shows loading spinner when loading is true 1`] = `
+"<div data-v-a4add4af="" class="cli-list">
+  <!-- Refresh button -->
+  <div data-v-a4add4af="" class="cli-refresh-row">
+    <v-btn data-v-a4add4af="" color="primary" disabled="true" class="cli-refresh-btn">
+      <!-- spinner while loading -->
+      <v-progress-circular data-v-a4add4af="" class="cli-icon" indeterminate="" size="14" width="2"></v-progress-circular> Détection en cours...
+    </v-btn>
+  </div><!-- CLI rows -->
+  <div data-v-a4add4af="" class="cli-row">
+    <!-- Left: name + vendor + version badge -->
+    <div data-v-a4add4af="" class="cli-row-left">
+      <div data-v-a4add4af="" class="cli-labels"><span data-v-a4add4af="" class="cli-label text-caption">Claude Code</span><span data-v-a4add4af="" class="cli-vendor text-label-medium">Anthropic</span></div><span data-v-a4add4af="" class="cli-version-badge text-label-medium">Non détecté</span>
+    </div><!-- Right: v-switch MD3 toggle -->
+    <v-switch data-v-a4add4af="" model-value="false" color="primary" hide-details="" density="compact" class="flex-grow-0"></v-switch>
+  </div>
+  <div data-v-a4add4af="" class="cli-row">
+    <!-- Left: name + vendor + version badge -->
+    <div data-v-a4add4af="" class="cli-row-left">
+      <div data-v-a4add4af="" class="cli-labels"><span data-v-a4add4af="" class="cli-label text-caption">Codex CLI</span><span data-v-a4add4af="" class="cli-vendor text-label-medium">OpenAI</span></div><span data-v-a4add4af="" class="cli-version-badge text-label-medium">Non détecté</span>
+    </div><!-- Right: v-switch MD3 toggle -->
+    <v-switch data-v-a4add4af="" model-value="false" color="primary" hide-details="" density="compact" class="flex-grow-0"></v-switch>
+  </div>
+  <div data-v-a4add4af="" class="cli-row">
+    <!-- Left: name + vendor + version badge -->
+    <div data-v-a4add4af="" class="cli-row-left">
+      <div data-v-a4add4af="" class="cli-labels"><span data-v-a4add4af="" class="cli-label text-caption">Gemini CLI</span><span data-v-a4add4af="" class="cli-vendor text-label-medium">Google</span></div><span data-v-a4add4af="" class="cli-version-badge text-label-medium">Non détecté</span>
+    </div><!-- Right: v-switch MD3 toggle -->
+    <v-switch data-v-a4add4af="" model-value="false" color="primary" hide-details="" density="compact" class="flex-grow-0"></v-switch>
+  </div>
+  <div data-v-a4add4af="" class="cli-row">
+    <!-- Left: name + vendor + version badge -->
+    <div data-v-a4add4af="" class="cli-row-left">
+      <div data-v-a4add4af="" class="cli-labels"><span data-v-a4add4af="" class="cli-label text-caption">OpenCode</span><span data-v-a4add4af="" class="cli-vendor text-label-medium">SST</span></div><span data-v-a4add4af="" class="cli-version-badge text-label-medium">Non détecté</span>
+    </div><!-- Right: v-switch MD3 toggle -->
+    <v-switch data-v-a4add4af="" model-value="false" color="primary" hide-details="" density="compact" class="flex-grow-0"></v-switch>
+  </div>
+  <div data-v-a4add4af="" class="cli-row">
+    <!-- Left: name + vendor + version badge -->
+    <div data-v-a4add4af="" class="cli-row-left">
+      <div data-v-a4add4af="" class="cli-labels"><span data-v-a4add4af="" class="cli-label text-caption">Aider</span><span data-v-a4add4af="" class="cli-vendor text-label-medium">Paul Gauthier</span></div><span data-v-a4add4af="" class="cli-version-badge text-label-medium">Non détecté</span>
+    </div><!-- Right: v-switch MD3 toggle -->
+    <v-switch data-v-a4add4af="" model-value="false" color="primary" hide-details="" density="compact" class="flex-grow-0"></v-switch>
+  </div>
+  <div data-v-a4add4af="" class="cli-row">
+    <!-- Left: name + vendor + version badge -->
+    <div data-v-a4add4af="" class="cli-row-left">
+      <div data-v-a4add4af="" class="cli-labels"><span data-v-a4add4af="" class="cli-label text-caption">Goose</span><span data-v-a4add4af="" class="cli-vendor text-label-medium">Block</span></div><span data-v-a4add4af="" class="cli-version-badge text-label-medium">Non détecté</span>
+    </div><!-- Right: v-switch MD3 toggle -->
+    <v-switch data-v-a4add4af="" model-value="false" color="primary" hide-details="" density="compact" class="flex-grow-0"></v-switch>
+  </div>
+</div>"
+`;
+
+exports[`CostSparkline > matches snapshot with two periods 1`] = `
+"<div data-v-069a63e2="" class="cost-sparkline-section ga-1"><span data-v-069a63e2="" class="cost-section-label text-label-medium">Tendance coût</span>
+  <div data-v-069a63e2="" class="cost-sparkline ga-1">
+    <div data-v-069a63e2="" class="cost-spark-bar-wrap">
+      <div data-v-069a63e2="" class="cost-spark-bar" style="height: 18px;"></div>
+      <!--v-if-->
+      <!--v-if-->
+    </div>
+    <div data-v-069a63e2="" class="cost-spark-bar-wrap">
+      <div data-v-069a63e2="" class="cost-spark-bar" style="height: 36px;"></div>
+      <!--v-if-->
+      <!--v-if-->
+    </div>
+  </div>
+</div>"
+`;
+
+exports[`DashboardMetricCards > matches snapshot 1`] = `
+"<v-row data-v-0d256b50="" class="row-16">
+  <!-- Active agents -->
+  <v-col data-v-0d256b50="" cols="3">
+    <v-card data-v-0d256b50="" elevation="1" class="metric-card">
+      <v-card-text data-v-0d256b50="" class="d-flex align-center ga-3 pa-4">
+        <div data-v-0d256b50="" class="metric-icon metric-icon--cyan shrink-0">
+          <v-icon data-v-0d256b50="" class="metric-svg" size="20" style="color: rgb(var(--v-theme-secondary));">mdi-account-group</v-icon>
+        </div>
+        <div data-v-0d256b50="" class="metric-values">
+          <div data-v-0d256b50="" class="text-h6 font-weight-bold tabular-nums lh-tight">2</div>
+          <div data-v-0d256b50="" class="text-caption text-medium-emphasis text-truncate">Agents actifs</div>
+          <div data-v-0d256b50="" class="metric-sublabel text-truncate text-label-medium">sessions lancées</div>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-col><!-- In-progress tasks -->
+  <v-col data-v-0d256b50="" cols="3">
+    <v-card data-v-0d256b50="" elevation="1" class="metric-card">
+      <v-card-text data-v-0d256b50="" class="d-flex align-center ga-3 pa-4">
+        <div data-v-0d256b50="" class="metric-icon metric-icon--amber shrink-0">
+          <v-icon data-v-0d256b50="" class="metric-svg" size="20" style="color: rgb(var(--v-theme-warning));">mdi-lightning-bolt</v-icon>
+        </div>
+        <div data-v-0d256b50="" class="metric-values">
+          <div data-v-0d256b50="" class="text-h6 font-weight-bold tabular-nums lh-tight">4</div>
+          <div data-v-0d256b50="" class="text-caption text-medium-emphasis text-truncate">En cours</div>
+          <div data-v-0d256b50="" class="metric-sublabel text-truncate text-label-medium">tâches actives</div>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-col><!-- Todo tasks -->
+  <v-col data-v-0d256b50="" cols="3">
+    <v-card data-v-0d256b50="" elevation="1" class="metric-card">
+      <v-card-text data-v-0d256b50="" class="d-flex align-center ga-3 pa-4">
+        <div data-v-0d256b50="" class="metric-icon metric-icon--violet shrink-0">
+          <v-icon data-v-0d256b50="" class="metric-svg" size="20" style="color: rgb(var(--v-theme-primary));">mdi-clipboard-text-outline</v-icon>
+        </div>
+        <div data-v-0d256b50="" class="metric-values">
+          <div data-v-0d256b50="" class="text-h6 font-weight-bold tabular-nums lh-tight">6</div>
+          <div data-v-0d256b50="" class="text-caption text-medium-emphasis text-truncate">À faire</div>
+          <div data-v-0d256b50="" class="metric-sublabel text-truncate text-label-medium">tâches en attente</div>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-col><!-- Sessions today -->
+  <v-col data-v-0d256b50="" cols="3">
+    <v-card data-v-0d256b50="" elevation="1" class="metric-card">
+      <v-card-text data-v-0d256b50="" class="d-flex align-center ga-3 pa-4">
+        <div data-v-0d256b50="" class="metric-icon metric-icon--emerald shrink-0">
+          <v-icon data-v-0d256b50="" class="metric-svg" size="20" style="color: rgb(var(--v-theme-info));">mdi-calendar-today</v-icon>
+        </div>
+        <div data-v-0d256b50="" class="metric-values">
+          <div data-v-0d256b50="" class="text-h6 font-weight-bold tabular-nums lh-tight">8</div>
+          <div data-v-0d256b50="" class="text-caption text-medium-emphasis text-truncate">Aujourd'hui</div>
+          <div data-v-0d256b50="" class="metric-sublabel text-truncate text-label-medium">sessions lancées</div>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-col>
+</v-row>"
+`;
+
+exports[`SetupCliModelSelector > matches snapshot 1`] = `
+"<div data-v-dd8942fd="" class="d-flex flex-column ga-3">
+  <v-select data-v-dd8942fd="" model-value="claude" items="[object Object]" label="CLI principal" placeholder="Défaut global" hint="CLI principal utilisé pour ce projet" persistent-hint="" clearable="" variant="outlined" density="compact" color="primary"></v-select>
+  <v-select data-v-dd8942fd="" model-value="claude-opus-4-5" items="[object Object]" label="Modèle par défaut" clearable="" placeholder="Défaut : claude-opus-4-5" hint="Modèle utilisé par défaut lors du lancement des sessions" persistent-hint="" variant="outlined" density="compact" color="primary"></v-select><!-- Additional CLIs -->
+  <!--v-if-->
+</div>"
+`;
+
+exports[`SidebarGroupNode > matches snapshot (collapsed) 1`] = `
+"<div data-v-696cdd9c="" class="group-zone" style="padding-left: 0px;" draggable="true">
+  <!-- Group header -->
+  <div data-v-696cdd9c="" class="group-header"><button data-v-696cdd9c="" class="group-header__chevron" type="button" aria-expanded="false">
+      <v-icon data-v-696cdd9c="" size="14" class="">mdi-chevron-right</v-icon>
+    </button><!-- Rename input — v-show (not v-if) to avoid element recreation while typing -->
+    <v-text-field data-v-696cdd9c="" model-value="" density="compact" variant="outlined" hide-details="" autofocus="" class="group-header__rename" style="display: none;"></v-text-field><!-- Group name (dblclick → inline rename) --><span data-v-696cdd9c="" class="group-header__name">Frontend</span><!-- Action buttons — fade in on hover -->
+    <div data-v-696cdd9c="" class="group-header__actions">
+      <v-btn data-v-696cdd9c="" variant="text" density="compact" size="x-small" class="group-action" title="Renommer le groupe">
+        <v-icon data-v-696cdd9c="" size="12">mdi-pencil</v-icon>
+      </v-btn>
+      <v-btn data-v-696cdd9c="" variant="text" density="compact" size="x-small" class="group-action group-action--danger" title="Supprimer le groupe">
+        <v-icon data-v-696cdd9c="" size="12">mdi-delete</v-icon>
+      </v-btn>
+    </div>
+  </div><!-- DnD drop hint -->
+  <div data-v-696cdd9c="" class="drop-hint text-label-medium" style="display: none;">Déposer ici</div><!-- Inline subgroup creation form -->
+  <div data-v-696cdd9c="" class="inline-form inline-form--sub mt-1" style="display: none;">
+    <v-text-field data-v-696cdd9c="" model-value="" density="compact" variant="outlined" hide-details="" autofocus="" class="inline-form__input" placeholder="Nom du groupe…"></v-text-field>
+    <v-btn data-v-696cdd9c="" variant="text" density="compact" size="x-small" class="inline-form__btn inline-form__btn--confirm">✓</v-btn>
+    <v-btn data-v-696cdd9c="" variant="text" density="compact" size="x-small" class="inline-form__btn inline-form__btn--cancel">✕</v-btn>
+  </div>
+</div>"
+`;
+
+exports[`StreamingIndicator > matches snapshot (streaming) 1`] = `"<div data-v-762d1ac9="" class="streaming-indicator ga-2 text-caption" style="color: rgb(33, 150, 243);" data-testid="streaming-indicator"><span data-v-762d1ac9="" class="bounce-dots"><span data-v-762d1ac9="" class="bounce-dot" style="background-color: rgb(33, 150, 243);"></span><span data-v-762d1ac9="" class="bounce-dot bounce-dot--d1" style="background-color: rgb(33, 150, 243);"></span><span data-v-762d1ac9="" class="bounce-dot bounce-dot--d2" style="background-color: rgb(33, 150, 243);"></span></span><span data-v-762d1ac9="" class="streaming-label">En cours…</span></div>"`;
+
+exports[`TabBarScrollArea > matches snapshot (empty tabs) 1`] = `
+"<!-- File tabs -->
+<!-- Agent group — envelope pill wrapping pill-header + sub-chips -->"
+`;
+
+exports[`TelemetryStatCards > matches snapshot (advanced metrics) 1`] = `
+"<div data-v-fc72853e="" class="telem-stat-grid ga-4 telem-stat-grid--wide">
+  <!-- Total Lines -->
+  <v-card data-v-fc72853e="" elevation="1" class="telem-metric-card">
+    <v-card-text data-v-fc72853e="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-fc72853e="" class="telem-metric-icon telem-metric-icon--cyan">
+        <v-icon data-v-fc72853e="" size="20" style="color: rgb(var(--v-theme-secondary));">mdi-code-tags</v-icon>
+      </div>
+      <div data-v-fc72853e="">
+        <div data-v-fc72853e="" class="text-h6 font-weight-bold tabular-nums lh-tight">12 345</div>
+        <div data-v-fc72853e="" class="text-caption text-medium-emphasis">Total lignes</div>
+      </div>
+    </v-card-text>
+  </v-card><!-- Real code (advanced only) -->
+  <v-card data-v-fc72853e="" elevation="1" class="telem-metric-card">
+    <v-card-text data-v-fc72853e="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-fc72853e="" class="telem-metric-icon telem-metric-icon--violet">
+        <v-icon data-v-fc72853e="" size="20" style="color: rgb(var(--v-theme-primary));">mdi-code-braces</v-icon>
+      </div>
+      <div data-v-fc72853e="">
+        <div data-v-fc72853e="" class="text-h6 font-weight-bold tabular-nums lh-tight">9 000</div>
+        <div data-v-fc72853e="" class="text-caption text-medium-emphasis">Code réel</div>
+      </div>
+    </v-card-text>
+  </v-card><!-- Total Files -->
+  <v-card data-v-fc72853e="" elevation="1" class="telem-metric-card">
+    <v-card-text data-v-fc72853e="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-fc72853e="" class="telem-metric-icon telem-metric-icon--emerald">
+        <v-icon data-v-fc72853e="" size="20" style="color: rgb(var(--v-theme-info));">mdi-file-multiple-outline</v-icon>
+      </div>
+      <div data-v-fc72853e="">
+        <div data-v-fc72853e="" class="text-h6 font-weight-bold tabular-nums lh-tight">87</div>
+        <div data-v-fc72853e="" class="text-caption text-medium-emphasis">Total fichiers</div>
+      </div>
+    </v-card-text>
+  </v-card><!-- Test Files (advanced only) -->
+  <v-card data-v-fc72853e="" elevation="1" class="telem-metric-card">
+    <v-card-text data-v-fc72853e="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-fc72853e="" class="telem-metric-icon telem-metric-icon--amber">
+        <v-icon data-v-fc72853e="" size="20" style="color: rgb(var(--v-theme-warning));">mdi-test-tube</v-icon>
+      </div>
+      <div data-v-fc72853e="">
+        <div data-v-fc72853e="" class="text-h6 font-weight-bold tabular-nums lh-tight">12</div>
+        <div data-v-fc72853e="" class="text-caption text-medium-emphasis">Fichiers test</div>
+      </div>
+    </v-card-text>
+  </v-card><!-- Languages -->
+  <v-card data-v-fc72853e="" elevation="1" class="telem-metric-card">
+    <v-card-text data-v-fc72853e="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-fc72853e="" class="telem-metric-icon telem-metric-icon--cyan">
+        <v-icon data-v-fc72853e="" size="20" style="color: rgb(var(--v-theme-secondary));">mdi-translate</v-icon>
+      </div>
+      <div data-v-fc72853e="">
+        <div data-v-fc72853e="" class="text-h6 font-weight-bold tabular-nums lh-tight">1</div>
+        <div data-v-fc72853e="" class="text-caption text-medium-emphasis">Langages</div>
+      </div>
+    </v-card-text>
+  </v-card>
+</div>"
+`;
+
+exports[`TelemetryStatCards > matches snapshot (basic metrics) 1`] = `
+"<div data-v-fc72853e="" class="telem-stat-grid ga-4">
+  <!-- Total Lines -->
+  <v-card data-v-fc72853e="" elevation="1" class="telem-metric-card">
+    <v-card-text data-v-fc72853e="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-fc72853e="" class="telem-metric-icon telem-metric-icon--cyan">
+        <v-icon data-v-fc72853e="" size="20" style="color: rgb(var(--v-theme-secondary));">mdi-code-tags</v-icon>
+      </div>
+      <div data-v-fc72853e="">
+        <div data-v-fc72853e="" class="text-h6 font-weight-bold tabular-nums lh-tight">12 345</div>
+        <div data-v-fc72853e="" class="text-caption text-medium-emphasis">Total lignes</div>
+      </div>
+    </v-card-text>
+  </v-card><!-- Real code (advanced only) -->
+  <!--v-if-->
+  <!-- Total Files -->
+  <v-card data-v-fc72853e="" elevation="1" class="telem-metric-card">
+    <v-card-text data-v-fc72853e="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-fc72853e="" class="telem-metric-icon telem-metric-icon--emerald">
+        <v-icon data-v-fc72853e="" size="20" style="color: rgb(var(--v-theme-info));">mdi-file-multiple-outline</v-icon>
+      </div>
+      <div data-v-fc72853e="">
+        <div data-v-fc72853e="" class="text-h6 font-weight-bold tabular-nums lh-tight">87</div>
+        <div data-v-fc72853e="" class="text-caption text-medium-emphasis">Total fichiers</div>
+      </div>
+    </v-card-text>
+  </v-card><!-- Test Files (advanced only) -->
+  <!--v-if-->
+  <!-- Languages -->
+  <v-card data-v-fc72853e="" elevation="1" class="telem-metric-card">
+    <v-card-text data-v-fc72853e="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-fc72853e="" class="telem-metric-icon telem-metric-icon--cyan">
+        <v-icon data-v-fc72853e="" size="20" style="color: rgb(var(--v-theme-secondary));">mdi-translate</v-icon>
+      </div>
+      <div data-v-fc72853e="">
+        <div data-v-fc72853e="" class="text-h6 font-weight-bold tabular-nums lh-tight">1</div>
+        <div data-v-fc72853e="" class="text-caption text-medium-emphasis">Langages</div>
+      </div>
+    </v-card-text>
+  </v-card>
+</div>"
+`;
+
+exports[`TimelineCanvas > matches snapshot (empty state) 1`] = `
+"<div data-v-980f51a8="" class="tl-state-center tl-muted-sm text-body-2">Aucune tâche sur cette période</div>
+<!-- Legend -->
+<!--v-if-->
+<!--v-if-->"
+`;
+
+exports[`TimelineCanvas > matches snapshot (error state) 1`] = `
+"<div data-v-980f51a8="" class="tl-state-center tl-error text-body-2">Failed to load</div>
+<!-- Legend -->
+<!--v-if-->
+<!--v-if-->"
+`;
+
+exports[`TimelineCanvas > matches snapshot (loading state) 1`] = `
+"<div data-v-980f51a8="" class="tl-state-center">
+  <v-progress-circular data-v-980f51a8="" indeterminate="" size="32" width="3"></v-progress-circular>
+</div>
+<!-- Legend -->
+<!--v-if-->
+<!--v-if-->"
+`;
+
+exports[`TimelineTooltip > matches snapshot 1`] = `
+"<teleport-stub data-v-ff83310c="" to="body">
+  <div data-v-ff83310c="" class="tl-tooltip elevation-2 pa-3 text-caption" style="left: 64px; top: 66px;">
+    <div data-v-ff83310c="" class="tl-tooltip-title">Fix the bug</div>
+    <div data-v-ff83310c="" class="tl-tooltip-body">
+      <div data-v-ff83310c="">Statut: <span data-v-ff83310c="" class="tl-status-done">done</span></div>
+      <div data-v-ff83310c="">Début: 01 janv., 10:00</div>
+      <div data-v-ff83310c="">Fin: 01 janv., 11:30</div>
+      <div data-v-ff83310c="">Durée: 1.5h</div>
+      <div data-v-ff83310c="">Effort: M</div>
+      <div data-v-ff83310c="" class="tl-tooltip-id">#42</div>
+    </div>
+  </div>
+</teleport-stub>"
+`;
+
+exports[`TokenStatsSummaryCards > matches snapshot 1`] = `
+"<div data-v-1267639a="" class="ts-cards-row ga-3 py-3 px-4">
+  <!-- Total tokens -->
+  <v-card data-v-1267639a="" elevation="1" class="ts-metric-card">
+    <v-card-text data-v-1267639a="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-1267639a="" class="ts-metric-icon ts-metric-icon--cyan">
+        <v-icon data-v-1267639a="" size="20" style="color: rgb(var(--v-theme-secondary));">mdi-counter</v-icon>
+      </div>
+      <div data-v-1267639a="" class="ts-metric-content">
+        <div data-v-1267639a="" class="text-h6 font-weight-bold tabular-nums lh-tight">100 000</div>
+        <div data-v-1267639a="" class="text-caption text-medium-emphasis">Total de tokens</div>
+        <div data-v-1267639a="" class="ts-card-sub ts-mono text-label-medium"><span data-v-1267639a="" class="ts-in">↓ 60 000</span><span data-v-1267639a="" class="ts-out">↑ 40 000</span></div>
+      </div>
+    </v-card-text>
+  </v-card><!-- Sessions -->
+  <v-card data-v-1267639a="" elevation="1" class="ts-metric-card">
+    <v-card-text data-v-1267639a="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-1267639a="" class="ts-metric-icon ts-metric-icon--emerald">
+        <v-icon data-v-1267639a="" size="20" style="color: rgb(var(--v-theme-info));">mdi-play-circle-outline</v-icon>
+      </div>
+      <div data-v-1267639a="" class="ts-metric-content">
+        <div data-v-1267639a="" class="text-h6 font-weight-bold tabular-nums lh-tight">25</div>
+        <div data-v-1267639a="" class="text-caption text-medium-emphasis">Sessions</div>
+        <div data-v-1267639a="" class="ts-card-sub text-label-medium">Moy./session : 4 000</div>
+      </div>
+    </v-card-text>
+  </v-card><!-- Cache -->
+  <v-card data-v-1267639a="" elevation="1" class="ts-metric-card">
+    <v-card-text data-v-1267639a="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-1267639a="" class="ts-metric-icon ts-metric-icon--amber">
+        <v-icon data-v-1267639a="" size="20" style="color: rgb(var(--v-theme-warning));">mdi-cached</v-icon>
+      </div>
+      <div data-v-1267639a="" class="ts-metric-content">
+        <div data-v-1267639a="" class="text-h6 font-weight-bold tabular-nums lh-tight">30 000</div>
+        <div data-v-1267639a="" class="text-caption text-medium-emphasis">Cache</div>
+        <div data-v-1267639a="" class="ts-card-sub ts-mono text-label-medium"><span data-v-1267639a="" class="ts-amber">R 25 000</span><span data-v-1267639a="" class="ts-violet">W 5 000</span></div>
+      </div>
+    </v-card-text>
+  </v-card><!-- Cache hit rate -->
+  <v-card data-v-1267639a="" elevation="1" class="ts-metric-card">
+    <v-card-text data-v-1267639a="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-1267639a="" class="ts-metric-icon ts-metric-icon--surface">
+        <v-icon data-v-1267639a="" size="20">mdi-percent</v-icon>
+      </div>
+      <div data-v-1267639a="" class="ts-metric-content">
+        <div data-v-1267639a="" class="text-h6 font-weight-bold tabular-nums lh-tight">83.3%</div>
+        <div data-v-1267639a="" class="text-caption text-medium-emphasis">Succès de cache</div>
+        <div data-v-1267639a="" class="ts-card-sub text-label-medium">% tokens en cache</div>
+      </div>
+    </v-card-text>
+  </v-card><!-- Estimated cost -->
+  <v-card data-v-1267639a="" elevation="1" class="ts-metric-card">
+    <v-card-text data-v-1267639a="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-1267639a="" class="ts-metric-icon ts-metric-icon--violet">
+        <v-icon data-v-1267639a="" size="20" style="color: rgb(var(--v-theme-primary));">mdi-currency-usd</v-icon>
+      </div>
+      <div data-v-1267639a="" class="ts-metric-content">
+        <div data-v-1267639a="" class="text-h6 font-weight-bold tabular-nums lh-tight">$1.25</div>
+        <div data-v-1267639a="" class="text-caption text-medium-emphasis">Coût estimé</div>
+        <div data-v-1267639a="" class="ts-card-sub ts-faint text-label-medium">Estimation Sonnet 4.6</div>
+      </div>
+    </v-card-text>
+  </v-card><!-- Output ratio -->
+  <v-card data-v-1267639a="" elevation="1" class="ts-metric-card">
+    <v-card-text data-v-1267639a="" class="d-flex align-center ga-3 pa-4">
+      <div data-v-1267639a="" class="ts-metric-icon ts-metric-icon--violet">
+        <v-icon data-v-1267639a="" size="20" style="color: rgb(var(--v-theme-primary));">mdi-arrow-up-circle-outline</v-icon>
+      </div>
+      <div data-v-1267639a="" class="ts-metric-content">
+        <div data-v-1267639a="" class="text-h6 font-weight-bold tabular-nums lh-tight">40% </div>
+        <div data-v-1267639a="" class="text-caption text-medium-emphasis">Ratio sortie</div>
+        <div data-v-1267639a="" class="ts-card-sub text-label-medium"><span data-v-1267639a="" class="ts-out">% output</span></div>
+      </div>
+    </v-card-text>
+  </v-card>
+</div>"
+`;
+
+exports[`TokenTelemetryPanel > matches snapshot (default today tab) 1`] = `
+"<div data-v-4448b841="" class="token-panel">
+  <!-- Header + period tabs -->
+  <div data-v-4448b841="" class="token-header py-3 px-4"><span data-v-4448b841="" class="token-title text-body-2 font-weight-medium">Télémétrie tokens</span>
+    <v-btn-toggle data-v-4448b841="" mandatory="" color="primary" variant="outlined" density="compact" rounded="lg">
+      <v-btn data-v-4448b841="" size="small" value="today">Aujourd'hui</v-btn>
+      <v-btn data-v-4448b841="" size="small" value="7d">7 jours</v-btn>
+      <v-btn data-v-4448b841="" size="small" value="all">Tout temps</v-btn>
+    </v-btn-toggle>
+  </div><!-- 4 token metrics -->
+  <div data-v-4448b841="" class="token-metrics py-3 px-4 ga-3">
+    <!-- Input tokens -->
+    <div data-v-4448b841="" class="token-metric"><span data-v-4448b841="" class="token-metric-label text-label-medium">Input</span><span data-v-4448b841="" class="token-metric-value text-subtitle-2">5.0k</span></div><!-- Output tokens -->
+    <div data-v-4448b841="" class="token-metric"><span data-v-4448b841="" class="token-metric-label text-label-medium">Output</span><span data-v-4448b841="" class="token-metric-value text-subtitle-2">3.0k</span></div><!-- Cache read (rose — économique) -->
+    <div data-v-4448b841="" class="token-metric"><span data-v-4448b841="" class="token-metric-label text-label-medium">Cache read</span><span data-v-4448b841="" class="token-metric-value token-metric-value--cache-read text-subtitle-2">1.0k</span></div><!-- Cache write (amber) -->
+    <div data-v-4448b841="" class="token-metric"><span data-v-4448b841="" class="token-metric-label text-label-medium">Cache write</span><span data-v-4448b841="" class="token-metric-value token-metric-value--cache-write text-subtitle-2">500</span></div>
+  </div><!-- Session count -->
+  <div data-v-4448b841="" class="token-sessions px-4 pb-3"><span data-v-4448b841="" class="token-sessions-text text-label-medium">3 sessions</span></div>
+</div>"
+`;
