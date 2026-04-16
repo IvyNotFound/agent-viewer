@@ -153,18 +153,17 @@ describe('ipc-project T1226 — exact string & value assertions', () => {
       expect(String(trustedCall![0])).toContain('trusted-project-paths.json')
     })
 
-    it('find-project-db reads from trusted-project-paths.json (exact filename)', async () => {
+    it('find-project-db does NOT read trusted-project-paths.json directly (uses gate, T1979)', async () => {
       const { access, readdir, readFile } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
-      // Untrusted path → fallback reads trusted-project-paths.json
-      vi.mocked(readFile as (p: string, enc: string) => Promise<string>).mockResolvedValueOnce('[]')
+      const readFileSpy = vi.mocked(readFile)
+
       await callHandler('find-project-db', '/untrusted/project')
-      const readFileCalls = vi.mocked(readFile).mock.calls
-      const trustedCall = readFileCalls.find(c => String(c[0]).includes('trusted-project-paths'))
-      expect(trustedCall).toBeDefined()
-      expect(String(trustedCall![0])).toContain('trusted-project-paths.json')
-      expect(String(trustedCall![1])).toBe('utf-8')
+
+      // With the gate approach (T1979), find-project-db no longer reads the file directly
+      const trustedCall = readFileSpy.mock.calls.find(c => String(c[0]).includes('trusted-project-paths'))
+      expect(trustedCall).toBeUndefined()
     })
   })
 
@@ -207,6 +206,19 @@ describe('ipc-project T1226 — exact string & value assertions', () => {
       vi.mocked(readFile).mockRejectedValueOnce(new Error('ENOENT'))
       const { restoreTrustedPaths } = await import('./ipc-project')
       await expect(restoreTrustedPaths()).resolves.toBeUndefined()
+    })
+
+    it('getTrustedPathsReady resolves immediately by default (before restoreTrustedPaths)', async () => {
+      const { getTrustedPathsReady } = await import('./ipc-project')
+      await expect(getTrustedPathsReady()).resolves.toBeUndefined()
+    })
+
+    it('getTrustedPathsReady resolves after restoreTrustedPaths completes', async () => {
+      const { readFile } = await import('fs/promises')
+      vi.mocked(readFile).mockRejectedValueOnce(new Error('ENOENT'))
+      const { restoreTrustedPaths, getTrustedPathsReady } = await import('./ipc-project')
+      void restoreTrustedPaths()
+      await expect(getTrustedPathsReady()).resolves.toBeUndefined()
     })
   })
 

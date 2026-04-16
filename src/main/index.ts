@@ -178,11 +178,15 @@ app.whenReady().then(async () => {
   registerIpcHandlers()
   warmupModelDetection()
   registerUpdaterIpc()
-  await restoreTrustedPaths()
+  // Fire trusted-path restoration without blocking window creation (T1979).
+  // IPC handlers that need the allowlist gate via getTrustedPathsReady().
+  void restoreTrustedPaths()
   void cleanupOrphanWorktreesAtStartup().catch((err) =>
     console.warn('[startup] cleanupOrphanWorktreesAtStartup error:', err)
   )
   registerAgentStreamHandlers()
+  const win = createWindow()
+  setupAutoUpdater(win)
   const userDataPath = app.getPath('userData')
   hookServer = startHookServer(userDataPath)
 
@@ -217,8 +221,6 @@ app.whenReady().then(async () => {
     const codexHooks = join(app.getPath('home'), '.codex', 'hooks.json')
     injectCodexHooks(codexHooks, listenIp, getHookSecret(), stubsDir, effectivePort).catch(() => {})
   })
-  const win = createWindow()
-  setupAutoUpdater(win)
 })
 app.on('window-all-closed', () => {
   hookServer?.close()

@@ -291,11 +291,9 @@ describe('ipc-project T1077 — ZIP export, dialog guard, agentLang', () => {
 
   describe('find-project-db — allowlist self-registration guard (T1173)', () => {
     it('does NOT register an arbitrary untrusted path into the allowlist', async () => {
-      const { access, readdir, readFile } = await import('fs/promises')
+      const { access, readdir } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
-      // trusted-project-paths.json returns empty list
-      vi.mocked(readFile as (p: string, enc: string) => Promise<string>).mockResolvedValueOnce('[]')
       const before = [...getAllowedProjectPaths()]
       const result = await callHandler('find-project-db', '/attacker/evil-path')
       expect(String(result)).toContain('project.db') // still returns db path
@@ -314,26 +312,28 @@ describe('ipc-project T1077 — ZIP export, dialog guard, agentLang', () => {
       expect(getAllowedProjectPaths()).toContain(resolve('/my/project'))
     })
 
-    it('registers a path present in trusted-project-paths.json (cold-start recovery)', async () => {
+    it('registers a path loaded via restoreTrustedPaths() (cold-start recovery, T1979)', async () => {
       const { access, readdir, readFile } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
       const recoveryPath = '/recovery/project'
+      // Simulate startup: restoreTrustedPaths loads the path into the allowlist
       vi.mocked(readFile as (p: string, enc: string) => Promise<string>)
         .mockResolvedValueOnce(JSON.stringify([recoveryPath]))
+      const { restoreTrustedPaths } = await import('./ipc-project')
+      await restoreTrustedPaths()
+      // Now find-project-db recognizes the path via isProjectPathAllowed (gate resolved)
       const result = await callHandler('find-project-db', recoveryPath)
       expect(String(result)).toContain('project.db')
       expect(getAllowedProjectPaths()).toContain(resolve(recoveryPath))
     })
 
-    it('does NOT register when trusted-project-paths.json is corrupt', async () => {
-      const { access, readdir, readFile } = await import('fs/promises')
+    it('does NOT register an unknown path when no prior restoreTrustedPaths() call loaded it', async () => {
+      const { access, readdir } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
-      vi.mocked(readFile as (p: string, enc: string) => Promise<string>)
-        .mockResolvedValueOnce('not-valid-json')
       const before = [...getAllowedProjectPaths()]
-      const result = await callHandler('find-project-db', '/corrupt-recovery/project')
+      const result = await callHandler('find-project-db', '/unknown-at-startup/project')
       expect(String(result)).toContain('project.db') // still returns db path safely
       expect(getAllowedProjectPaths()).toEqual(before) // no change
     })

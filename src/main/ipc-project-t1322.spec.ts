@@ -1,10 +1,11 @@
 /**
  * Tests for ipc-project.ts — T1322
- * Targets surviving mutants at L293/L299 (trusted paths) and CLAUDE.md resolution.
+ * Targets surviving mutants at L293 (trusted paths gate) and CLAUDE.md resolution.
+ * T1979: replaced direct JSON fallback in find-project-db with getTrustedPathsReady() gate.
  *
  * Key mutants killed:
- * - L293: `let trusted = isProjectPathAllowed(projectPath)` → mutant sets trusted=true always
- * - L299: `trusted = paths.some(p => resolve(p) === resolvedPath)` → mutant inverts equality
+ * - L293: `const trusted = isProjectPathAllowed(projectPath)` → mutant sets trusted=true always
+ * - getTrustedPathsReady gate: no direct JSON read in find-project-db handler
  * - L73:  `if (files.length > 0)` → first file returned vs null
  * - lang guard: `lang === 'en' ? 'en' : 'fr'`
  */
@@ -133,12 +134,10 @@ describe('ipc-project T1322 — trusted paths & CLAUDE.md resolution', () => {
   // registered. These tests verify that an untrusted path is NOT registered.
 
   describe('find-project-db — L293 trusted gate (isProjectPathAllowed)', () => {
-    it('path NOT in allowlist + NOT in JSON: allowlist count does not increase', async () => {
-      const { access, readdir, readFile } = await import('fs/promises')
+    it('path NOT in allowlist: allowlist count does not increase', async () => {
+      const { access, readdir } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
-      // JSON returns empty list → attacker path not trusted
-      vi.mocked(readFile as (p: string, enc: string) => Promise<string>).mockResolvedValueOnce('[]')
 
       const countBefore = getAllowedProjectPaths().length
       await callHandler('find-project-db', '/attacker/path')
@@ -148,38 +147,34 @@ describe('ipc-project T1322 — trusted paths & CLAUDE.md resolution', () => {
       expect(countAfter).toBe(countBefore)
     })
 
-    it('path NOT in allowlist + NOT in JSON: isProjectPathAllowed remains false after call', async () => {
-      const { access, readdir, readFile } = await import('fs/promises')
+    it('path NOT in allowlist: isProjectPathAllowed remains false after call', async () => {
+      const { access, readdir } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['data.db'])
-      vi.mocked(readFile as (p: string, enc: string) => Promise<string>).mockResolvedValueOnce('[]')
 
       await callHandler('find-project-db', '/not-trusted/path')
       // isProjectPathAllowed must still return false after the call
       expect(isProjectPathAllowed('/not-trusted/path')).toBe(false)
     })
 
-    it('path IN allowlist (L293 short-circuit): isProjectPathAllowed returns true (no JSON read needed)', async () => {
+    it('path IN allowlist: isProjectPathAllowed returns true (no JSON read)', async () => {
       const { access, readdir, readFile } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
-      // /my/project is registered in beforeEach — should be trusted without reading JSON
       const readFileSpy = vi.mocked(readFile)
 
       await callHandler('find-project-db', '/my/project')
 
-      // Should not have read trusted-project-paths.json (short-circuit at L293)
+      // find-project-db must not read trusted-project-paths.json
       const trustedFileRead = readFileSpy.mock.calls.some(c => String(c[0]).includes('trusted-project-paths'))
       expect(trustedFileRead).toBe(false)
-      // And should still be in the allowlist
       expect(isProjectPathAllowed('/my/project')).toBe(true)
     })
 
     it('path NOT in allowlist: find-project-db still returns the dbPath (read-only, no registration)', async () => {
-      const { access, readdir, readFile } = await import('fs/promises')
+      const { access, readdir } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['secret.db'])
-      vi.mocked(readFile as (p: string, enc: string) => Promise<string>).mockResolvedValueOnce('[]')
 
       const result = await callHandler('find-project-db', '/not-in-list/project')
       // Returns db path despite not being trusted (security is about registration, not return)
@@ -187,85 +182,68 @@ describe('ipc-project T1322 — trusted paths & CLAUDE.md resolution', () => {
     })
   })
 
-  // ── L299: resolve(p) === resolvedPath — kill inverted equality mutant ────────
+  // ── getTrustedPathsReady gate — find-project-db awaits startup restoration ──
   //
-  // The mutant changes `===` to `!==` in paths.some(...) making every non-matching
-  // path trusted instead of matching paths.
-  // Kill: assert that ONLY the exact matching path is trusted via JSON.
+  // The old direct-file fallback in find-project-db was replaced by a gate promise
+  // (T1979). restoreTrustedPaths() loads paths once at startup; find-project-db
+  // awaits the gate before consulting isProjectPathAllowed().
 
-  describe('find-project-db — L299 resolve equality in JSON lookup', () => {
-    it('path IN JSON list: becomes trusted and gets registered', async () => {
-      const { access, readdir, readFile } = await import('fs/promises')
+  describe('find-project-db — getTrustedPathsReady gate (T1979)', () => {
+    it('gate is resolved by default — handler does not hang in test context', async () => {
+      const { access, readdir } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
-
-      const trustedPath = '/json-registered/project'
-      vi.mocked(readFile as (p: string, enc: string) => Promise<string>)
-        .mockResolvedValueOnce(JSON.stringify([trustedPath]))
-
-      await callHandler('find-project-db', trustedPath)
-      // Must be in allowlist after call (L299 correct: matching path is registered)
-      expect(getAllowedProjectPaths()).toContain(resolve(trustedPath))
+      // /my/project is pre-registered in beforeEach — gate (default resolved) allows check
+      await expect(callHandler('find-project-db', '/my/project')).resolves.toBeDefined()
     })
 
-    it('path NOT in JSON list (different value): does NOT get registered', async () => {
+    it('find-project-db does NOT read trusted-project-paths.json directly', async () => {
+      const { access, readdir, readFile } = await import('fs/promises')
+      vi.mocked(access).mockResolvedValueOnce(undefined)
+      vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['secret.db'])
+      const readFileSpy = vi.mocked(readFile)
+
+      await callHandler('find-project-db', '/unregistered/path')
+
+      const trustedFileRead = readFileSpy.mock.calls.some(c => String(c[0]).includes('trusted-project-paths'))
+      expect(trustedFileRead).toBe(false)
+    })
+
+    it('path registered via restoreTrustedPaths() is trusted by find-project-db', async () => {
       const { access, readdir, readFile } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
 
-      // JSON contains a DIFFERENT path, not the requested one
+      const newPath = '/restored-via-startup/project'
       vi.mocked(readFile as (p: string, enc: string) => Promise<string>)
-        .mockResolvedValueOnce(JSON.stringify(['/other/path']))
+        .mockResolvedValueOnce(JSON.stringify([newPath]))
+      const { restoreTrustedPaths } = await import('./ipc-project')
+      await restoreTrustedPaths()
+
+      await callHandler('find-project-db', newPath)
+      expect(isProjectPathAllowed(newPath)).toBe(true)
+    })
+
+    it('path NOT registered anywhere: find-project-db returns dbPath without registering it', async () => {
+      const { access, readdir } = await import('fs/promises')
+      vi.mocked(access).mockResolvedValueOnce(undefined)
+      vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['data.db'])
+      const countBefore = getAllowedProjectPaths().length
+
+      const result = await callHandler('find-project-db', '/completely/unknown/project')
+
+      expect(String(result)).toContain('data.db')
+      expect(getAllowedProjectPaths()).toHaveLength(countBefore)
+    })
+
+    it('path NOT in allowlist: count does not increase (no JSON fallback registration)', async () => {
+      const { access, readdir } = await import('fs/promises')
+      vi.mocked(access).mockResolvedValueOnce(undefined)
+      vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
 
       const before = [...getAllowedProjectPaths()]
-      await callHandler('find-project-db', '/not-in-json/project')
-      // The requested path must NOT be added (mutant !== would add all non-matching ones)
-      expect(getAllowedProjectPaths()).not.toContain(resolve('/not-in-json/project'))
-      expect(getAllowedProjectPaths()).toHaveLength(before.length)
-    })
-
-    it('JSON contains multiple paths: only the exact match triggers registration', async () => {
-      const { access, readdir, readFile } = await import('fs/promises')
-      vi.mocked(access).mockResolvedValueOnce(undefined)
-      vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
-
-      const requestedPath = '/exact/match/project'
-      vi.mocked(readFile as (p: string, enc: string) => Promise<string>)
-        .mockResolvedValueOnce(JSON.stringify(['/other/a', requestedPath, '/other/b']))
-
-      await callHandler('find-project-db', requestedPath)
-      // Exact match: registered
-      expect(getAllowedProjectPaths()).toContain(resolve(requestedPath))
-    })
-
-    it('JSON contains path with different casing: resolve() normalizes — same resolved path is trusted', async () => {
-      const { access, readdir, readFile } = await import('fs/promises')
-      vi.mocked(access).mockResolvedValueOnce(undefined)
-      vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
-
-      const pathInJson = '/my/trusted/project'
-      const requestedPath = '/my/trusted/project' // identical after resolve
-      vi.mocked(readFile as (p: string, enc: string) => Promise<string>)
-        .mockResolvedValueOnce(JSON.stringify([pathInJson]))
-
-      await callHandler('find-project-db', requestedPath)
-      expect(getAllowedProjectPaths()).toContain(resolve(requestedPath))
-    })
-
-    it('JSON contains only non-matching paths: none of them bleed into registration', async () => {
-      const { access, readdir, readFile } = await import('fs/promises')
-      vi.mocked(access).mockResolvedValueOnce(undefined)
-      vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
-
-      // JSON has paths A, B, C — we request path D
-      vi.mocked(readFile as (p: string, enc: string) => Promise<string>)
-        .mockResolvedValueOnce(JSON.stringify(['/path/a', '/path/b', '/path/c']))
-
-      const before = [...getAllowedProjectPaths()]
-      await callHandler('find-project-db', '/path/d')
-      // path/d must NOT be registered
-      expect(getAllowedProjectPaths()).not.toContain(resolve('/path/d'))
-      // Total count unchanged
+      await callHandler('find-project-db', '/not-in-allowlist/project')
+      expect(getAllowedProjectPaths()).not.toContain(resolve('/not-in-allowlist/project'))
       expect(getAllowedProjectPaths()).toHaveLength(before.length)
     })
   })

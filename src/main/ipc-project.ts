@@ -10,7 +10,7 @@
 
 import { ipcMain, dialog, app, shell } from 'electron'
 import { access, mkdir, readdir, readFile, writeFile } from 'fs/promises'
-import { join, basename, resolve } from 'path'
+import { join, basename } from 'path'
 import { getProjectRules, WORKFLOW_MD_TEMPLATE, CLI_RULES_FILE_MAP } from './project-templates'
 import { GENERIC_AGENTS_BY_LANG } from './default-agents'
 import type { AgentLanguage } from './default-agents'
@@ -40,13 +40,26 @@ async function persistTrustedPaths(): Promise<void> {
   } catch { /* non-fatal */ }
 }
 
+// Gate promise — resolves once restoreTrustedPaths() settles (success or failure).
+// Default: resolved, so handlers called before startup (e.g. in tests) don't hang.
+let _trustedPathsReady: Promise<void> = Promise.resolve()
+
+/** Awaitable gate: resolves when restoreTrustedPaths() has settled. */
+export function getTrustedPathsReady(): Promise<void> {
+  return _trustedPathsReady
+}
+
 /** Restore dialog-approved project paths from the persisted JSON file on startup. */
 export async function restoreTrustedPaths(): Promise<void> {
-  try {
-    const raw = await readFile(getTrustedPathsFile(), 'utf-8')
-    const paths: string[] = JSON.parse(raw)
-    for (const p of paths) registerProjectPath(p)
-  } catch { /* first run or corrupt file — ignore */ }
+  const run = async (): Promise<void> => {
+    try {
+      const raw = await readFile(getTrustedPathsFile(), 'utf-8')
+      const paths: string[] = JSON.parse(raw)
+      for (const p of paths) registerProjectPath(p)
+    } catch { /* first run or corrupt file — ignore */ }
+  }
+  _trustedPathsReady = run()
+  await _trustedPathsReady
 }
 // Re-export for backward compatibility (moved to ipc-project-create.ts)
 export { AGENT_SCRIPTS } from './ipc-project-create'
@@ -213,18 +226,11 @@ export function registerProjectHandlers(): void {
    */
   ipcMain.handle('find-project-db', async (_event, projectPath: string) => {
     if (!projectPath) throw new Error('PROJECT_PATH_REQUIRED')
+    // Wait for startup path restoration to settle before checking the allowlist (T1979).
+    await getTrustedPathsReady()
     const dbPath = await findProjectDb(projectPath)
     // Security: only register paths already trusted — do NOT self-register arbitrary renderer input.
-    let trusted = isProjectPathAllowed(projectPath)
-    if (!trusted) {
-      // Fallback: check the persisted file (handles restoreTrustedPaths failure on corrupt JSON).
-      try {
-        const raw = await readFile(getTrustedPathsFile(), 'utf-8')
-        const paths: string[] = JSON.parse(raw)
-        const resolvedPath = resolve(projectPath)
-        trusted = paths.some(p => resolve(p) === resolvedPath)
-      } catch { /* file absent or corrupt — treat as untrusted */ }
-    }
+    const trusted = isProjectPathAllowed(projectPath)
     if (trusted) {
       registerDbPath(dbPath)
       registerProjectPath(projectPath)

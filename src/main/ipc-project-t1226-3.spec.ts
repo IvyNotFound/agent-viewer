@@ -203,9 +203,9 @@ describe('ipc-project T1226 — exact string & value assertions', () => {
     })
   })
 
-  // ── find-project-db — L294, L300: trusted conditional ────────────────────
+  // ── find-project-db — trusted conditional (T1979: gate replaces JSON fallback) ─
 
-  describe('find-project-db — trusted path logic (L294, L300)', () => {
+  describe('find-project-db — trusted path logic (gate-based, T1979)', () => {
     it('trusted=true (in-memory): registerDbPath is called with found dbPath', async () => {
       const { access, readdir } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
@@ -216,12 +216,10 @@ describe('ipc-project T1226 — exact string & value assertions', () => {
       expect(String(result)).toContain('project.db')
     })
 
-    it('trusted=false (not in-memory, not in json): returns dbPath but does NOT register', async () => {
-      const { access, readdir, readFile } = await import('fs/promises')
+    it('trusted=false (not in-memory): returns dbPath but does NOT register', async () => {
+      const { access, readdir } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['data.db'])
-      // trusted-project-paths.json returns empty list
-      vi.mocked(readFile as (p: string, enc: string) => Promise<string>).mockResolvedValueOnce('[]')
       const before = [...getAllowedProjectPaths()]
       const result = await callHandler('find-project-db', '/unregistered/path')
       // Still returns path
@@ -231,28 +229,28 @@ describe('ipc-project T1226 — exact string & value assertions', () => {
       expect(getAllowedProjectPaths()).toEqual(before)
     })
 
-    it('trusted via json (L300): registers the path when found in persisted file', async () => {
+    it('trusted via restoreTrustedPaths (gate): registers path loaded at startup', async () => {
       const { access, readdir, readFile } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
       const jsonPath = '/json-trusted/project'
       vi.mocked(readFile as (p: string, enc: string) => Promise<string>)
         .mockResolvedValueOnce(JSON.stringify([jsonPath]))
+      const { restoreTrustedPaths } = await import('./ipc-project')
+      await restoreTrustedPaths()
       const result = await callHandler('find-project-db', jsonPath)
       expect(String(result)).toContain('project.db')
       expect(getAllowedProjectPaths()).toContain(resolve(jsonPath))
     })
 
-    it('readFile with encoding "utf-8" for trusted paths file (L297)', async () => {
+    it('find-project-db does NOT read trusted-project-paths.json directly (uses gate, T1979)', async () => {
       const { access, readdir, readFile } = await import('fs/promises')
       vi.mocked(access).mockResolvedValueOnce(undefined)
       vi.mocked(readdir as (p: string) => Promise<string[]>).mockResolvedValueOnce(['project.db'])
-      vi.mocked(readFile as (p: string, enc: string) => Promise<string>).mockResolvedValueOnce('[]')
+      const readFileSpy = vi.mocked(readFile)
       await callHandler('find-project-db', '/untrusted/path')
-      const readFileCalls = vi.mocked(readFile).mock.calls
-      const trustedCall = readFileCalls.find(c => String(c[0]).includes('trusted-project-paths'))
-      expect(trustedCall).toBeDefined()
-      expect(trustedCall![1]).toBe('utf-8')
+      const trustedCall = readFileSpy.mock.calls.find(c => String(c[0]).includes('trusted-project-paths'))
+      expect(trustedCall).toBeUndefined()
     })
   })
 
