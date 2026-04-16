@@ -85,8 +85,8 @@ export function attachStreamHandlers({
     if (!clean) return
     if (eventsReceived === 0) logDebug(`first stdout line (raw): ${line.slice(0, 200)}`)
 
-    const event = adapter.parseLine(clean)
-    if (event === null) {
+    const parsed = adapter.parseLine(clean)
+    if (parsed === null) {
       const readable = clean.replace(/\x00/g, '').replace(/  +/g, ' ').trim()
       if (readable) {
         stdoutErrorBuffer = (stdoutErrorBuffer + '\n' + readable).slice(-1000)
@@ -94,49 +94,54 @@ export function attachStreamHandlers({
       return
     }
 
-    eventsReceived++
+    // parseLine may return a single event or an array (e.g. OpenCode inline tool_result)
+    const events = Array.isArray(parsed) ? parsed : [parsed]
 
-    // Accumulate token usage from adapters that support extractTokenUsage
-    if (adapter.cli !== 'claude' && adapter.extractTokenUsage) {
-      try {
-        const usage = adapter.extractTokenUsage(event)
-        if (usage) {
-          tokenAccum.tokensIn  += usage.tokensIn  ?? 0
-          tokenAccum.tokensOut += usage.tokensOut ?? 0
-          tokenAccum.cacheRead  += usage.cacheRead  ?? 0
-          tokenAccum.cacheWrite += usage.cacheWrite ?? 0
-          if (typeof usage.costUsd === 'number') {
-            tokenAccum.costUsd = (tokenAccum.costUsd ?? 0) + usage.costUsd
+    for (const event of events) {
+      eventsReceived++
+
+      // Accumulate token usage from adapters that support extractTokenUsage
+      if (adapter.cli !== 'claude' && adapter.extractTokenUsage) {
+        try {
+          const usage = adapter.extractTokenUsage(event)
+          if (usage) {
+            tokenAccum.tokensIn  += usage.tokensIn  ?? 0
+            tokenAccum.tokensOut += usage.tokensOut ?? 0
+            tokenAccum.cacheRead  += usage.cacheRead  ?? 0
+            tokenAccum.cacheWrite += usage.cacheWrite ?? 0
+            if (typeof usage.costUsd === 'number') {
+              tokenAccum.costUsd = (tokenAccum.costUsd ?? 0) + usage.costUsd
+            }
           }
-        }
-      } catch { /* defensive — never break stream on accumulation error */ }
-    }
-
-    const convId = adapter.extractConvId?.(event) ?? null
-    if (convId) {
-      const wc = webContents.fromId(wcId)
-      if (wc && !wc.isDestroyed()) {
-        wc.send(`agent:convId:${id}`, convId)
+        } catch { /* defensive — never break stream on accumulation error */ }
       }
-    }
 
-    if (!webContents.fromId(wcId) || webContents.fromId(wcId)!.isDestroyed()) {
-      killAgent(id)
-      return
-    }
-    pushStreamEvent(id, wcId, event)
+      const convId = adapter.extractConvId?.(event) ?? null
+      if (convId) {
+        const wc = webContents.fromId(wcId)
+        if (wc && !wc.isDestroyed()) {
+          wc.send(`agent:convId:${id}`, convId)
+        }
+      }
 
-    // T1708: normalize Claude AskUserQuestion tool_use into a synthetic ask_user event.
-    // This allows non-Claude-aware consumers to detect pending questions via type === 'ask_user'
-    // without parsing the assistant message content structure.
-    if (adapter.cli === 'claude' && event.type === 'assistant' && event.message) {
-      const askBlock = event.message.content.find(
-        (b) => b.type === 'tool_use' && b.name === 'AskUserQuestion'
-      )
-      if (askBlock?.input) {
-        const question = (askBlock.input as Record<string, unknown>).question
-        if (typeof question === 'string') {
-          pushStreamEvent(id, wcId, { type: 'ask_user', text: question })
+      if (!webContents.fromId(wcId) || webContents.fromId(wcId)!.isDestroyed()) {
+        killAgent(id)
+        return
+      }
+      pushStreamEvent(id, wcId, event)
+
+      // T1708: normalize Claude AskUserQuestion tool_use into a synthetic ask_user event.
+      // This allows non-Claude-aware consumers to detect pending questions via type === 'ask_user'
+      // without parsing the assistant message content structure.
+      if (adapter.cli === 'claude' && event.type === 'assistant' && event.message) {
+        const askBlock = event.message.content.find(
+          (b) => b.type === 'tool_use' && b.name === 'AskUserQuestion'
+        )
+        if (askBlock?.input) {
+          const question = (askBlock.input as Record<string, unknown>).question
+          if (typeof question === 'string') {
+            pushStreamEvent(id, wcId, { type: 'ask_user', text: question })
+          }
         }
       }
     }

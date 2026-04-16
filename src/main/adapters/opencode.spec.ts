@@ -397,6 +397,163 @@ describe('opencodeAdapter.parseLine', () => {
     const event = opencodeAdapter.parseLine(raw)
     expect(event).toEqual({ type: 'error', text: raw })
   })
+
+  // ── OpenCode SDK v2 official format ──────────────────────────────────────────
+
+  it('SDK v2: resolves tool name from part.tool', () => {
+    const line = JSON.stringify({
+      type: 'tool_use',
+      timestamp: 1776348998710,
+      part: {
+        type: 'tool',
+        tool: 'read',
+        callID: 'call_0406b82ff9c744ab9c7d0c88',
+        state: { status: 'completed', input: { filePath: '/tmp/foo' }, output: '<result>ok</result>' },
+      },
+    })
+    const result = opencodeAdapter.parseLine(line)
+    const events = Array.isArray(result) ? result : [result]
+    expect(events[0]?.message?.content[0]?.name).toBe('read')
+  })
+
+  it('SDK v2: resolves input from part.state.input', () => {
+    const line = JSON.stringify({
+      type: 'tool_use',
+      part: {
+        tool: 'read',
+        callID: 'call_abc',
+        state: { status: 'completed', input: { filePath: '/tmp/bar' }, output: 'content' },
+      },
+    })
+    const result = opencodeAdapter.parseLine(line)
+    const events = Array.isArray(result) ? result : [result]
+    expect(events[0]?.message?.content[0]?.input).toEqual({ filePath: '/tmp/bar' })
+  })
+
+  it('SDK v2: resolves call ID from part.callID', () => {
+    const line = JSON.stringify({
+      type: 'tool_use',
+      part: {
+        tool: 'bash',
+        callID: 'call_0406b82ff9c744ab',
+        state: { status: 'completed', input: { command: 'ls' }, output: 'file.ts' },
+      },
+    })
+    const result = opencodeAdapter.parseLine(line)
+    const events = Array.isArray(result) ? result : [result]
+    expect(events[0]?.message?.content[0]?.tool_use_id).toBe('call_0406b82ff9c744ab')
+  })
+
+  it('SDK v2: returns array [tool_use, tool_result] when state.output present', () => {
+    const line = JSON.stringify({
+      type: 'tool_use',
+      part: {
+        tool: 'read',
+        callID: 'call_xyz',
+        state: { status: 'completed', input: { filePath: '/tmp/f' }, output: 'file content here' },
+      },
+    })
+    const result = opencodeAdapter.parseLine(line)
+    expect(Array.isArray(result)).toBe(true)
+    const events = result as any[]
+    expect(events).toHaveLength(2)
+    expect(events[0]?.message?.content[0]?.type).toBe('tool_use')
+    expect(events[1]?.message?.content[0]?.type).toBe('tool_result')
+    expect(events[1]?.message?.content[0]?.content).toBe('file content here')
+    expect(events[1]?.message?.content[0]?.tool_use_id).toBe('call_xyz')
+  })
+
+  it('SDK v2: tool_result in array has is_error:false when status is "completed"', () => {
+    const line = JSON.stringify({
+      type: 'tool_use',
+      part: {
+        tool: 'bash',
+        callID: 'call_ok',
+        state: { status: 'completed', input: {}, output: 'ok' },
+      },
+    })
+    const result = opencodeAdapter.parseLine(line)
+    const events = result as any[]
+    expect(events[1]?.message?.content[0]?.is_error).toBe(false)
+  })
+
+  it('SDK v2: tool_result has is_error:true when state.status is "error"', () => {
+    const line = JSON.stringify({
+      type: 'tool_use',
+      part: {
+        tool: 'bash',
+        callID: 'call_err',
+        state: { status: 'error', input: {}, output: 'command not found' },
+      },
+    })
+    const result = opencodeAdapter.parseLine(line)
+    const events = result as any[]
+    expect(events[1]?.message?.content[0]?.is_error).toBe(true)
+  })
+
+  it('SDK v2: returns single StreamEvent (not array) when state.output is absent', () => {
+    const line = JSON.stringify({
+      type: 'tool_use',
+      part: {
+        tool: 'bash',
+        callID: 'call_pending',
+        state: { status: 'pending', input: { command: 'ls' } },
+      },
+    })
+    const result = opencodeAdapter.parseLine(line)
+    expect(Array.isArray(result)).toBe(false)
+    expect(result?.message?.content[0]?.type).toBe('tool_use')
+  })
+
+  it('SDK v2: part.tool takes priority over part.name (both present)', () => {
+    const line = JSON.stringify({
+      type: 'tool_use',
+      part: {
+        tool: 'sdk_tool',
+        name: 'legacy_name',
+        callID: 'call_prio',
+        state: { status: 'pending', input: {} },
+      },
+    })
+    const result = opencodeAdapter.parseLine(line)
+    const event = Array.isArray(result) ? result[0] : result
+    expect(event?.message?.content[0]?.name).toBe('sdk_tool')
+  })
+
+  it('SDK v2: part.input takes priority over part.state.input (both present)', () => {
+    const line = JSON.stringify({
+      type: 'tool_use',
+      part: {
+        tool: 'read',
+        callID: 'call_input_prio',
+        input: { direct: true },
+        state: { status: 'pending', input: { fromState: true } },
+      },
+    })
+    const result = opencodeAdapter.parseLine(line)
+    const event = Array.isArray(result) ? result[0] : result
+    expect(event?.message?.content[0]?.input).toEqual({ direct: true })
+  })
+
+  it('SDK v2: warns when tool name falls back to unknown', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const line = JSON.stringify({ type: 'tool_use', part: { callID: 'call_unk', state: { status: 'pending', input: {} } } })
+    opencodeAdapter.parseLine(line)
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[opencode] tool_use fallback to unknown:'),
+      expect.any(String)
+    )
+    warnSpy.mockRestore()
+  })
+
+  it('legacy format still works after SDK v2 changes (backward compat)', () => {
+    const line = JSON.stringify({ type: 'tool_use', name: 'bash', input: { cmd: 'echo hi' }, toolCallId: 'call_legacy' })
+    const result = opencodeAdapter.parseLine(line)
+    const event = Array.isArray(result) ? result[0] : result
+    expect(event?.message?.content[0]?.name).toBe('bash')
+    expect(event?.message?.content[0]?.input).toEqual({ cmd: 'echo hi' })
+    expect(event?.message?.content[0]?.tool_use_id).toBe('call_legacy')
+  })
 })
 
 // ── opencodeAdapter.formatStdinMessage ────────────────────────────────────────

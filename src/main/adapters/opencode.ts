@@ -103,7 +103,7 @@ export const opencodeAdapter: CliAdapter = {
     }
   },
 
-  parseLine(line: string): StreamEvent | null {
+  parseLine(line: string): StreamEvent | StreamEvent[] | null {
     if (!line.trim()) return null
     try {
       const parsed = JSON.parse(line) as Record<string, unknown>
@@ -151,23 +151,38 @@ export const opencodeAdapter: CliAdapter = {
 
       if (evType === 'tool_use') {
         // Render tool calls as assistant content blocks (natively displayed by StreamToolBlock.vue)
-        // New format (v1.3+): fields are wrapped in a part object — same pattern as text/reasoning above.
-        // Legacy format: fields are at the root of parsed.
-        // Field aliases: toolCallId is the SST/OpenCode convention; id is a fallback.
+        // Supported formats (in priority order):
+        //   1. Official OpenCode SDK v2 format: part.tool, part.callID, part.state.input, part.state.output
+        //   2. Legacy part-wrapped format (v1.3+): part.name, part.toolCallId, part.input
+        //   3. Flat legacy format: name, toolCallId/id, input
         const tuPart = typeof parsed.part === 'object' && parsed.part !== null
           ? parsed.part as Record<string, unknown>
           : null
-        const name = typeof tuPart?.name === 'string' ? tuPart.name
+        // Tool name: part.tool (SDK v2) > part.name (v1.3+) > flat name
+        const name = typeof tuPart?.tool === 'string' ? tuPart.tool
+          : typeof tuPart?.name === 'string' ? tuPart.name
           : typeof parsed.name === 'string' ? parsed.name : 'unknown'
+        if (name === 'unknown') {
+          console.warn('[opencode] tool_use fallback to unknown:', line)
+        }
+        // State object (SDK v2): part.state carries input, output, status
+        const stateObj = tuPart && typeof tuPart.state === 'object' && tuPart.state !== null
+          ? tuPart.state as Record<string, unknown>
+          : null
+        // Input: part.input (v1.3+) > part.state.input (SDK v2) > flat input
         const input = (typeof tuPart?.input === 'object' && tuPart?.input !== null)
           ? tuPart.input as Record<string, unknown>
+          : (stateObj && typeof stateObj.input === 'object' && stateObj.input !== null)
+          ? stateObj.input as Record<string, unknown>
           : (typeof parsed.input === 'object' && parsed.input !== null)
           ? parsed.input as Record<string, unknown> : {}
-        const tuId = typeof tuPart?.toolCallId === 'string' ? tuPart.toolCallId
+        // Call ID: part.callID (SDK v2) > part.toolCallId (v1.3+) > flat toolCallId > part.id > flat id
+        const tuId = typeof tuPart?.callID === 'string' ? tuPart.callID
+          : typeof tuPart?.toolCallId === 'string' ? tuPart.toolCallId
           : typeof parsed.toolCallId === 'string' ? parsed.toolCallId
           : typeof tuPart?.id === 'string' ? tuPart.id
           : typeof parsed.id === 'string' ? parsed.id : undefined
-        return {
+        const toolUseEvent: StreamEvent = {
           type: 'assistant',
           message: {
             role: 'assistant',
@@ -178,7 +193,26 @@ export const opencodeAdapter: CliAdapter = {
               tool_use_id: tuId,
             }],
           },
-        } as StreamEvent
+        }
+        // SDK v2: tool result is inline in state.output — no separate tool_result event is emitted.
+        // When state.output exists, emit tool_use + tool_result together as an array.
+        if (stateObj && typeof stateObj.output === 'string') {
+          const is_error = stateObj.status === 'error'
+          const toolResultEvent: StreamEvent = {
+            type: 'assistant',
+            message: {
+              role: 'assistant',
+              content: [{
+                type: 'tool_result',
+                content: stateObj.output,
+                tool_use_id: tuId,
+                is_error,
+              }],
+            },
+          }
+          return [toolUseEvent, toolResultEvent]
+        }
+        return toolUseEvent
       }
       if (evType === 'tool_result') {
         // New format (v1.3+): fields are wrapped in a part object — same pattern as tool_use above.

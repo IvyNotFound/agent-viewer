@@ -239,8 +239,10 @@ export interface CliAdapter {
   /**
    * Parse a single stdout line into a StreamEvent.
    * Returns null if the line carries no meaningful event (blank, debug noise, etc.).
+   * May return an array when a single JSONL line produces multiple logical events
+   * (e.g. OpenCode tool_use with inline state.output → tool_use + tool_result).
    */
-  parseLine(line: string): StreamEvent | null
+  parseLine(line: string): StreamEvent | StreamEvent[] | null
 
   /**
    * Extract the stable conversation/session ID from a stream event.
