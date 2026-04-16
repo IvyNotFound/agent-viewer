@@ -51,16 +51,16 @@ describe('migrateDb v39 — add idx_tasks_scope index', () => {
     expect(db._getVersion()).toBe(41)
   })
 
-  it('applies v39 + v40 when starting from v38', () => {
+  it('applies v39 + v40 + v41 when starting from v38', () => {
     const db = makeMockDb({ userVersion: 38 })
     const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(applied).toBe(2)
+    expect(applied).toBe(3)
   })
 
   it('is a no-op for idx_tasks_scope when already at v39', () => {
     const db = makeMockDb({ userVersion: 39 })
     const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(applied).toBe(1) // only v40 applied
+    expect(applied).toBe(2) // v40 and v41 applied
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.every(s => !s.includes('idx_tasks_scope'))).toBe(true)
   })
@@ -92,16 +92,16 @@ describe('migrateDb v40 — idx_agm_agent on agent_group_members(agent_id)', () 
     expect(db._getVersion()).toBe(41)
   })
 
-  it('applies only v40 when starting from v39', () => {
+  it('applies v40 and v41 when starting from v39', () => {
     const db = makeMockDb({ userVersion: 39 })
     const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(applied).toBe(1)
+    expect(applied).toBe(2)
   })
 
   it('is a no-op when already at v40', () => {
     const db = makeMockDb({ userVersion: 40 })
     const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(applied).toBe(0)
+    expect(applied).toBe(1) // only v41 applies
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     expect(calls.every(s => !s.includes('idx_agm_agent'))).toBe(true)
   })

@@ -331,7 +331,7 @@ describe('useStreamIpc — onMounted exit handler', () => {
     expect(tabsStore.closeTab).not.toHaveBeenCalled()
   })
 
-  it('task-creator agentName → does NOT auto-close even on clean exit (exitCode=0)', async () => {
+  it('planner agentName → does NOT auto-close even on clean exit (exitCode=0)', async () => {
     let exitCb: ((code: number | null) => void) | undefined
     api().onAgentExit.mockImplementation((_id: string, cb: (code: number | null) => void) => {
       exitCb = cb
@@ -341,7 +341,7 @@ describe('useStreamIpc — onMounted exit handler', () => {
     const { tabsStore } = await mountComposable({
       initialState: {
         tabs: { tabs: [makeTab({ agentName: 'task-creator' })] },
-        agents: { agents: [{ id: 1, name: 'dev-front-vuejs', type: 'dev' }] },
+        agents: { agents: [{ id: 1, name: 'task-creator', type: 'planner' }] },
       },
     })
 

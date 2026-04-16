@@ -147,10 +147,10 @@ describe('migrateDb — legacy bootstrap', () => {
     })
   }
 
-  it('sets cursor to 23 (bootstrap) and returns 16 migrations (v24–v39)', () => {
+  it('sets cursor to 23 (bootstrap) and returns 17 migrations (v24–v40)', () => {
     const db = createLegacyDb()
     const result = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(result).toBe(17)
+    expect(result).toBe(18)
   })
 
   it('emits PRAGMA user_version = 23 (bootstrap cursor)', () => {

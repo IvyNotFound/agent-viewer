@@ -109,7 +109,7 @@ describe('migrateDb v34 — add missing DB indexes (T1852)', () => {
   it('skips v34 when already at version 34 (v35, v36, v37, v38, v39, v40, v41 run)', () => {
     const db = makeMockDb({ userVersion: 34 })
     const applied = migrateDb(db as unknown as import('./migration-db-adapter').MigrationDb)
-    expect(applied).toBe(6)
+    expect(applied).toBe(7)
     const calls = db.run.mock.calls.map((c: string[]) => c[0])
     // v34 creates idx_sessions_conv_id ON sessions(claude_conv_id) — that specific column name must not appear
     // (v36 re-creates same index name but on sessions(conv_id), which is fine)
