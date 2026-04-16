@@ -149,7 +149,7 @@ describe('CostStatsSection (T824)', () => {
     const weekBtn = buttons.find(b => b.text().match(/semaine|week/i))
     expect(weekBtn?.exists()).toBe(true)
     await weekBtn!.trigger('click')
-    vi.runAllTimers()
+    await vi.advanceTimersByTimeAsync(200)
     await flushPromises()
     expect(api.sessionsStatsCost).toHaveBeenCalledTimes(2)
     expect(api.sessionsStatsCost).toHaveBeenLastCalledWith('/p/db', { period: 'week', limit: 30 })
@@ -203,7 +203,7 @@ describe('CostStatsSection (T824)', () => {
     expect(api.sessionsStatsCost).toHaveBeenCalledWith('/p/db1', { period: 'day', limit: 30 })
 
     await wrapper.setProps({ dbPath: '/p/db2' })
-    vi.runAllTimers()
+    await vi.advanceTimersByTimeAsync(200)
     await flushPromises()
     expect(api.sessionsStatsCost).toHaveBeenCalledWith('/p/db2', { period: 'day', limit: 30 })
     wrapper.unmount()

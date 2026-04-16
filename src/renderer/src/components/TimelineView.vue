@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTasksStore } from '@renderer/stores/tasks'
 import { agentFg, agentBg } from '@renderer/utils/agentColor'
+import { useDebouncedFn } from '@renderer/composables/useDebounce'
 import TimelineCanvas from './TimelineCanvas.vue'
 
 const { t } = useI18n()
@@ -118,8 +119,8 @@ async function fetchTasks(): Promise<void> {
   }
 }
 
-watch(() => store.dbPath, fetchTasks)
-watch(daysBack, fetchTasks)
+const debouncedFetchTasks = useDebouncedFn(fetchTasks, 200)
+watch([() => store.dbPath, daysBack], debouncedFetchTasks)
 
 watch(viewportStart, (newStart) => {
   const cutoff = now.value - daysBack.value * 86_400_000

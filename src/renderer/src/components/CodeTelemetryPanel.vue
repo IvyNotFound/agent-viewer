@@ -11,6 +11,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@renderer/stores/settings'
 import { getLangColor } from '@renderer/utils/lang-colors'
+import { useDebouncedFn } from '@renderer/composables/useDebounce'
 
 const { t } = useI18n()
 const settings = useSettingsStore()
@@ -54,8 +55,9 @@ async function scan(): Promise<void> {
   }
 }
 
+const debouncedScan = useDebouncedFn(scan, 200)
 onMounted(() => { if (props.projectPath) scan() })
-watch(() => props.projectPath, (v) => { if (v) scan() })
+watch(() => props.projectPath, (v) => { if (v) debouncedScan() })
 
 function formatLines(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
